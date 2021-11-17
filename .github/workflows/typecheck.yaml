@@ -1,0 +1,36 @@
+name: Type Check
+on: [push]
+jobs:
+  type-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🔔 Check out
+        uses: actions/checkout@v2
+
+      - name: 🏗️ python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: ⬇️ Python Dependencies
+        uses: py-actions/py-dependency-install@v2
+        with:
+          path: requirements.txt
+          update-pip: true
+          update-setuptools: true
+          update-wheel: true
+
+      - name: 🏗️ Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - name: ⬇️ fd-find
+        run: cargo install fd-find
+
+      - name: 🏗️ node
+        uses: actions/setup-node@v2
+        with:
+          node-verion: 16
+      - name: ⬇️ all packages
+        run: npm install
+      - name: 🏃 pyright
+        run: ./node_modules/.bin/pyright
