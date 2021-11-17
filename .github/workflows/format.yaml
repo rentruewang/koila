@@ -1,0 +1,37 @@
+name: Format
+on: [push]
+jobs:
+  format-all:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🔔 Check out
+        uses: actions/checkout@v2
+
+      - name: 🏗️ Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - name: ⬇️ fd-find, ripgrep
+        run: cargo install fd-find ripgrep
+
+      - name: 🏗️ python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: ⬇️ isort, black, autoflake
+        run: pip install isort black autoflake
+      - name: 🏃 isort
+        run: isort --profile=black .
+      - name: 🏃 black
+        run: black .
+      - name: 🏃 autoflake
+        run: autoflake -ir $(fd -e py | rg -vsF __init__.py) --remove-all-unused-imports
+
+      - name: ⬆️ Add and Commit
+        uses: EndBug/add-and-commit@v7
+        with:
+          author_name: "github-actions[bot]"
+          author_email: "github-actions[bot]@users.noreply.github.com"
+          message: "🤖 RenTrueWang thinks you forgot to format your code!"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
