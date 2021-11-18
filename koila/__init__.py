@@ -1,4 +1,4 @@
-from .core import Function, Tensor
-from .core import _add as add
-from .core import _lazy as lazy
+from .core import LazyFunction, LazyTensor, add, div, eager, lazy, mul, sub
 from .protocols import Runnable
+
+divide = div
