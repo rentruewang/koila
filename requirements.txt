@@ -1,2 +1,7 @@
+autoflake
+black
+isort
+numpy
 pytest
+rich
 torch
