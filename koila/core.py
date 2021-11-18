@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import dataclasses as dc
 import functools
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Tuple, overload
