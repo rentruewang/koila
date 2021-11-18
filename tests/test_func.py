@@ -1,7 +1,7 @@
-from koila import Function, Runnable, Tensor
 import torch
 
 import koila
+from koila import Function
 
 
 def test_func() -> None:
