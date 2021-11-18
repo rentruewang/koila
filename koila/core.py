@@ -1,22 +1,25 @@
 from __future__ import annotations
 
-from collections.abc import Callable
+import dataclasses as dc
+import functools
 from dataclasses import dataclass
-from typing import overload
+from typing import Any, Callable, Dict, Tuple, overload
 
 import torch
-from torch import Tensor
+from torch import Tensor as TorchTensor
+
+from .protocols import Runnable
 
 
 @dataclass
-class LazyOperation:
-    function: Callable[..., Tensor]
-    args: tuple[LazyTensor | Tensor | int | float, ...]
-    kwargs: dict[str, LazyTensor | Tensor | int | float]
+class Function(Runnable):
+    function: Callable[..., TorchTensor]
+    args: Tuple[Tensor | TorchTensor | int | float, ...]
+    kwargs: Dict[str, Tensor | TorchTensor | int | float]
 
     @overload
     @staticmethod
-    def evaluate(value: LazyTensor | Tensor) -> Tensor:
+    def evaluate(value: Tensor | TorchTensor) -> TorchTensor:
         ...
 
     @overload
@@ -30,12 +33,14 @@ class LazyOperation:
         ...
 
     @staticmethod
-    def evaluate(value: LazyTensor | Tensor | int | float) -> Tensor | int | float:
-        if isinstance(value, LazyTensor):
+    def evaluate(
+        value: Tensor | TorchTensor | int | float,
+    ) -> TorchTensor | int | float:
+        if isinstance(value, Tensor):
             return value.run()
         return value
 
-    def run(self) -> Tensor:
+    def run(self) -> TorchTensor:
         print("run")
         args = [self.evaluate(arg) for arg in self.args]
         kwargs = {k: self.evaluate(w) for (k, w) in self.kwargs.items()}
@@ -43,38 +48,48 @@ class LazyOperation:
 
 
 @dataclass(init=False)
-class LazyTensor:
-    data: Tensor | LazyOperation
+class Tensor(Runnable):
+    data: TorchTensor | Function
     retain_forward: bool
 
     def __init__(
-        self, data: Tensor | LazyOperation, retain_forward: bool = False
+        self, data: TorchTensor | Function, retain_forward: bool = False
     ) -> None:
         self.data = data
         self.retain_forward = retain_forward
 
-    @classmethod
-    def ensure_lazy(cls, tensor: LazyTensor | Tensor) -> LazyTensor:
-        if isinstance(tensor, Tensor):
-            return cls(tensor)
-        return tensor
+    def __getattr__(self, name: str) -> Callable[..., Any]:
+        func = self._lookup_global_function(name)
+        return functools.partial(func, self)
 
-    def __add__(self, other: LazyTensor | Tensor) -> LazyTensor:
-        return self.add(other)
+    def __add__(self, other: Tensor | TorchTensor) -> Tensor:
+        return _add(self, other)
 
-    def __radd__(self, other: LazyTensor | Tensor) -> LazyTensor:
-        return self.ensure_lazy(other).add(self)
+    def __radd__(self, other: Tensor | TorchTensor) -> Tensor:
+        return _add(other, self)
 
-    def add(self, other: LazyTensor | Tensor) -> LazyTensor:
-        tensor = self.ensure_lazy(other)
-        return LazyTensor(LazyOperation(torch.add, (self, tensor), {}))
+    def add(self, other: Tensor | TorchTensor) -> Tensor:
+        return _add(self, other)
 
-    def run(self) -> Tensor:
+    def run(self) -> TorchTensor:
         data = self.data
-        if isinstance(data, Tensor):
+        if isinstance(data, TorchTensor):
             return data
 
         tensor = data.run()
         if not self.retain_forward:
             self.data = tensor
         return tensor
+
+
+def _lazy(tensor: Tensor | TorchTensor) -> Tensor:
+    if isinstance(tensor, TorchTensor):
+        return Tensor(tensor)
+    return tensor
+
+
+def _add(a: Tensor | TorchTensor, b: Tensor | TorchTensor) -> Tensor:
+    a = _lazy(a)
+    b = _lazy(b)
+    func = Function(torch.add, (a, b), {})
+    return Tensor(func)
