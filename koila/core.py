@@ -1,218 +1,129 @@
 from __future__ import annotations
+from types import FunctionType
 
-import dataclasses as dcls
-import functools
-import inspect
-from dataclasses import dataclass
-from numbers import Number
-from typing import Any, Callable, Dict, Tuple, overload
+import typing, functools
+from typing import Any, Callable, ClassVar, Dict, Protocol, Set, Tuple, Type, TypeVar, Union
 
 import torch
 from torch import Tensor
 
-from .protocols import Runnable
+from .protocols import Lazy, LazyFunction,Runnable
+
+T = TypeVar("T")
 
 
-@dataclass
-class LazyFunction(Runnable):
-    function: Callable[..., Tensor]
-    args: Tuple[LazyTensor | Tensor | Any, ...] = dcls.field(default_factory=tuple)
-    kwargs: Dict[str, LazyTensor | Tensor | Any] = dcls.field(default_factory=dict)
-
-    def run(self) -> Tensor:
-        args = [eager(arg) for arg in self.args]
-        kwargs = {k: eager(w) for (k, w) in self.kwargs.items()}
-        return self.function(*args, **kwargs)
-
-    def tensor(self) -> LazyTensor:
-        return LazyTensor(self)
+class LazyTensor(Lazy[Tensor]):
+    def __init__(self, data: Tensor | Runnable[Tensor] | Lazy) -> None:
+        super().__init__(data)
+        LazyTensor.init()
 
 
-@dataclass(init=False)
-class LazyTensor(Runnable):
-    data: Tensor | LazyFunction
-    retain_forward: bool
+    def __add__(self, other: TensorLike) -> LazyTensor:
+        return torch.add(self, other)   # type: ignore
 
-    def __init__(
-        self, data: Tensor | LazyFunction, retain_forward: bool = False
-    ) -> None:
-        self.data = data
-        self.retain_forward = retain_forward
+    def __radd__(self, other: TensorLike) -> LazyTensor:
+        return torch.add(other, self)   # type: ignore
 
-    def __getattr__(self, name: str) -> Callable[..., Any]:
-        return self._getattr_global_func(name)
+    def __sub__(self, other: TensorLike) -> LazyTensor:
+        return torch.sub(self, other)   # type: ignore
 
-    def __add__(self, other: LazyTensor | Tensor | Number) -> LazyTensor:
-        return add(self, other)
+    def __rsub__(self, other: TensorLike) -> LazyTensor:
+        return torch.sub(other, self)   # type: ignore
 
-    def __radd__(self, other: LazyTensor | Tensor | Number) -> LazyTensor:
-        return add(other, self)
+    def __mul__(self, other: TensorLike) -> LazyTensor:
+        return torch.mul(self, other)   # type: ignore
 
-    def __sub__(self, other: LazyTensor | Tensor | Number) -> LazyTensor:
-        return add(self, other)
+    def __rmul__(self, other: TensorLike) -> LazyTensor:
+        return torch.mul(other, self)   # type: ignore
 
-    def __rsub__(self, other: LazyTensor | Tensor | Number) -> LazyTensor:
-        return sub(other, self)
+    def __truediv__(self, other: TensorLike) -> LazyTensor:
+        return torch.div(self, other)   # type: ignore
 
-    def __pow__(self, other: LazyTensor | Tensor | Number) -> LazyTensor:
-        return pow(self, other)
+    def __rtruediv__(self, other: TensorLike) -> LazyTensor:
+        return torch.div(other, self)   # type: ignore
 
-    def __rpow__(self, other: LazyTensor | Tensor | Number) -> LazyTensor:
-        return pow(other, self)
+    def __floordiv__(self, other: TensorLike) -> LazyTensor:
+        return torch.trunc(self, other) # type: ignore
 
-    def _getattr_global_func(self, name: str) -> Callable[..., Any]:
-        if (
-            (func := globals().get(name, None)) is not None
-            and callable(func)
-            and len(inspect.signature(func).parameters) >= 1
-        ):
-            wrapper = functools.wraps(func)
-            partial = functools.partial(func, self)
-            return wrapper(partial)
+    def __rfloordiv__(self, other: TensorLike) -> LazyTensor:
+        return torch.trunc(other, self) # type: ignore
 
-        raise AttributeError
+    def __pow__(self, other: TensorLike) -> LazyTensor:
+        return torch.pow(self, other)   # type: ignore
 
-    def run(self) -> Tensor:
-        data = self.data
-        if isinstance(data, Tensor):
-            return data
+    def __rpow__(self, other: TensorLike) -> LazyTensor:
+        return torch.pow(other, self)   # type: ignore
 
-        tensor = data.run()
-        if not self.retain_forward:
-            self.data = tensor
-        return tensor
+    def __matmul__(self, other: TensorLike) -> LazyTensor:
+        return torch.matmul(self, other)    # type: ignore
 
+    def __rmatmul__(self, other: TensorLike) -> LazyTensor:
+        return torch.matmul(other, self)    # type: ignore
 
-@overload
-def lazy(tensor: LazyTensor | Tensor) -> LazyTensor:
-    ...
+    def __getattr__(self, name: str) -> LazyFunction:
+        func = getattr(torch, name)
 
+        if func not in self._methods:
+            raise AttributeError
 
-@overload
-def lazy(tensor: Number) -> Number:
-    ...
+        return LazyFunction(func)
 
+    @classmethod
+    def register(cls, func: Callable[..., Tensor]) -> None:
+        cls._methods.add(func)
 
-@overload
-def lazy(tensor: None) -> None:
-    ...
+    @classmethod
+    def __torch_function__(
+        cls,
+        func: Callable[..., Tensor],
+        types: Tuple[Type[Any], ...],
+        args: Tuple[TensorLike, ...] = (),
+        kwargs: Dict[str, TensorLike] | None = None,
+    ) -> LazyTensor:
+        if kwargs is None:
+            kwargs = {}
 
+        if not all(issubclass(typ, (LazyTensor, Tensor, int, float)) for typ in types):
+            return NotImplemented
 
-def lazy(tensor: LazyTensor | Tensor | Number | None) -> LazyTensor | Number | None:
-    if isinstance(tensor, Tensor):
-        return LazyTensor(tensor)
-    return tensor
+        if func not in cls._methods:
+            return NotImplemented
 
+        return LazyTensor(LazyFunction(func)(*args, **kwargs))
 
-@overload
-def eager(tensor: LazyTensor | Tensor) -> Tensor:
-    ...
+    _methods: ClassVar[Set[Callable[...,Tensor]]] = set()
 
+    @classmethod
+    def init(cls) -> None:
+        cls.register(torch.add)
+        cls.register(torch.sub)
+        cls.register(torch.mul)
+        cls.register(torch.div)
+        cls.register(torch.trunc)
+        cls.register(torch.multiply)
+        cls.register(torch.divide)
 
-@overload
-def eager(tensor: Number) -> Number:
-    ...
+        cls.register(torch.pow)
+        cls.register(torch.abs)
+        cls.register(torch.min)
+        cls.register(torch.max)
+        cls.register(torch.absolute)
+        cls.register(torch.minimum)
+        cls.register(torch.maximum)
 
+        cls.register(torch.sin)
+        cls.register(torch.cos)
+        cls.register(torch.tan)
+        cls.register(torch.asin)
+        cls.register(torch.acos)
+        cls.register(torch.atan)
+        cls.register(torch.arcsin)
+        cls.register(torch.arccos)
+        cls.register(torch.arctan)
 
-@overload
-def eager(tensor: None) -> None:
-    ...
-
-
-def eager(tensor: LazyTensor | Tensor | Number | None) -> Tensor | Number | None:
-    if isinstance(tensor, LazyTensor):
-        return tensor.run()
-    return tensor
-
-
-def add(
-    input: LazyTensor | Tensor | Number, other: LazyTensor | Tensor | Number
-) -> LazyTensor:
-    input = lazy(input)
-    other = lazy(other)
-    return LazyFunction(torch.add, (input, other)).tensor()
-
-
-def sub(
-    input: LazyTensor | Tensor | Number, other: LazyTensor | Tensor | Number
-) -> LazyTensor:
-    input = lazy(input)
-    other = lazy(other)
-    return LazyFunction(torch.sub, (input, other)).tensor()
+        cls.register(torch.matmul)
+        cls.register(torch.mm)
+        cls.register(torch.bmm)
 
 
-def mul(
-    input: LazyTensor | Tensor | Number, other: LazyTensor | Tensor | Number
-) -> LazyTensor:
-    input = lazy(input)
-    other = lazy(other)
-    return LazyFunction(torch.mul, (input, other)).tensor()
-
-
-def div(
-    input: LazyTensor | Tensor | Number, other: LazyTensor | Tensor | Number
-) -> LazyTensor:
-    input = lazy(input)
-    other = lazy(other)
-    return LazyFunction(torch.div, (input, other)).tensor()
-
-
-def pow(
-    input: LazyTensor | Tensor | Number, other: LazyTensor | Tensor | Number
-) -> LazyTensor:
-    input = lazy(input)
-    other = lazy(other)
-    return LazyFunction(torch.pow, (input, other)).tensor()
-
-
-def all(input: LazyTensor | Tensor) -> LazyTensor:
-    input = lazy(input)
-    return LazyFunction(torch.all, (input,)).tensor()
-
-
-def any(input: LazyTensor | Tensor) -> LazyTensor:
-    input = lazy(input)
-    return LazyFunction(torch.any, (input,)).tensor()
-
-
-def amin(
-    input: LazyTensor | Tensor, dim: int | Tuple[int, ...], keepdim: bool = False
-) -> LazyTensor:
-    input = lazy(input)
-    return LazyFunction(torch.amin, (input, dim), {"keepdim": keepdim}).tensor()
-
-
-def amax(
-    input: LazyTensor | Tensor, dim: int | Tuple[int, ...], keepdim: bool = False
-) -> LazyTensor:
-    input = lazy(input)
-    return LazyFunction(torch.amax, (input, dim), {"keepdim": keepdim}).tensor()
-
-
-def minimum(input: LazyTensor | Tensor, other: LazyTensor | Tensor) -> LazyTensor:
-    input = lazy(input)
-    other = lazy(other)
-    return LazyFunction(torch.minimum, (input, other)).tensor()
-
-
-def maximum(input: LazyTensor | Tensor, other: LazyTensor | Tensor) -> LazyTensor:
-    input = lazy(input)
-    other = lazy(other)
-    return LazyFunction(torch.maximum, (input, other)).tensor()
-
-
-@overload
-def clamp(input: LazyTensor | Tensor, min: Tensor, max: Tensor) -> LazyTensor:
-    ...
-
-
-@overload
-def clamp(input: LazyTensor | Tensor, min: Number, max: Number) -> LazyTensor:
-    ...
-
-
-def clamp(
-    input: LazyTensor | Tensor, min: Tensor | Number, max: Tensor | Number
-) -> LazyTensor:
-    input = lazy(input)
-    return LazyFunction(torch.clamp, (input, min, max)).tensor()
+TensorLike = Union[LazyTensor, Tensor, int, float]

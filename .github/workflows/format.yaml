@@ -14,10 +14,10 @@ jobs:
       - name: ⬇️ fd-find, ripgrep
         run: cargo install fd-find ripgrep
 
-      - name: 🏗️ python 3.9
+      - name: 🏗️ python 3.10
         uses: actions/setup-python@v2
         with:
-          python-version: 3.9
+          python-version: 3.10
       - name: ⬇️ isort, black, autoflake
         run: pip install isort black autoflake
       - name: 🏃 isort
