@@ -8,7 +8,6 @@ import torch
 from torch import Tensor
 
 from .protocols import Lazy, LazyFunction, Runnable
-from functools import wraps
 
 
 class LazyTensor(Lazy[Tensor], Mock):
