@@ -1,84 +1,94 @@
 from __future__ import annotations
-from types import FunctionType
 
-import typing, functools
-from typing import Any, Callable, ClassVar, Dict, Protocol, Set, Tuple, Type, TypeVar, Union
+import functools
+import typing
+from typing import Any, Callable, Dict, Tuple, Type
+from unittest.mock import Mock
 
 import torch
 from torch import Tensor
 
-from .protocols import Lazy, LazyFunction,Runnable
-
-T = TypeVar("T")
+from .protocols import Lazy, LazyFunction, Runnable
 
 
-class LazyTensor(Lazy[Tensor]):
-    def __init__(self, data: Tensor | Runnable[Tensor] | Lazy) -> None:
+class LazyTensor(Lazy[Tensor], Mock):
+    def __init__(self, data: Tensor | Runnable[Tensor] | Lazy[Tensor]) -> None:
         super().__init__(data)
-        LazyTensor.init()
 
+    def __add__(self, other: Tensor | LazyTensor) -> LazyTensor:
+        return typing.cast(LazyTensor, torch.add(self, other))
 
-    def __add__(self, other: TensorLike) -> LazyTensor:
-        return torch.add(self, other)   # type: ignore
+    def __radd__(self, other: Tensor | LazyTensor) -> LazyTensor:
+        return typing.cast(LazyTensor, torch.add(other, self))
 
-    def __radd__(self, other: TensorLike) -> LazyTensor:
-        return torch.add(other, self)   # type: ignore
+    def __sub__(self, other: Tensor | LazyTensor) -> LazyTensor:
+        return typing.cast(LazyTensor, torch.sub(self, other))
 
-    def __sub__(self, other: TensorLike) -> LazyTensor:
-        return torch.sub(self, other)   # type: ignore
+    def __rsub__(self, other: Tensor | LazyTensor) -> LazyTensor:
+        return typing.cast(LazyTensor, torch.sub(other, self))
 
-    def __rsub__(self, other: TensorLike) -> LazyTensor:
-        return torch.sub(other, self)   # type: ignore
+    def __mul__(self, other: Tensor | LazyTensor) -> LazyTensor:
+        return typing.cast(LazyTensor, torch.mul(self, other))
 
-    def __mul__(self, other: TensorLike) -> LazyTensor:
-        return torch.mul(self, other)   # type: ignore
+    def __rmul__(self, other: Tensor | LazyTensor) -> LazyTensor:
+        return typing.cast(LazyTensor, torch.mul(other, self))
 
-    def __rmul__(self, other: TensorLike) -> LazyTensor:
-        return torch.mul(other, self)   # type: ignore
+    def __truediv__(self, other: Tensor | LazyTensor) -> LazyTensor:
+        return typing.cast(LazyTensor, torch.div(self, other))
 
-    def __truediv__(self, other: TensorLike) -> LazyTensor:
-        return torch.div(self, other)   # type: ignore
+    def __rtruediv__(self, other: Tensor | LazyTensor) -> LazyTensor:
+        return typing.cast(LazyTensor, torch.div(other, self))
 
-    def __rtruediv__(self, other: TensorLike) -> LazyTensor:
-        return torch.div(other, self)   # type: ignore
+    def __floordiv__(self, other: Tensor | LazyTensor) -> LazyTensor:
+        return typing.cast(LazyTensor, torch.trunc(self / other))
 
-    def __floordiv__(self, other: TensorLike) -> LazyTensor:
-        return torch.trunc(self, other) # type: ignore
+    def __rfloordiv__(self, other: Tensor | LazyTensor) -> LazyTensor:
+        return typing.cast(LazyTensor, torch.trunc(other / self))
 
-    def __rfloordiv__(self, other: TensorLike) -> LazyTensor:
-        return torch.trunc(other, self) # type: ignore
+    def __pow__(self, other: Tensor | LazyTensor) -> LazyTensor:
+        return typing.cast(LazyTensor, torch.pow(self, other))
 
-    def __pow__(self, other: TensorLike) -> LazyTensor:
-        return torch.pow(self, other)   # type: ignore
+    def __rpow__(self, other: Tensor | LazyTensor) -> LazyTensor:
+        return typing.cast(LazyTensor, torch.pow(other, self))
 
-    def __rpow__(self, other: TensorLike) -> LazyTensor:
-        return torch.pow(other, self)   # type: ignore
+    def __mod__(self, other: Tensor | LazyTensor) -> LazyTensor:
+        return typing.cast(LazyTensor, torch.remainder(self, other))
 
-    def __matmul__(self, other: TensorLike) -> LazyTensor:
-        return torch.matmul(self, other)    # type: ignore
+    def __rmod__(self, other: Tensor | LazyTensor) -> LazyTensor:
+        return typing.cast(LazyTensor, torch.remainder(other, self))
 
-    def __rmatmul__(self, other: TensorLike) -> LazyTensor:
-        return torch.matmul(other, self)    # type: ignore
+    def __matmul__(self, other: Tensor | LazyTensor) -> LazyTensor:
+        return typing.cast(LazyTensor, torch.matmul(self, other))
+
+    def __rmatmul__(self, other: Tensor | LazyTensor) -> LazyTensor:
+        return typing.cast(LazyTensor, torch.matmul(other, self))
 
     def __getattr__(self, name: str) -> LazyFunction:
         func = getattr(torch, name)
+        method = getattr(Tensor, name)
+        wrapper = functools.wraps(method)
+        partial = functools.partial(func, self)
+        return LazyFunction(wrapper(partial))
 
-        if func not in self._methods:
-            raise AttributeError
+    def __bool__(self) -> bool:
+        return bool(self.item())
 
-        return LazyFunction(func)
+    def __int__(self) -> int:
+        return int(self.item())
 
-    @classmethod
-    def register(cls, func: Callable[..., Tensor]) -> None:
-        cls._methods.add(func)
+    def __float__(self) -> float:
+        return float(self.item())
+
+    def item(self) -> bool | int | float:
+        return self.run().item()
 
     @classmethod
     def __torch_function__(
         cls,
         func: Callable[..., Tensor],
         types: Tuple[Type[Any], ...],
-        args: Tuple[TensorLike, ...] = (),
-        kwargs: Dict[str, TensorLike] | None = None,
+        args: Tuple[Tensor | LazyTensor, ...] = (),
+        kwargs: Dict[str, Tensor | LazyTensor] | None = None,
     ) -> LazyTensor:
         if kwargs is None:
             kwargs = {}
@@ -86,44 +96,4 @@ class LazyTensor(Lazy[Tensor]):
         if not all(issubclass(typ, (LazyTensor, Tensor, int, float)) for typ in types):
             return NotImplemented
 
-        if func not in cls._methods:
-            return NotImplemented
-
         return LazyTensor(LazyFunction(func)(*args, **kwargs))
-
-    _methods: ClassVar[Set[Callable[...,Tensor]]] = set()
-
-    @classmethod
-    def init(cls) -> None:
-        cls.register(torch.add)
-        cls.register(torch.sub)
-        cls.register(torch.mul)
-        cls.register(torch.div)
-        cls.register(torch.trunc)
-        cls.register(torch.multiply)
-        cls.register(torch.divide)
-
-        cls.register(torch.pow)
-        cls.register(torch.abs)
-        cls.register(torch.min)
-        cls.register(torch.max)
-        cls.register(torch.absolute)
-        cls.register(torch.minimum)
-        cls.register(torch.maximum)
-
-        cls.register(torch.sin)
-        cls.register(torch.cos)
-        cls.register(torch.tan)
-        cls.register(torch.asin)
-        cls.register(torch.acos)
-        cls.register(torch.atan)
-        cls.register(torch.arcsin)
-        cls.register(torch.arccos)
-        cls.register(torch.arctan)
-
-        cls.register(torch.matmul)
-        cls.register(torch.mm)
-        cls.register(torch.bmm)
-
-
-TensorLike = Union[LazyTensor, Tensor, int, float]

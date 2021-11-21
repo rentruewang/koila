@@ -7,10 +7,10 @@ jobs:
       - name: 🔔 Check out
         uses: actions/checkout@v2
 
-      - name: 🏗️ python 3.10
+      - name: 🏗️ python 3.9
         uses: actions/setup-python@v2
         with:
-          python-version: 3.10
+          python-version: 3.9
       - name: ⬇️ Python Dependencies
         uses: py-actions/py-dependency-install@v2
         with:
