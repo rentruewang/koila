@@ -1,28 +1,6 @@
 name: Unit Testing
 on: [push]
 jobs:
-  unit-test-py37:
-    runs-on: ubuntu-latest
-    steps:
-      - name: 🔔 Check out
-        uses: actions/checkout@v2
-
-      - name: 🏗️ python 3.7
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.7
-      - name: ⬇️ Python Dependencies
-        uses: py-actions/py-dependency-install@v2
-        with:
-          path: requirements.txt
-          update-pip: true
-          update-setuptools: true
-          update-wheel: true
-      - name: ⬇️ pytest
-        run: pip install pytest
-      - name: 🏃 pytest
-        run: pytest -v
-
   unit-test-py38:
     runs-on: ubuntu-latest
     steps:
