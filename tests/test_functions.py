@@ -1,7 +1,6 @@
-from koila.core import LazyTensor
 import torch
 
-import koila
+from koila.core import LazyTensor
 
 
 def test_add() -> None:

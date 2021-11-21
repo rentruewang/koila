@@ -16,6 +16,7 @@ from typing import (
 )
 
 T = TypeVar("T", covariant=True)
+V = TypeVar("V", contravariant=True)
 
 
 @runtime_checkable
@@ -29,7 +30,7 @@ class Runnable(Protocol[T]):
 class Lazy(Runnable[T]):
     data: T | Runnable[T]
 
-    def __init__(self, data: T | Runnable[T] | Lazy) -> None:
+    def __init__(self, data: T | Runnable[T] | Lazy[T]) -> None:
         if isinstance(data, Lazy):
             object.__setattr__(self, "data", data.data)
         else:
@@ -43,16 +44,14 @@ class Lazy(Runnable[T]):
 
 
 @dataclass(frozen=True)
-class LazyFunction(Generic[T]):
+class LazyFunction(Generic[T, V]):
     func: Callable[..., T]
 
     def __call__(self, *args: Any, **kwargs: Any) -> Lazy[T]:
         return Lazy(Evaluation(self.func, *args, **kwargs))
 
-    def __get__(
-        self, obj: Any, objtype: Type[Any] | None = None
-    ) -> Callable[..., Lazy[T]]:
-        _ = objtype
+    def __get__(self, obj: V, objtype: Type[V]) -> Callable[..., Lazy[T]]:
+        assert isinstance(obj, objtype), [type(obj), objtype]
         if obj is None:
             return self
         else:
