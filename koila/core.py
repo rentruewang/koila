@@ -3,6 +3,7 @@ from __future__ import annotations
 import builtins
 import functools
 from functools import wraps
+from types import MappingProxyType
 from typing import (
     Any,
     Callable,
@@ -41,6 +42,18 @@ class LazyTensor(Lazy[Tensor]):
     def __neg__(self: TensorLike) -> TensorLike:
         return LazyTensor.neg(self)
 
+    def __bool__(self: TensorLike) -> bool:
+        return bool(self.item())
+
+    def __int__(self: TensorLike) -> int:
+        return int(self.item())
+
+    def __float__(self: TensorLike) -> float:
+        return float(self.item())
+
+    def __invert__(self: TensorLike) -> bool:
+        return not bool(self)
+
     def __add__(self: TensorLike, other: TensorLike) -> TensorLike:
         return LazyTensor.add(self, other)
 
@@ -65,6 +78,12 @@ class LazyTensor(Lazy[Tensor]):
     def __rtruediv__(self: TensorLike, other: TensorLike) -> TensorLike:
         return LazyTensor.div(other, self)
 
+    def __floordiv__(self: TensorLike, other: TensorLike) -> NoReturn:
+        will_not_implement(self, other)
+
+    def __rfloordiv__(self: TensorLike, other: TensorLike) -> NoReturn:
+        will_not_implement(other, self)
+
     def __pow__(self: TensorLike, other: TensorLike) -> TensorLike:
         return LazyTensor.pow(self, other)
 
@@ -77,6 +96,18 @@ class LazyTensor(Lazy[Tensor]):
     def __rmod__(self: TensorLike, other: TensorLike) -> TensorLike:
         return LazyTensor.fmod(other, self)
 
+    def __divmod__(self: TensorLike, other: TensorLike) -> NoReturn:
+        will_not_implement(self, other)
+
+    def __rdivmod__(self: TensorLike, other: TensorLike) -> NoReturn:
+        will_not_implement(other, self)
+
+    def __abs__(self: TensorLike) -> TensorLike:
+        return LazyTensor.abs(self)
+
+    def __hash__(self: TensorLike) -> int:
+        return hash(run(self))
+
     def __matmul__(self: TensorLike, other: TensorLike) -> TensorLike:
         return LazyTensor.matmul(self, other)
 
@@ -84,20 +115,12 @@ class LazyTensor(Lazy[Tensor]):
         return LazyTensor.matmul(other, self)
 
     def __getattr__(self: TensorLike, name: str) -> LazyFunction:
-        func = getattr(torch, name)
-        method = getattr(Tensor, name)
-        wrapper = functools.wraps(method)
-        partial = functools.partial(func, self)
-        return LazyFunction(wrapper(partial))
+        if (func := IMPLEMENTED_FUNCTIONS.get(name, None)) is not None:
+            wrapper = functools.wraps(func)
+            partial = functools.partial(func, self)
+            return LazyFunction(wrapper(partial))
 
-    def __bool__(self: TensorLike) -> bool:
-        return bool(self.item())
-
-    def __int__(self: TensorLike) -> int:
-        return int(self.item())
-
-    def __float__(self: TensorLike) -> float:
-        return float(self.item())
+        raise AttributeError
 
     @classmethod
     def __torch_function__(
@@ -107,7 +130,6 @@ class LazyTensor(Lazy[Tensor]):
         args: Tuple[TensorLike, ...] = (),
         kwargs: Dict[str, TensorLike] | None = None,
     ) -> TensorLike:
-        print(cls, func.__name__, types, args, kwargs)
         if kwargs is None:
             kwargs = {}
 
@@ -307,7 +329,7 @@ class LazyTensor(Lazy[Tensor]):
 
     @wraps(Tensor.item)
     def item(self: TensorLike) -> bool | int | float:
-        return lazy(self).run().item()
+        return run(self).item()
 
     @wraps(Tensor.isclose)
     def isclose(self: TensorLike) -> TensorLike:
@@ -315,7 +337,7 @@ class LazyTensor(Lazy[Tensor]):
 
     @wraps(Tensor.allclose)
     def allclose(self: TensorLike, other: TensorLike) -> bool:
-        return lazy(self).run().allclose(run(other))
+        return run(self).allclose(run(other))
 
     # Shaping functions
 
@@ -329,7 +351,7 @@ class LazyTensor(Lazy[Tensor]):
 
     @wraps(Tensor.size)
     def size(self: TensorLike, dim: int | None = None) -> int | Size:
-        tensor = lazy(self).run()
+        tensor = run(self)
         if dim is None:
             return tensor.dim()
         else:
@@ -342,7 +364,7 @@ class LazyTensor(Lazy[Tensor]):
 
     @wraps(Tensor.dim)
     def dim(self: TensorLike) -> int:
-        return lazy(self).run().dim()
+        return run(self).dim()
 
     @property
     @wraps(dim)
@@ -381,20 +403,20 @@ class LazyTensor(Lazy[Tensor]):
         return lazy_in_training(torch.tan, self)
 
     @wraps(Tensor.asin)
-    def asin(self: TensorLike) -> TensorLike:
-        return lazy_in_training(torch.asin, self)
+    def asin(self: TensorLike) -> Tensor:
+        return torch.asin(run(self))
 
     arcsin = asin
 
     @wraps(Tensor.acos)
-    def acos(self: TensorLike) -> TensorLike:
-        return lazy_in_training(torch.acos, self)
+    def acos(self: TensorLike) -> Tensor:
+        return torch.acos(run(self))
 
     arccos = acos
 
     @wraps(Tensor.atan)
-    def atan(self: TensorLike) -> TensorLike:
-        return lazy_in_training(torch.atan, self)
+    def atan(self: TensorLike) -> Tensor:
+        return torch.atan(run(self))
 
     arctan = atan
 
@@ -413,20 +435,20 @@ class LazyTensor(Lazy[Tensor]):
         return lazy_in_training(torch.tanh, self)
 
     @wraps(Tensor.asinh)
-    def asinh(self: TensorLike) -> TensorLike:
-        return lazy_in_training(torch.asinh, self)
+    def asinh(self: TensorLike) -> Tensor:
+        return torch.asinh(run(self))
 
     arcsinh = asinh
 
     @wraps(Tensor.acosh)
-    def acosh(self: TensorLike) -> TensorLike:
-        return lazy_in_training(torch.acosh, self)
+    def acosh(self: TensorLike) -> Tensor:
+        return torch.acosh(run(self))
 
     arccosh = acosh
 
     @wraps(Tensor.atanh)
-    def atanh(self: TensorLike) -> TensorLike:
-        return lazy_in_training(torch.atanh, self)
+    def atanh(self: TensorLike) -> Tensor:
+        return torch.atanh(run(self))
 
     arctanh = atanh
 
@@ -574,61 +596,63 @@ def will_not_implement(*args: Any, **kwargs: Any) -> NoReturn:
     )
 
 
-IMPLEMENTED_FUNCTIONS: Dict[str, Callable[..., Any]] = {
-    "positive": LazyTensor.positive,
-    "negative": LazyTensor.negative,
-    "neg": LazyTensor.neg,
-    "add": LazyTensor.add,
-    "sub": LazyTensor.sub,
-    "subtract": LazyTensor.subtract,
-    "mul": LazyTensor.mul,
-    "multiply": LazyTensor.multiply,
-    "div": LazyTensor.div,
-    "divide": LazyTensor.divide,
-    "true_divide": LazyTensor.true_divide,
-    "fmod": LazyTensor.fmod,
-    "remainder": LazyTensor.remainder,
-    "frac": LazyTensor.frac,
-    "pow": LazyTensor.pow,
-    "exp": LazyTensor.exp,
-    "exp2": LazyTensor.exp2,
-    "log": LazyTensor.log,
-    "log2": LazyTensor.log2,
-    "log10": LazyTensor.log10,
-    "log1p": LazyTensor.log1p,
-    "abs": LazyTensor.abs,
-    "matmul": LazyTensor.matmul,
-    "bmm": LazyTensor.bmm,
-    "mm": LazyTensor.mm,
-    "mv": LazyTensor.mv,
-    "dot": LazyTensor.dot,
-    "min": LazyTensor.min,
-    "max": LazyTensor.max,
-    "mean": LazyTensor.mean,
-    "std": LazyTensor.std,
-    "minimum": LazyTensor.minimum,
-    "maximum": LazyTensor.maximum,
-    "amin": LazyTensor.amin,
-    "amax": LazyTensor.amax,
-    "argmin": LazyTensor.argmin,
-    "argmax": LazyTensor.argmax,
-    "isclose": LazyTensor.isclose,
-    "allclose": LazyTensor.allclose,
-    "t": LazyTensor.t,
-    "permute": LazyTensor.permute,
-    "transpose": LazyTensor.transpose,
-    "sin": LazyTensor.sin,
-    "cos": LazyTensor.cos,
-    "tan": LazyTensor.tan,
-    "asin": LazyTensor.asin,
-    "acos": LazyTensor.acos,
-    "atan": LazyTensor.atan,
-    "sinh": LazyTensor.sinh,
-    "cosh": LazyTensor.cosh,
-    "tanh": LazyTensor.tanh,
-    "asinh": LazyTensor.asinh,
-    "acosh": LazyTensor.acosh,
-    "atanh": LazyTensor.atanh,
-    # Functions that will not be implemented.
-    "__floordiv__": will_not_implement,
-}
+IMPLEMENTED_FUNCTIONS: MappingProxyType[str, Callable[..., Any]] = MappingProxyType(
+    {
+        "positive": LazyTensor.positive,
+        "negative": LazyTensor.negative,
+        "neg": LazyTensor.neg,
+        "add": LazyTensor.add,
+        "sub": LazyTensor.sub,
+        "subtract": LazyTensor.subtract,
+        "mul": LazyTensor.mul,
+        "multiply": LazyTensor.multiply,
+        "div": LazyTensor.div,
+        "divide": LazyTensor.divide,
+        "true_divide": LazyTensor.true_divide,
+        "fmod": LazyTensor.fmod,
+        "remainder": LazyTensor.remainder,
+        "frac": LazyTensor.frac,
+        "pow": LazyTensor.pow,
+        "exp": LazyTensor.exp,
+        "exp2": LazyTensor.exp2,
+        "log": LazyTensor.log,
+        "log2": LazyTensor.log2,
+        "log10": LazyTensor.log10,
+        "log1p": LazyTensor.log1p,
+        "abs": LazyTensor.abs,
+        "matmul": LazyTensor.matmul,
+        "bmm": LazyTensor.bmm,
+        "mm": LazyTensor.mm,
+        "mv": LazyTensor.mv,
+        "dot": LazyTensor.dot,
+        "min": LazyTensor.min,
+        "max": LazyTensor.max,
+        "mean": LazyTensor.mean,
+        "std": LazyTensor.std,
+        "minimum": LazyTensor.minimum,
+        "maximum": LazyTensor.maximum,
+        "amin": LazyTensor.amin,
+        "amax": LazyTensor.amax,
+        "argmin": LazyTensor.argmin,
+        "argmax": LazyTensor.argmax,
+        "isclose": LazyTensor.isclose,
+        "allclose": LazyTensor.allclose,
+        "t": LazyTensor.t,
+        "permute": LazyTensor.permute,
+        "transpose": LazyTensor.transpose,
+        "sin": LazyTensor.sin,
+        "cos": LazyTensor.cos,
+        "tan": LazyTensor.tan,
+        "asin": LazyTensor.asin,
+        "acos": LazyTensor.acos,
+        "atan": LazyTensor.atan,
+        "sinh": LazyTensor.sinh,
+        "cosh": LazyTensor.cosh,
+        "tanh": LazyTensor.tanh,
+        "asinh": LazyTensor.asinh,
+        "acosh": LazyTensor.acosh,
+        "atanh": LazyTensor.atanh,
+        # Functions that will not be implemented.
+        "__floordiv__": will_not_implement,
+    }
+)
