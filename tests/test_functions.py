@@ -1,8 +1,10 @@
+import math
+
 import torch
 
 import koila
 from koila import LazyTensor
-import math
+
 from .common import ArgsKwargs, Condition
 
 
