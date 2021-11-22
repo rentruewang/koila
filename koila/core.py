@@ -10,7 +10,6 @@ from typing import (
     List,
     NamedTuple,
     NoReturn,
-    Set,
     Tuple,
     Type,
     TypeVar,

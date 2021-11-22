@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import dataclasses as dcls
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, NoReturn, Sequence
+from typing import Any, Callable, Dict, Sequence
 
 
 @dataclass(init=False)
