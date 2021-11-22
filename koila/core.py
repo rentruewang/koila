@@ -3,17 +3,7 @@ from __future__ import annotations
 import builtins
 import functools
 from functools import wraps
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    List,
-    NamedTuple,
-    Tuple,
-    Type,
-    TypeVar,
-    overload,
-)
+from typing import Any, Callable, Dict, List, NamedTuple, Tuple, Type, TypeVar, overload
 
 import torch
 from numpy import ndarray
