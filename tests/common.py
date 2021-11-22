@@ -17,15 +17,15 @@ class ArgsKwargs:
 
 @dataclass(init=False)
 class Condition:
-    function: Callable[..., bool]
+    func: Callable[..., Any]
     arguments: Sequence[ArgsKwargs] = dcls.field(default_factory=list)
 
     def __init__(
         self,
-        function: Callable[..., bool],
+        func: Callable[..., Any],
         arguments: Sequence[ArgsKwargs | Sequence[Any] | Dict[str, Any]],
     ) -> None:
-        self.function = function
+        self.func = func
         self.arguments = []
 
         for argument in arguments:
@@ -38,12 +38,16 @@ class Condition:
 
             self.arguments.append(argument)
 
-    def check(self) -> None:
+    def call(self) -> None:
         for argument in self.arguments:
-            assert self.function(*argument.args, **argument.kwargs), [
-                argument.args,
-                argument.kwargs,
-            ]
+            self.func(*argument.args, **argument.kwargs)
+
+
+def call(
+    func: Callable[..., Any],
+    arguments: Sequence[ArgsKwargs | Sequence[Any] | Dict[str, Any]],
+) -> None:
+    Condition(func, arguments=arguments).call()
 
 
 def is_notimplemented(func: Callable[[], Any]) -> bool:
