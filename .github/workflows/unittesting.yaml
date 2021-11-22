@@ -43,6 +43,6 @@ jobs:
       - name: ⬇️ pytest coverage
         run: pip install pytest coverage
       - name: 🏃 pytest
-        run: coverage run -m pytest -v --disable-pytest-warnings
+        run: coverage run -m pytest -v
       - name: 📊 coverage
         run: coverage report -m

@@ -9,6 +9,7 @@ from typing import (
     Dict,
     List,
     NamedTuple,
+    NoReturn,
     Set,
     Tuple,
     Type,
@@ -28,79 +29,75 @@ T = TypeVar("T")
 
 
 class LazyTensor(Lazy[Tensor]):
-    def __init__(self, data: Tensor | Runnable[Tensor] | Lazy[Tensor]) -> None:
+    def __init__(
+        self: TensorLike, data: Tensor | Runnable[Tensor] | Lazy[Tensor]
+    ) -> None:
         super().__init__(data)
 
     # Magic methods
 
-    def __pos__(self) -> TensorLike:
-        return lazy_in_training(torch.positive, self)
+    def __pos__(self: TensorLike) -> TensorLike:
+        return LazyTensor.positive(self)
 
-    def __neg__(self) -> TensorLike:
-        return lazy_in_training(torch.neg, self)
+    def __neg__(self: TensorLike) -> TensorLike:
+        return LazyTensor.neg(self)
 
-    def __add__(self, other: TensorLike) -> TensorLike:
-        return lazy_in_training(torch.add, self, other)
+    def __add__(self: TensorLike, other: TensorLike) -> TensorLike:
+        return LazyTensor.add(self, other)
 
-    def __radd__(self, other: TensorLike) -> TensorLike:
-        return lazy_in_training(torch.add, other, self)
+    def __radd__(self: TensorLike, other: TensorLike) -> TensorLike:
+        return LazyTensor.add(other, self)
 
-    def __sub__(self, other: TensorLike) -> TensorLike:
-        return lazy_in_training(torch.sub, self, other)
+    def __sub__(self: TensorLike, other: TensorLike) -> TensorLike:
+        return LazyTensor.sub(self, other)
 
-    def __rsub__(self, other: TensorLike) -> TensorLike:
-        return lazy_in_training(torch.sub, other, self)
+    def __rsub__(self: TensorLike, other: TensorLike) -> TensorLike:
+        return LazyTensor.sub(other, self)
 
-    def __mul__(self, other: TensorLike) -> TensorLike:
-        return lazy_in_training(torch.mul, self, other)
+    def __mul__(self: TensorLike, other: TensorLike) -> TensorLike:
+        return LazyTensor.mul(self, other)
 
-    def __rmul__(self, other: TensorLike) -> TensorLike:
-        return lazy_in_training(torch.mul, other, self)
+    def __rmul__(self: TensorLike, other: TensorLike) -> TensorLike:
+        return LazyTensor.mul(other, self)
 
-    def __truediv__(self, other: TensorLike) -> TensorLike:
-        return lazy_in_training(torch.div, self, other)
+    def __truediv__(self: TensorLike, other: TensorLike) -> TensorLike:
+        return LazyTensor.div(self, other)
 
-    def __rtruediv__(self, other: TensorLike) -> TensorLike:
-        return lazy_in_training(torch.div, other, self)
+    def __rtruediv__(self: TensorLike, other: TensorLike) -> TensorLike:
+        return LazyTensor.div(other, self)
 
-    def __floordiv__(self, other: TensorLike) -> TensorLike:
-        return lazy_in_training(torch.div, self, other, rounding_mode="trunc")
+    def __pow__(self: TensorLike, other: TensorLike) -> TensorLike:
+        return LazyTensor.pow(self, other)
 
-    def __rfloordiv__(self, other: TensorLike) -> TensorLike:
-        return lazy_in_training(torch.div, other, self, rounding_mode="trunc")
+    def __rpow__(self: TensorLike, other: TensorLike) -> TensorLike:
+        return LazyTensor.pow(other, self)
 
-    def __pow__(self, other: TensorLike) -> TensorLike:
-        return lazy_in_training(torch.pow, self, other)
+    def __mod__(self: TensorLike, other: TensorLike) -> TensorLike:
+        return LazyTensor.fmod(self, other)
 
-    def __rpow__(self, other: TensorLike) -> TensorLike:
-        return lazy_in_training(torch.pow, other, self)
+    def __rmod__(self: TensorLike, other: TensorLike) -> TensorLike:
+        return LazyTensor.fmod(other, self)
 
-    def __mod__(self, other: TensorLike) -> TensorLike:
-        return lazy_in_training(torch.fmod, self, other)
+    def __matmul__(self: TensorLike, other: TensorLike) -> TensorLike:
+        return LazyTensor.matmul(self, other)
 
-    def __rmod__(self, other: TensorLike) -> TensorLike:
-        return lazy_in_training(torch.fmod, other, self)
+    def __rmatmul__(self: TensorLike, other: TensorLike) -> TensorLike:
+        return LazyTensor.matmul(other, self)
 
-    def __matmul__(self, other: TensorLike) -> TensorLike:
-        return lazy_in_training(torch.matmul, self, other)
-
-    def __rmatmul__(self, other: TensorLike) -> TensorLike:
-        return lazy_in_training(torch.matmul, other, self)
-
-    def __getattr__(self, name: str) -> LazyFunction:
+    def __getattr__(self: TensorLike, name: str) -> LazyFunction:
         func = getattr(torch, name)
         method = getattr(Tensor, name)
         wrapper = functools.wraps(method)
         partial = functools.partial(func, self)
         return LazyFunction(wrapper(partial))
 
-    def __bool__(self) -> bool:
+    def __bool__(self: TensorLike) -> bool:
         return bool(self.item())
 
-    def __int__(self) -> int:
+    def __int__(self: TensorLike) -> int:
         return int(self.item())
 
-    def __float__(self) -> float:
+    def __float__(self: TensorLike) -> float:
         return float(self.item())
 
     @classmethod
@@ -111,6 +108,7 @@ class LazyTensor(Lazy[Tensor]):
         args: Tuple[TensorLike, ...] = (),
         kwargs: Dict[str, TensorLike] | None = None,
     ) -> TensorLike:
+        print(cls, func.__name__, types, args, kwargs)
         if kwargs is None:
             kwargs = {}
 
@@ -119,158 +117,155 @@ class LazyTensor(Lazy[Tensor]):
         ):
             return NotImplemented
 
-        if func in SPECIAL_HANDLES.keys():
-            return SPECIAL_HANDLES[func](*args, **kwargs)
+        if (impl := IMPLEMENTED_FUNCTIONS.get(func.__name__, None)) is not None:
+            return impl(*args, **kwargs)
 
-        result = lazy_in_training(func, *args, **kwargs)
-
-        if func in EAGER_FUNCTIONS:
-            return lazy(result).run()
-
-        return result
+        return NotImplemented
 
     # Arithmetic operations
 
     @wraps(Tensor.positive)
-    def positive(self) -> TensorLike:
+    def positive(self: TensorLike) -> TensorLike:
         return lazy_in_training(torch.positive, self)
 
     @wraps(Tensor.neg)
-    def neg(self) -> TensorLike:
+    def neg(self: TensorLike) -> TensorLike:
         return lazy_in_training(torch.neg, self)
 
     negative = neg
 
     @wraps(Tensor.add)
-    def add(self, other: TensorLike, *, alpha: float = 1) -> TensorLike:
+    def add(self: TensorLike, other: TensorLike, *, alpha: float = 1) -> TensorLike:
         return lazy_in_training(torch.add, self, other, alpha=alpha)
 
     @wraps(Tensor.sub)
-    def sub(self, other: TensorLike, *, alpha: float = 1) -> TensorLike:
+    def sub(self: TensorLike, other: TensorLike, *, alpha: float = 1) -> TensorLike:
         return lazy_in_training(torch.sub, self, other, alpha=alpha)
 
     subtract = sub
 
     @wraps(Tensor.mul)
-    def mul(self, other: TensorLike) -> TensorLike:
+    def mul(self: TensorLike, other: TensorLike) -> TensorLike:
         return lazy_in_training(torch.mul, self, other)
 
     multiply = mul
 
     @wraps(Tensor.div)
-    def div(self, other: TensorLike, *, rounding_mode=None) -> TensorLike:
+    def div(self: TensorLike, other: TensorLike, *, rounding_mode=None) -> TensorLike:
         return lazy_in_training(torch.div, self, other, rounding_mode=rounding_mode)
 
     divide = true_divide = div
 
-    @wraps(Tensor.remainder)
-    def remainder(self, other: TensorLike) -> TensorLike:
+    @wraps(Tensor.fmod)
+    def fmod(self: TensorLike, other: TensorLike) -> TensorLike:
         return lazy_in_training(torch.fmod, self, other)
 
-    fmod = remainder
+    remainder = fmod
 
     @wraps(Tensor.frac)
-    def frac(self) -> TensorLike:
+    def frac(self: TensorLike) -> TensorLike:
         return lazy_in_training(torch.frac, self)
 
     @wraps(Tensor.pow)
-    def pow(self, exponent: TensorLike) -> TensorLike:
+    def pow(self: TensorLike, exponent: TensorLike) -> TensorLike:
         return lazy_in_training(torch.pow, self, exponent)
 
     @wraps(Tensor.exp)
-    def exp(self) -> TensorLike:
+    def exp(self: TensorLike) -> TensorLike:
         return lazy_in_training(torch.exp, self)
 
     @wraps(Tensor.exp2)
-    def exp2(self) -> TensorLike:
+    def exp2(self: TensorLike) -> TensorLike:
         return lazy_in_training(torch.exp2, self)
 
     @wraps(Tensor.log)
-    def log(self) -> TensorLike:
+    def log(self: TensorLike) -> TensorLike:
         return lazy_in_training(torch.log, self)
 
     @wraps(Tensor.log2)
-    def log2(self) -> TensorLike:
+    def log2(self: TensorLike) -> TensorLike:
         return lazy_in_training(torch.log2, self)
 
     @wraps(Tensor.log10)
-    def log10(self) -> TensorLike:
+    def log10(self: TensorLike) -> TensorLike:
         return lazy_in_training(torch.log10, self)
 
     @wraps(Tensor.log1p)
-    def log1p(self) -> TensorLike:
+    def log1p(self: TensorLike) -> TensorLike:
         return lazy_in_training(torch.log1p, self)
 
     @wraps(Tensor.abs)
-    def abs(self) -> TensorLike:
+    def abs(self: TensorLike) -> TensorLike:
         return lazy_in_training(torch.abs, self)
 
     absolute = abs
 
     @wraps(Tensor.matmul)
-    def matmul(self, other: TensorLike) -> TensorLike:
+    def matmul(self: TensorLike, other: TensorLike) -> TensorLike:
         return lazy_in_training(torch.matmul, self, other)
 
     @wraps(Tensor.bmm)
-    def bmm(self, mat2: TensorLike) -> TensorLike:
+    def bmm(self: TensorLike, mat2: TensorLike) -> TensorLike:
         return lazy_in_training(torch.bmm, self, mat2)
 
     @wraps(Tensor.mm)
-    def mm(self, mat2: TensorLike) -> TensorLike:
+    def mm(self: TensorLike, mat2: TensorLike) -> TensorLike:
         return lazy_in_training(torch.mm, self, mat2)
 
     @wraps(Tensor.mv)
-    def mv(self, vec: TensorLike) -> TensorLike:
+    def mv(self: TensorLike, vec: TensorLike) -> TensorLike:
         return lazy_in_training(torch.mv, self, vec)
 
     @wraps(Tensor.dot)
-    def dot(self, other: TensorLike) -> TensorLike:
+    def dot(self: TensorLike, other: TensorLike) -> TensorLike:
         return lazy_in_training(torch.dot, self, other)
 
     # Statistic operations
 
     @overload
-    def min(self) -> Lazy[Tensor]:
+    def min(self: TensorLike) -> Lazy[Tensor]:
         ...
 
     @overload
-    def min(self, dim: int, keepdim: bool = False) -> Lazy[_ValIdx]:
+    def min(self: TensorLike, dim: int, keepdim: bool = False) -> Lazy[_ValIdx]:
         ...
 
     @overload
-    def min(self, other: TensorLike) -> Lazy[Tensor]:
+    def min(self: TensorLike, other: TensorLike) -> Lazy[Tensor]:
         ...
 
     @wraps(Tensor.min)
-    def min(self, *args: Any, **kwargs: Any) -> Lazy[Any]:
+    def min(self: TensorLike, *args: Any, **kwargs: Any) -> Lazy[Any]:
         return _min(self, *args, **kwargs)
 
     @overload
-    def max(self) -> Lazy[Tensor]:
+    def max(self: TensorLike) -> Lazy[Tensor]:
         ...
 
     @overload
-    def max(self, dim: int, keepdim: bool = False) -> Lazy[_ValIdx]:
+    def max(self: TensorLike, dim: int, keepdim: bool = False) -> Lazy[_ValIdx]:
         ...
 
     @overload
-    def max(self, other: TensorLike) -> Lazy[Tensor]:
+    def max(self: TensorLike, other: TensorLike) -> Lazy[Tensor]:
         ...
 
     @wraps(Tensor.max)
-    def max(self, *args: Any, **kwargs: Any) -> Lazy[Any]:
+    def max(self: TensorLike, *args: Any, **kwargs: Any) -> Lazy[Any]:
         return _max(self, *args, **kwargs)
 
     @overload
-    def mean(self) -> TensorLike:
+    def mean(self: TensorLike) -> TensorLike:
         ...
 
     @overload
-    def mean(self, dim: int | Tuple[int, ...], keepdim: bool = False) -> TensorLike:
+    def mean(
+        self: TensorLike, dim: int | Tuple[int, ...], keepdim: bool = False
+    ) -> TensorLike:
         ...
 
     @wraps(Tensor.mean)
-    def mean(self, *args: Any, **kwargs: Any) -> TensorLike:
+    def mean(self: TensorLike, *args: Any, **kwargs: Any) -> TensorLike:
         return lazy_in_training(torch.mean, self, *args, **kwargs)
 
     @wraps(Tensor.std)
@@ -280,58 +275,62 @@ class LazyTensor(Lazy[Tensor]):
         return lazy_in_training(torch.std, self, dim, unbiased, keepdim)
 
     @wraps(Tensor.minimum)
-    def minimum(self, other: TensorLike) -> TensorLike:
+    def minimum(self: TensorLike, other: TensorLike) -> TensorLike:
         return lazy_in_training(torch.minimum, self, other)
 
     @wraps(Tensor.maximum)
-    def maximum(self, other: TensorLike) -> TensorLike:
+    def maximum(self: TensorLike, other: TensorLike) -> TensorLike:
         return lazy_in_training(torch.maximum, self, other)
 
     @wraps(Tensor.amin)
-    def amin(self, dim: int | Tuple[int, ...], keepdim: bool = False) -> TensorLike:
+    def amin(
+        self: TensorLike, dim: int | Tuple[int, ...], keepdim: bool = False
+    ) -> TensorLike:
         return lazy_in_training(torch.amin, self, dim, keepdim)
 
     @wraps(Tensor.amax)
-    def amax(self, dim: int | Tuple[int, ...], keepdim: bool = False) -> TensorLike:
+    def amax(
+        self: TensorLike, dim: int | Tuple[int, ...], keepdim: bool = False
+    ) -> TensorLike:
         return lazy_in_training(torch.amax, self, dim, keepdim)
 
-    @wraps(Tensor.aminmax)
-    def aminmax(self, dim: int | Tuple[int, ...], keepdim: bool = False) -> _MinMax:
-        return _aminmax(self, dim, keepdim)
-
     @wraps(Tensor.argmin)
-    def argmin(self, dim: int | None = None, keepdim: bool = False) -> TensorLike:
+    def argmin(
+        self: TensorLike, dim: int | None = None, keepdim: bool = False
+    ) -> TensorLike:
         return lazy_in_training(torch.argmin, self, dim, keepdim)
 
     @wraps(Tensor.argmax)
-    def argmax(self, dim: int | None = None, keepdim: bool = False) -> TensorLike:
+    def argmax(
+        self: TensorLike, dim: int | None = None, keepdim: bool = False
+    ) -> TensorLike:
         return lazy_in_training(torch.argmax, self, dim, keepdim)
 
     @wraps(Tensor.item)
-    def item(self) -> bool | int | float:
-        return self.run().item()
+    def item(self: TensorLike) -> bool | int | float:
+        return lazy(self).run().item()
 
     @wraps(Tensor.isclose)
-    def isclose(self) -> TensorLike:
+    def isclose(self: TensorLike) -> TensorLike:
         return lazy_in_training(torch.isclose, self)
 
     @wraps(Tensor.allclose)
-    def allclose(self, other: TensorLike) -> bool:
-        return self.run().allclose(run(other))
+    def allclose(self: TensorLike, other: TensorLike) -> bool:
+        return lazy(self).run().allclose(run(other))
 
     # Shaping functions
 
     @overload
-    def size(self) -> Size:
+    def size(self: TensorLike) -> Size:
         ...
 
     @overload
-    def size(self, dim: int) -> int:
+    def size(self: TensorLike, dim: int) -> int:
         ...
 
     @wraps(Tensor.size)
-    def size(self, dim: int | None = None) -> int | Size:
-        tensor = self.run()
+    def size(self: TensorLike, dim: int | None = None) -> int | Size:
+        tensor = lazy(self).run()
         if dim is None:
             return tensor.dim()
         else:
@@ -339,63 +338,63 @@ class LazyTensor(Lazy[Tensor]):
 
     @property
     @wraps(size)
-    def shape(self) -> Size:
+    def shape(self: TensorLike) -> Size:
         return self.size()
 
     @wraps(Tensor.dim)
-    def dim(self) -> int:
-        return self.run().dim()
+    def dim(self: TensorLike) -> int:
+        return lazy(self).run().dim()
 
     @property
     @wraps(dim)
-    def ndim(self) -> int:
+    def ndim(self: TensorLike) -> int:
         return self.dim()
 
     @wraps(Tensor.t)
-    def t(self) -> TensorLike:
+    def t(self: TensorLike) -> TensorLike:
         return lazy_in_training(torch.transpose, self)
 
     @property
     @wraps(t)
-    def T(self) -> TensorLike:
+    def T(self: TensorLike) -> TensorLike:
         return self.t()
 
     @wraps(Tensor.permute)
-    def permute(self, *dims: int) -> TensorLike:
+    def permute(self: TensorLike, *dims: int) -> TensorLike:
         return lazy_in_training(torch.permute, self, dims)
 
     @wraps(Tensor.transpose)
-    def transpose(self, dim0: int, dim1: int) -> TensorLike:
+    def transpose(self: TensorLike, dim0: int, dim1: int) -> TensorLike:
         return lazy_in_training(torch.transpose, self, dim0, dim1)
 
     # Trigonometric functions
 
     @wraps(Tensor.sin)
-    def sin(self) -> TensorLike:
+    def sin(self: TensorLike) -> TensorLike:
         return lazy_in_training(torch.sin, self)
 
     @wraps(Tensor.cos)
-    def cos(self) -> TensorLike:
+    def cos(self: TensorLike) -> TensorLike:
         return lazy_in_training(torch.cos, self)
 
     @wraps(Tensor.tan)
-    def tan(self) -> TensorLike:
+    def tan(self: TensorLike) -> TensorLike:
         return lazy_in_training(torch.tan, self)
 
     @wraps(Tensor.asin)
-    def asin(self) -> TensorLike:
+    def asin(self: TensorLike) -> TensorLike:
         return lazy_in_training(torch.asin, self)
 
     arcsin = asin
 
     @wraps(Tensor.acos)
-    def acos(self) -> TensorLike:
+    def acos(self: TensorLike) -> TensorLike:
         return lazy_in_training(torch.acos, self)
 
     arccos = acos
 
     @wraps(Tensor.atan)
-    def atan(self) -> TensorLike:
+    def atan(self: TensorLike) -> TensorLike:
         return lazy_in_training(torch.atan, self)
 
     arctan = atan
@@ -403,31 +402,31 @@ class LazyTensor(Lazy[Tensor]):
     # Hyperbolic functions
 
     @wraps(Tensor.sinh)
-    def sinh(self) -> TensorLike:
+    def sinh(self: TensorLike) -> TensorLike:
         return lazy_in_training(torch.sinh, self)
 
     @wraps(Tensor.cosh)
-    def cosh(self) -> TensorLike:
+    def cosh(self: TensorLike) -> TensorLike:
         return lazy_in_training(torch.cosh, self)
 
     @wraps(Tensor.tanh)
-    def tanh(self) -> TensorLike:
+    def tanh(self: TensorLike) -> TensorLike:
         return lazy_in_training(torch.tanh, self)
 
     @wraps(Tensor.asinh)
-    def asinh(self) -> TensorLike:
+    def asinh(self: TensorLike) -> TensorLike:
         return lazy_in_training(torch.asinh, self)
 
     arcsinh = asinh
 
     @wraps(Tensor.acosh)
-    def acosh(self) -> TensorLike:
+    def acosh(self: TensorLike) -> TensorLike:
         return lazy_in_training(torch.acosh, self)
 
     arccosh = acosh
 
     @wraps(Tensor.atanh)
-    def atanh(self) -> TensorLike:
+    def atanh(self: TensorLike) -> TensorLike:
         return lazy_in_training(torch.atanh, self)
 
     arctanh = atanh
@@ -435,22 +434,22 @@ class LazyTensor(Lazy[Tensor]):
     # Evaluation functions
 
     @wraps(Tensor.all)
-    def all(self) -> TensorLike:
+    def all(self: TensorLike) -> TensorLike:
         return lazy_in_training(torch.all, self)
 
     @wraps(Tensor.any)
-    def any(self) -> TensorLike:
+    def any(self: TensorLike) -> TensorLike:
         return lazy_in_training(torch.any, self)
 
-    def torch(self) -> Tensor:
+    def torch(self: LazyTensor) -> Tensor:
         return self.run()
 
     @wraps(Tensor.numpy)
-    def numpy(self) -> ndarray:
+    def numpy(self: LazyTensor) -> ndarray:
         return self.run().numpy()
 
     @wraps(Tensor.tolist)
-    def tolist(self) -> List[Any] | Number:
+    def tolist(self: LazyTensor) -> List[Any] | Number:
         return self.run().tolist()
 
 
@@ -566,22 +565,71 @@ def _max(input: TensorLike, *args: Any, **kwargs: Any) -> Lazy[Any]:
     return LazyFunction(torch.max)(input, *args, **kwargs)
 
 
-class _MinMax(NamedTuple):
-    min: TensorLike
-    max: TensorLike
+def will_not_implement(*args: Any, **kwargs: Any) -> NoReturn:
+    _ = args
+    _ = kwargs
+    raise NotImplementedError(
+        "Sorry, this function will not be implemented."
+        " "
+        "Because it causes confusion or is dangerous."
+    )
 
 
-@wraps(torch.aminmax)
-def _aminmax(
-    input: TensorLike, dim: int | Tuple[int, ...], keepdim: bool = False
-) -> _MinMax:
-    return _MinMax(lazy(input).amin(dim, keepdim), lazy(input).amax(dim, keepdim))
-
-
-SPECIAL_HANDLES: Dict[Callable[..., Any], Callable[..., Any]] = {
-    torch.min: _min,
-    torch.max: _max,
-    torch.aminmax: _aminmax,
+IMPLEMENTED_FUNCTIONS: Dict[str, Callable[..., Any]] = {
+    "positive": LazyTensor.positive,
+    "negative": LazyTensor.negative,
+    "neg": LazyTensor.neg,
+    "add": LazyTensor.add,
+    "sub": LazyTensor.sub,
+    "subtract": LazyTensor.subtract,
+    "mul": LazyTensor.mul,
+    "multiply": LazyTensor.multiply,
+    "div": LazyTensor.div,
+    "divide": LazyTensor.divide,
+    "true_divide": LazyTensor.true_divide,
+    "fmod": LazyTensor.fmod,
+    "remainder": LazyTensor.remainder,
+    "frac": LazyTensor.frac,
+    "pow": LazyTensor.pow,
+    "exp": LazyTensor.exp,
+    "exp2": LazyTensor.exp2,
+    "log": LazyTensor.log,
+    "log2": LazyTensor.log2,
+    "log10": LazyTensor.log10,
+    "log1p": LazyTensor.log1p,
+    "abs": LazyTensor.abs,
+    "matmul": LazyTensor.matmul,
+    "bmm": LazyTensor.bmm,
+    "mm": LazyTensor.mm,
+    "mv": LazyTensor.mv,
+    "dot": LazyTensor.dot,
+    "min": LazyTensor.min,
+    "max": LazyTensor.max,
+    "mean": LazyTensor.mean,
+    "std": LazyTensor.std,
+    "minimum": LazyTensor.minimum,
+    "maximum": LazyTensor.maximum,
+    "amin": LazyTensor.amin,
+    "amax": LazyTensor.amax,
+    "argmin": LazyTensor.argmin,
+    "argmax": LazyTensor.argmax,
+    "isclose": LazyTensor.isclose,
+    "allclose": LazyTensor.allclose,
+    "t": LazyTensor.t,
+    "permute": LazyTensor.permute,
+    "transpose": LazyTensor.transpose,
+    "sin": LazyTensor.sin,
+    "cos": LazyTensor.cos,
+    "tan": LazyTensor.tan,
+    "asin": LazyTensor.asin,
+    "acos": LazyTensor.acos,
+    "atan": LazyTensor.atan,
+    "sinh": LazyTensor.sinh,
+    "cosh": LazyTensor.cosh,
+    "tanh": LazyTensor.tanh,
+    "asinh": LazyTensor.asinh,
+    "acosh": LazyTensor.acosh,
+    "atanh": LazyTensor.atanh,
+    # Functions that will not be implemented.
+    "__floordiv__": will_not_implement,
 }
-
-EAGER_FUNCTIONS: Set[Callable[..., Any]] = {torch.allclose}
