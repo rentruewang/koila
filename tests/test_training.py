@@ -8,6 +8,7 @@ from torch import Tensor
 import koila
 from koila import LazyTensor
 
+from . import common
 from .common import Condition
 
 
@@ -165,12 +166,13 @@ def test_scalar_mul_function() -> None:
 
 
 def test_scalar_floordiv_op() -> None:
+
     Condition(
-        lambda a, b, c: scalar_isclose(koila.run(a // b).item(), c),
+        common.is_notimplemented,
         [
-            [LazyTensor(torch.tensor(1)), LazyTensor(torch.tensor(2)), 1 // 2],
-            [torch.tensor(1), LazyTensor(torch.tensor(2)), 1 // 2],
-            [LazyTensor(torch.tensor(1)), torch.tensor(2), 1 // 2],
+            [lambda: LazyTensor(torch.tensor(1)) // LazyTensor(torch.tensor(2))],
+            [lambda: torch.tensor(1) // LazyTensor(torch.tensor(2))],
+            [lambda: LazyTensor(torch.tensor(1)) // torch.tensor(2)],
         ],
     ).check()
 

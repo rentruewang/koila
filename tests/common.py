@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import dataclasses as dcls
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, Sequence
+from typing import Any, Callable, Dict, NoReturn, Sequence
 
 
 @dataclass(init=False)
@@ -44,3 +44,11 @@ class Condition:
                 argument.args,
                 argument.kwargs,
             ]
+
+
+def is_notimplemented(func: Callable[[], Any]) -> bool:
+    try:
+        func()
+        return False
+    except:
+        return True
