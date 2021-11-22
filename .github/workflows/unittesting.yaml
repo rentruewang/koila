@@ -40,7 +40,9 @@ jobs:
           update-pip: true
           update-setuptools: true
           update-wheel: true
-      - name: ⬇️ pytest
-        run: pip install pytest
+      - name: ⬇️ pytest coverage
+        run: pip install pytest coverage
       - name: 🏃 pytest
-        run: pytest -v --disable-pytest-warnings
+        run: coverage run -m pytest -v --disable-pytest-warnings
+      - name: 📊 coverage
+        run: coverage report -m
