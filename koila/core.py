@@ -1,8 +1,8 @@
 from __future__ import annotations
-from enum import Enum
+
 import builtins
-import functools
 from dataclasses import dataclass
+from enum import Enum
 from functools import wraps
 from types import MappingProxyType
 from typing import (
@@ -12,7 +12,6 @@ from typing import (
     List,
     NamedTuple,
     NoReturn,
-    Protocol,
     Tuple,
     Type,
     TypeVar,
@@ -22,7 +21,7 @@ from typing import (
 
 import torch
 from numpy import ndarray
-from torch import Size, Tensor
+from torch import Tensor
 from torch.types import Number
 
 from .protocols import CalculateShape, Lazy, LazyFunction, Runnable

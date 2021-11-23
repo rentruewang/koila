@@ -4,7 +4,6 @@ import functools
 import operator
 from abc import abstractmethod
 from dataclasses import dataclass
-from torch import Tensor
 from typing import (
     Any,
     Callable,
@@ -18,7 +17,7 @@ from typing import (
     runtime_checkable,
 )
 
-from numpy.core.fromnumeric import size
+from torch import Tensor
 
 T = TypeVar("T", covariant=True)
 V = TypeVar("V", contravariant=True)
