@@ -1,7 +1,8 @@
 from __future__ import annotations
-
+from enum import Enum
 import builtins
 import functools
+from dataclasses import dataclass
 from functools import wraps
 from types import MappingProxyType
 from typing import (
@@ -11,6 +12,7 @@ from typing import (
     List,
     NamedTuple,
     NoReturn,
+    Protocol,
     Tuple,
     Type,
     TypeVar,
@@ -23,11 +25,12 @@ from numpy import ndarray
 from torch import Size, Tensor
 from torch.types import Number
 
-from .protocols import Lazy, LazyFunction, Runnable
+from .protocols import CalculateShape, Lazy, LazyFunction, Runnable
 
 T = TypeVar("T")
 
 
+@dataclass(frozen=True)
 class LazyTensor(Lazy[Tensor]):
     def __init__(
         self: TensorLike, data: Tensor | Runnable[Tensor] | Lazy[Tensor]
@@ -36,91 +39,83 @@ class LazyTensor(Lazy[Tensor]):
 
     # Magic methods
 
-    def __pos__(self: TensorLike) -> TensorLike:
+    def __pos__(self) -> TensorLike:
         return LazyTensor.positive(self)
 
-    def __neg__(self: TensorLike) -> TensorLike:
+    def __neg__(self) -> TensorLike:
         return LazyTensor.neg(self)
 
-    def __bool__(self: TensorLike) -> bool:
+    def __bool__(self) -> bool:
         return bool(self.item())
 
-    def __int__(self: TensorLike) -> int:
+    def __int__(self) -> int:
         return int(self.item())
 
-    def __float__(self: TensorLike) -> float:
+    def __float__(self) -> float:
         return float(self.item())
 
-    def __invert__(self: TensorLike) -> bool:
+    def __invert__(self) -> bool:
         return not bool(self)
 
-    def __add__(self: TensorLike, other: TensorLike) -> TensorLike:
+    def __add__(self, other: TensorLike) -> TensorLike:
         return LazyTensor.add(self, other)
 
-    def __radd__(self: TensorLike, other: TensorLike) -> TensorLike:
+    def __radd__(self, other: TensorLike) -> TensorLike:
         return LazyTensor.add(other, self)
 
-    def __sub__(self: TensorLike, other: TensorLike) -> TensorLike:
+    def __sub__(self, other: TensorLike) -> TensorLike:
         return LazyTensor.sub(self, other)
 
-    def __rsub__(self: TensorLike, other: TensorLike) -> TensorLike:
+    def __rsub__(self, other: TensorLike) -> TensorLike:
         return LazyTensor.sub(other, self)
 
-    def __mul__(self: TensorLike, other: TensorLike) -> TensorLike:
+    def __mul__(self, other: TensorLike) -> TensorLike:
         return LazyTensor.mul(self, other)
 
-    def __rmul__(self: TensorLike, other: TensorLike) -> TensorLike:
+    def __rmul__(self, other: TensorLike) -> TensorLike:
         return LazyTensor.mul(other, self)
 
-    def __truediv__(self: TensorLike, other: TensorLike) -> TensorLike:
+    def __truediv__(self, other: TensorLike) -> TensorLike:
         return LazyTensor.div(self, other)
 
-    def __rtruediv__(self: TensorLike, other: TensorLike) -> TensorLike:
+    def __rtruediv__(self, other: TensorLike) -> TensorLike:
         return LazyTensor.div(other, self)
 
-    def __floordiv__(self: TensorLike, other: TensorLike) -> NoReturn:
+    def __floordiv__(self, other: TensorLike) -> NoReturn:
         will_not_implement(self, other)
 
-    def __rfloordiv__(self: TensorLike, other: TensorLike) -> NoReturn:
+    def __rfloordiv__(self, other: TensorLike) -> NoReturn:
         will_not_implement(other, self)
 
-    def __pow__(self: TensorLike, other: TensorLike) -> TensorLike:
+    def __pow__(self, other: TensorLike) -> TensorLike:
         return LazyTensor.pow(self, other)
 
-    def __rpow__(self: TensorLike, other: TensorLike) -> TensorLike:
+    def __rpow__(self, other: TensorLike) -> TensorLike:
         return LazyTensor.pow(other, self)
 
-    def __mod__(self: TensorLike, other: TensorLike) -> TensorLike:
+    def __mod__(self, other: TensorLike) -> TensorLike:
         return LazyTensor.fmod(self, other)
 
-    def __rmod__(self: TensorLike, other: TensorLike) -> TensorLike:
+    def __rmod__(self, other: TensorLike) -> TensorLike:
         return LazyTensor.fmod(other, self)
 
-    def __divmod__(self: TensorLike, other: TensorLike) -> NoReturn:
+    def __divmod__(self, other: TensorLike) -> NoReturn:
         will_not_implement(self, other)
 
-    def __rdivmod__(self: TensorLike, other: TensorLike) -> NoReturn:
+    def __rdivmod__(self, other: TensorLike) -> NoReturn:
         will_not_implement(other, self)
 
-    def __abs__(self: TensorLike) -> TensorLike:
+    def __abs__(self) -> TensorLike:
         return LazyTensor.abs(self)
 
-    def __hash__(self: TensorLike) -> int:
-        return hash(run(self))
+    def __hash__(self) -> int:
+        return id(self.data)
 
-    def __matmul__(self: TensorLike, other: TensorLike) -> TensorLike:
+    def __matmul__(self, other: TensorLike) -> TensorLike:
         return LazyTensor.matmul(self, other)
 
-    def __rmatmul__(self: TensorLike, other: TensorLike) -> TensorLike:
+    def __rmatmul__(self, other: TensorLike) -> TensorLike:
         return LazyTensor.matmul(other, self)
-
-    def __getattr__(self: TensorLike, name: str) -> LazyFunction:
-        if (func := IMPLEMENTED_FUNCTIONS.get(name, None)) is not None:
-            wrapper = functools.wraps(func)
-            partial = functools.partial(func, self)
-            return LazyFunction(wrapper(partial))
-
-        raise AttributeError
 
     @classmethod
     def __torch_function__(
@@ -327,10 +322,6 @@ class LazyTensor(Lazy[Tensor]):
     ) -> TensorLike:
         return lazy_in_training(torch.argmax, self, dim, keepdim)
 
-    @wraps(Tensor.item)
-    def item(self: TensorLike) -> bool | int | float:
-        return run(self).item()
-
     @wraps(Tensor.isclose)
     def isclose(self: TensorLike) -> TensorLike:
         return lazy_in_training(torch.isclose, self)
@@ -339,41 +330,51 @@ class LazyTensor(Lazy[Tensor]):
     def allclose(self: TensorLike, other: TensorLike) -> bool:
         return run(self).allclose(run(other))
 
+    @wraps(Tensor.item)
+    def item(self: TensorLike) -> bool | int | float:
+        return run(self).item()
+
     # Shaping functions
 
+    def numel(self: TensorLike) -> int:
+        return run(self).numel()
+
     @overload
-    def size(self: TensorLike) -> Size:
+    def size(self) -> Tuple[int, ...]:
         ...
 
     @overload
-    def size(self: TensorLike, dim: int) -> int:
+    def size(self, dim: int) -> int:
         ...
 
     @wraps(Tensor.size)
-    def size(self: TensorLike, dim: int | None = None) -> int | Size:
+    def size(self, dim: int | None = None) -> int | Tuple[int, ...]:
         tensor = run(self)
+
         if dim is None:
-            return tensor.dim()
+            return tensor.size()
         else:
             return tensor.size(dim)
 
     @property
     @wraps(size)
-    def shape(self: TensorLike) -> Size:
+    def shape(self) -> Tuple[int, ...]:
         return self.size()
 
     @wraps(Tensor.dim)
-    def dim(self: TensorLike) -> int:
+    def dim(self) -> int:
         return run(self).dim()
 
     @property
     @wraps(dim)
-    def ndim(self: TensorLike) -> int:
+    def ndim(self) -> int:
         return self.dim()
+
+    # Transform functions
 
     @wraps(Tensor.t)
     def t(self: TensorLike) -> TensorLike:
-        return lazy_in_training(torch.transpose, self)
+        return lazy_in_training(torch.t, self)
 
     @property
     @wraps(t)
@@ -548,7 +549,7 @@ def lazy_in_training(
     func: Callable[..., Any], *args: Any, **kwargs: Any
 ) -> LazyTensor | Tensor:
     if torch.is_grad_enabled():
-        return LazyTensor(LazyFunction(func)(*args, **kwargs))
+        return LazyTensor(LazyFunction(func, shape)(*args, **kwargs))  # type: ignore
     else:
         return func(*args, **kwargs)
 
@@ -586,6 +587,11 @@ def _max(input: TensorLike, *args: Any, **kwargs: Any) -> Lazy[Any]:
     return LazyFunction(torch.max)(input, *args, **kwargs)
 
 
+@wraps(torch.permute)
+def _permute(input: TensorLike, dims: int | Tuple[int, ...]) -> TensorLike:
+    return lazy_in_training(torch.permute, input, dims)
+
+
 def will_not_implement(*args: Any, **kwargs: Any) -> NoReturn:
     _ = args
     _ = kwargs
@@ -594,6 +600,10 @@ def will_not_implement(*args: Any, **kwargs: Any) -> NoReturn:
         " "
         "Because it causes confusion or is dangerous."
     )
+
+
+class ShapeFunctions(Enum, CalculateShape):
+    identity = lambda: None
 
 
 IMPLEMENTED_FUNCTIONS: MappingProxyType[str, Callable[..., Any]] = MappingProxyType(
@@ -638,7 +648,7 @@ IMPLEMENTED_FUNCTIONS: MappingProxyType[str, Callable[..., Any]] = MappingProxyT
         "isclose": LazyTensor.isclose,
         "allclose": LazyTensor.allclose,
         "t": LazyTensor.t,
-        "permute": LazyTensor.permute,
+        "permute": _permute,
         "transpose": LazyTensor.transpose,
         "sin": LazyTensor.sin,
         "cos": LazyTensor.cos,

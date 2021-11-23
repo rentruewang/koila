@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import functools
+import operator
 from abc import abstractmethod
 from dataclasses import dataclass
+from torch import Tensor
 from typing import (
     Any,
     Callable,
@@ -12,8 +14,11 @@ from typing import (
     Tuple,
     Type,
     TypeVar,
+    overload,
     runtime_checkable,
 )
+
+from numpy.core.fromnumeric import size
 
 T = TypeVar("T", covariant=True)
 V = TypeVar("V", contravariant=True)
@@ -23,6 +28,37 @@ V = TypeVar("V", contravariant=True)
 class Runnable(Protocol[T]):
     @abstractmethod
     def run(self) -> T:
+        ...
+
+        ...
+
+    @overload
+    @abstractmethod
+    def size(self) -> Tuple[int, ...]:
+        ...
+
+    @abstractmethod
+    @overload
+    def size(self, dim: int) -> int:
+        ...
+
+    @abstractmethod
+    def size(self, dim: int | None = None) -> int | Tuple[int, ...]:
+        ...
+
+    @property
+    def shape(self) -> Tuple[int, ...]:
+        return self.size()
+
+    def numel(self) -> int:
+        return functools.reduce(operator.mul, self.shape, 1)
+
+
+@runtime_checkable
+class CalculateShape(Protocol):
+    def __call__(
+        self, *args: Tuple[int, ...], **kwargs: Tuple[int, ...]
+    ) -> Tuple[int, ...]:
         ...
 
 
@@ -42,34 +78,58 @@ class Lazy(Runnable[T]):
             return data.run()
         return data
 
+    def size(self, dim: int | None = None) -> int | Tuple[int, ...]:
+        if dim is None:
+            return ()
+        else:
+            raise ()[dim]
+
 
 @dataclass(frozen=True)
-class LazyFunction(Generic[T, V]):
-    func: Callable[..., T]
+class LazyFunction(Generic[V]):
+    func: Callable[..., Tensor]
+    shape: CalculateShape
 
-    def __call__(self, *args: Any, **kwargs: Any) -> Lazy[T]:
-        return Lazy(Evaluation(self.func, *args, **kwargs))
+    def __call__(self, *args: Any, **kwargs: Any) -> Lazy[Tensor]:
+        lazy_args = tuple(Lazy(arg) for arg in args)
+        lazy_kwargs = dict((k, Lazy(v)) for (k, v) in kwargs.items())
 
-    def __get__(self, obj: V, objtype: Type[V]) -> Callable[..., Lazy[T]]:
+        shape_args = [arg.shape for arg in lazy_args]
+        shape_kwargs = {k: v.shape for (k, v) in lazy_kwargs.items()}
+        shape = self.shape(*shape_args, **shape_kwargs)
+
+        return Lazy(Evaluation(self.func, shape, lazy_args, lazy_kwargs))
+
+    def __get__(self, obj: V, objtype: Type[V]) -> Callable[..., Lazy[Tensor]]:
         assert isinstance(obj, objtype), [type(obj), objtype]
         if obj is None:
             return self
         else:
             return functools.partial(self, obj)
 
+    def calculate_shape(self, *args: Lazy[Any], **kwargs: Lazy[Any]) -> Tuple[int, ...]:
+        arg_shapes = [arg.shape for arg in args]
+        kwarg_shapes = {k: v.shape for (k, v) in kwargs.items()}
+        return self.shape(*arg_shapes, **kwarg_shapes)
+
 
 @dataclass
-class Evaluation(Runnable[T]):
-    func: Callable[..., T]
+class Evaluation(Runnable[Tensor]):
+    func: Callable[..., Tensor]
+    shape: Tuple[int, ...]
     args: Tuple[Lazy[Any], ...]
     kwargs: Dict[str, Lazy[Any]]
 
-    def __init__(self, func: Callable[..., T], *args: Any, **kwargs: Any) -> None:
-        self.func = func
-        self.args = tuple(Lazy(arg) for arg in args)
-        self.kwargs = dict((k, Lazy(v)) for (k, v) in kwargs.items())
+    def run(self) -> Tensor:
+        real_args = [arg.run() for arg in self.args]
+        real_kwargs = {k: v.run() for (k, v) in self.kwargs.items()}
+        result = self.func(*real_args, **real_kwargs)
+        assert result.shape == self.shape
 
-    def run(self) -> T:
-        real_args = tuple(arg.run() for arg in self.args)
-        real_kwargs = dict((k, v.run()) for (k, v) in self.kwargs.items())
-        return self.func(*real_args, **real_kwargs)
+        return result
+
+    def size(self, dim: int | None = None) -> int | Tuple[int, ...]:
+        if dim is not None:
+            return self.shape[dim]
+        else:
+            return self.shape
