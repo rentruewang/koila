@@ -1,2 +1,3 @@
-from .core import LazyTensor, lazy, run
-from .protocols import Evaluation, Lazy, LazyFunction, Runnable
+from .runnables import Runnable, RunnableTensor
+from .shapes import ShapeFunction
+from .tensors import Evaluation, LazyFunction, LazyTensor, lazy, run

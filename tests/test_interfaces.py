@@ -1,5 +1,5 @@
 import koila
-from koila import Lazy, Runnable
+from koila import LazyTensor, Runnable
 
 
 def test_is_runnable() -> None:
@@ -15,5 +15,5 @@ def test_is_runnable() -> None:
     assert koila.run(mcr) == 42
 
 
-def test_lazy_is_runnable() -> None:
-    assert issubclass(Lazy, Runnable)
+def test_lazytensor_is_runnable() -> None:
+    assert issubclass(LazyTensor, Runnable)

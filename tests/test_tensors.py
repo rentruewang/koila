@@ -8,7 +8,6 @@ from torch import Tensor
 
 import koila
 from koila import LazyTensor
-from koila.core import lazy
 
 from . import common
 
@@ -546,8 +545,8 @@ def test_hash_op() -> None:
     b = a
     c = LazyTensor(arr)
     d = LazyTensor(a)
-    e = lazy(arr)
-    f = lazy(a)
+    e = koila.lazy(arr)
+    f = koila.lazy(a)
 
     assert hash(a) == hash(b) == hash(c) == hash(d) == hash(e) == hash(f)
 
@@ -601,12 +600,24 @@ def test_transpose_method() -> None:
     assert la.transpose(0, 3).shape == (5, 3, 4, 2, 6)
 
 
-def test_transpose_function() -> None:
+def test_numel_method() -> None:
     arr = torch.randn(2, 3, 4, 5, 6)
     la = typing.cast(Tensor, LazyTensor(arr))
-    assert torch.transpose(la, 3, 4).shape == (2, 3, 4, 6, 5)
-    assert torch.transpose(la, 0, 1).shape == (3, 2, 4, 5, 6)
-    assert torch.transpose(la, 0, 3).shape == (5, 3, 4, 2, 6)
+    assert la.numel() == 2 * 3 * 4 * 5 * 6
+
+    arr = torch.randn(15, 19)
+    la = typing.cast(Tensor, LazyTensor(arr))
+    assert la.numel() == 15 * 19
+
+
+def test_numel_function() -> None:
+    arr = torch.randn(2, 3, 4, 5, 6)
+    la = typing.cast(Tensor, LazyTensor(arr))
+    assert torch.numel(la) == 2 * 3 * 4 * 5 * 6
+
+    arr = torch.randn(15, 19)
+    la = typing.cast(Tensor, LazyTensor(arr))
+    assert torch.numel(la) == 15 * 19
 
 
 def test_scalar_sin_method() -> None:
