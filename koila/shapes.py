@@ -114,7 +114,6 @@ def permute(input: Tuple[int, ...], *dims: int, **kwargs: Any) -> Tuple[int, ...
     paired = sorted(zip(scattered_dims, input))
     reordered_dim = [pair[1] for pair in paired]
     return tuple(reordered_dim)
-    
 
 
 def tranpose(
