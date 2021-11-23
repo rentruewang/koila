@@ -1,4 +1,5 @@
 import math
+import typing
 
 import numpy as np
 import torch
@@ -7,6 +8,7 @@ from torch import Tensor
 
 import koila
 from koila import LazyTensor
+from koila.core import lazy
 
 from . import common
 
@@ -540,7 +542,71 @@ def test_scalar_abs_function() -> None:
 def test_hash_op() -> None:
     arr = torch.randn(2, 10, 11)
 
-    common.call(lambda a, c: koila.run(hash(a)) == hash(c), [[LazyTensor(arr), arr]])
+    a = LazyTensor(arr)
+    b = a
+    c = LazyTensor(arr)
+    d = LazyTensor(a)
+    e = lazy(arr)
+    f = lazy(a)
+
+    assert hash(a) == hash(b) == hash(c) == hash(d) == hash(e) == hash(f)
+
+
+def test_size_shape_method() -> None:
+    arr = torch.randn(11, 13)
+    la = LazyTensor(arr)
+    assert la.size() == la.shape == (11, 13)
+    assert la.size(0) == 11
+    assert la.size(1) == 13
+
+
+def test_t_method() -> None:
+    arr = torch.randn(11, 13)
+    la = LazyTensor(arr)
+    assert la.T.size() == la.t().size() == (13, 11)
+
+
+def test_t_function() -> None:
+    arr = torch.randn(11, 13)
+    la = typing.cast(Tensor, LazyTensor(arr))
+    assert torch.t(la).shape == (13, 11)
+
+
+def test_dim_method() -> None:
+    arr = torch.randn(11, 13)
+    assert arr.ndim == arr.dim() == 2
+    arr = torch.randn(1, 2, 3, 4, 5)
+    assert arr.dim() == 5
+
+
+def test_permute_method() -> None:
+    arr = torch.randn(2, 3, 4, 5, 6)
+    la = LazyTensor(arr)
+    assert la.permute(3, 4, 1, 2, 0).shape == (5, 6, 3, 4, 2)
+    assert la.permute(0, 1, 4, 3, 2).shape == (2, 3, 6, 5, 4)
+
+
+def test_permute_function() -> None:
+    arr = torch.randn(2, 3, 4, 5, 6)
+    la = typing.cast(Tensor, LazyTensor(arr))
+    assert torch.permute(la, (3, 4, 1, 2, 0)).shape == (5, 6, 3, 4, 2)
+    assert torch.permute(la, (0, 1, 4, 3, 2)).shape == (2, 3, 6, 5, 4)
+
+
+def test_transpose_method() -> None:
+    arr = torch.randn(2, 3, 4, 5, 6)
+    la = LazyTensor(arr)
+    assert la.transpose(3, 4).shape == (2, 3, 4, 6, 5)
+    assert la.transpose(0, 1).shape == (3, 2, 4, 5, 6)
+    assert la.transpose(0, 3).shape == (5, 3, 4, 2, 6)
+
+
+def test_transpose_function() -> None:
+    arr = torch.randn(2, 3, 4, 5, 6)
+    la = typing.cast(Tensor, LazyTensor(arr))
+    assert torch.transpose(la, 3, 4).shape == (2, 3, 4, 6, 5)
+    assert torch.transpose(la, 0, 1).shape == (3, 2, 4, 5, 6)
+    assert torch.transpose(la, 0, 3).shape == (5, 3, 4, 2, 6)
 
 
 def test_scalar_sin_method() -> None:
