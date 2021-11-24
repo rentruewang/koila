@@ -16,7 +16,7 @@ class ArgsKwargs:
 
 
 @dataclass(init=False)
-class Condition:
+class Caller:
     func: Callable[..., Any]
     arguments: Sequence[ArgsKwargs] = dcls.field(default_factory=list)
 
@@ -47,7 +47,7 @@ def call(
     func: Callable[..., Any],
     arguments: Sequence[ArgsKwargs | Sequence[Any] | Dict[str, Any]],
 ) -> None:
-    Condition(func, arguments=arguments).call()
+    Caller(func, arguments=arguments).call()
 
 
 def is_notimplemented(func: Callable[[], Any]) -> bool:

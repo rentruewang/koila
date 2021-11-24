@@ -37,3 +37,6 @@ class RunnableTensor(Runnable[Tensor], Protocol):
 
     def numel(self) -> int:
         return functools.reduce(operator.mul, self.size(), 1)
+
+    def dim(self) -> int:
+        return len(self.size())

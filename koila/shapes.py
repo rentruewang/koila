@@ -7,16 +7,21 @@ from typing import Any, Protocol, Tuple
 class ShapeFunction(Protocol):
     @abstractmethod
     def __call__(
-        self, input: Tuple[int, ...], *args: Any, **kwds: Any
+        self, input: Tuple[int, ...], *args: Any, **kwargs: Any
     ) -> Tuple[int, ...]:
         ...
 
 
-def compatible(a: int, b: int, broadcast: bool = True) -> bool:
+def mute_unused_args(*args: Any, **kwargs: Any) -> None:
+    _ = args
+    _ = kwargs
+
+
+def compatible(input: int, other: int, broadcast: bool = True) -> bool:
     if broadcast:
-        return a == 1 or b == 1 or a == b
+        return input == 1 or other == 1 or input == other
     else:
-        return a == b
+        return input == other
 
 
 def prepends(
@@ -24,6 +29,7 @@ def prepends(
 ) -> Tuple[Tuple[int, ...], Tuple[int, ...]]:
     li = len(input)
     lo = len(other)
+
     prepended = (1,) * abs(li - lo)
     if li >= lo:
         other = prepended + other
@@ -71,16 +77,15 @@ def coerce(
 
 
 def identity(input: Tuple[int, ...], *args: Any, **kwargs: Any) -> Tuple[int, ...]:
-    _ = args
-    _ = kwargs
+    mute_unused_args(*args, **kwargs)
+
     return input
 
 
 def symmetric(
     input: Tuple[int, ...], other: Tuple[int, ...], *args: Any, **kwargs: Any
 ) -> Tuple[int, ...]:
-    _ = args
-    _ = kwargs
+    mute_unused_args(*args, **kwargs)
 
     shape = coerce(input, other, broadcast=True, scalars=True)
 
@@ -91,25 +96,36 @@ def symmetric(
 
 
 def reduce_dims(
-    input: Tuple[int, ...], dim: int | Tuple[int, ...], *args: Any, **kwargs: Any
+    input: Tuple[int, ...],
+    dim: int | Tuple[int, ...],
+    keepdim: bool = False,
+    *args: Any,
+    **kwargs: Any,
 ) -> Tuple[int, ...]:
-    _ = args
-    _ = kwargs
+    mute_unused_args(*args, **kwargs)
 
-    shapes = list(input)
+    shapes = []
 
     if isinstance(dim, int):
-        dim = (dim,)
+        dimensions = {dim}
+    else:
+        dimensions = set(dim)
 
-    for d in dim:
-        shapes[d] = 1
+    for d in input:
+        if d not in dimensions:
+            continue
+
+        if keepdim:
+            shapes.append(1)
+
+    if keepdim:
+        assert len(shapes) == len(input)
 
     return tuple(shapes)
 
 
 def scalar(input: Tuple[int, ...], *args: Any, **kwargs: Any) -> Tuple[int, ...]:
-    _ = args
-    _ = kwargs
+    mute_unused_args(*args, **kwargs)
 
     result = reduce_dims(input, dim=tuple(range(len(input))))
     assert result == ()
@@ -117,7 +133,8 @@ def scalar(input: Tuple[int, ...], *args: Any, **kwargs: Any) -> Tuple[int, ...]
 
 
 def permute(input: Tuple[int, ...], *dims: int, **kwargs: Any) -> Tuple[int, ...]:
-    _ = kwargs
+    mute_unused_args(**kwargs)
+
     if not len(input) == len(dims):
         raise TypeError
 
@@ -137,8 +154,7 @@ def permute(input: Tuple[int, ...], *dims: int, **kwargs: Any) -> Tuple[int, ...
 def tranpose(
     input: Tuple[int, ...], dim0: int, dim1: int, *args: Any, **kwargs: Any
 ) -> Tuple[int, ...]:
-    _ = args
-    _ = kwargs
+    mute_unused_args(*args, **kwargs)
 
     if len(input) < 2:
         raise ValueError
@@ -151,8 +167,7 @@ def tranpose(
 def matmul(
     input: Tuple[int, ...], other: Tuple[int, ...], *args: Any, **kwargs: Any
 ) -> Tuple[int, ...]:
-    _ = args
-    _ = kwargs
+    mute_unused_args(*args, **kwargs)
 
     li = len(input)
     lo = len(other)
@@ -207,7 +222,11 @@ def linear(
     input: Tuple[int, ...],
     weight: Tuple[int, ...],
     bias: Tuple[int, ...] | None = None,
+    *args: Any,
+    **kwargs: Any,
 ) -> Tuple[int, ...]:
+    mute_unused_args(*args, **kwargs)
+
     result = matmul(input, tranpose(weight, -1, -2))
 
     if bias is not None:
