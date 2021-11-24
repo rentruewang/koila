@@ -24,49 +24,49 @@ def array_allclose(a: ndarray, b: ndarray) -> None:
     assert np.allclose(a, b, atol=1e-5), a != b
 
 
-def test_scalar_positive_op() -> None:
+def test_positive_op() -> None:
     common.call(
         lambda a, c: scalar_isclose((+a).item(), c),
         [[LazyTensor(torch.tensor(-11)), -11]],
     )
 
 
-def test_scalar_positive_method() -> None:
+def test_positive_method() -> None:
     common.call(
         lambda a, c: scalar_isclose(a.positive().item(), c),
         [[LazyTensor(torch.tensor(4)), 4]],
     )
 
 
-def test_scalar_positive_function() -> None:
+def test_positive_function() -> None:
     common.call(
         lambda a, c: scalar_isclose(torch.positive(a).item(), c),
         [[LazyTensor(torch.tensor(-8)), -8]],
     )
 
 
-def test_scalar_negative_op() -> None:
+def test_negative_op() -> None:
     common.call(
         lambda a, c: scalar_isclose((-a).item(), c),
         [[LazyTensor(torch.tensor(-13)), 13]],
     )
 
 
-def test_scalar_negative_method() -> None:
+def test_negative_method() -> None:
     common.call(
         lambda a, c: scalar_isclose(a.neg().item(), c),
         [[LazyTensor(torch.tensor(2)), -2]],
     )
 
 
-def test_scalar_negative_function() -> None:
+def test_negative_function() -> None:
     common.call(
         lambda a, c: scalar_isclose(torch.neg(a).item(), c),
         [[LazyTensor(torch.tensor(-5)), 5]],
     )
 
 
-def test_scalar_add_op() -> None:
+def test_add_op() -> None:
     common.call(
         lambda a, b, c: scalar_isclose((a + b).item(), c),
         [
@@ -77,7 +77,7 @@ def test_scalar_add_op() -> None:
     )
 
 
-def test_scalar_add_method() -> None:
+def test_add_method() -> None:
     common.call(
         lambda a, b, c: scalar_isclose(a.add(b).item(), c),
         [
@@ -88,7 +88,7 @@ def test_scalar_add_method() -> None:
     )
 
 
-def test_scalar_add_function() -> None:
+def test_add_function() -> None:
     common.call(
         lambda a, b, c: scalar_isclose(torch.add(a, b).item(), c),
         [
@@ -99,7 +99,7 @@ def test_scalar_add_function() -> None:
     )
 
 
-def test_scalar_sub_op() -> None:
+def test_sub_op() -> None:
     common.call(
         lambda a, b, c: scalar_isclose((a - b).item(), c),
         [
@@ -110,7 +110,7 @@ def test_scalar_sub_op() -> None:
     )
 
 
-def test_scalar_sub_method() -> None:
+def test_sub_method() -> None:
     common.call(
         lambda a, b, c: scalar_isclose(a.sub(b).item(), c),
         [
@@ -121,7 +121,7 @@ def test_scalar_sub_method() -> None:
     )
 
 
-def test_scalar_sub_function() -> None:
+def test_sub_function() -> None:
     common.call(
         lambda a, b, c: scalar_isclose(torch.sub(a, b).item(), c),
         [
@@ -132,7 +132,7 @@ def test_scalar_sub_function() -> None:
     )
 
 
-def test_scalar_mul_op() -> None:
+def test_mul_op() -> None:
     common.call(
         lambda a, b, c: scalar_isclose((a * b).item(), c),
         [
@@ -143,7 +143,7 @@ def test_scalar_mul_op() -> None:
     )
 
 
-def test_scalar_mul_method() -> None:
+def test_mul_method() -> None:
     common.call(
         lambda a, b, c: scalar_isclose(a.mul(b).item(), c),
         [
@@ -154,7 +154,7 @@ def test_scalar_mul_method() -> None:
     )
 
 
-def test_scalar_mul_function() -> None:
+def test_mul_function() -> None:
     common.call(
         lambda a, b, c: scalar_isclose(torch.mul(a, b).item(), c),
         [
@@ -165,7 +165,7 @@ def test_scalar_mul_function() -> None:
     )
 
 
-def test_scalar_floordiv_op() -> None:
+def test_floordiv_op() -> None:
     common.call(
         common.is_notimplemented,
         [
@@ -176,7 +176,7 @@ def test_scalar_floordiv_op() -> None:
     )
 
 
-def test_scalar_floordiv_method() -> None:
+def test_floordiv_method() -> None:
     common.call(
         lambda a, b, c: scalar_isclose(a.div(b, rounding_mode="trunc").item(), c),
         [
@@ -187,7 +187,7 @@ def test_scalar_floordiv_method() -> None:
     )
 
 
-def test_scalar_floordiv_function() -> None:
+def test_floordiv_function() -> None:
     common.call(
         lambda a, b, c: scalar_isclose(
             torch.div(a, b, rounding_mode="trunc").item(), c
@@ -200,7 +200,7 @@ def test_scalar_floordiv_function() -> None:
     )
 
 
-def test_scalar_truediv_op() -> None:
+def test_truediv_op() -> None:
     common.call(
         lambda a, b, c: scalar_isclose((a / b).item(), c),
         [
@@ -211,7 +211,7 @@ def test_scalar_truediv_op() -> None:
     )
 
 
-def test_scalar_truediv_method() -> None:
+def test_truediv_method() -> None:
     common.call(
         lambda a, b, c: scalar_isclose(a.div(b).item(), c),
         [
@@ -222,7 +222,7 @@ def test_scalar_truediv_method() -> None:
     )
 
 
-def test_scalar_truediv_function() -> None:
+def test_truediv_function() -> None:
     common.call(
         lambda a, b, c: scalar_isclose(torch.div(a, b).item(), c),
         [
@@ -233,7 +233,7 @@ def test_scalar_truediv_function() -> None:
     )
 
 
-def test_scalar_pow_op() -> None:
+def test_pow_op() -> None:
     common.call(
         lambda a, b, c: scalar_isclose((a ** b).item(), c),
         [
@@ -244,7 +244,7 @@ def test_scalar_pow_op() -> None:
     )
 
 
-def test_scalar_pow_method() -> None:
+def test_pow_method() -> None:
     common.call(
         lambda a, b, c: scalar_isclose(a.pow(b).item(), c),
         [
@@ -255,7 +255,7 @@ def test_scalar_pow_method() -> None:
     )
 
 
-def test_scalar_pow_function() -> None:
+def test_pow_function() -> None:
     common.call(
         lambda a, b, c: scalar_isclose(torch.pow(a, b).item(), c),
         [
@@ -266,7 +266,7 @@ def test_scalar_pow_function() -> None:
     )
 
 
-def test_scalar_remainder_op() -> None:
+def test_remainder_op() -> None:
     common.call(
         lambda a, b, c: scalar_isclose((a % b).item(), c),
         [
@@ -277,7 +277,7 @@ def test_scalar_remainder_op() -> None:
     )
 
 
-def test_scalar_remainder_method() -> None:
+def test_remainder_method() -> None:
     common.call(
         lambda a, b, c: scalar_isclose(a.remainder(b).item(), c),
         [
@@ -288,7 +288,7 @@ def test_scalar_remainder_method() -> None:
     )
 
 
-def test_scalar_remainder_function() -> None:
+def test_remainder_function() -> None:
     common.call(
         lambda a, b, c: scalar_isclose(torch.remainder(a, b).item(), c),
         [
@@ -338,7 +338,7 @@ def test_matmul_function() -> None:
     )
 
 
-def test_scalar_identity() -> None:
+def test_identity() -> None:
     tensor = torch.tensor(13.5)
 
     assert LazyTensor(tensor).run() == 13.5
@@ -362,7 +362,7 @@ def test_scalar_identity() -> None:
     assert not bool(LazyTensor(tensor))
 
 
-def test_scalar_frac_method() -> None:
+def test_frac_method() -> None:
     common.call(
         lambda a, c: scalar_isclose(a.frac().item(), c),
         [
@@ -373,7 +373,7 @@ def test_scalar_frac_method() -> None:
     )
 
 
-def test_scalar_frac_function() -> None:
+def test_frac_function() -> None:
     common.call(
         lambda a, c: scalar_isclose(torch.frac(a).item(), c),
         [
@@ -384,7 +384,7 @@ def test_scalar_frac_function() -> None:
     )
 
 
-def test_scalar_exp_method() -> None:
+def test_exp_method() -> None:
     common.call(
         lambda a, c: scalar_isclose(a.exp().item(), c),
         [
@@ -395,7 +395,7 @@ def test_scalar_exp_method() -> None:
     )
 
 
-def test_scalar_exp_function() -> None:
+def test_exp_function() -> None:
     common.call(
         lambda a, c: scalar_isclose(torch.exp(a).item(), c),
         [
@@ -406,7 +406,7 @@ def test_scalar_exp_function() -> None:
     )
 
 
-def test_scalar_exp2_method() -> None:
+def test_exp2_method() -> None:
     common.call(
         lambda a, c: scalar_isclose(a.exp2().item(), c),
         [
@@ -417,7 +417,7 @@ def test_scalar_exp2_method() -> None:
     )
 
 
-def test_scalar_exp2_function() -> None:
+def test_exp2_function() -> None:
     common.call(
         lambda a, c: scalar_isclose(torch.exp2(a).item(), c),
         [
@@ -428,7 +428,7 @@ def test_scalar_exp2_function() -> None:
     )
 
 
-def test_scalar_log_method() -> None:
+def test_log_method() -> None:
     common.call(
         lambda a, c: scalar_isclose(a.log().item(), c),
         [
@@ -439,7 +439,7 @@ def test_scalar_log_method() -> None:
     )
 
 
-def test_scalar_log_function() -> None:
+def test_log_function() -> None:
     common.call(
         lambda a, c: scalar_isclose(torch.log(a).item(), c),
         [
@@ -450,7 +450,7 @@ def test_scalar_log_function() -> None:
     )
 
 
-def test_scalar_log2_method() -> None:
+def test_log2_method() -> None:
     common.call(
         lambda a, c: scalar_isclose(a.log2().item(), c),
         [
@@ -461,7 +461,7 @@ def test_scalar_log2_method() -> None:
     )
 
 
-def test_scalar_log2_function() -> None:
+def test_log2_function() -> None:
     common.call(
         lambda a, c: scalar_isclose(torch.log2(a).item(), c),
         [
@@ -472,7 +472,7 @@ def test_scalar_log2_function() -> None:
     )
 
 
-def test_scalar_log10_method() -> None:
+def test_log10_method() -> None:
     common.call(
         lambda a, c: scalar_isclose(a.log10().item(), c),
         [
@@ -483,7 +483,7 @@ def test_scalar_log10_method() -> None:
     )
 
 
-def test_scalar_log10_function() -> None:
+def test_log10_function() -> None:
     common.call(
         lambda a, c: scalar_isclose(torch.log10(a).item(), c),
         [
@@ -494,21 +494,21 @@ def test_scalar_log10_function() -> None:
     )
 
 
-def test_scalar_log1p_method() -> None:
+def test_log1p_method() -> None:
     common.call(
         lambda a, c: scalar_isclose(a.log1p().item(), c),
         [[LazyTensor(torch.tensor(1.5)), math.log1p(1.5)]],
     )
 
 
-def test_scalar_log1p_function() -> None:
+def test_log1p_function() -> None:
     common.call(
         lambda a, c: scalar_isclose(torch.log1p(a).item(), c),
         [[LazyTensor(torch.tensor(2.7)), math.log1p(2.7)]],
     )
 
 
-def test_scalar_abs_op() -> None:
+def test_abs_op() -> None:
     common.call(
         lambda a, c: scalar_isclose(abs(a).item(), c),
         [
@@ -518,7 +518,7 @@ def test_scalar_abs_op() -> None:
     )
 
 
-def test_scalar_abs_method() -> None:
+def test_abs_method() -> None:
     common.call(
         lambda a, c: scalar_isclose(a.abs().item(), c),
         [
@@ -528,7 +528,7 @@ def test_scalar_abs_method() -> None:
     )
 
 
-def test_scalar_abs_function() -> None:
+def test_abs_function() -> None:
     common.call(
         lambda a, c: scalar_isclose(torch.abs(a).item(), c),
         [
@@ -620,7 +620,24 @@ def test_numel_function() -> None:
     assert torch.numel(la) == 15 * 19
 
 
-def test_scalar_sin_method() -> None:
+def test_sigmoid_method() -> None:
+    arr = torch.randn(4, 5, 6)
+    common.call(
+        lambda a, c: tensor_allclose(koila.run(a), c),
+        [[LazyTensor(arr).sigmoid(), torch.sigmoid(arr)]],
+    )
+
+
+def test_sigmoid_function() -> None:
+    arr = torch.randn(4, 5, 6)
+    la = typing.cast(Tensor, arr)
+    common.call(
+        lambda a, c: tensor_allclose(koila.run(a), c),
+        [[torch.sigmoid(la), torch.sigmoid(arr)]],
+    )
+
+
+def test_sin_method() -> None:
     common.call(
         lambda a, c: scalar_isclose(a.sin().item(), c),
         [
@@ -634,7 +651,7 @@ def test_scalar_sin_method() -> None:
     )
 
 
-def test_scalar_sin_function() -> None:
+def test_sin_function() -> None:
     common.call(
         lambda a, c: scalar_isclose(torch.sin(a).item(), c),
         [
@@ -648,7 +665,7 @@ def test_scalar_sin_function() -> None:
     )
 
 
-def test_scalar_cos_method() -> None:
+def test_cos_method() -> None:
     common.call(
         lambda a, c: scalar_isclose(a.cos().item(), c),
         [
@@ -662,7 +679,7 @@ def test_scalar_cos_method() -> None:
     )
 
 
-def test_scalar_cos_function() -> None:
+def test_cos_function() -> None:
     common.call(
         lambda a, c: scalar_isclose(torch.cos(a).item(), c),
         [
@@ -676,7 +693,7 @@ def test_scalar_cos_function() -> None:
     )
 
 
-def test_scalar_tan_method() -> None:
+def test_tan_method() -> None:
     common.call(
         lambda a, c: scalar_isclose(a.tan().item(), c),
         [
@@ -688,7 +705,7 @@ def test_scalar_tan_method() -> None:
     )
 
 
-def test_scalar_tan_function() -> None:
+def test_tan_function() -> None:
     common.call(
         lambda a, c: scalar_isclose(torch.tan(a).item(), c),
         [
@@ -700,7 +717,7 @@ def test_scalar_tan_function() -> None:
     )
 
 
-def test_scalar_asin_method() -> None:
+def test_asin_method() -> None:
     common.call(
         lambda a, c: scalar_isclose(a.asin().item(), c),
         [
@@ -710,7 +727,7 @@ def test_scalar_asin_method() -> None:
     )
 
 
-def test_scalar_asin_function() -> None:
+def test_asin_function() -> None:
     common.call(
         lambda a, c: scalar_isclose(torch.asin(a).item(), c),
         [
@@ -720,7 +737,7 @@ def test_scalar_asin_function() -> None:
     )
 
 
-def test_scalar_acos_method() -> None:
+def test_acos_method() -> None:
     common.call(
         lambda a, c: scalar_isclose(a.acos().item(), c),
         [
@@ -730,7 +747,7 @@ def test_scalar_acos_method() -> None:
     )
 
 
-def test_scalar_acos_function() -> None:
+def test_acos_function() -> None:
     common.call(
         lambda a, c: scalar_isclose(torch.acos(a).item(), c),
         [
@@ -740,7 +757,7 @@ def test_scalar_acos_function() -> None:
     )
 
 
-def test_scalar_atan_method() -> None:
+def test_atan_method() -> None:
     common.call(
         lambda a, c: scalar_isclose(a.atan().item(), c),
         [
@@ -752,7 +769,7 @@ def test_scalar_atan_method() -> None:
     )
 
 
-def test_scalar_atan_function() -> None:
+def test_atan_function() -> None:
     common.call(
         lambda a, c: scalar_isclose(torch.atan(a).item(), c),
         [
@@ -764,7 +781,7 @@ def test_scalar_atan_function() -> None:
     )
 
 
-def test_scalar_sinh_method() -> None:
+def test_sinh_method() -> None:
     common.call(
         lambda a, c: scalar_isclose(a.sinh().item(), c),
         [
@@ -774,7 +791,7 @@ def test_scalar_sinh_method() -> None:
     )
 
 
-def test_scalar_sinh_function() -> None:
+def test_sinh_function() -> None:
     common.call(
         lambda a, c: scalar_isclose(torch.sinh(a).item(), c),
         [
@@ -784,7 +801,7 @@ def test_scalar_sinh_function() -> None:
     )
 
 
-def test_scalar_cosh_method() -> None:
+def test_cosh_method() -> None:
     common.call(
         lambda a, c: scalar_isclose(a.cosh().item(), c),
         [
@@ -794,7 +811,7 @@ def test_scalar_cosh_method() -> None:
     )
 
 
-def test_scalar_cosh_function() -> None:
+def test_cosh_function() -> None:
     common.call(
         lambda a, c: scalar_isclose(torch.cosh(a).item(), c),
         [
@@ -804,21 +821,21 @@ def test_scalar_cosh_function() -> None:
     )
 
 
-def test_scalar_tanh_method() -> None:
+def test_tanh_method() -> None:
     common.call(
         lambda a, c: scalar_isclose(a.tanh().item(), c),
         [[LazyTensor(torch.tensor(n)), math.tanh(n)] for n in np.linspace(-10, 10)],
     )
 
 
-def test_scalar_tanh_function() -> None:
+def test_tanh_function() -> None:
     common.call(
         lambda a, c: scalar_isclose(torch.tanh(a).item(), c),
         [[LazyTensor(torch.tensor(n)), math.tanh(n)] for n in np.linspace(-10, 10)],
     )
 
 
-def test_scalar_asinh_method() -> None:
+def test_asinh_method() -> None:
     common.call(
         lambda a, c: scalar_isclose(a.asinh().item(), c),
         [
@@ -830,7 +847,7 @@ def test_scalar_asinh_method() -> None:
     )
 
 
-def test_scalar_asinh_function() -> None:
+def test_asinh_function() -> None:
     common.call(
         lambda a, c: scalar_isclose(torch.asinh(a).item(), c),
         [
@@ -842,7 +859,7 @@ def test_scalar_asinh_function() -> None:
     )
 
 
-def test_scalar_acosh_method() -> None:
+def test_acosh_method() -> None:
     common.call(
         lambda a, c: scalar_isclose(a.acosh().item(), c),
         [
@@ -854,7 +871,7 @@ def test_scalar_acosh_method() -> None:
     )
 
 
-def test_scalar_acosh_function() -> None:
+def test_acosh_function() -> None:
     common.call(
         lambda a, c: scalar_isclose(torch.acosh(a).item(), c),
         [
@@ -866,7 +883,7 @@ def test_scalar_acosh_function() -> None:
     )
 
 
-def test_scalar_atanh_method() -> None:
+def test_atanh_method() -> None:
     common.call(
         lambda a, c: scalar_isclose(a.atanh().item(), c),
         [
@@ -876,7 +893,7 @@ def test_scalar_atanh_method() -> None:
     )
 
 
-def test_scalar_atanh_function() -> None:
+def test_atanh_function() -> None:
     common.call(
         lambda a, c: scalar_isclose(torch.atanh(a).item(), c),
         [
