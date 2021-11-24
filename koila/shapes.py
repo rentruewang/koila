@@ -19,6 +19,20 @@ def compatible(a: int, b: int, broadcast: bool = True) -> bool:
         return a == b
 
 
+def prepends(
+    input: Tuple[int, ...], other: Tuple[int, ...]
+) -> Tuple[Tuple[int, ...], Tuple[int, ...]]:
+    li = len(input)
+    lo = len(other)
+    prepended = (1,) * abs(li - lo)
+    if li >= lo:
+        other = prepended + other
+    else:
+        input = prepended + input
+    assert len(input) == len(other)
+    return (input, other)
+
+
 def coerce(
     input: Tuple[int, ...],
     other: Tuple[int, ...],
@@ -40,6 +54,8 @@ def coerce(
             return shape
         else:
             return None
+
+    (input, other) = prepends(input, other)
 
     shape = []
     for (a, b) in zip(input, other):
@@ -74,13 +90,6 @@ def symmetric(
     return shape
 
 
-def scalar(*args: Any, **kwargs: Any) -> Tuple[int, ...]:
-    _ = args
-    _ = kwargs
-
-    return ()
-
-
 def reduce_dims(
     input: Tuple[int, ...], dim: int | Tuple[int, ...], *args: Any, **kwargs: Any
 ) -> Tuple[int, ...]:
@@ -98,10 +107,19 @@ def reduce_dims(
     return tuple(shapes)
 
 
+def scalar(input: Tuple[int, ...], *args: Any, **kwargs: Any) -> Tuple[int, ...]:
+    _ = args
+    _ = kwargs
+
+    result = reduce_dims(input, dim=tuple(range(len(input))))
+    assert result == ()
+    return result
+
+
 def permute(input: Tuple[int, ...], *dims: int, **kwargs: Any) -> Tuple[int, ...]:
     _ = kwargs
     if not len(input) == len(dims):
-        raise ValueError
+        raise TypeError
 
     if sorted(dims) != list(range(len(dims))):
         raise ValueError
@@ -170,12 +188,7 @@ def matmul(
 
         return (input[0],)
 
-    prepend = (1,) * abs(li - lo)
-    if li >= lo:
-        other = prepend + other
-    else:
-        input = prepend + input
-    assert len(input) == len(other)
+    (input, other) = prepends(input, other)
 
     shapes = []
     for (dimi, dimo) in zip(input[:-2], other[:-2]):
@@ -188,3 +201,16 @@ def matmul(
     shapes.extend([input[-2], other[-1]])
 
     return tuple(shapes)
+
+
+def linear(
+    input: Tuple[int, ...],
+    weight: Tuple[int, ...],
+    bias: Tuple[int, ...] | None = None,
+) -> Tuple[int, ...]:
+    result = matmul(input, tranpose(weight, -1, -2))
+
+    if bias is not None:
+        result = symmetric(result, bias)
+
+    return result

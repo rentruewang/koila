@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+from torch.nn import functional as F
 import builtins
 import dataclasses as dcls
 import functools
@@ -107,7 +107,7 @@ class Evaluation(RunnableTensor):
 
 @dataclass
 class LazyTensor(RunnableTensor):
-    _data: Tensor | RunnableTensor = dcls.field()
+    _data: Tensor | RunnableTensor
 
     def __init__(self, data: Tensor | LazyTensor | RunnableTensor) -> None:
         if isinstance(data, LazyTensor):
@@ -116,6 +116,7 @@ class LazyTensor(RunnableTensor):
             self._data = data
 
     # Implementations
+
     def run(self) -> Tensor:
         data = self._data
         if isinstance(data, Runnable):
@@ -202,6 +203,24 @@ class LazyTensor(RunnableTensor):
     def __rmatmul__(self, other: TensorLike) -> TensorLike:
         return LazyTensor.matmul(other, self)
 
+    def __eq__(self, other: TensorLike) -> TensorLike:
+        return LazyTensor.eq(self, other)
+
+    def __ne__(self, other: TensorLike) -> TensorLike:
+        return LazyTensor.ne(self, other)
+
+    def __gt__(self, other: TensorLike) -> TensorLike:
+        return LazyTensor.gt(self, other)
+
+    def __ge__(self, other: TensorLike) -> TensorLike:
+        return LazyTensor.ge(self, other)
+
+    def __lt__(self, other: TensorLike) -> TensorLike:
+        return LazyTensor.lt(self, other)
+
+    def __le__(self, other: TensorLike) -> TensorLike:
+        return LazyTensor.le(self, other)
+
     @classmethod
     def __torch_function__(
         cls,
@@ -218,7 +237,7 @@ class LazyTensor(RunnableTensor):
         ):
             return NotImplemented
 
-        if (impl := IMPLEMENTED_FUNCTIONS.get(func.__name__, None)) is not None:
+        if (impl := TORCH_FUNCS.get(func.__name__, None)) is not None:
             return impl(*args, **kwargs)
 
         return NotImplemented
@@ -323,39 +342,77 @@ class LazyTensor(RunnableTensor):
     def dot(self: TensorLike, other: TensorLike) -> TensorLike:
         return lazy_in_training(torch.dot, _dot_shape, self, other)
 
+    # Comparison operations
+
+    @wraps(Tensor.eq)
+    def eq(self: TensorLike, other: TensorLike) -> TensorLike:
+        return lazy_in_training(torch.eq, shapes.symmetric, self, other)
+
+    equal = eq
+
+    @wraps(Tensor.ne)
+    def ne(self: TensorLike, other: TensorLike) -> TensorLike:
+        return lazy_in_training(torch.ne, shapes.symmetric, self, other)
+
+    not_equal = ne
+
+    @wraps(Tensor.gt)
+    def gt(self: TensorLike, other: TensorLike) -> TensorLike:
+        return lazy_in_training(torch.gt, shapes.symmetric, self, other)
+
+    greater = gt
+
+    @wraps(Tensor.ge)
+    def ge(self: TensorLike, other: TensorLike) -> TensorLike:
+        return lazy_in_training(torch.ge, shapes.symmetric, self, other)
+
+    greater_equal = ge
+
+    @wraps(Tensor.lt)
+    def lt(self: TensorLike, other: TensorLike) -> TensorLike:
+        return lazy_in_training(torch.lt, shapes.symmetric, self, other)
+
+    less = lt
+
+    @wraps(Tensor.le)
+    def le(self: TensorLike, other: TensorLike) -> TensorLike:
+        return lazy_in_training(torch.le, shapes.symmetric, self, other)
+
+    less_equal = le
+
     # Statistic operations
 
-    # @overload
-    # def min(self: TensorLike) -> LazyTensor:
-    #     ...
+    @overload
+    def min(self: TensorLike) -> TensorLike:
+        ...
 
-    # @overload
-    # def min(self: TensorLike, dim: int, keepdim: bool = False) -> _ValIdx:
-    #     ...
+    @overload
+    def min(self: TensorLike, dim: int, keepdim: bool = False) -> _ValIdx:
+        ...
 
-    # @overload
-    # def min(self: TensorLike, other: TensorLike) -> LazyTensor:
-    #     ...
+    @overload
+    def min(self: TensorLike, other: TensorLike) -> TensorLike:
+        ...
 
-    # @wraps(Tensor.min)
-    # def min(self: TensorLike, *args: Any, **kwargs: Any) -> LazyTensor | _ValIdx:
-    #     return _min(self, *args, **kwargs)
+    @wraps(Tensor.min)
+    def min(self: TensorLike, *args: Any, **kwargs: Any) -> TensorLike | _ValIdx:
+        return _min(self, *args, **kwargs)
 
-    # @overload
-    # def max(self: TensorLike) -> LazyTensor:
-    #     ...
+    @overload
+    def max(self: TensorLike) -> TensorLike:
+        ...
 
-    # @overload
-    # def max(self: TensorLike, dim: int, keepdim: bool = False) -> _ValIdx:
-    #     ...
+    @overload
+    def max(self: TensorLike, dim: int, keepdim: bool = False) -> _ValIdx:
+        ...
 
-    # @overload
-    # def max(self: TensorLike, other: TensorLike) -> LazyTensor:
-    #     ...
+    @overload
+    def max(self: TensorLike, other: TensorLike) -> TensorLike:
+        ...
 
-    # @wraps(Tensor.max)
-    # def max(self: TensorLike, *args: Any, **kwargs: Any) -> LazyTensor | _ValIdx:
-    #     return _max(self, *args, **kwargs)
+    @wraps(Tensor.max)
+    def max(self: TensorLike, *args: Any, **kwargs: Any) -> TensorLike | _ValIdx:
+        return _max(self, *args, **kwargs)
 
     @overload
     def mean(self: TensorLike) -> TensorLike:
@@ -464,7 +521,11 @@ class LazyTensor(RunnableTensor):
     def transpose(self: TensorLike, dim0: int, dim1: int) -> TensorLike:
         return lazy_in_training(torch.transpose, shapes.tranpose, self, dim0, dim1)
 
-    # Trigonometric functions
+    # Numerical functions
+
+    @wraps(Tensor.sigmoid)
+    def sigmoid(self: TensorLike) -> TensorLike:
+        return lazy_in_training(torch.sigmoid, shapes.identity, self)
 
     @wraps(Tensor.sin)
     def sin(self: TensorLike) -> TensorLike:
@@ -495,8 +556,6 @@ class LazyTensor(RunnableTensor):
         return torch.atan(run(self))
 
     arctan = atan
-
-    # Hyperbolic functions
 
     @wraps(Tensor.sinh)
     def sinh(self: TensorLike) -> TensorLike:
@@ -628,48 +687,76 @@ def lazy_in_training(
 
 
 class _ValIdx(NamedTuple):
-    values: LazyTensor
-    indices: LazyTensor
+    values: TensorLike
+    indices: TensorLike
 
 
-# @overload
-# def _min(input: TensorLike) -> LazyTensor:
-#     ...
+@overload
+def _min(input: TensorLike) -> TensorLike:
+    ...
 
 
-# @overload
-# def _min(input: TensorLike, dim: int, keepdim: bool = False) -> _ValIdx:
-#     ...
+@overload
+def _min(input: TensorLike, dim: int, keepdim: bool = False) -> _ValIdx:
+    ...
 
 
-# @overload
-# def _min(input: TensorLike, other: TensorLike) -> LazyTensor:
-#     ...
+@overload
+def _min(input: TensorLike, other: TensorLike) -> TensorLike:
+    ...
 
 
-# @wraps(torch.min)
-# def _min(input: TensorLike, *args: Any, **kwargs: Any) -> LazyTensor | _ValIdx:
-#     return LazyFunction(torch.min)(input, *args, **kwargs)
+@wraps(torch.min)
+def _min(input: TensorLike, *args: Any, **kwargs: Any) -> TensorLike | _ValIdx:
+    if len(args) == len(kwargs) == 0:
+        return lazy_in_training(torch.min, shapes.scalar, input)
+
+    if (
+        len(args) == 1
+        and isinstance((other := args[0]), (Tensor, LazyTensor))
+        or len(kwargs) == 1
+        and (other := kwargs.get("other", None) is not None)
+    ):
+        return lazy_in_training(torch.minimum, shapes.symmetric, input, other)
+
+    return _ValIdx(
+        lazy_in_training(torch.amin, shapes.reduce_dims, *args, **kwargs),
+        lazy_in_training(torch.argmin, shapes.reduce_dims, *args, **kwargs),
+    )
 
 
-# @overload
-# def _max(input: TensorLike) -> LazyTensor:
-#     ...
+@overload
+def _max(input: TensorLike) -> TensorLike:
+    ...
 
 
-# @overload
-# def _max(input: TensorLike, dim: int, keepdim: bool = False) -> _ValIdx:
-#     ...
+@overload
+def _max(input: TensorLike, dim: int, keepdim: bool = False) -> _ValIdx:
+    ...
 
 
-# @overload
-# def _max(input: TensorLike, other: TensorLike) -> LazyTensor:
-#     ...
+@overload
+def _max(input: TensorLike, other: TensorLike) -> TensorLike:
+    ...
 
 
-# @wraps(torch.max)
-# def _max(input: TensorLike, *args: Any, **kwargs: Any) -> LazyTensor | _ValIdx:
-#     return LazyFunction(torch.max)(input, *args, **kwargs)
+@wraps(torch.max)
+def _max(input: TensorLike, *args: Any, **kwargs: Any) -> TensorLike | _ValIdx:
+    if len(args) == len(kwargs) == 0:
+        return lazy_in_training(torch.max, shapes.scalar, input)
+
+    if (
+        len(args) == 1
+        and isinstance((other := args[0]), (Tensor, LazyTensor))
+        or len(kwargs) == 1
+        and (other := kwargs.get("other", None) is not None)
+    ):
+        return lazy_in_training(torch.maximum, shapes.symmetric, input, other)
+
+    return _ValIdx(
+        lazy_in_training(torch.amax, shapes.reduce_dims, *args, **kwargs),
+        lazy_in_training(torch.argmax, shapes.reduce_dims, *args, **kwargs),
+    )
 
 
 @wraps(torch.permute)
@@ -723,7 +810,7 @@ def _mv_shape(
     _ = kwargs
 
     if not (len(input) == 2 and len(other) == 1):
-        raise ValueError
+        raise TypeError
 
     return typing.cast(Tuple[int], shapes.matmul(input, other))
 
@@ -735,9 +822,63 @@ def _dot_shape(
     _ = kwargs
 
     if not (len(input) == len(other) == 1):
-        raise ValueError
+        raise TypeError
 
     return shapes.matmul(input, other)
+
+
+@wraps(F.relu)
+def _relu(input: TensorLike, inplace: bool = False) -> TensorLike:
+    if inplace:
+        raise NotImplementedError
+
+    return lazy_in_training(F.relu, shapes.identity, input, inplace=False)
+
+
+@wraps(F.leaky_relu)
+def _leaky_relu(
+    input: TensorLike, negative_slope: float = 0.01, inplace: bool = False
+) -> TensorLike:
+    if inplace:
+        raise NotImplementedError
+
+    return lazy_in_training(
+        F.leaky_relu,
+        shapes.identity,
+        input,
+        negative_slope=negative_slope,
+        inplace=False,
+    )
+
+
+@wraps(F.binary_cross_entropy)
+def _binary_cross_entropy(
+    input: TensorLike, target: TensorLike, **kwargs: Any
+) -> TensorLike:
+    return lazy_in_training(
+        F.binary_cross_entropy, shapes.scalar, input, target, **kwargs
+    )
+
+
+@wraps(F.binary_cross_entropy_with_logits)
+def _binary_cross_entropy_with_logits(
+    input: TensorLike, target: TensorLike, **kwargs: Any
+) -> TensorLike:
+    return lazy_in_training(
+        F.binary_cross_entropy_with_logits, shapes.scalar, input, target, **kwargs
+    )
+
+
+@wraps(F.gelu)
+def _gelu(input: TensorLike) -> TensorLike:
+    return lazy_in_training(F.gelu, shapes.identity, input)
+
+
+@wraps(F.linear)
+def _linear(
+    input: TensorLike, weight: TensorLike, bias: Tensor | None = None
+) -> TensorLike:
+    return lazy_in_training(F.linear, shapes.linear, input, weight, bias)
 
 
 def will_not_implement(*args: Any, **kwargs: Any) -> NoReturn:
@@ -750,7 +891,7 @@ def will_not_implement(*args: Any, **kwargs: Any) -> NoReturn:
     )
 
 
-IMPLEMENTED_FUNCTIONS: MappingProxyType[str, Callable[..., Any]] = MappingProxyType(
+TORCH_FUNCS: MappingProxyType[str, Callable[..., Any]] = MappingProxyType(
     {
         "positive": LazyTensor.positive,
         "negative": LazyTensor.negative,
@@ -779,8 +920,20 @@ IMPLEMENTED_FUNCTIONS: MappingProxyType[str, Callable[..., Any]] = MappingProxyT
         "mm": LazyTensor.mm,
         "mv": LazyTensor.mv,
         "dot": LazyTensor.dot,
-        # "min": LazyTensor.min,
-        # "max": LazyTensor.max,
+        "eq": LazyTensor.eq,
+        "equal": LazyTensor.equal,
+        "ne": LazyTensor.ne,
+        "not_equal": LazyTensor.not_equal,
+        "gt": LazyTensor.gt,
+        "greater": LazyTensor.greater,
+        "ge": LazyTensor.ge,
+        "greater_equal": LazyTensor.greater_equal,
+        "lt": LazyTensor.lt,
+        "less": LazyTensor.less,
+        "le": LazyTensor.le,
+        "less_equal": LazyTensor.less_equal,
+        "min": LazyTensor.min,
+        "max": LazyTensor.max,
         "mean": LazyTensor.mean,
         "std": LazyTensor.std,
         "minimum": LazyTensor.minimum,
@@ -807,6 +960,13 @@ IMPLEMENTED_FUNCTIONS: MappingProxyType[str, Callable[..., Any]] = MappingProxyT
         "asinh": LazyTensor.asinh,
         "acosh": LazyTensor.acosh,
         "atanh": LazyTensor.atanh,
+        "sigmoid": LazyTensor.sigmoid,
+        "relu": _relu,
+        "leaky_relu": _leaky_relu,
+        "binary_cross_entropy": _binary_cross_entropy,
+        "binary_cross_entropy_with_logits": _binary_cross_entropy_with_logits,
+        "gelu": _gelu,
+        "linear": _linear,
         # Functions that will not be implemented.
         "__floordiv__": will_not_implement,
     }
