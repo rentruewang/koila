@@ -1,5 +1,5 @@
 from __future__ import annotations
-from torch.nn import functional as F
+
 import builtins
 import dataclasses as dcls
 import functools
@@ -25,6 +25,7 @@ from typing import (
 import torch
 from numpy import ndarray
 from torch import Tensor
+from torch.nn import functional as F
 
 from . import shapes
 from .runnables import Runnable, RunnableTensor
