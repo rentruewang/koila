@@ -3,7 +3,7 @@ from __future__ import annotations
 import functools
 import operator
 from abc import abstractmethod
-from typing import Protocol, Tuple, TypeVar, overload, runtime_checkable
+from typing import Protocol, Tuple, TypeVar, Union, overload, runtime_checkable
 
 from torch import Tensor
 
@@ -40,3 +40,10 @@ class RunnableTensor(Runnable[Tensor], Protocol):
 
     def dim(self) -> int:
         return len(self.size())
+
+    @abstractmethod
+    def upstream_numel(self) -> int:
+        ...
+
+
+TensorLike = Union[Tensor, RunnableTensor]

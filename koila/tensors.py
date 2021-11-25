@@ -3,6 +3,7 @@ from __future__ import annotations
 import builtins
 import dataclasses as dcls
 import functools
+import logging
 from dataclasses import dataclass
 from functools import wraps
 from typing import (
@@ -17,21 +18,25 @@ from typing import (
     Tuple,
     Type,
     TypeVar,
-    Union,
     final,
     overload,
 )
 
 import torch
-from numpy import ndarray
+from rich.logging import RichHandler
 from torch import Tensor
 
 from . import shapes
-from .runnables import Runnable, RunnableTensor
+from .errors import NeverImplementedError, UnsupportedError
+from .runnables import Runnable, RunnableTensor, TensorLike
 from .shapes import ShapeFunction
 
 T = TypeVar("T")
 V = TypeVar("V", contravariant=True)
+
+logger = logging.getLogger(__name__)
+logger.addHandler(RichHandler())
+logger.setLevel(logging.WARNING)
 
 
 @dataclass(frozen=True)
@@ -42,11 +47,7 @@ class LazyFunction(Generic[V]):
     def __call__(self, *args: Any, **kwargs: Any) -> LazyTensor:
         lazy_args = tuple(lazy(arg) for arg in args)
         lazy_kwargs = dict((k, lazy(v)) for (k, v) in kwargs.items())
-
-        shape_args = [self.size_or_val(arg) for arg in lazy_args]
-        shape_kwargs = {k: self.size_or_val(v) for (k, v) in lazy_kwargs.items()}
-        shape = self.shape_func(*shape_args, **shape_kwargs)
-
+        shape = self.shape_func(*args, **kwargs)
         return LazyTensor(Evaluation(self.func, shape, *lazy_args, **lazy_kwargs))
 
     def __get__(self, obj: V, objtype: Type[V]) -> Callable[..., LazyTensor]:
@@ -55,15 +56,6 @@ class LazyFunction(Generic[V]):
             return self
         else:
             return functools.partial(self, obj)
-
-    @staticmethod
-    def size_or_val(
-        argument: RunnableTensor | Any,
-    ) -> Tuple[int, ...] | Any:
-        if isinstance(argument, RunnableTensor):
-            return argument.size()
-
-        return argument
 
 
 @dataclass(init=False)
@@ -94,7 +86,7 @@ class Evaluation(RunnableTensor):
         real_kwargs = {k: run(v) for (k, v) in self.kwargs.items()}
         result = self.func(*real_args, **real_kwargs)
 
-        assert result.shape == self.shape
+        assert self.shape == result.shape, [self.shape, result.shape]
 
         return result
 
@@ -104,33 +96,54 @@ class Evaluation(RunnableTensor):
         else:
             return self.shape
 
+    def upstream_numel(self) -> int:
+        total_numel = self.numel()
+
+        for arg in self.args:
+            if isinstance(arg, (Tensor, RunnableTensor)):
+                total_numel += arg.numel()
+
+        for value in self.kwargs.values():
+            if isinstance(value, (Tensor, RunnableTensor)):
+                total_numel += value.numel()
+
+        return total_numel
+
 
 @final
 @dataclass
 class LazyTensor(RunnableTensor):
-    _data: Tensor | RunnableTensor
+    data: Tensor | RunnableTensor
 
     def __init__(self, data: Tensor | LazyTensor | RunnableTensor) -> None:
         if isinstance(data, LazyTensor):
-            self._data = data._data
+            self.data = data.data
         else:
-            self._data = data
+            self.data = data
 
     # Implementations
 
     def run(self) -> Tensor:
-        data = self._data
+        data = self.data
         if isinstance(data, Runnable):
             return data.run()
         return data
 
+    def _size_impl(self, dim: int | None = None) -> int | Tuple[int, ...]:
+        data = self.data
+
+        if dim is None:
+            return data.size()
+
+        return data.size(dim)
+
+    def upstream_numel(self) -> int:
+        if isinstance(self.data, Tensor):
+            return self.data.numel()
+
+        return self.data.upstream_numel()
+
     # Magic methods
-
-    def __pos__(self) -> TensorLike:
-        return torch.positive(self)  # type: ignore
-
-    def __neg__(self) -> TensorLike:
-        return torch.neg(self)  # type: ignore
 
     def __bool__(self) -> bool:
         return bool(self.item())
@@ -144,93 +157,130 @@ class LazyTensor(RunnableTensor):
     def __invert__(self) -> bool:
         return not bool(self)
 
+    def __pos__(self) -> TensorLike:
+        return lazy_forward(Tensor.__pos__, shapes.identity, self)
+
+    def __neg__(self) -> TensorLike:
+        return lazy_forward(Tensor.__neg__, shapes.identity, self)
+
     def __add__(self, other: TensorLike) -> TensorLike:
-        return torch.add(self, other)  # type: ignore
+        return lazy_forward(Tensor.__add__, shapes.symmetric, self, other)
 
     def __radd__(self, other: TensorLike) -> TensorLike:
-        return torch.add(other, self)  # type: ignore
+        return lazy_forward(Tensor.__add__, shapes.symmetric, other, self)  # type: ignore
 
     def __sub__(self, other: TensorLike) -> TensorLike:
-        return torch.sub(self, other)  # type: ignore
+        return lazy_forward(Tensor.__sub__, shapes.symmetric, self, other)
 
     def __rsub__(self, other: TensorLike) -> TensorLike:
-        return torch.sub(other, self)  # type: ignore
+        return lazy_forward(Tensor.__sub__, shapes.symmetric, other, self)
 
     def __mul__(self, other: TensorLike) -> TensorLike:
-        return torch.mul(self, other)  # type: ignore
+        return lazy_forward(Tensor.__mul__, shapes.symmetric, self, other)
 
     def __rmul__(self, other: TensorLike) -> TensorLike:
-        return torch.mul(other, self)  # type: ignore
+        return lazy_forward(Tensor.__mul__, shapes.symmetric, other, self)
 
     def __truediv__(self, other: TensorLike) -> TensorLike:
-        return torch.div(self, other)  # type: ignore
+        return lazy_forward(Tensor.__truediv__, shapes.symmetric, self, other)
 
     def __rtruediv__(self, other: TensorLike) -> TensorLike:
-        return torch.div(other, self)  # type: ignore
+        return lazy_forward(Tensor.__truediv__, shapes.symmetric, other, self)
 
     def __floordiv__(self, other: TensorLike) -> NoReturn:
-        will_not_implement(self, other)  # type: ignore
+        del other
+        raise NeverImplementedError
 
     def __rfloordiv__(self, other: TensorLike) -> NoReturn:
-        will_not_implement(other, self)  # type: ignore
+        del other
+        raise NeverImplementedError
 
     def __pow__(self, other: TensorLike) -> TensorLike:
-        return torch.pow(self, other)  # type: ignore
+        return lazy_forward(Tensor.__pow__, shapes.symmetric, self, other)
 
     def __rpow__(self, other: TensorLike) -> TensorLike:
-        return torch.pow(other, self)  # type: ignore
+        return lazy_forward(Tensor.__pow__, shapes.symmetric, other, self)
 
     def __mod__(self, other: TensorLike) -> TensorLike:
-        return torch.fmod(self, other)  # type: ignore
+        return lazy_forward(Tensor.__mod__, shapes.symmetric, self, other)
 
     def __rmod__(self, other: TensorLike) -> TensorLike:
-        return torch.fmod(other, self)  # type: ignore
+        return lazy_forward(Tensor.__mod__, shapes.symmetric, other, self)
 
     def __divmod__(self, other: TensorLike) -> NoReturn:
-        will_not_implement(self, other)
+        del other
+        raise NeverImplementedError
 
     def __rdivmod__(self, other: TensorLike) -> NoReturn:
-        will_not_implement(other, self)
+        del other
+        raise NeverImplementedError
 
     def __abs__(self) -> TensorLike:
-        return torch.abs(self)  # type: ignore
+        return lazy_forward(Tensor.__abs__, shapes.identity, self)
 
     def __hash__(self) -> int:
-        return id(self._data)  # type: ignore
+        return id(self.data)  # type: ignore
 
     def __matmul__(self, other: TensorLike) -> TensorLike:
-        return torch.matmul(self, other)  # type: ignore
+        return lazy_forward(Tensor.__matmul__, shapes.matmul, self, other)
 
     def __rmatmul__(self, other: TensorLike) -> TensorLike:
-        return torch.matmul(other, self)  # type: ignore
+        return lazy_forward(Tensor.__matmul__, shapes.matmul, other, self)
 
     def __eq__(self, other: TensorLike) -> TensorLike:
-        return torch.eq(self, other)  # type: ignore
+        return lazy_forward(Tensor.__eq__, shapes.symmetric, self, other)
 
     def __ne__(self, other: TensorLike) -> TensorLike:
-        return torch.ne(self, other)  # type: ignore
+        return lazy_forward(Tensor.__ne__, shapes.symmetric, self, other)
 
     def __gt__(self, other: TensorLike) -> TensorLike:
-        return torch.gt(self, other)  # type: ignore
+        return lazy_forward(Tensor.__gt__, shapes.symmetric, self, other)
 
     def __ge__(self, other: TensorLike) -> TensorLike:
-        return torch.ge(self, other)  # type: ignore
+        return lazy_forward(Tensor.__ge__, shapes.symmetric, self, other)
 
     def __lt__(self, other: TensorLike) -> TensorLike:
-        return torch.lt(self, other)  # type: ignore
+        return lazy_forward(Tensor.__lt__, shapes.symmetric, self, other)
 
     def __le__(self, other: TensorLike) -> TensorLike:
-        return torch.le(self, other)  # type: ignore
+        return lazy_forward(Tensor.__le__, shapes.symmetric, self, other)
+
+    def __getitem__(
+        self, index: int | slice | Tensor | List[Any] | Tuple[Any] | None
+    ) -> TensorLike:
+        if isinstance(self.data, Tensor):
+            return self.data[index]
+
+        if isinstance(index, int):
+            return self.data.run()[index]
+
+        raise NotImplementedError
+        # return lazy_forward(Tensor.__getitem__, shapes.getitem, self, index)
+
+    def __setitem__(
+        self,
+        index: int | slice | Tensor | List[Any] | Tuple[Any] | None,
+        value: Tensor,
+    ) -> None:
+        if isinstance(self.data, RunnableTensor):
+            raise UnsupportedError
+
+        self.data[index] = value
 
     def __getattr__(self, name: str) -> Callable[..., Any]:
+        logger.debug("__getattr__ called. Automatically resolving function.")
+
         method = getattr(Tensor, name)
         wrapper = functools.wraps(method)
 
         if (custom_impl := CUSTOM_IMPLS.lookup_method(name)) is not None:
+            logger.debug("A custom method definition is found.")
             partial = functools.partial(custom_impl, self)
         elif (shape_impl := SHAPE_IMPLS.lookup_method(name)) is not None:
+            logger.debug("A custom shape method is found. Lazy evaluation.")
             partial = functools.partial(lazy_forward, method, shape_impl, self)
         else:
+            logger.debug("No custom methods found. Evaluating eagerly.")
             partial = functools.partial(method, run(self))
 
         return wrapper(partial)
@@ -252,22 +302,18 @@ class LazyTensor(RunnableTensor):
             return NotImplemented
 
         name = func.__name__
+
         if (custom_impl := CUSTOM_IMPLS.lookup_function(name)) is not None:
+            logger.debug("A custom function definition is found.")
             return custom_impl(*args, **kwargs)
         elif (shape_impl := SHAPE_IMPLS.lookup_function(name)) is not None:
+            logger.debug("A custom shape function is found. Lazy evaluation.")
             return lazy_forward(func, shape_impl, *args, **kwargs)
         else:
+            logger.debug("No custom method found. Evaluating eagerly.")
             args = [run(arg) for arg in args]
             kwargs = {k: run(v) for (k, v) in kwargs.items()}
             return func(*args, **kwargs)
-
-    def _size_impl(self, dim: int | None = None) -> int | Tuple[int, ...]:
-        data = self._data
-
-        if dim is None:
-            return data.size()
-
-        return data.size(dim)
 
     @property
     @wraps(Tensor.size)
@@ -286,17 +332,6 @@ class LazyTensor(RunnableTensor):
 
     def torch(self) -> Tensor:
         return self.run()
-
-    @wraps(Tensor.numpy)
-    def numpy(self) -> ndarray:
-        return self.run().numpy()
-
-    @wraps(Tensor.tolist)
-    def tolist(self) -> List[Any] | int | float | bool:
-        return self.run().tolist()
-
-
-TensorLike = Union[Tensor, LazyTensor]
 
 
 @overload
@@ -407,8 +442,8 @@ def _min(input: TensorLike, *args: Any, **kwargs: Any) -> TensorLike | _ValIdx:
         return lazy_forward(torch.minimum, shapes.symmetric, input, other)
 
     return _ValIdx(
-        lazy_forward(torch.amin, shapes.reduce_dims, *args, **kwargs),
-        lazy_forward(torch.argmin, shapes.reduce_dims, *args, **kwargs),
+        lazy_forward(torch.amin, shapes.reduce_dims, input, *args, **kwargs),
+        lazy_forward(torch.argmin, shapes.reduce_dims, input, *args, **kwargs),
     )
 
 
@@ -441,13 +476,13 @@ def _max(input: TensorLike, *args: Any, **kwargs: Any) -> TensorLike | _ValIdx:
         return lazy_forward(torch.maximum, shapes.symmetric, input, other)
 
     return _ValIdx(
-        lazy_forward(torch.amax, shapes.reduce_dims, *args, **kwargs),
-        lazy_forward(torch.argmax, shapes.reduce_dims, *args, **kwargs),
+        lazy_forward(torch.amax, shapes.reduce_dims, input, *args, **kwargs),
+        lazy_forward(torch.argmax, shapes.reduce_dims, input, *args, **kwargs),
     )
 
 
 def _permute_function_shape(
-    input: Tuple[int, ...], dims: int | Tuple[int, ...], *args: Any, **kwargs: Any
+    input: TensorLike, dims: int | Tuple[int, ...], *args: Any, **kwargs: Any
 ) -> Tuple[int, ...]:
     if isinstance(dims, int):
         dims = (dims,)
@@ -455,19 +490,9 @@ def _permute_function_shape(
     return shapes.permute(input, *dims)
 
 
-def _t_shape(input: Tuple[int, ...], *args: Any, **kwargs: Any) -> Tuple[int, ...]:
+def _t_shape(input: TensorLike, *args: Any, **kwargs: Any) -> Tuple[int, ...]:
     shapes.mute_unused_args(*args, **kwargs)
     return shapes.tranpose(input, 0, 1)
-
-
-def will_not_implement(*args: Any, **kwargs: Any) -> NoReturn:
-    _ = args
-    _ = kwargs
-    raise NotImplementedError(
-        "Sorry, this function will not be implemented."
-        " "
-        "Because it causes confusion or is dangerous."
-    )
 
 
 @dataclass
@@ -475,13 +500,25 @@ class MethodFunction(Generic[T]):
     method: Dict[str, T]
     function: Dict[str, T]
 
+    @staticmethod
+    def _search(key: str, *dbs: Dict[str, T]) -> T | None:
+        for db in dbs:
+            if (value := db.get(key)) is not None:
+                return value
+        return None
+
+    def lookup(self, key: str, *dbs: Dict[str, T]) -> T | None:
+        if (result := self._search(key, *dbs)) is not None:
+            return result
+
+        fallback = key.lstrip("_")
+        return self._search(fallback, *dbs)
+
     def lookup_method(self, key: str) -> T | None:
-        if key in self.method:
-            return self.method[key]
-        return self.lookup_function(key)
+        return self.lookup(key, self.method, self.function)
 
     def lookup_function(self, key: str) -> T | None:
-        return self.function.get(key, None)
+        return self.lookup(key, self.function)
 
 
 CUSTOM_IMPLS = MethodFunction[Callable](
@@ -506,6 +543,7 @@ SHAPE_IMPLS = MethodFunction[ShapeFunction](
         "div": shapes.symmetric,
         "divide": shapes.symmetric,
         "true_divide": shapes.symmetric,
+        "floor": shapes.identity,
         "fmod": shapes.symmetric,
         "remainder": shapes.symmetric,
         "frac": shapes.identity,
@@ -535,6 +573,7 @@ SHAPE_IMPLS = MethodFunction[ShapeFunction](
         "le": shapes.symmetric,
         "less_equal": shapes.symmetric,
         "mean": shapes.reduce_dims,
+        "sum": shapes.reduce_dims,
         "std": shapes.scalar,
         "minimum": shapes.symmetric,
         "maximum": shapes.symmetric,
@@ -544,6 +583,7 @@ SHAPE_IMPLS = MethodFunction[ShapeFunction](
         "argmax": shapes.reduce_dims,
         "isclose": shapes.symmetric,
         "allclose": shapes.scalar,
+        "cat": shapes.cat,
         "t": _t_shape,
         "permute": _permute_function_shape,
         "transpose": shapes.tranpose,
@@ -561,6 +601,7 @@ SHAPE_IMPLS = MethodFunction[ShapeFunction](
         "atanh": shapes.identity,
         "sigmoid": shapes.identity,
         "hardsigmoid": shapes.identity,
+        "softmax": shapes.identity,
         "relu": shapes.identity,
         "relu6": shapes.identity,
         "leaky_relu": shapes.identity,
@@ -568,8 +609,24 @@ SHAPE_IMPLS = MethodFunction[ShapeFunction](
         "binary_cross_entropy_with_logits": shapes.scalar,
         "elu": shapes.identity,
         "gelu": shapes.identity,
+        "dropout": shapes.identity,
+        "batch_norm": shapes.identity,
+        "layer_norm": shapes.identity,
         "linear": shapes.linear,
+        "pad": shapes.pad,
+        "conv1d": shapes.conv,
+        "conv2d": shapes.conv,
+        "conv3d": shapes.conv,
+        "conv_transpose1d": shapes.conv_transpose,
+        "conv_transpose2d": shapes.conv_transpose,
+        "conv_transpose3d": shapes.conv_transpose,
+        "max_pool1d": shapes.maxpool,
+        "max_pool2d": shapes.maxpool,
+        "max_pool3d": shapes.maxpool,
+        "avg_pool1d": shapes.avgpool,
+        "avg_pool2d": shapes.avgpool,
+        "avg_pool3d": shapes.avgpool,
         # Functions that will not be implemented.
-        "__floordiv__": will_not_implement,
+        "__floordiv__": NeverImplementedError.raise_error,
     },
 )
