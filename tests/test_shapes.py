@@ -9,13 +9,17 @@ def test_compatibility() -> None:
     assert isinstance(shapes.identity, ShapeFunction)
     assert isinstance(shapes.symmetric, ShapeFunction)
     assert isinstance(shapes.reduce_dims, ShapeFunction)
-    assert isinstance(shapes.scalar, ShapeFunction)
     assert isinstance(shapes.permute, ShapeFunction)
     assert isinstance(shapes.tranpose, ShapeFunction)
     assert isinstance(shapes.matmul, ShapeFunction)
     assert isinstance(shapes.linear, ShapeFunction)
     assert isinstance(shapes.cat, ShapeFunction)
     assert isinstance(shapes.pad, ShapeFunction)
+    assert isinstance(shapes.conv, ShapeFunction)
+    assert isinstance(shapes.conv_transpose, ShapeFunction)
+    assert isinstance(shapes.pool, ShapeFunction)
+    assert isinstance(shapes.maxpool, ShapeFunction)
+    assert isinstance(shapes.avgpool, ShapeFunction)
 
 
 def test_identity() -> None:
@@ -59,8 +63,8 @@ def test_scalar() -> None:
     common.call(
         common.assert_equal,
         [
-            [shapes.scalar(torch.randn(5, 5, 2)), ()],
-            [shapes.scalar(torch.randn(7, 8)), ()],
+            [shapes.reduce_dims(torch.randn(5, 5, 2)), ()],
+            [shapes.reduce_dims(torch.randn(7, 8)), ()],
         ],
     )
 

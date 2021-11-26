@@ -184,7 +184,7 @@ def symmetric(
 
 def reduce_dims(
     input: TensorLike,
-    dim: int | Tuple[int, ...],
+    dim: int | Tuple[int, ...] | None = None,
     keepdim: bool = False,
     *args: Any,
     **kwargs: Any,
@@ -193,7 +193,9 @@ def reduce_dims(
 
     shapes = []
 
-    if isinstance(dim, int):
+    if dim is None:
+        dimensions = set(range(input.dim()))
+    elif isinstance(dim, int):
         dimensions = {dim}
     else:
         dimensions = set(dim)
@@ -210,14 +212,6 @@ def reduce_dims(
         assert len(shapes) == input.dim()
 
     return tuple(shapes)
-
-
-def scalar(input: TensorLike, *args: Any, **kwargs: Any) -> Tuple[int, ...]:
-    mute_unused_args(*args, **kwargs)
-
-    result = reduce_dims(input, dim=tuple(range(input.dim())))
-    assert result == ()
-    return result
 
 
 def permute(input: TensorLike, *dims: int, **kwargs: Any) -> Tuple[int, ...]:

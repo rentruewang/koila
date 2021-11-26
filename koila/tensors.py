@@ -100,11 +100,15 @@ class Evaluation(RunnableTensor):
         total_numel = self.numel()
 
         for arg in self.args:
-            if isinstance(arg, (Tensor, RunnableTensor)):
+            if isinstance(arg, RunnableTensor):
+                total_numel += arg.upstream_numel()
+            elif isinstance(arg, Tensor):
                 total_numel += arg.numel()
 
         for value in self.kwargs.values():
-            if isinstance(value, (Tensor, RunnableTensor)):
+            if isinstance(value, RunnableTensor):
+                total_numel += value.upstream_numel()
+            elif isinstance(value, Tensor):
                 total_numel += value.numel()
 
         return total_numel
@@ -431,7 +435,7 @@ def _min(input: TensorLike, other: TensorLike) -> TensorLike:
 @wraps(torch.min)
 def _min(input: TensorLike, *args: Any, **kwargs: Any) -> TensorLike | _ValIdx:
     if len(args) == len(kwargs) == 0:
-        return lazy_forward(torch.min, shapes.scalar, input)
+        return lazy_forward(torch.min, shapes.reduce_dims, input)
 
     if (
         len(args) == 1
@@ -465,7 +469,7 @@ def _max(input: TensorLike, other: TensorLike) -> TensorLike:
 @wraps(torch.max)
 def _max(input: TensorLike, *args: Any, **kwargs: Any) -> TensorLike | _ValIdx:
     if len(args) == len(kwargs) == 0:
-        return lazy_forward(torch.max, shapes.scalar, input)
+        return lazy_forward(torch.max, shapes.reduce_dims, input)
 
     if (
         len(args) == 1
@@ -574,7 +578,7 @@ SHAPE_IMPLS = MethodFunction[ShapeFunction](
         "less_equal": shapes.symmetric,
         "mean": shapes.reduce_dims,
         "sum": shapes.reduce_dims,
-        "std": shapes.scalar,
+        "std": shapes.reduce_dims,
         "minimum": shapes.symmetric,
         "maximum": shapes.symmetric,
         "amin": shapes.reduce_dims,
@@ -582,7 +586,7 @@ SHAPE_IMPLS = MethodFunction[ShapeFunction](
         "argmin": shapes.reduce_dims,
         "argmax": shapes.reduce_dims,
         "isclose": shapes.symmetric,
-        "allclose": shapes.scalar,
+        "allclose": shapes.reduce_dims,
         "cat": shapes.cat,
         "t": _t_shape,
         "permute": _permute_function_shape,
@@ -605,8 +609,8 @@ SHAPE_IMPLS = MethodFunction[ShapeFunction](
         "relu": shapes.identity,
         "relu6": shapes.identity,
         "leaky_relu": shapes.identity,
-        "binary_cross_entropy": shapes.scalar,
-        "binary_cross_entropy_with_logits": shapes.scalar,
+        "binary_cross_entropy": shapes.reduce_dims,
+        "binary_cross_entropy_with_logits": shapes.reduce_dims,
         "elu": shapes.identity,
         "gelu": shapes.identity,
         "dropout": shapes.identity,
