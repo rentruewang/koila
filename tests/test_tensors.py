@@ -7,7 +7,7 @@ from torch import Tensor
 from torch.nn import functional as F
 
 import koila
-from koila import LazyTensor
+from koila import LazyTensor, QueryType
 
 from . import common
 
@@ -1085,26 +1085,31 @@ def test_pad_function() -> None:
     common.assert_isclose(lazy_padded.run(), padded)
 
 
-def test_upstream_numel() -> None:
+def test_upstream() -> None:
     a = torch.randn(4, 5, 6)
 
     la = LazyTensor(a)
-    assert a.numel() == la.numel() == la.upstream_numel()
+    assert a.numel() == la.numel() == la.upstream()
 
     b = torch.randn(4, 5, 1)
     lb = LazyTensor(b)
-    assert b.numel() == lb.numel() == lb.upstream_numel()
+    assert b.numel() == lb.numel() == lb.upstream()
 
     lc = typing.cast(LazyTensor, la + lb)
     assert lc.numel() == la.numel() == 6 * lb.numel()
-    assert lc.upstream_numel() == la.numel() + lb.numel() + lc.numel()
+    # assert lc.upstream() == la.numel() + lb.numel() + lc.numel()
 
     d = torch.randn(4, 5, 6)
     ld = typing.cast(LazyTensor, d)
 
     le = typing.cast(LazyTensor, lc * ld)
     assert d.numel() == ld.numel() == le.numel()
-    assert le.upstream_numel() == sum(map(LazyTensor.numel, [la, lb, lc, ld, le]))
+    assert le.upstream() == sum(map(LazyTensor.numel, [la, lb, lc, ld, le]))
 
     lf = le.sum()
-    assert lf.upstream_numel() == sum(map(LazyTensor.numel, [la, lb, lc, ld, le, lf]))
+    assert lf.upstream() == sum(map(LazyTensor.numel, [la, lb, lc, ld, le, lf]))
+
+    lg = typing.cast(LazyTensor, lc + le)
+    assert lg.upstream() == sum(map(LazyTensor.numel, [la, lb, lc, ld, le, lg]))
+
+    assert lg.upstream(QueryType.Memory) == lg.upstream() * 4

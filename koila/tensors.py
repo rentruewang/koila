@@ -15,6 +15,7 @@ from typing import (
     NamedTuple,
     NoReturn,
     Sequence,
+    Set,
     Tuple,
     Type,
     TypeVar,
@@ -25,11 +26,13 @@ from typing import (
 import torch
 from rich.logging import RichHandler
 from torch import Tensor
+from torch import device as Device
+from torch import dtype as DType
 
-from . import shapes
+from . import runnables, shapes
 from .errors import NeverImplementedError, UnsupportedError
 from .runnables import Runnable, RunnableTensor, TensorLike
-from .shapes import Shape, ShapeFunction
+from .shapes import MetaData, Shape, ShapeFunction
 
 T = TypeVar("T")
 V = TypeVar("V", contravariant=True)
@@ -58,7 +61,8 @@ class LazyFunction(Generic[V]):
             return functools.partial(self, obj)
 
 
-@dataclass(init=False)
+@final
+@dataclass(init=False, frozen=True)
 class Evaluation(RunnableTensor):
     func: Callable[..., Tensor]
     shape: Shape
@@ -76,10 +80,14 @@ class Evaluation(RunnableTensor):
         *args: LazyTensor | Tensor | int | float | bool,
         **kwargs: LazyTensor | Tensor | int | float | bool,
     ):
-        self.func = func
-        self.shape = shape
-        self.args = args
-        self.kwargs = kwargs
+        object.__setattr__(self, "func", func)
+        object.__setattr__(self, "shape", shape)
+        object.__setattr__(self, "args", args)
+        object.__setattr__(self, "kwargs", kwargs)
+
+    def __hash__(self) -> int:
+        # Evaluations are unique.
+        return id(self)
 
     def run(self) -> Tensor:
         real_args = [run(arg) for arg in self.args]
@@ -97,30 +105,41 @@ class Evaluation(RunnableTensor):
         else:
             return shape
 
-    def upstream_numel(self) -> int:
-        total_numel = self.numel()
+    def dtype(self) -> DType:
+        return self.shape.metadata.dtype
+
+    def device(self) -> str | Device:
+        return self.shape.metadata.device
+
+    def metadata(self) -> MetaData:
+        return self.shape.metadata
+
+    def upstream_tensors(self, visited: Set[TensorLike]) -> None:
+        if self in visited:
+            return
 
         for arg in self.args:
             if isinstance(arg, RunnableTensor):
-                total_numel += arg.upstream_numel()
+                arg.upstream_tensors(visited)
             elif isinstance(arg, Tensor):
-                total_numel += arg.numel()
+                visited.add(arg)
 
         for value in self.kwargs.values():
             if isinstance(value, RunnableTensor):
-                total_numel += value.upstream_numel()
+                value.upstream_tensors(visited)
             elif isinstance(value, Tensor):
-                total_numel += value.numel()
+                visited.add(value)
 
-        return total_numel
+        assert not self in visited
+        visited.add(self)
 
 
 @final
 @dataclass
 class LazyTensor(RunnableTensor):
-    data: Tensor | RunnableTensor
+    data: TensorLike
 
-    def __init__(self, data: Tensor | LazyTensor | RunnableTensor) -> None:
+    def __init__(self, data: Tensor | LazyTensor | Evaluation) -> None:
         if isinstance(data, LazyTensor):
             self.data = data.data
         else:
@@ -142,11 +161,27 @@ class LazyTensor(RunnableTensor):
 
         return data.size(dim)
 
-    def upstream_numel(self) -> int:
-        if isinstance(self.data, Tensor):
-            return self.data.numel()
+    def dtype(self) -> DType:
+        return runnables.dtype(self.data)
 
-        return self.data.upstream_numel()
+    def device(self) -> str | Device:
+        return runnables.device(self.data)
+
+    def metadata(self) -> MetaData:
+        return runnables.metadata(self.data)
+
+    def upstream_tensors(self, visited: Set[TensorLike]) -> None:
+        data = self.data
+
+        if data in visited:
+            return
+
+        if isinstance(data, Tensor):
+            visited.add(data)
+        else:
+            data.upstream_tensors(visited)
+
+        assert data in visited
 
     # Magic methods
 
@@ -172,7 +207,7 @@ class LazyTensor(RunnableTensor):
         return lazy_forward(Tensor.__add__, shapes.symmetric, self, other)
 
     def __radd__(self, other: TensorLike) -> TensorLike:
-        return lazy_forward(Tensor.__add__, shapes.symmetric, other, self)  # type: ignore
+        return lazy_forward(Tensor.__add__, shapes.symmetric, other, self)
 
     def __sub__(self, other: TensorLike) -> TensorLike:
         return lazy_forward(Tensor.__sub__, shapes.symmetric, self, other)
@@ -224,7 +259,8 @@ class LazyTensor(RunnableTensor):
         return lazy_forward(Tensor.__abs__, shapes.identity, self)
 
     def __hash__(self) -> int:
-        return id(self.data)  # type: ignore
+        # LazyTensors are not unique. They are defined by their data.
+        return id(self.data)
 
     def __matmul__(self, other: TensorLike) -> TensorLike:
         return lazy_forward(Tensor.__matmul__, shapes.matmul, self, other)
@@ -623,6 +659,7 @@ SHAPE_IMPLS = MethodFunction[ShapeFunction](
         "batch_norm": shapes.identity,
         "layer_norm": shapes.identity,
         "linear": shapes.linear,
+        "embedding": shapes.embedding,
         "pad": shapes.pad,
         "conv1d": shapes.conv,
         "conv2d": shapes.conv,

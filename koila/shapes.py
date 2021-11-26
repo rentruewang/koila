@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+from . import constants
 import logging
 import math
 from abc import abstractmethod
@@ -9,8 +9,9 @@ from typing import Any, List, Protocol, Sequence, Tuple, overload, runtime_check
 from rich.logging import RichHandler
 from torch.functional import Tensor
 
+from . import runnables
 from .errors import UnsupportedError
-from .runnables import TensorLike
+from .runnables import MetaData, TensorLike
 
 logger = logging.getLogger(__name__)
 logger.addHandler(RichHandler())
@@ -19,9 +20,11 @@ logger.addHandler(RichHandler())
 @dataclass(init=False, frozen=True)
 class Shape:
     value: Tuple[int, ...]
+    metadata: MetaData
 
-    def __init__(self, value: Sequence[int]) -> None:
+    def __init__(self, value: Sequence[int], metadata: MetaData) -> None:
         object.__setattr__(self, "value", tuple(value))
+        object.__setattr__(self, "metadata", metadata)
 
     def __iter__(self):
         return iter(self.value)
@@ -57,6 +60,23 @@ class ShapeFunction(Protocol):
 def mute_unused_args(*args: Any, **kwargs: Any) -> None:
     del args
     del kwargs
+
+
+def same(*tensors: TensorLike) -> MetaData:
+    assert len(tensors) > 0
+    if len(tensors) == 1:
+        runnables.dtype(tensors[0])
+
+    dtypes = [runnables.dtype(t) for t in tensors]
+
+    max_dtype = max(dtypes, key=lambda dtype: constants.MEMORY_BYTES[dtype])
+
+    devices = [str(runnables.device(t)) for t in tensors]
+
+    if len(set(devices)) != 1:
+        raise ValueError(f"Expected tensors to be on the same device, got {devices}.")
+
+    return MetaData(max_dtype, devices[0])
 
 
 def compatible_dim(input: int, other: int, broadcast: bool = True) -> bool:
@@ -199,7 +219,7 @@ def matmul_shape(input: Tuple[int, ...], other: Tuple[int, ...]) -> Tuple[int, .
 def identity(input: TensorLike, *args: Any, **kwargs: Any) -> Shape:
     mute_unused_args(*args, **kwargs)
 
-    return Shape(input.size())
+    return Shape(input.size(), same(input))
 
 
 def symmetric(input: TensorLike, other: TensorLike, *args: Any, **kwargs: Any) -> Shape:
@@ -210,7 +230,7 @@ def symmetric(input: TensorLike, other: TensorLike, *args: Any, **kwargs: Any) -
     if shape is None:
         raise ValueError
 
-    return Shape(shape)
+    return Shape(shape, same(input, other))
 
 
 def reduce_dims(
@@ -242,13 +262,13 @@ def reduce_dims(
     if keepdim:
         assert len(shapes) == input.dim()
 
-    return Shape(shapes)
+    return Shape(shapes, same(input))
 
 
 def permute(input: TensorLike, *dims: int, **kwargs: Any) -> Shape:
     mute_unused_args(**kwargs)
 
-    return Shape(permute_shape(input.size(), *dims))
+    return Shape(permute_shape(input.size(), *dims), same(input))
 
 
 def tranpose(
@@ -256,7 +276,7 @@ def tranpose(
 ) -> Shape:
     mute_unused_args(*args, **kwargs)
 
-    return Shape(tranpose_shape(input.size(), dim0, dim1))
+    return Shape(tranpose_shape(input.size(), dim0, dim1), same(input))
 
 
 def select(
@@ -288,13 +308,22 @@ def select(
     else:
         sliced_idx = ()
 
-    return Shape(shape[:dim] + sliced_idx + shape[dim + 1 :])
+    return Shape(shape[:dim] + sliced_idx + shape[dim + 1 :], same(input))
+
+
+def embedding(
+    input: TensorLike, weight: TensorLike, *args: Any, **kwargs: Any
+) -> Shape:
+    mute_unused_args(*args, **kwargs)
+
+    shape = input.size()
+    return Shape((*shape, weight.size(-1)), same(input))
 
 
 def matmul(input: TensorLike, other: TensorLike, *args: Any, **kwargs: Any) -> Shape:
     mute_unused_args(*args, **kwargs)
 
-    return Shape(matmul_shape(input.size(), other.size()))
+    return Shape(matmul_shape(input.size(), other.size()), same(input, other))
 
 
 def linear(
@@ -314,7 +343,7 @@ def linear(
     if result is None:
         raise ValueError
 
-    return Shape(result)
+    return Shape(result, same(input, weight))
 
 
 def cat(
@@ -336,10 +365,12 @@ def cat(
             )
 
     concat_size = sum(t[dim] for t in shapes)
-    return Shape([*result_size[:dim], concat_size, *result_size[dim:]])
+    return Shape([*result_size[:dim], concat_size, *result_size[dim:]], same(*tensors))
 
 
 def pad(input: TensorLike, pad: List[int], *args: Any, **kwargs: Any) -> Shape:
+    mute_unused_args(*args, **kwargs)
+
     shapes = input.size()
 
     if len(pad) % 2 == 1:
@@ -357,7 +388,7 @@ def pad(input: TensorLike, pad: List[int], *args: Any, **kwargs: Any) -> Shape:
 
     assert len(pad0) == len(pad1) == len(shapes), [pad0, pad1, shapes]
 
-    return Shape([s + p0 + p1 for (s, p0, p1) in zip(shapes, pad0, pad1)])
+    return Shape([s + p0 + p1 for (s, p0, p1) in zip(shapes, pad0, pad1)], same(input))
 
 
 def _int_to_tuple(value: int | Tuple[int, ...], length: int) -> Tuple[int, ...]:
@@ -404,7 +435,7 @@ def conv(
         for (dim, pad, dil, ker, st) in zip(dims, padding, dilation, kernels, stride)
     ]
 
-    return Shape((batch, out_chan, *out_dims))
+    return Shape((batch, out_chan, *out_dims), same(input, weight))
 
 
 def conv_transpose(
@@ -443,7 +474,7 @@ def conv_transpose(
         )
     ]
 
-    return Shape((batch, out_chan, *out_dims))
+    return Shape((batch, out_chan, *out_dims), same(input, weight))
 
 
 def pool(
@@ -470,7 +501,7 @@ def pool(
         )
     ]
 
-    return Shape((batch, chan, *out_dims))
+    return Shape((batch, chan, *out_dims), same(input))
 
 
 def maxpool(

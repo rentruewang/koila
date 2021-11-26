@@ -14,6 +14,7 @@ from torch.nn import (
     ConvTranspose2d,
     ConvTranspose3d,
     Dropout,
+    Embedding,
     LayerNorm,
     LeakyReLU,
     Linear,
@@ -407,4 +408,22 @@ def test_avgpool_layer() -> None:
     assert not isinstance(lo, Tensor)
     assert isinstance(lo, LazyTensor)
     assert lo.shape == out.shape
+    common.assert_isclose(lo.run(), out)
+
+
+def test_embedding_layer() -> None:
+    arr = torch.randint(0, 11, [5])
+    la = koila.lazy(arr)
+    layer = Embedding(num_embeddings=11, embedding_dim=13)
+
+    out = layer(arr)
+    assert out.shape == (5, 13)
+    assert not isinstance(out, LazyTensor)
+    assert isinstance(out, Tensor)
+
+    assert isinstance(la, LazyTensor)
+    lo = layer(la)
+    assert lo.shape == (5, 13)
+    assert not isinstance(lo, Tensor)
+    assert isinstance(lo, LazyTensor)
     common.assert_isclose(lo.run(), out)
