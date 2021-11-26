@@ -1,17 +1,10 @@
+from __future__ import annotations
+
 from torch import cuda
 
+from . import constants
+
 NVSMI = None
-UNITS = {
-    "b": 1,
-    "kb": 10 ** 3,
-    "kib": 2 ** 10,
-    "mb": 10 ** 6,
-    "mib": 2 ** 20,
-    "gb": 10 ** 9,
-    "gib": 2 ** 30,
-    "tb": 10 ** 4,
-    "tib": 2 ** 40,
-}
 
 
 def nvidia_free_memory() -> int:
@@ -26,11 +19,10 @@ def nvidia_free_memory() -> int:
     """
 
     global NVSMI
-    if NVSMI is None and cuda.is_available():
+    if NVSMI is None:
         from pynvml.smi import nvidia_smi
 
         NVSMI = nvidia_smi.getInstance()
-        return 0
 
     assert NVSMI is not None
     query = NVSMI.DeviceQuery("memory.free")
@@ -38,7 +30,7 @@ def nvidia_free_memory() -> int:
     # Only works on one GPU as of now.
     gpu = query["gpu"][0]
 
-    unit = UNITS[gpu["unit"].lower()]
+    unit = constants.UNITS[gpu["unit"].lower()]
     free = gpu["free"]
 
     return free * unit
@@ -69,14 +61,17 @@ def torch_free_memory() -> int:
     return unused_memory
 
 
-def free_memory() -> int:
+def free_memory() -> int | None:
     """
     The amount of free GPU memory that can be used.
 
     Returns
     -------
 
-    Unused GPU memory.
+    Unused GPU memory, or None if no GPUs are available.
     """
 
-    return nvidia_free_memory() + torch_free_memory()
+    if cuda.is_available():
+        return nvidia_free_memory() + torch_free_memory()
+    else:
+        return None
