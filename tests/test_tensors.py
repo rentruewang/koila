@@ -1024,15 +1024,25 @@ def test_pad_function() -> None:
 
 
 def test_upstream_numel() -> None:
-    input = torch.randn(4, 5, 6)
+    a = torch.randn(4, 5, 6)
 
-    la = LazyTensor(input)
-    assert input.numel() == la.numel() == la.upstream_numel()
+    la = LazyTensor(a)
+    assert a.numel() == la.numel() == la.upstream_numel()
 
-    other = torch.randn(4, 5, 1)
-    lb = LazyTensor(other)
-    assert other.numel() == lb.numel() == lb.upstream_numel()
+    b = torch.randn(4, 5, 1)
+    lb = LazyTensor(b)
+    assert b.numel() == lb.numel() == lb.upstream_numel()
 
     lc = typing.cast(LazyTensor, la + lb)
     assert lc.numel() == la.numel() == 6 * lb.numel()
     assert lc.upstream_numel() == la.numel() + lb.numel() + lc.numel()
+
+    d = torch.randn(4, 5, 6)
+    ld = typing.cast(LazyTensor, d)
+
+    le = typing.cast(LazyTensor, lc * ld)
+    assert d.numel() == ld.numel() == le.numel()
+    assert le.upstream_numel() == sum(map(LazyTensor.numel, [la, lb, lc, ld, le]))
+
+    lf = le.sum()
+    assert lf.upstream_numel() == sum(map(LazyTensor.numel, [la, lb, lc, ld, le, lf]))
