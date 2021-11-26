@@ -29,7 +29,7 @@ from torch import Tensor
 from . import shapes
 from .errors import NeverImplementedError, UnsupportedError
 from .runnables import Runnable, RunnableTensor, TensorLike
-from .shapes import ShapeFunction
+from .shapes import Shape, ShapeFunction
 
 T = TypeVar("T")
 V = TypeVar("V", contravariant=True)
@@ -61,7 +61,7 @@ class LazyFunction(Generic[V]):
 @dataclass(init=False)
 class Evaluation(RunnableTensor):
     func: Callable[..., Tensor]
-    shape: Tuple[int, ...]
+    shape: Shape
     args: Tuple[LazyTensor | Tensor | int | float | bool, ...] = dcls.field(
         default_factory=tuple
     )
@@ -72,7 +72,7 @@ class Evaluation(RunnableTensor):
     def __init__(
         self,
         func: Callable[..., Tensor],
-        shape: Tuple[int, ...],
+        shape: Shape,
         *args: LazyTensor | Tensor | int | float | bool,
         **kwargs: LazyTensor | Tensor | int | float | bool,
     ):
@@ -91,10 +91,11 @@ class Evaluation(RunnableTensor):
         return result
 
     def _size_impl(self, dim: int | None = None) -> int | Tuple[int, ...]:
+        shape = self.shape.value
         if dim is not None:
-            return self.shape[dim]
+            return shape[dim]
         else:
-            return self.shape
+            return shape
 
     def upstream_numel(self) -> int:
         total_numel = self.numel()
@@ -249,17 +250,17 @@ class LazyTensor(RunnableTensor):
     def __le__(self, other: TensorLike) -> TensorLike:
         return lazy_forward(Tensor.__le__, shapes.symmetric, self, other)
 
+    def __len__(self) -> int:
+        return self.size(0)
+
     def __getitem__(
         self, index: int | slice | Tensor | List[Any] | Tuple[Any] | None
-    ) -> TensorLike:
-        if isinstance(self.data, Tensor):
-            return self.data[index]
-
-        if isinstance(index, int):
-            return self.data.run()[index]
-
-        raise NotImplementedError
-        # return lazy_forward(Tensor.__getitem__, shapes.getitem, self, index)
+    ) -> Tensor:
+        if isinstance(self.data, RunnableTensor):
+            data = self.data.run()
+        else:
+            data = self.data
+        return data[index]
 
     def __setitem__(
         self,
@@ -487,15 +488,18 @@ def _max(input: TensorLike, *args: Any, **kwargs: Any) -> TensorLike | _ValIdx:
 
 def _permute_function_shape(
     input: TensorLike, dims: int | Tuple[int, ...], *args: Any, **kwargs: Any
-) -> Tuple[int, ...]:
+) -> Shape:
+    shapes.mute_unused_args(*args, **kwargs)
+
     if isinstance(dims, int):
         dims = (dims,)
 
     return shapes.permute(input, *dims)
 
 
-def _t_shape(input: TensorLike, *args: Any, **kwargs: Any) -> Tuple[int, ...]:
+def _t_shape(input: TensorLike, *args: Any, **kwargs: Any) -> Shape:
     shapes.mute_unused_args(*args, **kwargs)
+
     return shapes.tranpose(input, 0, 1)
 
 
@@ -591,6 +595,8 @@ SHAPE_IMPLS = MethodFunction[ShapeFunction](
         "t": _t_shape,
         "permute": _permute_function_shape,
         "transpose": shapes.tranpose,
+        "select": shapes.select,
+        "index_select": shapes.select,
         "sin": shapes.identity,
         "cos": shapes.identity,
         "tan": shapes.identity,

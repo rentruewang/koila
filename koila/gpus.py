@@ -1,7 +1,6 @@
-from pynvml.smi import nvidia_smi
 from torch import cuda
 
-NVSMI = nvidia_smi.getInstance()
+NVSMI = None
 UNITS = {
     "b": 1,
     "kb": 10 ** 3,
@@ -26,6 +25,14 @@ def nvidia_free_memory() -> int:
     Free GPU memory in terms of bytes.
     """
 
+    global NVSMI
+    if NVSMI is None and cuda.is_available():
+        from pynvml.smi import nvidia_smi
+
+        NVSMI = nvidia_smi.getInstance()
+        return 0
+
+    assert NVSMI is not None
     query = NVSMI.DeviceQuery("memory.free")
 
     # Only works on one GPU as of now.
@@ -48,6 +55,9 @@ def torch_free_memory() -> int:
     Reserved GPU memory in terms of bytes.
     """
 
+    if not cuda.is_available():
+        return 0
+
     # Only works on one GPU as of now.
     stats = cuda.memory_stats(0)
 
@@ -61,7 +71,7 @@ def torch_free_memory() -> int:
 
 def free_memory() -> int:
     """
-    The amount of free memory that can be used.
+    The amount of free GPU memory that can be used.
 
     Returns
     -------

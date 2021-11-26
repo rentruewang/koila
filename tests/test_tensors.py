@@ -683,6 +683,68 @@ def test_transpose_method() -> None:
     assert la.transpose(0, 3).shape == (5, 3, 4, 2, 6)
 
 
+def test_select_method() -> None:
+    arr = torch.randn(3, 4, 5)
+    sel = arr.select(1, 2)
+    assert isinstance(sel, Tensor)
+    assert not isinstance(sel, LazyTensor)
+
+    la = LazyTensor(arr)
+    lsel = la.select(1, 2)
+
+    assert not isinstance(lsel, Tensor)
+    assert isinstance(lsel, LazyTensor)
+    assert sel.size() == lsel.size() == (3, 5)
+    common.assert_isclose(lsel.run(), sel)
+
+
+def test_select_function() -> None:
+    arr = torch.randn(3, 4, 5)
+    sel = torch.select(arr, 1, 2)
+    assert isinstance(sel, Tensor)
+    assert not isinstance(sel, LazyTensor)
+
+    la = typing.cast(Tensor, LazyTensor(arr))
+    lsel = torch.select(la, 1, 2)
+
+    assert not isinstance(lsel, Tensor)
+    assert isinstance(lsel, LazyTensor)
+    assert sel.size() == lsel.size() == (3, 5)
+    common.assert_isclose(lsel.run(), sel)
+
+
+def test_index_select_method() -> None:
+    arr = torch.randn(3, 4, 5)
+    idx = torch.tensor([1, 2, 3])
+    sel = arr.index_select(1, idx)
+    assert isinstance(sel, Tensor)
+    assert not isinstance(sel, LazyTensor)
+
+    la = LazyTensor(arr)
+    lsel = la.index_select(1, idx)
+
+    assert not isinstance(lsel, Tensor)
+    assert isinstance(lsel, LazyTensor)
+    assert sel.size() == lsel.size() == (3, 3, 5)
+    common.assert_isclose(lsel.run(), sel)
+
+
+def test_index_select_function() -> None:
+    arr = torch.randn(3, 4, 5)
+    idx = torch.tensor([1, 2, 3])
+    sel = torch.index_select(arr, 1, idx)
+    assert isinstance(sel, Tensor)
+    assert not isinstance(sel, LazyTensor)
+
+    la = typing.cast(Tensor, LazyTensor(arr))
+    lsel = torch.index_select(la, 1, idx)
+
+    assert not isinstance(lsel, Tensor)
+    assert isinstance(lsel, LazyTensor)
+    assert sel.size() == lsel.size() == (3, 3, 5)
+    common.assert_isclose(lsel.run(), sel)
+
+
 def test_numel_method() -> None:
     arr = torch.randn(2, 3, 4, 5, 6)
     la = typing.cast(Tensor, LazyTensor(arr))
