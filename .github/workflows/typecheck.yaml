@@ -1,4 +1,4 @@
-name: Type Check
+name: Type Checking
 on: [push]
 jobs:
   type-check:

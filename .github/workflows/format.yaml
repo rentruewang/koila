@@ -1,4 +1,4 @@
-name: Format
+name: Formatting
 on: [push]
 jobs:
   format-all:

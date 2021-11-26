@@ -1,11 +1,21 @@
 from __future__ import annotations
+from dataclasses import dataclass
 
 import logging
 import math
 from abc import abstractmethod
-from typing import Any, List, Protocol, Sequence, Tuple, runtime_checkable
+from typing import (
+    Any,
+    List,
+    Protocol,
+    Sequence,
+    Tuple,
+    overload,
+    runtime_checkable,
+)
 
 from rich.logging import RichHandler
+from torch.functional import Tensor
 
 from .errors import UnsupportedError
 from .runnables import TensorLike
@@ -14,10 +24,41 @@ logger = logging.getLogger(__name__)
 logger.addHandler(RichHandler())
 
 
+@dataclass(init=False, frozen=True)
+class Shape:
+    value: Tuple[int, ...]
+
+    def __init__(self, value: Sequence[int]) -> None:
+        object.__setattr__(self, "value", tuple(value))
+
+    def __iter__(self):
+        return iter(self.value)
+
+    @overload
+    def __getitem__(self, index: int) -> int:
+        ...
+
+    @overload
+    def __getitem__(self, index: slice) -> Tuple[int, ...]:
+        ...
+
+    def __getitem__(self, index: int | slice) -> int | Tuple[int, ...]:
+        return self.value[index]
+
+    def __eq__(self, other: Any) -> bool:
+        if isinstance(other, Shape):
+            return self == other
+
+        if isinstance(other, Tuple):
+            return self.value == other
+
+        return False
+
+
 @runtime_checkable
 class ShapeFunction(Protocol):
     @abstractmethod
-    def __call__(self, *args: Any, **kwargs: Any) -> Tuple[int, ...]:
+    def __call__(self, *args: Any, **kwargs: Any) -> Shape:
         ...
 
 
@@ -163,15 +204,13 @@ def matmul_shape(input: Tuple[int, ...], other: Tuple[int, ...]) -> Tuple[int, .
     return tuple(shapes)
 
 
-def identity(input: TensorLike, *args: Any, **kwargs: Any) -> Tuple[int, ...]:
+def identity(input: TensorLike, *args: Any, **kwargs: Any) -> Shape:
     mute_unused_args(*args, **kwargs)
 
-    return input.size()
+    return Shape(input.size())
 
 
-def symmetric(
-    input: TensorLike, other: TensorLike, *args: Any, **kwargs: Any
-) -> Tuple[int, ...]:
+def symmetric(input: TensorLike, other: TensorLike, *args: Any, **kwargs: Any) -> Shape:
     mute_unused_args(*args, **kwargs)
 
     shape = coerce_shape(input.size(), other.size(), broadcast=True, scalars=True)
@@ -179,7 +218,7 @@ def symmetric(
     if shape is None:
         raise ValueError
 
-    return shape
+    return Shape(shape)
 
 
 def reduce_dims(
@@ -188,7 +227,7 @@ def reduce_dims(
     keepdim: bool = False,
     *args: Any,
     **kwargs: Any,
-) -> Tuple[int, ...]:
+) -> Shape:
     mute_unused_args(*args, **kwargs)
 
     shapes = []
@@ -211,29 +250,59 @@ def reduce_dims(
     if keepdim:
         assert len(shapes) == input.dim()
 
-    return tuple(shapes)
+    return Shape(shapes)
 
 
-def permute(input: TensorLike, *dims: int, **kwargs: Any) -> Tuple[int, ...]:
+def permute(input: TensorLike, *dims: int, **kwargs: Any) -> Shape:
     mute_unused_args(**kwargs)
 
-    return permute_shape(input.size(), *dims)
+    return Shape(permute_shape(input.size(), *dims))
 
 
 def tranpose(
     input: TensorLike, dim0: int, dim1: int, *args: Any, **kwargs: Any
-) -> Tuple[int, ...]:
+) -> Shape:
     mute_unused_args(*args, **kwargs)
 
-    return tranpose_shape(input.size(), dim0, dim1)
+    return Shape(tranpose_shape(input.size(), dim0, dim1))
 
 
-def matmul(
-    input: TensorLike, other: TensorLike, *args: Any, **kwargs: Any
-) -> Tuple[int, ...]:
+def select(
+    input: TensorLike,
+    dim: int | ... | None,
+    index: int | Tensor,
+    *args: Any,
+    **kwargs: Any,
+) -> Shape:
     mute_unused_args(*args, **kwargs)
 
-    return matmul_shape(input.size(), other.size())
+    shape = input.size()
+
+    if dim is ...:
+        dim = -1
+
+    if dim is None:
+        dim = 0
+        shape = (1,) + shape
+
+    if not -len(shape) <= dim < len(shape):
+        raise IndexError
+
+    dim %= len(shape)
+    assert isinstance(dim, int)
+
+    if isinstance(index, Tensor):
+        sliced_idx = (len(index),)
+    else:
+        sliced_idx = ()
+
+    return Shape(shape[:dim] + sliced_idx + shape[dim + 1 :])
+
+
+def matmul(input: TensorLike, other: TensorLike, *args: Any, **kwargs: Any) -> Shape:
+    mute_unused_args(*args, **kwargs)
+
+    return Shape(matmul_shape(input.size(), other.size()))
 
 
 def linear(
@@ -242,7 +311,7 @@ def linear(
     bias: TensorLike | None = None,
     *args: Any,
     **kwargs: Any,
-) -> Tuple[int, ...]:
+) -> Shape:
     mute_unused_args(*args, **kwargs)
 
     result = matmul_shape(input.size(), tranpose_shape(weight.size(), -1, -2))
@@ -253,12 +322,12 @@ def linear(
     if result is None:
         raise ValueError
 
-    return result
+    return Shape(result)
 
 
 def cat(
     tensors: Sequence[TensorLike], dim: int = 0, *args: Any, **kwargs: Any
-) -> Tuple[int, ...]:
+) -> Shape:
     mute_unused_args(*args, **kwargs)
 
     if len(tensors) == 0:
@@ -275,12 +344,10 @@ def cat(
             )
 
     concat_size = sum(t[dim] for t in shapes)
-    return (*result_size[:dim], concat_size, *result_size[dim:])
+    return Shape([*result_size[:dim], concat_size, *result_size[dim:]])
 
 
-def pad(
-    input: TensorLike, pad: List[int], *args: Any, **kwargs: Any
-) -> Tuple[int, ...]:
+def pad(input: TensorLike, pad: List[int], *args: Any, **kwargs: Any) -> Shape:
     shapes = input.size()
 
     if len(pad) % 2 == 1:
@@ -298,7 +365,7 @@ def pad(
 
     assert len(pad0) == len(pad1) == len(shapes), [pad0, pad1, shapes]
 
-    return tuple(s + p0 + p1 for (s, p0, p1) in zip(shapes, pad0, pad1))
+    return Shape([s + p0 + p1 for (s, p0, p1) in zip(shapes, pad0, pad1)])
 
 
 def _int_to_tuple(value: int | Tuple[int, ...], length: int) -> Tuple[int, ...]:
@@ -320,7 +387,7 @@ def conv(
     groups: int = 1,
     *args: Any,
     **kwargs: Any,
-) -> Tuple[int, ...]:
+) -> Shape:
     mute_unused_args(groups, *args, **kwargs)
 
     (batch, chan, *dims) = input.size()
@@ -345,7 +412,7 @@ def conv(
         for (dim, pad, dil, ker, st) in zip(dims, padding, dilation, kernels, stride)
     ]
 
-    return (batch, out_chan, *out_dims)
+    return Shape((batch, out_chan, *out_dims))
 
 
 def conv_transpose(
@@ -359,7 +426,7 @@ def conv_transpose(
     dilation: int | Tuple[int, ...] = 1,
     *args: Any,
     **kwargs: Any,
-) -> Tuple[int, ...]:
+) -> Shape:
     mute_unused_args(groups, *args, **kwargs)
 
     (batch, chan, *dims) = input.size()
@@ -384,7 +451,7 @@ def conv_transpose(
         )
     ]
 
-    return (batch, out_chan, *out_dims)
+    return Shape((batch, out_chan, *out_dims))
 
 
 def pool(
@@ -395,7 +462,7 @@ def pool(
     padding: int | Tuple[int, ...] = 0,
     dilation: int | Tuple[int, ...] = 1,
     ceil_mode: bool = False,
-) -> Tuple[int, ...]:
+) -> Shape:
     (batch, chan, *dims) = input.size()
 
     kernel_size = _int_to_tuple(kernel_size, len(dims))
@@ -411,7 +478,7 @@ def pool(
         )
     ]
 
-    return (batch, chan, *out_dims)
+    return Shape((batch, chan, *out_dims))
 
 
 def maxpool(
@@ -424,7 +491,7 @@ def maxpool(
     return_indices: bool = False,
     *args: Any,
     **kwargs: Any,
-) -> Tuple[int, ...]:
+) -> Shape:
     mute_unused_args(*args, **kwargs)
 
     if return_indices:
@@ -448,7 +515,7 @@ def avgpool(
     ceil_mode: bool = False,
     *args: Any,
     **kwargs: Any,
-) -> Tuple[int, ...]:
+) -> Shape:
     mute_unused_args(*args, **kwargs)
 
     return pool(
