@@ -1,18 +1,10 @@
 from __future__ import annotations
-from dataclasses import dataclass
 
 import logging
 import math
 from abc import abstractmethod
-from typing import (
-    Any,
-    List,
-    Protocol,
-    Sequence,
-    Tuple,
-    overload,
-    runtime_checkable,
-)
+from dataclasses import dataclass
+from typing import Any, List, Protocol, Sequence, Tuple, overload, runtime_checkable
 
 from rich.logging import RichHandler
 from torch.functional import Tensor
