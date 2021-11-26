@@ -1,5 +1,5 @@
 from __future__ import annotations
-from . import constants
+
 import logging
 import math
 from abc import abstractmethod
@@ -9,7 +9,7 @@ from typing import Any, List, Protocol, Sequence, Tuple, overload, runtime_check
 from rich.logging import RichHandler
 from torch.functional import Tensor
 
-from . import runnables
+from . import constants, runnables
 from .errors import UnsupportedError
 from .runnables import MetaData, TensorLike
 
