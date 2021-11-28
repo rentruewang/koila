@@ -15,6 +15,7 @@ from typing import (
     NamedTuple,
     NoReturn,
     Sequence,
+    Set,
     Tuple,
     Type,
     TypeVar,
@@ -28,30 +29,28 @@ from torch import Tensor
 from torch import device as Device
 from torch import dtype as DType
 
-from . import interfaces, shapes
-from .errors import NeverImplementedError, UnsupportedError
+from . import interfaces, prepasses
+from .errors import UnsupportedError
 from .interfaces import Runnable, RunnableTensor, TensorLike
-from .partials import PartialInfo
-from .shapes import MetaData, Shape, ShapeFunction
+from .prepasses import PrePass, PrePassFunc
 
 T = TypeVar("T")
 V = TypeVar("V", contravariant=True)
 
 logger = logging.getLogger(__name__)
 logger.addHandler(RichHandler())
-logger.setLevel(logging.WARNING)
 
 
 @dataclass(frozen=True)
 class LazyFunction(Generic[V]):
     func: Callable[..., Tensor]
-    shape_func: ShapeFunction
+    shape_func: PrePassFunc
 
     def __call__(self, *args: Any, **kwargs: Any) -> LazyTensor:
         lazy_args = tuple(lazy(arg) for arg in args)
         lazy_kwargs = dict((k, lazy(v)) for (k, v) in kwargs.items())
         shape = self.shape_func(*args, **kwargs)
-        return LazyTensor(Evaluation(self.func, shape, None, *lazy_args, **lazy_kwargs))
+        return LazyTensor(Evaluation(self.func, shape, *lazy_args, **lazy_kwargs))
 
     def __get__(self, obj: V, objtype: Type[V]) -> Callable[..., LazyTensor]:
         assert isinstance(obj, objtype), [type(obj), objtype]
@@ -65,8 +64,7 @@ class LazyFunction(Generic[V]):
 @dataclass(init=False)
 class Evaluation(RunnableTensor):
     func: Callable[..., Tensor]
-    shape: Shape
-    callback: Callable[[Tensor], Tensor] | None = None
+    shape: PrePass
     args: Tuple[LazyTensor | Tensor | int | float | bool, ...] = dcls.field(
         default_factory=tuple
     )
@@ -77,14 +75,12 @@ class Evaluation(RunnableTensor):
     def __init__(
         self,
         func: Callable[..., Tensor],
-        shape: Shape,
-        callback: Callable[[Tensor], Tensor] | None,
+        prepass: PrePass,
         *args: LazyTensor | Tensor | int | float | bool,
         **kwargs: LazyTensor | Tensor | int | float | bool,
     ) -> None:
         self.func = func
-        self.shape = shape
-        self.callback = callback
+        self.prepass = prepass
         self.args = args
         self.kwargs = kwargs
 
@@ -92,43 +88,65 @@ class Evaluation(RunnableTensor):
         # Evaluations are unique.
         return id(self)
 
-    def run(self, partial: PartialInfo | None = None) -> Tensor:
-        if partial is None:
-            real_args = [run(arg) for arg in self.args]
-            real_kwargs = {k: run(v) for (k, v) in self.kwargs.items()}
-        else:
-            real_args = [run(arg, partial) for arg in self.args]
-            real_kwargs = {k: run(v, partial) for (k, v) in self.kwargs.items()}
+    def _run(self) -> Tensor:
+        real_args = [run(arg) for arg in self.args]
+        real_kwargs = {k: run(v) for (k, v) in self.kwargs.items()}
 
         result = self.func(*real_args, **real_kwargs)
-
-        if partial is not None:
-            if self.callback is None:
-                raise UnsupportedError("Cannot safely parallelize.")
-            result = self.callback(result)
-
-        assert self.shape == result.shape, [self.shape, result.shape]
+        assert self.prepass.shape == result.shape, [self.prepass, result.shape]
 
         return result
 
+    run = _run
+
+    def visit(self, nodes: Set[TensorLike]) -> None:
+        if self in nodes:
+            return
+
+        for arg in self.args:
+            if isinstance(arg, Tensor):
+                nodes.add(arg)
+            elif isinstance(arg, RunnableTensor):
+                arg.visit(nodes)
+
+        for val in self.kwargs.values():
+            if isinstance(val, Tensor):
+                nodes.add(val)
+            elif isinstance(val, RunnableTensor):
+                val.visit(nodes)
+
+        assert self not in nodes
+        nodes.add(self)
+
+    def _take_batch(self, low: int, high: int) -> Tensor:
+        args = [take_batch(arg, low, high) for arg in self.args]
+        kwargs = {k: take_batch(v, low, high) for (k, v) in self.kwargs.items()}
+        result = self.func(*args, **kwargs)
+
+        if (reducer := self.prepass.reducer()) is None:
+            raise UnsupportedError("Cannot safely parallelize.")
+
+        result = reducer(result)
+
+        return result
+
+    take_batch = _take_batch
+
     def size(self, dim: int | None = None) -> int | Tuple[int, ...]:
-        shape = self.shape.value
+        shape = self.prepass.shape
         if dim is not None:
             return shape[dim]
         else:
             return shape
 
     def dtype(self) -> DType:
-        return self.shape.metadata.dtype
+        return self.prepass.dtype()
 
     def device(self) -> str | Device:
-        return self.shape.metadata.device
-
-    def metadata(self) -> MetaData:
-        return self.shape.metadata
+        return self.prepass.device()
 
     def batch(self) -> int | None:
-        return self.shape.metadata.batch
+        return self.prepass.batch()
 
 
 @final
@@ -147,15 +165,34 @@ class LazyTensor(RunnableTensor):
 
     # Implementations
 
-    def run(self, partial: PartialInfo | None = None) -> Tensor:
+    def run(self) -> Tensor:
         data = self._data
         if isinstance(data, Tensor):
-            if partial is None:
-                return data
-            else:
-                return data[partial.index]
+            return data
 
-        return data.run(partial)
+        return data.run()
+
+    def visit(self, nodes: Set[TensorLike]) -> None:
+        data = self._data
+
+        if data in nodes:
+            return
+
+        if isinstance(data, Tensor):
+            nodes.add(data)
+        else:
+            data.visit(nodes)
+
+        assert data in nodes
+
+    def take_batch(self, low: int, high: int) -> Tensor:
+        if isinstance(self._data, Tensor):
+            assert self.batch is not None
+            return self._data.index_select(
+                self._batch, torch.tensor(list(range(low, high)))
+            )
+
+        return self._data.take_batch(low, high)
 
     @overload
     def size(self) -> Tuple[int, ...]:
@@ -174,13 +211,11 @@ class LazyTensor(RunnableTensor):
         return data.size(dim)
 
     def dtype(self) -> DType:
-        return interfaces.dtype(self._data)
+        dt = interfaces.dtyp(self._data)
+        return dt
 
     def device(self) -> str | Device:
-        return interfaces.device(self._data)
-
-    def metadata(self) -> MetaData:
-        return interfaces.metadata(self._data)
+        return interfaces.dev(self._data)
 
     def batch(self) -> int | None:
         self._batch
@@ -203,93 +238,93 @@ class LazyTensor(RunnableTensor):
         return not bool(self)
 
     def __pos__(self) -> TensorLike:
-        return lazy_forward(Tensor.__pos__, shapes.identity, self)
+        return lazy_forward(Tensor.__pos__, prepasses.identity, self)
 
     def __neg__(self) -> TensorLike:
-        return lazy_forward(Tensor.__neg__, shapes.identity, self)
+        return lazy_forward(Tensor.__neg__, prepasses.identity, self)
 
     def __add__(self, other: TensorLike) -> TensorLike:
-        return lazy_forward(Tensor.__add__, shapes.symmetric, self, other)
+        return lazy_forward(Tensor.__add__, prepasses.symmetric, self, other)
 
     def __radd__(self, other: TensorLike) -> TensorLike:
-        return lazy_forward(Tensor.__add__, shapes.symmetric, other, self)
+        return lazy_forward(Tensor.__add__, prepasses.symmetric, other, self)
 
     def __sub__(self, other: TensorLike) -> TensorLike:
-        return lazy_forward(Tensor.__sub__, shapes.symmetric, self, other)
+        return lazy_forward(Tensor.__sub__, prepasses.symmetric, self, other)
 
     def __rsub__(self, other: TensorLike) -> TensorLike:
-        return lazy_forward(Tensor.__sub__, shapes.symmetric, other, self)
+        return lazy_forward(Tensor.__sub__, prepasses.symmetric, other, self)
 
     def __mul__(self, other: TensorLike) -> TensorLike:
-        return lazy_forward(Tensor.__mul__, shapes.symmetric, self, other)
+        return lazy_forward(Tensor.__mul__, prepasses.symmetric, self, other)
 
     def __rmul__(self, other: TensorLike) -> TensorLike:
-        return lazy_forward(Tensor.__mul__, shapes.symmetric, other, self)
+        return lazy_forward(Tensor.__mul__, prepasses.symmetric, other, self)
 
     def __truediv__(self, other: TensorLike) -> TensorLike:
-        return lazy_forward(Tensor.__truediv__, shapes.symmetric, self, other)
+        return lazy_forward(Tensor.__truediv__, prepasses.symmetric, self, other)
 
     def __rtruediv__(self, other: TensorLike) -> TensorLike:
-        return lazy_forward(Tensor.__truediv__, shapes.symmetric, other, self)
+        return lazy_forward(Tensor.__truediv__, prepasses.symmetric, other, self)
 
     def __floordiv__(self, other: TensorLike) -> NoReturn:
         del other
-        raise NeverImplementedError
+        raise UnsupportedError
 
     def __rfloordiv__(self, other: TensorLike) -> NoReturn:
         del other
-        raise NeverImplementedError
+        raise UnsupportedError
 
     def __pow__(self, other: TensorLike) -> TensorLike:
-        return lazy_forward(Tensor.__pow__, shapes.symmetric, self, other)
+        return lazy_forward(Tensor.__pow__, prepasses.symmetric, self, other)
 
     def __rpow__(self, other: TensorLike) -> TensorLike:
-        return lazy_forward(Tensor.__pow__, shapes.symmetric, other, self)
+        return lazy_forward(Tensor.__pow__, prepasses.symmetric, other, self)
 
     def __mod__(self, other: TensorLike) -> TensorLike:
-        return lazy_forward(Tensor.__mod__, shapes.symmetric, self, other)
+        return lazy_forward(Tensor.__mod__, prepasses.symmetric, self, other)
 
     def __rmod__(self, other: TensorLike) -> TensorLike:
-        return lazy_forward(Tensor.__mod__, shapes.symmetric, other, self)
+        return lazy_forward(Tensor.__mod__, prepasses.symmetric, other, self)
 
     def __divmod__(self, other: TensorLike) -> NoReturn:
         del other
-        raise NeverImplementedError
+        raise UnsupportedError
 
     def __rdivmod__(self, other: TensorLike) -> NoReturn:
         del other
-        raise NeverImplementedError
+        raise UnsupportedError
 
     def __abs__(self) -> TensorLike:
-        return lazy_forward(Tensor.__abs__, shapes.identity, self)
+        return lazy_forward(Tensor.__abs__, prepasses.identity, self)
 
     def __hash__(self) -> int:
         # LazyTensors are not unique. They are defined by their data.
         return id(self._data)
 
     def __matmul__(self, other: TensorLike) -> TensorLike:
-        return lazy_forward(Tensor.__matmul__, shapes.matmul, self, other)
+        return lazy_forward(Tensor.__matmul__, prepasses.matmul, self, other)
 
     def __rmatmul__(self, other: TensorLike) -> TensorLike:
-        return lazy_forward(Tensor.__matmul__, shapes.matmul, other, self)
+        return lazy_forward(Tensor.__matmul__, prepasses.matmul, other, self)
 
     def __eq__(self, other: TensorLike) -> TensorLike:
-        return lazy_forward(Tensor.__eq__, shapes.symmetric, self, other)
+        return lazy_forward(Tensor.__eq__, prepasses.symmetric, self, other)
 
     def __ne__(self, other: TensorLike) -> TensorLike:
-        return lazy_forward(Tensor.__ne__, shapes.symmetric, self, other)
+        return lazy_forward(Tensor.__ne__, prepasses.symmetric, self, other)
 
     def __gt__(self, other: TensorLike) -> TensorLike:
-        return lazy_forward(Tensor.__gt__, shapes.symmetric, self, other)
+        return lazy_forward(Tensor.__gt__, prepasses.symmetric, self, other)
 
     def __ge__(self, other: TensorLike) -> TensorLike:
-        return lazy_forward(Tensor.__ge__, shapes.symmetric, self, other)
+        return lazy_forward(Tensor.__ge__, prepasses.symmetric, self, other)
 
     def __lt__(self, other: TensorLike) -> TensorLike:
-        return lazy_forward(Tensor.__lt__, shapes.symmetric, self, other)
+        return lazy_forward(Tensor.__lt__, prepasses.symmetric, self, other)
 
     def __le__(self, other: TensorLike) -> TensorLike:
-        return lazy_forward(Tensor.__le__, shapes.symmetric, self, other)
+        return lazy_forward(Tensor.__le__, prepasses.symmetric, self, other)
 
     def __len__(self) -> int:
         return self.size(0)
@@ -419,34 +454,63 @@ def lazy(val: Any, batch: int | None = None) -> Any:
 
 
 @overload
-def run(val: LazyTensor, partial: PartialInfo | None = None) -> Tensor:
+def run(val: LazyTensor) -> Tensor:
     ...
 
 
 @overload
-def run(val: RunnableTensor, partial: PartialInfo | None = None) -> Tensor:
+def run(val: RunnableTensor) -> Tensor:
     ...
 
 
 @overload
-def run(val: Runnable[T], partial: PartialInfo | None = None) -> T:
+def run(val: Runnable[T]) -> T:
     ...
 
 
 @overload
-def run(val: T, partial: PartialInfo | None = None) -> T:
+def run(val: T) -> T:
     ...
 
 
-def run(val: Any, partial: PartialInfo | None = None) -> Any:
+def run(val: Any) -> Any:
     if isinstance(val, Runnable):
-        return val.run(partial)
+        return val.run()
 
     return val
 
 
+@overload
+def take_batch(tensor: TensorLike, low: int, high: int) -> Tensor:
+    ...
+
+
+@overload
+def take_batch(tensor: int, low: int, high: int) -> int:
+    ...
+
+
+@overload
+def take_batch(tensor: float, low: int, high: int) -> float:
+    ...
+
+
+@overload
+def take_batch(tensor: bool, low: int, high: int) -> bool:
+    ...
+
+
+def take_batch(
+    tensor: TensorLike | int | float | bool, low: int, high: int
+) -> Tensor | int | float | bool:
+    if not isinstance(tensor, RunnableTensor):
+        return tensor
+
+    return tensor.take_batch(low, high)
+
+
 def lazy_forward(
-    func: Callable[..., Any], shape_func: ShapeFunction, *args: Any, **kwargs: Any
+    func: Callable[..., Any], shape_func: PrePassFunc, *args: Any, **kwargs: Any
 ) -> TensorLike:
     if torch.is_grad_enabled():
         return LazyTensor(LazyFunction(func, shape_func)(*args, **kwargs))
@@ -480,7 +544,7 @@ def _min(input: TensorLike, other: TensorLike) -> TensorLike:
 @wraps(torch.min)
 def _min(input: TensorLike, *args: Any, **kwargs: Any) -> TensorLike | _ValIdx:
     if len(args) == len(kwargs) == 0:
-        return lazy_forward(torch.min, shapes.reduce_dims, input)
+        return lazy_forward(torch.min, prepasses.reduce_dims, input)
 
     if (
         len(args) == 1
@@ -488,11 +552,11 @@ def _min(input: TensorLike, *args: Any, **kwargs: Any) -> TensorLike | _ValIdx:
         or len(kwargs) == 1
         and (other := kwargs.get("other", None) is not None)
     ):
-        return lazy_forward(torch.minimum, shapes.symmetric, input, other)
+        return lazy_forward(torch.minimum, prepasses.symmetric, input, other)
 
     return _ValIdx(
-        lazy_forward(torch.amin, shapes.reduce_dims, input, *args, **kwargs),
-        lazy_forward(torch.argmin, shapes.reduce_dims, input, *args, **kwargs),
+        lazy_forward(torch.amin, prepasses.reduce_dims, input, *args, **kwargs),
+        lazy_forward(torch.argmin, prepasses.reduce_dims, input, *args, **kwargs),
     )
 
 
@@ -514,7 +578,7 @@ def _max(input: TensorLike, other: TensorLike) -> TensorLike:
 @wraps(torch.max)
 def _max(input: TensorLike, *args: Any, **kwargs: Any) -> TensorLike | _ValIdx:
     if len(args) == len(kwargs) == 0:
-        return lazy_forward(torch.max, shapes.reduce_dims, input)
+        return lazy_forward(torch.max, prepasses.reduce_dims, input)
 
     if (
         len(args) == 1
@@ -522,29 +586,53 @@ def _max(input: TensorLike, *args: Any, **kwargs: Any) -> TensorLike | _ValIdx:
         or len(kwargs) == 1
         and (other := kwargs.get("other", None) is not None)
     ):
-        return lazy_forward(torch.maximum, shapes.symmetric, input, other)
+        return lazy_forward(torch.maximum, prepasses.symmetric, input, other)
 
     return _ValIdx(
-        lazy_forward(torch.amax, shapes.reduce_dims, input, *args, **kwargs),
-        lazy_forward(torch.argmax, shapes.reduce_dims, input, *args, **kwargs),
+        lazy_forward(torch.amax, prepasses.reduce_dims, input, *args, **kwargs),
+        lazy_forward(torch.argmax, prepasses.reduce_dims, input, *args, **kwargs),
     )
 
 
 def _permute_function_shape(
     input: TensorLike, dims: int | Tuple[int, ...], *args: Any, **kwargs: Any
-) -> Shape:
-    shapes.mute_unused_args(*args, **kwargs)
+) -> PrePass:
+    prepasses.mute_unused_args(*args, **kwargs)
 
     if isinstance(dims, int):
         dims = (dims,)
 
-    return shapes.permute(input, *dims)
+    return prepasses.permute(input, *dims)
 
 
-def _t_shape(input: TensorLike, *args: Any, **kwargs: Any) -> Shape:
-    shapes.mute_unused_args(*args, **kwargs)
+def _reshape_function_shape(
+    input: TensorLike, dims: Tuple[int, ...], *args: Any, **kwargs: Any
+) -> PrePass:
+    prepasses.mute_unused_args(*args, **kwargs)
 
-    return shapes.tranpose(input, 0, 1)
+    return prepasses.reshape(input, *dims)
+
+
+def _flatten_shape(
+    input: TensorLike, start_dim: int = 0, end_dim: int = -1, *args: Any, **kwargs: Any
+) -> PrePass:
+    logger.debug("%s, %d, %d", input.size(), start_dim, end_dim)
+
+    prepasses.mute_unused_args(*args, **kwargs)
+
+    start_dim %= input.dim()
+    end_dim %= input.dim()
+
+    sizes = input.size()
+
+    shape = sizes[:start_dim] + (-1,) + sizes[end_dim + 1 :]
+    return prepasses.view(input, *shape)
+
+
+def _t_shape(input: TensorLike, *args: Any, **kwargs: Any) -> PrePass:
+    prepasses.mute_unused_args(*args, **kwargs)
+
+    return prepasses.tranpose(input, 0, 1)
 
 
 @dataclass
@@ -583,107 +671,109 @@ CUSTOM_OPS = MethodFunction[Callable](
 
 PARTIAL_OPS = MethodFunction[Callable](method={}, function={"sum": lambda x: x})
 
-SHAPE_OPS = MethodFunction[ShapeFunction](
-    method={"permute": shapes.permute},
+SHAPE_OPS = MethodFunction[PrePassFunc](
+    method={"permute": prepasses.permute, "view": prepasses.view},
     function={
-        "positive": shapes.identity,
-        "negative": shapes.identity,
-        "neg": shapes.identity,
-        "add": shapes.symmetric,
-        "sub": shapes.symmetric,
-        "subtract": shapes.symmetric,
-        "mul": shapes.symmetric,
-        "multiply": shapes.symmetric,
-        "div": shapes.symmetric,
-        "divide": shapes.symmetric,
-        "true_divide": shapes.symmetric,
-        "floor": shapes.identity,
-        "fmod": shapes.symmetric,
-        "remainder": shapes.symmetric,
-        "frac": shapes.identity,
-        "pow": shapes.symmetric,
-        "exp": shapes.identity,
-        "exp2": shapes.identity,
-        "log": shapes.identity,
-        "log2": shapes.identity,
-        "log10": shapes.identity,
-        "log1p": shapes.identity,
-        "abs": shapes.identity,
-        "matmul": shapes.matmul,
-        "bmm": shapes.matmul,
-        "mm": shapes.matmul,
-        "mv": shapes.matmul,
-        "dot": shapes.matmul,
-        "eq": shapes.symmetric,
-        "equal": shapes.symmetric,
-        "ne": shapes.symmetric,
-        "not_equal": shapes.symmetric,
-        "gt": shapes.symmetric,
-        "greater": shapes.symmetric,
-        "ge": shapes.symmetric,
-        "greater_equal": shapes.symmetric,
-        "lt": shapes.symmetric,
-        "less": shapes.symmetric,
-        "le": shapes.symmetric,
-        "less_equal": shapes.symmetric,
-        "mean": shapes.reduce_dims,
-        "sum": shapes.reduce_dims,
-        "std": shapes.reduce_dims,
-        "minimum": shapes.symmetric,
-        "maximum": shapes.symmetric,
-        "amin": shapes.reduce_dims,
-        "amax": shapes.reduce_dims,
-        "argmin": shapes.reduce_dims,
-        "argmax": shapes.reduce_dims,
-        "isclose": shapes.symmetric,
-        "allclose": shapes.reduce_dims,
-        "cat": shapes.cat,
+        "positive": prepasses.identity,
+        "negative": prepasses.identity,
+        "neg": prepasses.identity,
+        "add": prepasses.symmetric,
+        "sub": prepasses.symmetric,
+        "subtract": prepasses.symmetric,
+        "mul": prepasses.symmetric,
+        "multiply": prepasses.symmetric,
+        "div": prepasses.symmetric,
+        "divide": prepasses.symmetric,
+        "true_divide": prepasses.symmetric,
+        "floor": prepasses.identity,
+        "fmod": prepasses.symmetric,
+        "remainder": prepasses.symmetric,
+        "frac": prepasses.identity,
+        "pow": prepasses.symmetric,
+        "exp": prepasses.identity,
+        "exp2": prepasses.identity,
+        "log": prepasses.identity,
+        "log2": prepasses.identity,
+        "log10": prepasses.identity,
+        "log1p": prepasses.identity,
+        "abs": prepasses.identity,
+        "matmul": prepasses.matmul,
+        "bmm": prepasses.matmul,
+        "mm": prepasses.matmul,
+        "mv": prepasses.matmul,
+        "dot": prepasses.matmul,
+        "eq": prepasses.symmetric,
+        "equal": prepasses.symmetric,
+        "ne": prepasses.symmetric,
+        "not_equal": prepasses.symmetric,
+        "gt": prepasses.symmetric,
+        "greater": prepasses.symmetric,
+        "ge": prepasses.symmetric,
+        "greater_equal": prepasses.symmetric,
+        "lt": prepasses.symmetric,
+        "less": prepasses.symmetric,
+        "le": prepasses.symmetric,
+        "less_equal": prepasses.symmetric,
+        "mean": prepasses.mean,
+        "sum": prepasses.reduce_dims,
+        "std": prepasses.reduce_dims,
+        "minimum": prepasses.symmetric,
+        "maximum": prepasses.symmetric,
+        "amin": prepasses.reduce_dims,
+        "amax": prepasses.reduce_dims,
+        "argmin": prepasses.reduce_dims,
+        "argmax": prepasses.reduce_dims,
+        "isclose": prepasses.symmetric,
+        "allclose": prepasses.reduce_dims,
+        "cat": prepasses.cat,
         "t": _t_shape,
         "permute": _permute_function_shape,
-        "transpose": shapes.tranpose,
-        "select": shapes.select,
-        "index_select": shapes.select,
-        "sin": shapes.identity,
-        "cos": shapes.identity,
-        "tan": shapes.identity,
-        "asin": shapes.identity,
-        "acos": shapes.identity,
-        "atan": shapes.identity,
-        "sinh": shapes.identity,
-        "cosh": shapes.identity,
-        "tanh": shapes.identity,
-        "asinh": shapes.identity,
-        "acosh": shapes.identity,
-        "atanh": shapes.identity,
-        "sigmoid": shapes.identity,
-        "hardsigmoid": shapes.identity,
-        "softmax": shapes.identity,
-        "relu": shapes.identity,
-        "relu6": shapes.identity,
-        "leaky_relu": shapes.identity,
-        "binary_cross_entropy": shapes.reduce_dims,
-        "binary_cross_entropy_with_logits": shapes.reduce_dims,
-        "elu": shapes.identity,
-        "gelu": shapes.identity,
-        "dropout": shapes.identity,
-        "batch_norm": shapes.identity,
-        "layer_norm": shapes.identity,
-        "linear": shapes.linear,
-        "embedding": shapes.embedding,
-        "pad": shapes.pad,
-        "conv1d": shapes.conv,
-        "conv2d": shapes.conv,
-        "conv3d": shapes.conv,
-        "conv_transpose1d": shapes.conv_transpose,
-        "conv_transpose2d": shapes.conv_transpose,
-        "conv_transpose3d": shapes.conv_transpose,
-        "max_pool1d": shapes.maxpool,
-        "max_pool2d": shapes.maxpool,
-        "max_pool3d": shapes.maxpool,
-        "avg_pool1d": shapes.avgpool,
-        "avg_pool2d": shapes.avgpool,
-        "avg_pool3d": shapes.avgpool,
+        "reshape": _reshape_function_shape,
+        "flatten": _flatten_shape,
+        "transpose": prepasses.tranpose,
+        "select": prepasses.select,
+        "index_select": prepasses.select,
+        "sin": prepasses.identity,
+        "cos": prepasses.identity,
+        "tan": prepasses.identity,
+        "asin": prepasses.identity,
+        "acos": prepasses.identity,
+        "atan": prepasses.identity,
+        "sinh": prepasses.identity,
+        "cosh": prepasses.identity,
+        "tanh": prepasses.identity,
+        "asinh": prepasses.identity,
+        "acosh": prepasses.identity,
+        "atanh": prepasses.identity,
+        "sigmoid": prepasses.identity,
+        "hardsigmoid": prepasses.identity,
+        "softmax": prepasses.identity,
+        "relu": prepasses.identity,
+        "relu6": prepasses.identity,
+        "leaky_relu": prepasses.identity,
+        "binary_cross_entropy": prepasses.reduce_dims,
+        "binary_cross_entropy_with_logits": prepasses.reduce_dims,
+        "elu": prepasses.identity,
+        "gelu": prepasses.identity,
+        "dropout": prepasses.identity,
+        "batch_norm": prepasses.identity,
+        "layer_norm": prepasses.identity,
+        "linear": prepasses.linear,
+        "embedding": prepasses.embedding,
+        "pad": prepasses.pad,
+        "conv1d": prepasses.conv,
+        "conv2d": prepasses.conv,
+        "conv3d": prepasses.conv,
+        "conv_transpose1d": prepasses.conv_transpose,
+        "conv_transpose2d": prepasses.conv_transpose,
+        "conv_transpose3d": prepasses.conv_transpose,
+        "max_pool1d": prepasses.maxpool,
+        "max_pool2d": prepasses.maxpool,
+        "max_pool3d": prepasses.maxpool,
+        "avg_pool1d": prepasses.avgpool,
+        "avg_pool2d": prepasses.avgpool,
+        "avg_pool3d": prepasses.avgpool,
         # Functions that will not be implemented.
-        "__floordiv__": NeverImplementedError.raise_error,
+        "__floordiv__": UnsupportedError.raise_error,
     },
 )

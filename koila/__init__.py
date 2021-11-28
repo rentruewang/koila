@@ -1,5 +1,4 @@
 from . import gpus
-from .interfaces import MetaData, QueryType, Runnable, RunnableTensor
-from .partials import CallBack, PartialInfo
-from .shapes import CallBack, ShapeFunction
+from .interfaces import Runnable, RunnableTensor
+from .prepasses import CallBack, MetaData, PrePass, PrePassFunc
 from .tensors import Evaluation, LazyFunction, LazyTensor, lazy, run
