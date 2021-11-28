@@ -3,12 +3,9 @@ from __future__ import annotations
 import functools
 import operator
 from abc import abstractmethod
-from dataclasses import dataclass
 from typing import (
-    List,
     NamedTuple,
     Protocol,
-    Sequence,
     Set,
     Tuple,
     TypeVar,
