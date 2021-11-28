@@ -1,38 +1,60 @@
 from __future__ import annotations
 
+import functools
 import logging
 import math
+import operator
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import Any, List, Protocol, Sequence, Tuple, overload, runtime_checkable
+from typing import (
+    Any,
+    List,
+    Protocol,
+    Sequence,
+    Set,
+    Tuple,
+    overload,
+    runtime_checkable,
+)
 
 from rich.logging import RichHandler
+from torch import device as Device
+from torch import dtype as DType
 from torch.functional import Tensor
 
-from . import constants, interfaces, partials
+from . import constants, interfaces
 from .errors import UnsupportedError
-from .interfaces import MetaData, RunnableTensor, TensorLike
-from .partials import CallBack
+from .interfaces import TensorLike
 
 logger = logging.getLogger(__name__)
 logger.addHandler(RichHandler())
 
 
-@dataclass(frozen=True)
-class Shape:
-    value: Tuple[int, ...]
-    metadata: MetaData
-    partial_func: CallBack
+class CallBack(Protocol):
+    @abstractmethod
+    def __call__(self, input: Tensor) -> Tensor:
+        ...
 
-    def __init__(
-        self, value: Sequence[int], metadata: MetaData, partial_func: CallBack | None
-    ) -> None:
-        self.value = tuple(value)
+
+@dataclass(frozen=True)
+class MetaData:
+    dtype: DType
+    device: str | Device
+    batch: int | None
+    reducer: CallBack | None
+
+
+@dataclass
+class PrePass:
+    shape: Tuple[int, ...]
+    metadata: MetaData
+
+    def __init__(self, shape: Sequence[int], metadata: MetaData) -> None:
+        self.shape = tuple(shape)
         self.metadata = metadata
-        self.partial_func = partial_func
 
     def __iter__(self):
-        return iter(self.value)
+        return iter(self.shape)
 
     @overload
     def __getitem__(self, index: int) -> int:
@@ -43,22 +65,34 @@ class Shape:
         ...
 
     def __getitem__(self, index: int | slice) -> int | Tuple[int, ...]:
-        return self.value[index]
+        return self.shape[index]
 
     def __eq__(self, other: Any) -> bool:
-        if isinstance(other, Shape):
+        if isinstance(other, PrePass):
             return self == other
 
         if isinstance(other, Tuple):
-            return self.value == other
+            return self.shape == other
 
         return False
 
+    def dtype(self) -> DType:
+        return self.metadata.dtype
+
+    def device(self) -> str | Device:
+        return self.metadata.device
+
+    def batch(self) -> int | None:
+        return self.metadata.batch
+
+    def reducer(self) -> CallBack | None:
+        return self.metadata.reducer
+
 
 @runtime_checkable
-class ShapeFunction(Protocol):
+class PrePassFunc(Protocol):
     @abstractmethod
-    def __call__(self, *args: Any, **kwargs: Any) -> Shape:
+    def __call__(self, *args: Any, **kwargs: Any) -> PrePass:
         ...
 
 
@@ -67,29 +101,24 @@ def mute_unused_args(*args: Any, **kwargs: Any) -> None:
     del kwargs
 
 
-def same(*tensors: TensorLike) -> MetaData:
+def trivial(input: Tensor) -> Tensor:
+    return input
+
+
+def same(
+    tensors: Sequence[TensorLike], batch: int | None, reducer: CallBack | None
+) -> MetaData:
     assert len(tensors) > 0
-    if len(tensors) == 1:
-        interfaces.dtype(tensors[0])
+    dtypes = [interfaces.dtyp(t) for t in tensors]
 
-    dtypes = [interfaces.dtype(t) for t in tensors]
+    max_dtype = max(dtypes, key=lambda typ: constants.MEMORY_BYTES[typ])
 
-    max_dtype = max(dtypes, key=lambda dtype: constants.MEMORY_BYTES[dtype])
-
-    devices = [str(interfaces.device(t)) for t in tensors]
+    devices = [str(interfaces.dev(t)) for t in tensors]
 
     if len(set(devices)) != 1:
         raise ValueError(f"Expected tensors to be on the same device, got {devices}.")
 
-    if any(not isinstance(t, RunnableTensor) for t in tensors):
-        batch = None
-    else:
-        if len(set(t.batch() for t in tensors)) == 1:
-            batch = tensors[0].batch()
-        else:
-            batch = None
-
-    return MetaData(max_dtype, devices[0], batch)
+    return MetaData(max_dtype, devices[0], batch, reducer)
 
 
 def compatible_dim(input: int, other: int, broadcast: bool = True) -> bool:
@@ -156,6 +185,8 @@ def coerce_shape(
 
 
 def permute_shape(input: Tuple[int, ...], *dims: int) -> Tuple[int, ...]:
+    logger.debug("%s, %s", input, dims)
+
     if not len(input) == len(dims):
         raise TypeError
 
@@ -172,7 +203,43 @@ def permute_shape(input: Tuple[int, ...], *dims: int) -> Tuple[int, ...]:
     return tuple(reordered_dim)
 
 
+def reshape_shape(input: Tuple[int, ...], *shape: int) -> Tuple[int, ...]:
+    logger.debug("%s, %s", input, shape)
+
+    if not functools.reduce(operator.mul, input) == functools.reduce(
+        operator.mul, shape
+    ):
+        raise ValueError
+    return shape
+
+
+def view_shape(input: Tuple[int, ...], *shape: int) -> Tuple[int, ...]:
+    logger.debug("%s, %s", input, shape)
+
+    special_values = [x for x in shape if x < 0]
+
+    if len(special_values) > 1:
+        raise ValueError
+
+    if set(special_values) | {-1} != {-1}:
+        raise ValueError
+
+    special = -(
+        functools.reduce(operator.mul, input) // functools.reduce(operator.mul, shape)
+    )
+    new_shape = []
+    for s in shape:
+        if s > 0:
+            new_shape.append(s)
+        else:
+            new_shape.append(special)
+
+    return reshape_shape(input, *new_shape)
+
+
 def tranpose_shape(input: Tuple[int, ...], dim0: int, dim1: int) -> Tuple[int, ...]:
+    logger.debug("%s, %d, %d", input, dim0, dim1)
+
     if len(input) < 2:
         raise ValueError
 
@@ -182,6 +249,8 @@ def tranpose_shape(input: Tuple[int, ...], dim0: int, dim1: int) -> Tuple[int, .
 
 
 def matmul_shape(input: Tuple[int, ...], other: Tuple[int, ...]) -> Tuple[int, ...]:
+    logger.debug("%s, %s", input, other)
+
     if len(input) == 0 or len(other) == 0:
         raise ValueError(
             "Both arguments to matmul need to be at least 1D."
@@ -229,13 +298,15 @@ def matmul_shape(input: Tuple[int, ...], other: Tuple[int, ...]) -> Tuple[int, .
     return tuple(shapes)
 
 
-def identity(input: TensorLike, *args: Any, **kwargs: Any) -> Shape:
+def identity(input: TensorLike, *args: Any, **kwargs: Any) -> PrePass:
     mute_unused_args(*args, **kwargs)
 
-    return Shape(input.size(), same(input), partials.trivial)
+    return PrePass(input.size(), same([input], interfaces.bat(input), trivial))
 
 
-def symmetric(input: TensorLike, other: TensorLike, *args: Any, **kwargs: Any) -> Shape:
+def symmetric(
+    input: TensorLike, other: TensorLike, *args: Any, **kwargs: Any
+) -> PrePass:
     mute_unused_args(*args, **kwargs)
 
     shape = coerce_shape(input.size(), other.size(), broadcast=True, scalars=True)
@@ -243,28 +314,31 @@ def symmetric(input: TensorLike, other: TensorLike, *args: Any, **kwargs: Any) -
     if shape is None:
         raise ValueError
 
-    return Shape(shape, same(input, other), partials.trivial)
+    if (b := interfaces.bat(input)) == interfaces.bat(other):
+        batch = b
+    else:
+        batch = None
+
+    return PrePass(shape, same([input, other], batch, trivial))
 
 
-def reduce_dims(
-    input: TensorLike,
+def reduce_dims_shape(
+    input: Tuple[int, ...],
     dim: int | Tuple[int, ...] | None = None,
     keepdim: bool = False,
-    *args: Any,
-    **kwargs: Any,
-) -> Shape:
-    mute_unused_args(*args, **kwargs)
+) -> Tuple[Tuple[int, ...], Set[int]]:
+    logger.debug("%s, %s", input, dim)
 
     shapes = []
 
     if dim is None:
-        dimensions = set(range(input.dim()))
+        dimensions = set(range(len(input)))
     elif isinstance(dim, int):
         dimensions = {dim}
     else:
         dimensions = set(dim)
 
-    for (idx, dimsize) in enumerate(input.size()):
+    for (idx, dimsize) in enumerate(input):
         if idx not in dimensions:
             shapes.append(dimsize)
             continue
@@ -273,29 +347,95 @@ def reduce_dims(
             shapes.append(1)
 
     if keepdim:
-        assert len(shapes) == input.dim()
+        assert len(shapes) == len(input)
 
-    if input.batch() in dimensions:
-        partial_func = None
+    return (tuple(shapes), dimensions)
+
+
+def reduce_dims(
+    input: TensorLike,
+    dim: int | Tuple[int, ...] | None = None,
+    keepdim: bool = False,
+    *args: Any,
+    **kwargs: Any,
+) -> PrePass:
+    mute_unused_args(*args, **kwargs)
+
+    (shapes, dimensions) = reduce_dims_shape(input.size(), dim, keepdim)
+
+    if interfaces.bat(input) in dimensions:
+        batch = None
+        reducer = None
     else:
-        partial_func = partials.trivial
+        batch = interfaces.bat(input)
+        reducer = trivial
 
-    return Shape(shapes, same(input), partial_func)
+    return PrePass(shapes, same([input], batch, reducer))
 
 
-def permute(input: TensorLike, *dims: int, **kwargs: Any) -> Shape:
+def mean(
+    input: TensorLike,
+    dim: int | Tuple[int, ...] | None = None,
+    keepdim: bool = False,
+    *args: Any,
+    **kwargs: Any,
+) -> PrePass:
+    mute_unused_args(*args, **kwargs)
+
+    (shapes, dimensions) = reduce_dims_shape(input.size(), dim, keepdim)
+
+    if (b := interfaces.bat(input)) in dimensions:
+        batch = None
+
+        def _callback(input: Tensor) -> Tensor:
+            return input * input.size(b) / shapes[b]
+
+        reducer = _callback
+    else:
+        batch = interfaces.bat(input)
+        reducer = trivial
+    return PrePass(shapes, same([input], batch, reducer))
+
+
+def permute(input: TensorLike, *dims: int, **kwargs: Any) -> PrePass:
     mute_unused_args(**kwargs)
 
-    return Shape(permute_shape(input.size(), *dims), same(input), partials.trivial)
+    mapping = dict(enumerate(dims))
+
+    if (b := interfaces.bat(input)) is None:
+        batch = None
+    else:
+        batch = mapping[b]
+
+    return PrePass(permute_shape(input.size(), *dims), same([input], batch, trivial))
+
+
+def reshape(input: TensorLike, *shape: int, **kwargs: Any) -> PrePass:
+    mute_unused_args(**kwargs)
+
+    return PrePass(reshape_shape(input.size(), *shape), same([input], None, trivial))
+
+
+def view(input: TensorLike, *shape: int, **kwargs: Any) -> PrePass:
+    mute_unused_args(**kwargs)
+
+    return PrePass(view_shape(input.size(), *shape), same([input], None, trivial))
 
 
 def tranpose(
     input: TensorLike, dim0: int, dim1: int, *args: Any, **kwargs: Any
-) -> Shape:
+) -> PrePass:
     mute_unused_args(*args, **kwargs)
 
-    return Shape(
-        tranpose_shape(input.size(), dim0, dim1), same(input), partials.trivial
+    if (b := interfaces.bat(input)) == dim0:
+        batch = dim1
+    elif b == dim1:
+        batch = dim0
+    else:
+        batch = None
+
+    return PrePass(
+        tranpose_shape(input.size(), dim0, dim1), same([input], batch, trivial)
     )
 
 
@@ -305,7 +445,7 @@ def select(
     index: int | Tensor,
     *args: Any,
     **kwargs: Any,
-) -> Shape:
+) -> PrePass:
     mute_unused_args(*args, **kwargs)
 
     shape = input.size()
@@ -328,22 +468,39 @@ def select(
     else:
         sliced_idx = ()
 
-    return Shape(shape[:dim] + sliced_idx + shape[dim + 1 :], same(input))
+    if (b := interfaces.bat(input)) == dim:
+        batch = None
+    else:
+        batch = b
+
+    return PrePass(
+        shape[:dim] + sliced_idx + shape[dim + 1 :],
+        same([input], batch, trivial),
+    )
 
 
 def embedding(
     input: TensorLike, weight: TensorLike, *args: Any, **kwargs: Any
-) -> Shape:
+) -> PrePass:
     mute_unused_args(*args, **kwargs)
 
     shape = input.size()
-    return Shape((*shape, weight.size(-1)), same(input))
+    return PrePass(
+        (*shape, weight.size(-1)),
+        same([input], interfaces.bat(input), trivial),
+    )
 
 
-def matmul(input: TensorLike, other: TensorLike, *args: Any, **kwargs: Any) -> Shape:
+def matmul(input: TensorLike, other: TensorLike, *args: Any, **kwargs: Any) -> PrePass:
     mute_unused_args(*args, **kwargs)
 
-    return Shape(matmul_shape(input.size(), other.size()), same(input, other))
+    if (batch := interfaces.bat(input)) != interfaces.bat(other):
+        raise UnsupportedError
+
+    return PrePass(
+        matmul_shape(input.size(), other.size()),
+        same([input, other], interfaces.bat(input), trivial),
+    )
 
 
 def linear(
@@ -352,7 +509,7 @@ def linear(
     bias: TensorLike | None = None,
     *args: Any,
     **kwargs: Any,
-) -> Shape:
+) -> PrePass:
     mute_unused_args(*args, **kwargs)
 
     result = matmul_shape(input.size(), tranpose_shape(weight.size(), -1, -2))
@@ -363,12 +520,12 @@ def linear(
     if result is None:
         raise ValueError
 
-    return Shape(result, same(input, weight))
+    return PrePass(result, same([input, weight], interfaces.bat(input), trivial))
 
 
 def cat(
     tensors: Sequence[TensorLike], dim: int = 0, *args: Any, **kwargs: Any
-) -> Shape:
+) -> PrePass:
     mute_unused_args(*args, **kwargs)
 
     if len(tensors) == 0:
@@ -384,11 +541,22 @@ def cat(
                 f"Dimension should be equal outside dim {dim}. Got {shapes}."
             )
 
+    if len(set(interfaces.bat(t) for t in tensors)) != 1:
+        raise UnsupportedError
+
+    if (b := interfaces.bat(tensors[0])) == dim:
+        batch = None
+    else:
+        batch = b
+
     concat_size = sum(t[dim] for t in shapes)
-    return Shape([*result_size[:dim], concat_size, *result_size[dim:]], same(*tensors))
+    return PrePass(
+        [*result_size[:dim], concat_size, *result_size[dim:]],
+        same(tensors, batch, trivial),
+    )
 
 
-def pad(input: TensorLike, pad: List[int], *args: Any, **kwargs: Any) -> Shape:
+def pad(input: TensorLike, pad: List[int], *args: Any, **kwargs: Any) -> PrePass:
     mute_unused_args(*args, **kwargs)
 
     shapes = input.size()
@@ -408,7 +576,10 @@ def pad(input: TensorLike, pad: List[int], *args: Any, **kwargs: Any) -> Shape:
 
     assert len(pad0) == len(pad1) == len(shapes), [pad0, pad1, shapes]
 
-    return Shape([s + p0 + p1 for (s, p0, p1) in zip(shapes, pad0, pad1)], same(input))
+    return PrePass(
+        [s + p0 + p1 for (s, p0, p1) in zip(shapes, pad0, pad1)],
+        same([input], interfaces.bat(input), trivial),
+    )
 
 
 def _int_to_tuple(value: int | Tuple[int, ...], length: int) -> Tuple[int, ...]:
@@ -430,7 +601,7 @@ def conv(
     groups: int = 1,
     *args: Any,
     **kwargs: Any,
-) -> Shape:
+) -> PrePass:
     mute_unused_args(groups, *args, **kwargs)
 
     (batch, chan, *dims) = input.size()
@@ -455,7 +626,10 @@ def conv(
         for (dim, pad, dil, ker, st) in zip(dims, padding, dilation, kernels, stride)
     ]
 
-    return Shape((batch, out_chan, *out_dims), same(input, weight))
+    return PrePass(
+        (batch, out_chan, *out_dims),
+        same([input, weight], interfaces.bat(input), trivial),
+    )
 
 
 def conv_transpose(
@@ -469,7 +643,7 @@ def conv_transpose(
     dilation: int | Tuple[int, ...] = 1,
     *args: Any,
     **kwargs: Any,
-) -> Shape:
+) -> PrePass:
     mute_unused_args(groups, *args, **kwargs)
 
     (batch, chan, *dims) = input.size()
@@ -494,7 +668,10 @@ def conv_transpose(
         )
     ]
 
-    return Shape((batch, out_chan, *out_dims), same(input, weight))
+    return PrePass(
+        (batch, out_chan, *out_dims),
+        same([input, weight], interfaces.bat(input), trivial),
+    )
 
 
 def pool(
@@ -505,7 +682,7 @@ def pool(
     padding: int | Tuple[int, ...] = 0,
     dilation: int | Tuple[int, ...] = 1,
     ceil_mode: bool = False,
-) -> Shape:
+) -> PrePass:
     (batch, chan, *dims) = input.size()
 
     kernel_size = _int_to_tuple(kernel_size, len(dims))
@@ -521,7 +698,9 @@ def pool(
         )
     ]
 
-    return Shape((batch, chan, *out_dims), same(input))
+    return PrePass(
+        (batch, chan, *out_dims), same([input], interfaces.bat(input), trivial)
+    )
 
 
 def maxpool(
@@ -534,7 +713,7 @@ def maxpool(
     return_indices: bool = False,
     *args: Any,
     **kwargs: Any,
-) -> Shape:
+) -> PrePass:
     mute_unused_args(*args, **kwargs)
 
     if return_indices:
@@ -558,7 +737,7 @@ def avgpool(
     ceil_mode: bool = False,
     *args: Any,
     **kwargs: Any,
-) -> Shape:
+) -> PrePass:
     mute_unused_args(*args, **kwargs)
 
     return pool(
