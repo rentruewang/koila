@@ -9,22 +9,27 @@ from typing import Any, List, Protocol, Sequence, Tuple, overload, runtime_check
 from rich.logging import RichHandler
 from torch.functional import Tensor
 
-from . import constants, runnables
+from . import constants, interfaces, partials
 from .errors import UnsupportedError
-from .runnables import MetaData, TensorLike
+from .interfaces import MetaData, RunnableTensor, TensorLike
+from .partials import CallBack
 
 logger = logging.getLogger(__name__)
 logger.addHandler(RichHandler())
 
 
-@dataclass(init=False, frozen=True)
+@dataclass(frozen=True)
 class Shape:
     value: Tuple[int, ...]
     metadata: MetaData
+    partial_func: CallBack
 
-    def __init__(self, value: Sequence[int], metadata: MetaData) -> None:
-        object.__setattr__(self, "value", tuple(value))
-        object.__setattr__(self, "metadata", metadata)
+    def __init__(
+        self, value: Sequence[int], metadata: MetaData, partial_func: CallBack | None
+    ) -> None:
+        self.value = tuple(value)
+        self.metadata = metadata
+        self.partial_func = partial_func
 
     def __iter__(self):
         return iter(self.value)
@@ -65,18 +70,26 @@ def mute_unused_args(*args: Any, **kwargs: Any) -> None:
 def same(*tensors: TensorLike) -> MetaData:
     assert len(tensors) > 0
     if len(tensors) == 1:
-        runnables.dtype(tensors[0])
+        interfaces.dtype(tensors[0])
 
-    dtypes = [runnables.dtype(t) for t in tensors]
+    dtypes = [interfaces.dtype(t) for t in tensors]
 
     max_dtype = max(dtypes, key=lambda dtype: constants.MEMORY_BYTES[dtype])
 
-    devices = [str(runnables.device(t)) for t in tensors]
+    devices = [str(interfaces.device(t)) for t in tensors]
 
     if len(set(devices)) != 1:
         raise ValueError(f"Expected tensors to be on the same device, got {devices}.")
 
-    return MetaData(max_dtype, devices[0])
+    if any(not isinstance(t, RunnableTensor) for t in tensors):
+        batch = None
+    else:
+        if len(set(t.batch() for t in tensors)) == 1:
+            batch = tensors[0].batch()
+        else:
+            batch = None
+
+    return MetaData(max_dtype, devices[0], batch)
 
 
 def compatible_dim(input: int, other: int, broadcast: bool = True) -> bool:
@@ -219,7 +232,7 @@ def matmul_shape(input: Tuple[int, ...], other: Tuple[int, ...]) -> Tuple[int, .
 def identity(input: TensorLike, *args: Any, **kwargs: Any) -> Shape:
     mute_unused_args(*args, **kwargs)
 
-    return Shape(input.size(), same(input))
+    return Shape(input.size(), same(input), partials.trivial)
 
 
 def symmetric(input: TensorLike, other: TensorLike, *args: Any, **kwargs: Any) -> Shape:
@@ -230,7 +243,7 @@ def symmetric(input: TensorLike, other: TensorLike, *args: Any, **kwargs: Any) -
     if shape is None:
         raise ValueError
 
-    return Shape(shape, same(input, other))
+    return Shape(shape, same(input, other), partials.trivial)
 
 
 def reduce_dims(
@@ -262,13 +275,18 @@ def reduce_dims(
     if keepdim:
         assert len(shapes) == input.dim()
 
-    return Shape(shapes, same(input))
+    if input.batch() in dimensions:
+        partial_func = None
+    else:
+        partial_func = partials.trivial
+
+    return Shape(shapes, same(input), partial_func)
 
 
 def permute(input: TensorLike, *dims: int, **kwargs: Any) -> Shape:
     mute_unused_args(**kwargs)
 
-    return Shape(permute_shape(input.size(), *dims), same(input))
+    return Shape(permute_shape(input.size(), *dims), same(input), partials.trivial)
 
 
 def tranpose(
@@ -276,7 +294,9 @@ def tranpose(
 ) -> Shape:
     mute_unused_args(*args, **kwargs)
 
-    return Shape(tranpose_shape(input.size(), dim0, dim1), same(input))
+    return Shape(
+        tranpose_shape(input.size(), dim0, dim1), same(input), partials.trivial
+    )
 
 
 def select(

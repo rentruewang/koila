@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pynvml.smi import nvidia_smi
 from torch import cuda
 
 from . import constants
@@ -20,8 +21,6 @@ def nvidia_free_memory() -> int:
 
     global NVSMI
     if NVSMI is None:
-        from pynvml.smi import nvidia_smi
-
         NVSMI = nvidia_smi.getInstance()
 
     assert NVSMI is not None

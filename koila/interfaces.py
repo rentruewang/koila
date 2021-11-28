@@ -5,7 +5,7 @@ import operator
 from abc import abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Protocol, Set, Tuple, TypeVar, Union, overload, runtime_checkable
+from typing import Protocol, Tuple, TypeVar, Union, overload, runtime_checkable
 
 from torch import Tensor
 from torch import device as Device
@@ -20,7 +20,7 @@ V = TypeVar("V", contravariant=True)
 @runtime_checkable
 class Runnable(Protocol[T]):
     @abstractmethod
-    def run(self) -> T:
+    def run(self, partial: PartialInfo | None = None) -> T:
         ...
 
 
@@ -30,20 +30,19 @@ class QueryType(Enum):
 
 
 @runtime_checkable
-class RunnableTensor(Runnable[Tensor], Protocol):
+class TensorMixin(Protocol):
     @overload
+    @abstractmethod
     def size(self) -> Tuple[int, ...]:
         ...
 
     @overload
+    @abstractmethod
     def size(self, dim: int) -> int:
         ...
 
-    def size(self, dim: int | None = None) -> int | Tuple[int, ...]:
-        return self._size_impl(dim)
-
     @abstractmethod
-    def _size_impl(self, dim: int | None = None) -> int | Tuple[int, ...]:
+    def size(self, dim: int | None = None) -> int | Tuple[int, ...]:
         ...
 
     def numel(self) -> int:
@@ -51,22 +50,6 @@ class RunnableTensor(Runnable[Tensor], Protocol):
 
     def dim(self) -> int:
         return len(self.size())
-
-    def upstream(self, query: QueryType = QueryType.Numel) -> int:
-        visited: Set[TensorLike] = set()
-        self.upstream_tensors(visited)
-
-        if query == QueryType.Numel:
-            return sum(tensor.numel() for tensor in visited)
-
-        if QueryType.Memory:
-            return sum(memory(tensor) for tensor in visited)
-
-        raise ValueError
-
-    @abstractmethod
-    def upstream_tensors(self, visited: Set[TensorLike]) -> None:
-        ...
 
     @abstractmethod
     def dtype(self) -> DType:
@@ -81,10 +64,18 @@ class RunnableTensor(Runnable[Tensor], Protocol):
         return MetaData(self.dtype(), self.device())
 
 
-@dataclass
+@runtime_checkable
+class RunnableTensor(Runnable[Tensor], TensorMixin, Protocol):
+    @abstractmethod
+    def batch(self) -> int | None:
+        ...
+
+
+@dataclass(frozen=True)
 class MetaData:
     dtype: DType
     device: str | Device
+    batch: int | None = None
 
 
 def dtype(tensor: TensorLike) -> DType:

@@ -15,7 +15,6 @@ from typing import (
     NamedTuple,
     NoReturn,
     Sequence,
-    Set,
     Tuple,
     Type,
     TypeVar,
@@ -29,9 +28,10 @@ from torch import Tensor
 from torch import device as Device
 from torch import dtype as DType
 
-from . import runnables, shapes
+from . import interfaces, shapes
 from .errors import NeverImplementedError, UnsupportedError
-from .runnables import Runnable, RunnableTensor, TensorLike
+from .interfaces import Runnable, RunnableTensor, TensorLike
+from .partials import PartialInfo
 from .shapes import MetaData, Shape, ShapeFunction
 
 T = TypeVar("T")
@@ -51,7 +51,7 @@ class LazyFunction(Generic[V]):
         lazy_args = tuple(lazy(arg) for arg in args)
         lazy_kwargs = dict((k, lazy(v)) for (k, v) in kwargs.items())
         shape = self.shape_func(*args, **kwargs)
-        return LazyTensor(Evaluation(self.func, shape, *lazy_args, **lazy_kwargs))
+        return LazyTensor(Evaluation(self.func, shape, None, *lazy_args, **lazy_kwargs))
 
     def __get__(self, obj: V, objtype: Type[V]) -> Callable[..., LazyTensor]:
         assert isinstance(obj, objtype), [type(obj), objtype]
@@ -62,10 +62,11 @@ class LazyFunction(Generic[V]):
 
 
 @final
-@dataclass(init=False, frozen=True)
+@dataclass(init=False)
 class Evaluation(RunnableTensor):
     func: Callable[..., Tensor]
     shape: Shape
+    callback: Callable[[Tensor], Tensor] | None = None
     args: Tuple[LazyTensor | Tensor | int | float | bool, ...] = dcls.field(
         default_factory=tuple
     )
@@ -77,28 +78,40 @@ class Evaluation(RunnableTensor):
         self,
         func: Callable[..., Tensor],
         shape: Shape,
+        callback: Callable[[Tensor], Tensor] | None,
         *args: LazyTensor | Tensor | int | float | bool,
         **kwargs: LazyTensor | Tensor | int | float | bool,
-    ):
-        object.__setattr__(self, "func", func)
-        object.__setattr__(self, "shape", shape)
-        object.__setattr__(self, "args", args)
-        object.__setattr__(self, "kwargs", kwargs)
+    ) -> None:
+        self.func = func
+        self.shape = shape
+        self.callback = callback
+        self.args = args
+        self.kwargs = kwargs
 
     def __hash__(self) -> int:
         # Evaluations are unique.
         return id(self)
 
-    def run(self) -> Tensor:
-        real_args = [run(arg) for arg in self.args]
-        real_kwargs = {k: run(v) for (k, v) in self.kwargs.items()}
+    def run(self, partial: PartialInfo | None = None) -> Tensor:
+        if partial is None:
+            real_args = [run(arg) for arg in self.args]
+            real_kwargs = {k: run(v) for (k, v) in self.kwargs.items()}
+        else:
+            real_args = [run(arg, partial) for arg in self.args]
+            real_kwargs = {k: run(v, partial) for (k, v) in self.kwargs.items()}
+
         result = self.func(*real_args, **real_kwargs)
+
+        if partial is not None:
+            if self.callback is None:
+                raise UnsupportedError("Cannot safely parallelize.")
+            result = self.callback(result)
 
         assert self.shape == result.shape, [self.shape, result.shape]
 
         return result
 
-    def _size_impl(self, dim: int | None = None) -> int | Tuple[int, ...]:
+    def size(self, dim: int | None = None) -> int | Tuple[int, ...]:
         shape = self.shape.value
         if dim is not None:
             return shape[dim]
@@ -114,47 +127,46 @@ class Evaluation(RunnableTensor):
     def metadata(self) -> MetaData:
         return self.shape.metadata
 
-    def upstream_tensors(self, visited: Set[TensorLike]) -> None:
-        if self in visited:
-            return
-
-        for arg in self.args:
-            if isinstance(arg, RunnableTensor):
-                arg.upstream_tensors(visited)
-            elif isinstance(arg, Tensor):
-                visited.add(arg)
-
-        for value in self.kwargs.values():
-            if isinstance(value, RunnableTensor):
-                value.upstream_tensors(visited)
-            elif isinstance(value, Tensor):
-                visited.add(value)
-
-        assert not self in visited
-        visited.add(self)
+    def batch(self) -> int | None:
+        return self.shape.metadata.batch
 
 
 @final
-@dataclass
+@dataclass(init=False, repr=False)
 class LazyTensor(RunnableTensor):
-    data: TensorLike
+    _data: TensorLike
+    _batch: int | None = None
 
-    def __init__(self, data: Tensor | LazyTensor | Evaluation) -> None:
+    def __init__(self, data: TensorLike, batch: int | None = None) -> None:
         if isinstance(data, LazyTensor):
-            self.data = data.data
+            self._data = data._data
+            self._batch = data._batch
         else:
-            self.data = data
+            self._data = data
+            self._batch = batch
 
     # Implementations
 
-    def run(self) -> Tensor:
-        data = self.data
-        if isinstance(data, Runnable):
-            return data.run()
-        return data
+    def run(self, partial: PartialInfo | None = None) -> Tensor:
+        data = self._data
+        if isinstance(data, Tensor):
+            if partial is None:
+                return data
+            else:
+                return data[partial.index]
 
-    def _size_impl(self, dim: int | None = None) -> int | Tuple[int, ...]:
-        data = self.data
+        return data.run(partial)
+
+    @overload
+    def size(self) -> Tuple[int, ...]:
+        ...
+
+    @overload
+    def size(self, dim: int) -> int:
+        ...
+
+    def size(self, dim: int | None = None) -> int | Tuple[int, ...]:
+        data = self._data
 
         if dim is None:
             return data.size()
@@ -162,28 +174,21 @@ class LazyTensor(RunnableTensor):
         return data.size(dim)
 
     def dtype(self) -> DType:
-        return runnables.dtype(self.data)
+        return interfaces.dtype(self._data)
 
     def device(self) -> str | Device:
-        return runnables.device(self.data)
+        return interfaces.device(self._data)
 
     def metadata(self) -> MetaData:
-        return runnables.metadata(self.data)
+        return interfaces.metadata(self._data)
 
-    def upstream_tensors(self, visited: Set[TensorLike]) -> None:
-        data = self.data
-
-        if data in visited:
-            return
-
-        if isinstance(data, Tensor):
-            visited.add(data)
-        else:
-            data.upstream_tensors(visited)
-
-        assert data in visited
+    def batch(self) -> int | None:
+        self._batch
 
     # Magic methods
+
+    def __str__(self) -> str:
+        return f"LazyTensor {self.run()}"
 
     def __bool__(self) -> bool:
         return bool(self.item())
@@ -260,7 +265,7 @@ class LazyTensor(RunnableTensor):
 
     def __hash__(self) -> int:
         # LazyTensors are not unique. They are defined by their data.
-        return id(self.data)
+        return id(self._data)
 
     def __matmul__(self, other: TensorLike) -> TensorLike:
         return lazy_forward(Tensor.__matmul__, shapes.matmul, self, other)
@@ -292,10 +297,10 @@ class LazyTensor(RunnableTensor):
     def __getitem__(
         self, index: int | slice | Tensor | List[Any] | Tuple[Any] | None
     ) -> Tensor:
-        if isinstance(self.data, RunnableTensor):
-            data = self.data.run()
+        if isinstance(self._data, RunnableTensor):
+            data = self._data.run()
         else:
-            data = self.data
+            data = self._data
         return data[index]
 
     def __setitem__(
@@ -303,10 +308,10 @@ class LazyTensor(RunnableTensor):
         index: int | slice | Tensor | List[Any] | Tuple[Any] | None,
         value: Tensor,
     ) -> None:
-        if isinstance(self.data, RunnableTensor):
+        if isinstance(self._data, RunnableTensor):
             raise UnsupportedError
 
-        self.data[index] = value
+        self._data[index] = value
 
     def __getattr__(self, name: str) -> Callable[..., Any]:
         logger.debug("__getattr__ called. Automatically resolving function.")
@@ -314,10 +319,10 @@ class LazyTensor(RunnableTensor):
         method = getattr(Tensor, name)
         wrapper = functools.wraps(method)
 
-        if (custom_impl := CUSTOM_IMPLS.lookup_method(name)) is not None:
+        if (custom_impl := CUSTOM_OPS.lookup_method(name)) is not None:
             logger.debug("A custom method definition is found.")
             partial = functools.partial(custom_impl, self)
-        elif (shape_impl := SHAPE_IMPLS.lookup_method(name)) is not None:
+        elif (shape_impl := SHAPE_OPS.lookup_method(name)) is not None:
             logger.debug("A custom shape method is found. Lazy evaluation.")
             partial = functools.partial(lazy_forward, method, shape_impl, self)
         else:
@@ -344,10 +349,10 @@ class LazyTensor(RunnableTensor):
 
         name = func.__name__
 
-        if (custom_impl := CUSTOM_IMPLS.lookup_function(name)) is not None:
+        if (custom_impl := CUSTOM_OPS.lookup_function(name)) is not None:
             logger.debug("A custom function definition is found.")
             return custom_impl(*args, **kwargs)
-        elif (shape_impl := SHAPE_IMPLS.lookup_function(name)) is not None:
+        elif (shape_impl := SHAPE_OPS.lookup_function(name)) is not None:
             logger.debug("A custom shape function is found. Lazy evaluation.")
             return lazy_forward(func, shape_impl, *args, **kwargs)
         else:
@@ -374,9 +379,12 @@ class LazyTensor(RunnableTensor):
     def torch(self) -> Tensor:
         return self.run()
 
+    def backward(self) -> None:
+        self.run().backward()
+
 
 @overload
-def lazy(val: Tensor) -> LazyTensor:
+def lazy(val: Tensor, batch: int | None = None) -> LazyTensor:
     ...
 
 
@@ -400,46 +408,46 @@ def lazy(val: bool) -> bool:
     ...
 
 
-def lazy(val: Any) -> Any:
+def lazy(val: Any, batch: int | None = None) -> Any:
     if isinstance(val, LazyTensor):
         return val
 
     if isinstance(val, Tensor):
-        return LazyTensor(val)
+        return LazyTensor(val, batch)
 
     return val
 
 
 @overload
-def run(val: LazyTensor) -> Tensor:
+def run(val: LazyTensor, partial: PartialInfo | None = None) -> Tensor:
     ...
 
 
 @overload
-def run(val: RunnableTensor) -> Tensor:
+def run(val: RunnableTensor, partial: PartialInfo | None = None) -> Tensor:
     ...
 
 
 @overload
-def run(val: Runnable[T]) -> T:
+def run(val: Runnable[T], partial: PartialInfo | None = None) -> T:
     ...
 
 
 @overload
-def run(val: T) -> T:
+def run(val: T, partial: PartialInfo | None = None) -> T:
     ...
 
 
-def run(val: Any) -> Any:
+def run(val: Any, partial: PartialInfo | None = None) -> Any:
     if isinstance(val, Runnable):
-        return val.run()
+        return val.run(partial)
 
     return val
 
 
 def lazy_forward(
     func: Callable[..., Any], shape_func: ShapeFunction, *args: Any, **kwargs: Any
-) -> LazyTensor | Tensor:
+) -> TensorLike:
     if torch.is_grad_enabled():
         return LazyTensor(LazyFunction(func, shape_func)(*args, **kwargs))
     else:
@@ -565,7 +573,7 @@ class MethodFunction(Generic[T]):
         return self.lookup(key, self.function)
 
 
-CUSTOM_IMPLS = MethodFunction[Callable](
+CUSTOM_OPS = MethodFunction[Callable](
     method={},
     function={
         "min": _min,
@@ -573,7 +581,9 @@ CUSTOM_IMPLS = MethodFunction[Callable](
     },
 )
 
-SHAPE_IMPLS = MethodFunction[ShapeFunction](
+PARTIAL_OPS = MethodFunction[Callable](method={}, function={"sum": lambda x: x})
+
+SHAPE_OPS = MethodFunction[ShapeFunction](
     method={"permute": shapes.permute},
     function={
         "positive": shapes.identity,
