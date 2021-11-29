@@ -15,7 +15,6 @@ from typing import (
     NamedTuple,
     NoReturn,
     Sequence,
-    Set,
     Tuple,
     Type,
     TypeVar,
@@ -25,13 +24,13 @@ from typing import (
 
 import torch
 from rich.logging import RichHandler
-from torch import Tensor
+from torch import Tensor, cuda
 from torch import device as Device
 from torch import dtype as DType
 
-from . import interfaces, prepasses
+from . import gpus, interfaces, prepasses
 from .errors import UnsupportedError
-from .interfaces import Runnable, RunnableTensor, TensorLike
+from .interfaces import BatchInfo, Runnable, RunnableTensor, TensorLike
 from .prepasses import PrePass, PrePassFunc
 
 T = TypeVar("T")
@@ -99,24 +98,24 @@ class Evaluation(RunnableTensor):
 
     run = _run
 
-    def visit(self, nodes: Set[TensorLike]) -> None:
-        if self in nodes:
+    def visit(self, nodes: Dict[int, TensorLike]) -> None:
+        if hash(self) in nodes.keys():
             return
 
         for arg in self.args:
             if isinstance(arg, Tensor):
-                nodes.add(arg)
+                nodes[hash(arg)] = arg
             elif isinstance(arg, RunnableTensor):
                 arg.visit(nodes)
 
         for val in self.kwargs.values():
             if isinstance(val, Tensor):
-                nodes.add(val)
+                nodes[hash(val)] = val
             elif isinstance(val, RunnableTensor):
                 val.visit(nodes)
 
-        assert self not in nodes
-        nodes.add(self)
+        assert hash(self) not in nodes.keys()
+        nodes[hash(self)] = self
 
     def _take_batch(self, low: int, high: int) -> Tensor:
         logger.debug(
@@ -152,7 +151,7 @@ class Evaluation(RunnableTensor):
     def device(self) -> str | Device:
         return self.prepass.device()
 
-    def batch(self) -> int | None:
+    def batch(self) -> BatchInfo | None:
         return self.prepass.batch()
 
 
@@ -160,7 +159,7 @@ class Evaluation(RunnableTensor):
 @dataclass(init=False, repr=False)
 class LazyTensor(RunnableTensor):
     _data: TensorLike
-    _batch: int | None = None
+    _batch: BatchInfo | None = None
 
     def __init__(self, data: TensorLike, batch: int | None = None) -> None:
         if isinstance(data, LazyTensor):
@@ -171,7 +170,10 @@ class LazyTensor(RunnableTensor):
             self._batch = data.batch()
         else:
             self._data = data
-            self._batch = batch
+            if batch is None:
+                self._batch = None
+            else:
+                self._batch = BatchInfo(batch, data.size(batch))
 
         logger.debug("Creating LazyTensor. %s, %s", type(self._data), self._batch)
 
@@ -184,16 +186,18 @@ class LazyTensor(RunnableTensor):
 
         return data.run()
 
-    def visit(self, nodes: Set[TensorLike]) -> None:
+    def visit(self, nodes: Dict[int, TensorLike]) -> None:
         data = self._data
 
-        if self in nodes:
+        if hash(self) in nodes.keys():
             return
 
         if isinstance(data, Evaluation):
             data.visit(nodes)
         else:
-            nodes.add(self)
+            nodes[hash(self)] = self
+
+        assert hash(self) in nodes.keys()
 
     def take_batch(self, low: int, high: int) -> Tensor:
         logger.debug(
@@ -209,7 +213,7 @@ class LazyTensor(RunnableTensor):
                 result = self._data
             else:
                 result = self._data.index_select(
-                    self._batch, torch.tensor(list(range(low, high)))
+                    self._batch.index, torch.tensor(list(range(low, high)))
                 )
         else:
             result = self._data.take_batch(low, high)
@@ -239,7 +243,7 @@ class LazyTensor(RunnableTensor):
     def device(self) -> str | Device:
         return interfaces.dev(self._data)
 
-    def batch(self) -> int | None:
+    def batch(self) -> BatchInfo | None:
         return self._batch
 
     # Magic methods
@@ -322,7 +326,7 @@ class LazyTensor(RunnableTensor):
 
     def __hash__(self) -> int:
         # LazyTensors are not unique. They are defined by their data.
-        return id(self)
+        return id(self._data)
 
     def __matmul__(self, other: TensorLike) -> TensorLike:
         return lazy_forward(Tensor.__matmul__, prepasses.matmul, self, other)
@@ -439,7 +443,23 @@ class LazyTensor(RunnableTensor):
         return self.run()
 
     def backward(self) -> None:
-        self.run().backward()
+        if self._batch is None or not cuda.is_available():
+            logger.debug(
+                "Unable to parallelize across batches."
+                " "
+                "Running backward with native pytorch."
+            )
+            self.run().backward()
+        else:
+            total = 0
+            logger.debug("Able to parallelize across batches. Hooray!")
+            for mini_batch_size in gpus.split_batch(
+                self.buffer_memory(), self._batch.value
+            ):
+                logger.debug("Using mini batch size: %d.", mini_batch_size)
+                mini_batch = self.take_batch(total, total + mini_batch_size)
+                total += mini_batch_size
+                mini_batch.backward()
 
 
 @overload

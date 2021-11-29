@@ -24,7 +24,7 @@ from torch.functional import Tensor
 
 from . import constants, interfaces
 from .errors import UnsupportedError
-from .interfaces import TensorLike
+from .interfaces import BatchInfo, TensorLike
 
 logger = logging.getLogger(__name__)
 logger.addHandler(RichHandler())
@@ -40,7 +40,7 @@ class CallBack(Protocol):
 class MetaData:
     dtype: DType
     device: str | Device
-    batch: int | None
+    batch: BatchInfo | None
     reducer: CallBack | None
 
 
@@ -82,7 +82,7 @@ class PrePass:
     def device(self) -> str | Device:
         return self.metadata.device
 
-    def batch(self) -> int | None:
+    def batch(self) -> BatchInfo | None:
         return self.metadata.batch
 
     def reducer(self) -> CallBack | None:
@@ -106,7 +106,7 @@ def trivial(input: Tensor) -> Tensor:
 
 
 def same(
-    tensors: Sequence[TensorLike], batch: int | None, reducer: CallBack | None
+    tensors: Sequence[TensorLike], batch: BatchInfo | None, reducer: CallBack | None
 ) -> MetaData:
     assert len(tensors) > 0
     dtypes = [interfaces.dtyp(t) for t in tensors]
@@ -401,10 +401,9 @@ def permute(input: TensorLike, *dims: int, **kwargs: Any) -> PrePass:
 
     mapping = dict(enumerate(dims))
 
-    if (b := interfaces.bat(input)) is None:
-        batch = None
-    else:
-        batch = mapping[b]
+    batch = None
+    if (b := interfaces.bat(input)) is not None:
+        batch = b.map(lambda x: mapping[x])
 
     return PrePass(permute_shape(input.size(), *dims), same([input], batch, trivial))
 
@@ -414,13 +413,10 @@ def reshape(input: TensorLike, *shape: int, **kwargs: Any) -> PrePass:
 
     shape = reshape_shape(input.size(), *shape)
 
+    batch = None
     if (b := interfaces.bat(input)) is not None:
         if b in shape:
-            batch = shape.index(b)
-        else:
-            batch = None
-    else:
-        batch = None
+            batch = b.map(shape.index)
 
     return PrePass(shape, same([input], batch, trivial))
 
@@ -433,7 +429,7 @@ def view(input: TensorLike, *shape: int, **kwargs: Any) -> PrePass:
     batch = None
     if (b := interfaces.bat(input)) is not None:
         if b in shape:
-            batch = shape.index(b)
+            batch = b.map(shape.index)
 
     return PrePass(shape, same([input], batch, trivial))
 
@@ -458,7 +454,7 @@ def flatten(
 
     batch = None
     if (b := interfaces.bat(input)) is not None:
-        if not (start_dim <= b <= end_dim):
+        if not (start_dim <= b.index <= end_dim):
             batch = b
 
     return PrePass(shape, same([input], batch, trivial))
@@ -469,12 +465,9 @@ def tranpose(
 ) -> PrePass:
     mute_unused_args(*args, **kwargs)
 
-    if (b := interfaces.bat(input)) == dim0:
-        batch = dim1
-    elif b == dim1:
-        batch = dim0
-    else:
-        batch = None
+    batch = None
+    if (b := interfaces.bat(input)) is not None:
+        batch = b.map(lambda x: {dim0: dim1, dim1: dim0}[x])
 
     return PrePass(
         tranpose_shape(input.size(), dim0, dim1), same([input], batch, trivial)

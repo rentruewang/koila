@@ -2,7 +2,7 @@ import torch
 from torch import Tensor
 from torch.nn import Flatten, Linear, Module, ReLU, Sequential
 
-from koila import LazyTensor
+from koila import BatchInfo, LazyTensor
 
 
 def test_torch_tutorial() -> None:
@@ -34,7 +34,7 @@ def test_torch_tutorial() -> None:
     assert not isinstance(out, LazyTensor)
 
     lt = LazyTensor(t, batch=0)
-    assert lt.batch() == 0
+    assert lt.batch() == BatchInfo(0, 9)
     nn = NeuralNetwork()
 
     lout = nn(lt)
@@ -48,4 +48,4 @@ def test_torch_tutorial() -> None:
     assert isinstance(tbout, Tensor)
     assert not isinstance(tbout, LazyTensor)
 
-    assert lout.batch() == 0
+    assert lout.batch() == BatchInfo(0, 9)

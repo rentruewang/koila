@@ -1,6 +1,7 @@
 # General gitignore
 .DS_Store
 .vscode/
+__main__.py
 
 # Python gitignore
 # Byte-compiled / optimized / DLL files
