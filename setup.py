@@ -17,7 +17,7 @@ setuptools.setup(
     description="Never worry about OOM again, even with gigantic batch sizes.",
     long_description=long_desc,
     long_description_content_type="text/markdown",
-    packages=setuptools.find_packages(exclude=["examples","tests"]),
+    packages=setuptools.find_packages(exclude=["examples", "tests"]),
     classifiers=[
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.8",
