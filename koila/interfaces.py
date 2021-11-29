@@ -125,10 +125,9 @@ def mem(tensor: TensorLike) -> int:
 
 
 def bat(tensor: TensorLike) -> int | None:
-    if isinstance(tensor, Tensor):
-        return None
-
-    return tensor.batch()
+    if isinstance(tensor, RunnableTensor):
+        return tensor.batch()
+    return None
 
 
 TensorLike = Union[Tensor, RunnableTensor]
