@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import math
+from typing import Generator
+
 from pynvml.smi import nvidia_smi
 from torch import cuda
 
 from . import constants
+from .interfaces import BatchNoBatch
 
 NVSMI = None
 
@@ -27,7 +31,7 @@ def nvidia_free_memory() -> int:
     query = NVSMI.DeviceQuery("memory.free")
 
     # Only works on one GPU as of now.
-    gpu = query["gpu"][0]
+    gpu = query["gpu"][0]["fb_memory_usage"]
 
     unit = constants.UNITS[gpu["unit"].lower()]
     free = gpu["free"]
@@ -50,13 +54,10 @@ def torch_free_memory() -> int:
         return 0
 
     # Only works on one GPU as of now.
-    stats = cuda.memory_stats(0)
 
-    reserved_memory = stats["reserved_bytes.all.current"]
-    active_memory = stats["active_bytes.all.current"]
-    unused_memory = stats["inactive_split_bytes.all.current"]
-
-    assert unused_memory == reserved_memory - active_memory
+    reserved_memory = cuda.memory_reserved(0)
+    active_memory = cuda.memory_allocated(0)
+    unused_memory = reserved_memory - active_memory
     return unused_memory
 
 
@@ -74,3 +75,37 @@ def free_memory() -> int | None:
         return nvidia_free_memory() + torch_free_memory()
     else:
         return None
+
+
+def maximum_batch(memory: BatchNoBatch, total_memory: int | None = None) -> int | None:
+    # batch * x + no_batch = unused_memoroy
+    if total_memory is None:
+        total_memory = free_memory()
+
+    if total_memory is None:
+        return None
+
+    return (total_memory - memory.no_batch) // memory.batch
+
+
+def split_batch(
+    memory: BatchNoBatch, current_batch: int, total_memory: int | None = None
+) -> Generator[int, None, None]:
+    max_batch = maximum_batch(memory, total_memory)
+
+    if max_batch is None:
+        yield current_batch
+        return
+
+    batch_size = 2 ** (math.floor(math.log2(max_batch)))
+    (times, current_batch) = divmod(current_batch, batch_size)
+
+    for _ in range(times):
+        yield batch_size
+
+    while current_batch > 0:
+        batch_size >>= 1
+        if current_batch >= batch_size:
+            current_batch -= batch_size
+            yield batch_size
+        assert current_batch < batch_size, [current_batch, batch_size]

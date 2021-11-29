@@ -2,4 +2,3 @@ numpy
 pynvml
 rich
 torch
-torchvision

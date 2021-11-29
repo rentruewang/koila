@@ -4,9 +4,10 @@ import functools
 import operator
 from abc import abstractmethod
 from typing import (
+    Callable,
+    Dict,
     NamedTuple,
     Protocol,
-    Set,
     Tuple,
     TypeVar,
     Union,
@@ -67,10 +68,19 @@ class BatchNoBatch(NamedTuple):
     no_batch: int
 
 
+class BatchInfo(NamedTuple):
+    index: int
+    value: int
+
+    def map(self, func: Callable[[int], int]) -> BatchInfo:
+        index = func(self.index)
+        return BatchInfo(index, self.value)
+
+
 @runtime_checkable
 class RunnableTensor(Runnable[Tensor], TensorMixin, Protocol):
     @abstractmethod
-    def batch(self) -> int | None:
+    def batch(self) -> BatchInfo | None:
         ...
 
     @abstractmethod
@@ -78,23 +88,23 @@ class RunnableTensor(Runnable[Tensor], TensorMixin, Protocol):
         ...
 
     @abstractmethod
-    def visit(self, nodes: Set[TensorLike]) -> None:
+    def visit(self, nodes: Dict[int, TensorLike]) -> None:
         ...
 
-    def buffer(self) -> Set[TensorLike]:
-        nodes = set()
+    def buffer(self) -> Dict[int, TensorLike]:
+        nodes = {}
         self.visit(nodes)
         return nodes
 
     def buffer_numel(self) -> BatchNoBatch:
-        buffer = self.buffer()
+        buffer = self.buffer().values()
         return BatchNoBatch(
             sum(t.numel() for t in buffer if bat(t) is not None),
             sum(t.numel() for t in buffer if bat(t) is None),
         )
 
     def buffer_memory(self) -> BatchNoBatch:
-        buffer = self.buffer()
+        buffer = self.buffer().values()
         return BatchNoBatch(
             sum(mem(t) for t in buffer if bat(t) is not None),
             sum(mem(t) for t in buffer if bat(t) is None),
@@ -124,7 +134,7 @@ def mem(tensor: TensorLike) -> int:
     return constants.MEMORY_BYTES[dt] * numel
 
 
-def bat(tensor: TensorLike) -> int | None:
+def bat(tensor: TensorLike) -> BatchInfo | None:
     if isinstance(tensor, RunnableTensor):
         return tensor.batch()
     return None
