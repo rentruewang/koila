@@ -12,7 +12,7 @@ with open(WorkDir / "requirements.txt") as f:
 
 setuptools.setup(
     name="koila",
-    version="0.1.dev0",
+    version="0.1",
     author="RenChu Wang",
     description="Never worry about OOM again, even with gigantic batch sizes.",
     long_description=long_desc,
