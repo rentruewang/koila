@@ -97,7 +97,7 @@ You change this line of code:
 # Wrap the input tensor.
 # If a batch argument is provided, that dimension of the tensor would be treated as the batch.
 # In this case, the first dimension (dim=0) is used as batch's dimension.
-input = lazy(torch.nn(8, 28, 28), batch=0)
+input = lazy(torch.randn(8, 28, 28), batch=0)
 ```
 
 Done. You will not run out of memory again.
