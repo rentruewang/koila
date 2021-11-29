@@ -19,12 +19,12 @@
 
 - ✂️ Automatically splits along the batch dimension to more GPU friendly numbers (2's powers) to speed up the execution.
 
-- 🤏 Minimal API (for training, only wrapping is input is required).
+- 🤏 Minimal API (wrapping all inputs will be enough).
 
 ## 🤔 Why Koila?
 
-Ever encountered RuntimeError: CUDA error: out of memory`?
-We all love PyTorch because of its speed, efficiency, and transparancy, but that means it doesn't do extra things. Things like preventing a very common error that has been bothering every user since [2017](https://github.com/pytorch/pytorch/issues/958#issuecomment-285090162).
+Ever encountered `RuntimeError: CUDA error: out of memory`?
+We all love PyTorch because of its speed, efficiency, and transparency, but that means it doesn't do extra things. Things like preventing a very common error that has been bothering every user since [2017](https://github.com/pytorch/pytorch/issues/958#issuecomment-285090162).
 
 This library aims to prevent that by being a light-weight wrapper over native PyTorch. When a tensor is wrapped, the library **automatically computes the amount of remaining GPU memory and uses the right batch size**, saving everyone from having to manually finetune the batch size whenever a model is used.
 
@@ -116,11 +116,11 @@ In terms of memory usage, only **shapes of temporary variables are required to c
 
 **NO**. Indeed, calculating shapes and computing the size and memory usage sound like a lot of work. However, keep in mind that even a gigantic model like GPT-3, which has 96 layers, has only a few hundred nodes in its computing graph. Because Koila's algorithms run in linear time, any modern computer will be able to handle a graph like this instantly.
 
-Most of the computing is spent on computing individual tensors, and transfering tensors across devices. And bear in mind that those checks happen in vanilla PyTorch anyways. So no, not slow at all.
+Most of the computing is spent on computing individual tensors, and transferring tensors across devices. And bear in mind that those checks happen in vanilla PyTorch anyways. So no, not slow at all.
 
 ## 🔊 How to pronounce Koila?
 
-This project was originally named _koala_, the lazyiest species in the world, and this project is about lazy evaluation of tensors. However, as that name is taken on [PyPI](https://pypi.org/project/koala/), I had no choice but to use another name. Koila is a word made up by me, pronounced similarly to _voila_ (It's a French word), so sounds like koala.
+This project was originally named _koala_, the laziest species in the world, and this project is about lazy evaluation of tensors. However, as that name is taken on [PyPI](https://pypi.org/project/koala/), I had no choice but to use another name. Koila is a word made up by me, pronounced similarly to _voila_ (It's a French word), so sounds like koala.
 
 ## ⭐ Give me a star!
 
@@ -138,4 +138,4 @@ The code works on many cases, but it's still a work in progress. This is not (ye
 
 ## 🥰 Contributing
 
-We take openess and inclusiveness very seriously. We have adopted the following [Code of Conduct](./CODE_OF_CONDUCT.md).
+We take openness and inclusiveness very seriously. We have adopted the following [Code of Conduct](./CODE_OF_CONDUCT.md).
