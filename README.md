@@ -1,5 +1,8 @@
 # 🐨 Koila
 
+> Koila solves `CUDA error: out of memory error` painlessly.
+> Fix it with just one line of code, and forget it.
+
 ![Type Checking](https://github.com/rentruewang/koila/actions/workflows/typecheck.yaml/badge.svg)
 ![Formatting](https://github.com/rentruewang/koila/actions/workflows/format.yaml/badge.svg)
 ![Unit testing](https://github.com/rentruewang/koila/actions/workflows/unittest.yaml/badge.svg)
@@ -44,6 +47,7 @@ pip install koila
 The usage is dead simple. For example, you have the following PyTorch code (copied from PyTorch's tutorial)
 
 Define the input, label, and model:
+
 ```python
 # A batch of MNIST image
 input = torch.randn(8, 28, 28)
@@ -72,6 +76,7 @@ nn = NeuralNetwork().to(DEVICE)
 ```
 
 Define the loss function, calculate output and losses.
+
 ```python
 loss_fn = CrossEntropyLoss()
 
@@ -87,6 +92,7 @@ loss.backward()
 Ok. How to adapt the code to use `Koila`'s features?
 
 You change this line of code:
+
 ```python
 # Wrap the input tensor.
 # If a batch argument is provided, that dimension of the tensor would be treated as the batch.
