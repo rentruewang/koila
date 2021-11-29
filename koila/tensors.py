@@ -44,13 +44,13 @@ logger.addHandler(RichHandler())
 @dataclass(frozen=True)
 class LazyFunction(Generic[V]):
     func: Callable[..., Tensor]
-    shape_func: PrePassFunc
+    prepass_func: PrePassFunc
 
     def __call__(self, *args: Any, **kwargs: Any) -> LazyTensor:
         lazy_args = tuple(lazy(arg) for arg in args)
         lazy_kwargs = dict((k, lazy(v)) for (k, v) in kwargs.items())
-        shape = self.shape_func(*args, **kwargs)
-        return LazyTensor(Evaluation(self.func, shape, *lazy_args, **lazy_kwargs))
+        prepass = self.prepass_func(*args, **kwargs)
+        return LazyTensor(Evaluation(self.func, prepass, *lazy_args, **lazy_kwargs))
 
     def __get__(self, obj: V, objtype: Type[V]) -> Callable[..., LazyTensor]:
         assert isinstance(obj, objtype), [type(obj), objtype]
@@ -64,7 +64,7 @@ class LazyFunction(Generic[V]):
 @dataclass(init=False)
 class Evaluation(RunnableTensor):
     func: Callable[..., Tensor]
-    shape: PrePass
+    prepass: PrePass
     args: Tuple[LazyTensor | Tensor | int | float | bool, ...] = dcls.field(
         default_factory=tuple
     )
@@ -119,6 +119,14 @@ class Evaluation(RunnableTensor):
         nodes.add(self)
 
     def _take_batch(self, low: int, high: int) -> Tensor:
+        logger.debug(
+            "Evaluation taking batch: (%s, %s), low=%s, high=%s",
+            self.size(),
+            self.batch(),
+            low,
+            high,
+        )
+
         args = [take_batch(arg, low, high) for arg in self.args]
         kwargs = {k: take_batch(v, low, high) for (k, v) in self.kwargs.items()}
         result = self.func(*args, **kwargs)
@@ -127,7 +135,6 @@ class Evaluation(RunnableTensor):
             raise UnsupportedError("Cannot safely parallelize.")
 
         result = reducer(result)
-
         return result
 
     take_batch = _take_batch
@@ -159,9 +166,14 @@ class LazyTensor(RunnableTensor):
         if isinstance(data, LazyTensor):
             self._data = data._data
             self._batch = data._batch
+        elif isinstance(data, Evaluation):
+            self._data = data
+            self._batch = data.batch()
         else:
             self._data = data
             self._batch = batch
+
+        logger.debug("Creating LazyTensor. %s, %s", type(self._data), self._batch)
 
     # Implementations
 
@@ -175,24 +187,34 @@ class LazyTensor(RunnableTensor):
     def visit(self, nodes: Set[TensorLike]) -> None:
         data = self._data
 
-        if data in nodes:
+        if self in nodes:
             return
 
-        if isinstance(data, Tensor):
-            nodes.add(data)
-        else:
+        if isinstance(data, Evaluation):
             data.visit(nodes)
-
-        assert data in nodes
+        else:
+            nodes.add(self)
 
     def take_batch(self, low: int, high: int) -> Tensor:
-        if isinstance(self._data, Tensor):
-            assert self.batch is not None
-            return self._data.index_select(
-                self._batch, torch.tensor(list(range(low, high)))
-            )
+        logger.debug(
+            "LazyTensor taking batch: (%s, %s), low=%s, high=%s",
+            self.size(),
+            self.batch(),
+            low,
+            high,
+        )
 
-        return self._data.take_batch(low, high)
+        if isinstance(self._data, Tensor):
+            if self._batch is None:
+                result = self._data
+            else:
+                result = self._data.index_select(
+                    self._batch, torch.tensor(list(range(low, high)))
+                )
+        else:
+            result = self._data.take_batch(low, high)
+
+        return result
 
     @overload
     def size(self) -> Tuple[int, ...]:
@@ -218,7 +240,7 @@ class LazyTensor(RunnableTensor):
         return interfaces.dev(self._data)
 
     def batch(self) -> int | None:
-        self._batch
+        return self._batch
 
     # Magic methods
 
@@ -300,7 +322,7 @@ class LazyTensor(RunnableTensor):
 
     def __hash__(self) -> int:
         # LazyTensors are not unique. They are defined by their data.
-        return id(self._data)
+        return id(self)
 
     def __matmul__(self, other: TensorLike) -> TensorLike:
         return lazy_forward(Tensor.__matmul__, prepasses.matmul, self, other)
@@ -349,7 +371,9 @@ class LazyTensor(RunnableTensor):
         self._data[index] = value
 
     def __getattr__(self, name: str) -> Callable[..., Any]:
-        logger.debug("__getattr__ called. Automatically resolving function.")
+        logger.debug(
+            f"__getattr__ called for {name}. Automatically resolving function."
+        )
 
         method = getattr(Tensor, name)
         wrapper = functools.wraps(method)
@@ -444,11 +468,10 @@ def lazy(val: bool) -> bool:
 
 
 def lazy(val: Any, batch: int | None = None) -> Any:
-    if isinstance(val, LazyTensor):
-        return val
+    logger.debug("lazy %s, %s", type(val), interfaces.bat(val))
 
     if isinstance(val, Tensor):
-        return LazyTensor(val, batch)
+        val = LazyTensor(val, batch)
 
     return val
 
@@ -474,6 +497,7 @@ def run(val: T) -> T:
 
 
 def run(val: Any) -> Any:
+
     if isinstance(val, Runnable):
         return val.run()
 
@@ -503,17 +527,27 @@ def take_batch(tensor: bool, low: int, high: int) -> bool:
 def take_batch(
     tensor: TensorLike | int | float | bool, low: int, high: int
 ) -> Tensor | int | float | bool:
-    if not isinstance(tensor, RunnableTensor):
-        return tensor
 
-    return tensor.take_batch(low, high)
+    if isinstance(tensor, RunnableTensor):
+        logger.debug(
+            "Generic taking batch: (%s, %s), low=%s, high=%s",
+            tensor.size(),
+            tensor.batch(),
+            low,
+            high,
+        )
+        return tensor.take_batch(low, high)
+
+    return tensor
 
 
 def lazy_forward(
     func: Callable[..., Any], shape_func: PrePassFunc, *args: Any, **kwargs: Any
 ) -> TensorLike:
     if torch.is_grad_enabled():
-        return LazyTensor(LazyFunction(func, shape_func)(*args, **kwargs))
+        out = LazyTensor(LazyFunction(func, shape_func)(*args, **kwargs))
+        logger.debug("lazy forward %s, %s", out.size(), out.batch())
+        return out
     else:
         return func(*args, **kwargs)
 
@@ -613,22 +647,6 @@ def _reshape_function_shape(
     return prepasses.reshape(input, *dims)
 
 
-def _flatten_shape(
-    input: TensorLike, start_dim: int = 0, end_dim: int = -1, *args: Any, **kwargs: Any
-) -> PrePass:
-    logger.debug("%s, %d, %d", input.size(), start_dim, end_dim)
-
-    prepasses.mute_unused_args(*args, **kwargs)
-
-    start_dim %= input.dim()
-    end_dim %= input.dim()
-
-    sizes = input.size()
-
-    shape = sizes[:start_dim] + (-1,) + sizes[end_dim + 1 :]
-    return prepasses.view(input, *shape)
-
-
 def _t_shape(input: TensorLike, *args: Any, **kwargs: Any) -> PrePass:
     prepasses.mute_unused_args(*args, **kwargs)
 
@@ -651,8 +669,10 @@ class MethodFunction(Generic[T]):
         if (result := self._search(key, *dbs)) is not None:
             return result
 
-        fallback = key.lstrip("_")
-        return self._search(fallback, *dbs)
+        if key.startswith("_"):
+            fallback = key.lstrip("_")
+            return self._search(fallback, *dbs)
+        return None
 
     def lookup_method(self, key: str) -> T | None:
         return self.lookup(key, self.method, self.function)
@@ -729,7 +749,7 @@ SHAPE_OPS = MethodFunction[PrePassFunc](
         "t": _t_shape,
         "permute": _permute_function_shape,
         "reshape": _reshape_function_shape,
-        "flatten": _flatten_shape,
+        "flatten": prepasses.flatten,
         "transpose": prepasses.tranpose,
         "select": prepasses.select,
         "index_select": prepasses.select,

@@ -314,10 +314,9 @@ def symmetric(
     if shape is None:
         raise ValueError
 
+    batch = None
     if (b := interfaces.bat(input)) == interfaces.bat(other):
         batch = b
-    else:
-        batch = None
 
     return PrePass(shape, same([input, other], batch, trivial))
 
@@ -413,13 +412,56 @@ def permute(input: TensorLike, *dims: int, **kwargs: Any) -> PrePass:
 def reshape(input: TensorLike, *shape: int, **kwargs: Any) -> PrePass:
     mute_unused_args(**kwargs)
 
-    return PrePass(reshape_shape(input.size(), *shape), same([input], None, trivial))
+    shape = reshape_shape(input.size(), *shape)
+
+    if (b := interfaces.bat(input)) is not None:
+        if b in shape:
+            batch = shape.index(b)
+        else:
+            batch = None
+    else:
+        batch = None
+
+    return PrePass(shape, same([input], batch, trivial))
 
 
 def view(input: TensorLike, *shape: int, **kwargs: Any) -> PrePass:
     mute_unused_args(**kwargs)
 
-    return PrePass(view_shape(input.size(), *shape), same([input], None, trivial))
+    shape = view_shape(input.size(), *shape)
+
+    batch = None
+    if (b := interfaces.bat(input)) is not None:
+        if b in shape:
+            batch = shape.index(b)
+
+    return PrePass(shape, same([input], batch, trivial))
+
+
+def flatten(
+    input: TensorLike, start_dim: int = 0, end_dim: int = -1, *args: Any, **kwargs: Any
+) -> PrePass:
+    logger.debug("%s, %s, %s", input.size(), start_dim, end_dim)
+
+    mute_unused_args(*args, **kwargs)
+
+    start_dim %= input.dim()
+    end_dim %= input.dim()
+
+    sizes = input.size()
+
+    shape = (
+        *sizes[:start_dim],
+        functools.reduce(operator.mul, sizes[start_dim : end_dim + 1]),
+        *sizes[end_dim + 1 :],
+    )
+
+    batch = None
+    if (b := interfaces.bat(input)) is not None:
+        if not (start_dim <= b <= end_dim):
+            batch = b
+
+    return PrePass(shape, same([input], batch, trivial))
 
 
 def tranpose(
@@ -468,9 +510,8 @@ def select(
     else:
         sliced_idx = ()
 
-    if (b := interfaces.bat(input)) == dim:
-        batch = None
-    else:
+    batch = None
+    if (b := interfaces.bat(input)) != dim:
         batch = b
 
     return PrePass(
@@ -544,9 +585,8 @@ def cat(
     if len(set(interfaces.bat(t) for t in tensors)) != 1:
         raise UnsupportedError
 
-    if (b := interfaces.bat(tensors[0])) == dim:
-        batch = None
-    else:
+    batch = None
+    if (b := interfaces.bat(tensors[0])) != dim:
         batch = b
 
     concat_size = sum(t[dim] for t in shapes)

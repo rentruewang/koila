@@ -555,19 +555,6 @@ def test_abs_function() -> None:
     )
 
 
-def test_hash_op() -> None:
-    arr = torch.randn(2, 10, 11)
-
-    a = LazyTensor(arr)
-    b = a
-    c = LazyTensor(arr)
-    d = LazyTensor(a)
-    e = koila.lazy(arr)
-    f = koila.lazy(a)
-
-    assert hash(a) == hash(b) == hash(c) == hash(d) == hash(e) == hash(f)
-
-
 def test_min_method() -> None:
     arr = torch.randn(6, 7, 8)
 
