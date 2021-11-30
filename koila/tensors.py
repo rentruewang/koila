@@ -569,7 +569,11 @@ def lazy_forward(
         logger.debug("lazy forward %s, %s", out.size(), out.batch())
         return out
     else:
-        return func(*args, **kwargs)
+        run_args = [run(arg) for arg in args]
+        run_kwargs = {k: run(v) for (k, v) in kwargs.items()}
+        out = func(*run_args, **run_kwargs)
+        logger.debug("eager forward (%s, %s) -> %s", run_args, run_kwargs, out)
+        return out
 
 
 # Functions that require special handling.
