@@ -56,13 +56,15 @@ grads = [p.detach().clone() for p in nn.parameters()]
 lt = lazy(t, batch=0)
 
 # Using the same operations.
-out = nn(t)
-loss = loss_fn(out, label)
+out_lazy = nn(lt)
+loss = loss_fn(out_lazy, label)
 nn.zero_grad()
 loss.backward()
 
 # Would yield the same results.
 my_grads = [p.detach().clone() for p in nn.parameters()]
 
-# I told you.
+# The outputs are the same
+assert torch.allclose(out, out_lazy.torch())
+# The gradients are also the same.
 assert all([m.allclose(g) for (m, g) in zip(grads, my_grads)])
