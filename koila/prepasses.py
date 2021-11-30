@@ -372,6 +372,12 @@ def reduce_dims(
     return PrePass(shapes, same([input], batch, reducer))
 
 
+def scalars(input: TensorLike, *args: Any, **kwargs: Any) -> PrePass:
+    mute_unused_args(*args, **kwargs)
+
+    return reduce_dims(input, tuple(range(input.dim())))
+
+
 def mean(
     input: TensorLike,
     dim: int | Tuple[int, ...] | None = None,
