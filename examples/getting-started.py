@@ -1,11 +1,12 @@
 from __future__ import annotations
+
 import logging
+
 import torch
 from torch import Tensor
 from torch.nn import CrossEntropyLoss, Flatten, Linear, Module, ReLU, Sequential
 
-from koila import lazy
-from koila import LazyTensor
+from koila import LazyTensor, lazy
 
 loggers = [logging.getLogger(name) for name in logging.root.manager.loggerDict]
 for logger in loggers:
