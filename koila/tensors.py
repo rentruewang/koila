@@ -564,12 +564,11 @@ def take_batch(
 def lazy_forward(
     func: Callable[..., Any], shape_func: PrePassFunc, *args: Any, **kwargs: Any
 ) -> TensorLike:
-    if torch.is_grad_enabled():
-        out = LazyTensor(LazyFunction(func, shape_func)(*args, **kwargs))
-        logger.debug("lazy forward %s, %s", out.size(), out.batch())
-        return out
-    else:
-        return func(*args, **kwargs)
+    
+    out = LazyTensor(LazyFunction(func, shape_func)(*args, **kwargs))
+    logger.debug("lazy forward %s, %s", out.size(), out.batch())
+    return out
+
 
 
 # Functions that require special handling.
