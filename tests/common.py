@@ -76,11 +76,11 @@ def assert_isclose(
     input: Tensor | ndarray | Number, other: Tensor | ndarray | Number
 ) -> None:
     if isinstance(input, ndarray) or isinstance(other, ndarray):
-        assert np.allclose(input, other, atol=1e-5), input != other
+        assert np.allclose(input, other, atol=1e-5), [input, other]
         return
 
     if isinstance(input, Tensor) and isinstance(other, Tensor):
-        assert torch.allclose(input, other, atol=1e-5), input != other
+        assert torch.allclose(input, other, atol=1e-5), [input, other]
         return
 
     assert math.isclose(input, other, abs_tol=1e-5), [input, other]

@@ -7,9 +7,16 @@ from torch import Tensor
 from torch.nn import functional as F
 
 import koila
-from koila import LazyTensor
+from koila import Evaluation, LazyTensor, Runnable, RunnableTensor
 
 from . import common
+
+
+def test_lazytensor_is_runnable() -> None:
+    assert issubclass(Evaluation, Runnable)
+    assert issubclass(Evaluation, RunnableTensor)
+    assert issubclass(LazyTensor, Runnable)
+    assert issubclass(LazyTensor, RunnableTensor)
 
 
 def test_positive_op() -> None:
