@@ -107,7 +107,8 @@ class Evaluation(RunnableTensor):
                 partial[0],
                 partial[1],
             )
-            result = reducer(result)
+            callback = reducer(input, *self.args, **self.kwargs)
+            result = callback(result)
 
         return result
 
@@ -738,11 +739,12 @@ SHAPE_OPS = MethodFunction[PrePassFunc](
         "relu": prepasses.identity,
         "relu6": prepasses.identity,
         "leaky_relu": prepasses.identity,
-        "l1_loss": prepasses.scalars,
-        "mse_loss": prepasses.scalars,
-        "cross_entropy": prepasses.scalars,
-        "binary_cross_entropy": prepasses.scalars,
-        "binary_cross_entropy_with_logits": prepasses.scalars,
+        "l1_loss": prepasses.loss,
+        "smooth_l1_loss": prepasses.loss,
+        "mse_loss": prepasses.loss,
+        "cross_entropy": prepasses.loss,
+        "binary_cross_entropy": prepasses.loss,
+        "binary_cross_entropy_with_logits": prepasses.loss,
         "elu": prepasses.identity,
         "gelu": prepasses.identity,
         "dropout": prepasses.identity,
