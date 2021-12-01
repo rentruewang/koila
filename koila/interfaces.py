@@ -84,7 +84,7 @@ class RunnableTensor(Runnable[Tensor], TensorMixin, Protocol):
         ...
 
     @abstractmethod
-    def take_batch(self, low: int, high: int) -> Tensor:
+    def run(self, partial: Tuple[int, int] | None = None) -> Tensor:
         ...
 
     @abstractmethod

@@ -3,6 +3,7 @@ from torch import Tensor
 from torch.nn import Flatten, Linear, Module, ReLU, Sequential
 
 from koila import BatchInfo, LazyTensor
+from . import common
 
 
 def test_torch_tutorial() -> None:
@@ -42,8 +43,9 @@ def test_torch_tutorial() -> None:
     assert not isinstance(lout, Tensor)
     assert isinstance(lout, LazyTensor)
 
-    assert lt.take_batch(3, 6).size() == (3, 28, 28)
-    tbout = lout.take_batch(3, 6)
+    assert lt.run((3, 6)).size() == (3, 28, 28)
+    common.assert_isclose(lt.run((3, 6)), t[3:6])
+    tbout = lout.run((3, 6))
     assert tbout.shape == (3, 10)
     assert isinstance(tbout, Tensor)
     assert not isinstance(tbout, LazyTensor)
