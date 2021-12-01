@@ -3,6 +3,7 @@ from torch import Tensor
 from torch.nn import Flatten, Linear, Module, ReLU, Sequential
 
 from koila import BatchInfo, LazyTensor
+
 from . import common
 
 
