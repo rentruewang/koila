@@ -8,7 +8,7 @@ def test_is_runnable() -> None:
     class MyCustomRunnable:
         num_elements = 0
 
-        def run(self) -> int:
+        def run(self, partial=None) -> int:
             return 42
 
     mcr = MyCustomRunnable()

@@ -87,12 +87,27 @@ class Evaluation(RunnableTensor):
         # Evaluations are unique.
         return id(self)
 
-    def _run(self) -> Tensor:
-        real_args = [run(arg) for arg in self.args]
-        real_kwargs = {k: run(v) for (k, v) in self.kwargs.items()}
+    def _run(self, partial: Tuple[int, int] | None = None) -> Tensor:
+        real_args = [run(arg, partial) for arg in self.args]
+        real_kwargs = {k: run(v, partial) for (k, v) in self.kwargs.items()}
 
         result = self.func(*real_args, **real_kwargs)
-        assert self.prepass.shape == result.shape, [self.prepass, result.shape]
+
+        # Checks the shape only when pre-passing.
+        # If partial is supplemented, it means the tensors are really evaluated
+        if partial is None:
+            assert self.prepass.shape == result.shape, [self.prepass, result.shape]
+        elif (reducer := self.prepass.reducer()) is None:
+            raise UnsupportedError("Cannot safely parallelize.")
+        else:
+            logger.debug(
+                "Evaluation taking batch: (%s, %s), low=%s, high=%s",
+                self.size(),
+                self.batch(),
+                partial[0],
+                partial[1],
+            )
+            result = reducer(result)
 
         return result
 
@@ -116,27 +131,6 @@ class Evaluation(RunnableTensor):
 
         assert hash(self) not in nodes.keys()
         nodes[hash(self)] = self
-
-    def _take_batch(self, low: int, high: int) -> Tensor:
-        logger.debug(
-            "Evaluation taking batch: (%s, %s), low=%s, high=%s",
-            self.size(),
-            self.batch(),
-            low,
-            high,
-        )
-
-        args = [take_batch(arg, low, high) for arg in self.args]
-        kwargs = {k: take_batch(v, low, high) for (k, v) in self.kwargs.items()}
-        result = self.func(*args, **kwargs)
-
-        if (reducer := self.prepass.reducer()) is None:
-            raise UnsupportedError("Cannot safely parallelize.")
-
-        result = reducer(result)
-        return result
-
-    take_batch = _take_batch
 
     def size(self, dim: int | None = None) -> int | Tuple[int, ...]:
         shape = self.prepass.shape
@@ -179,12 +173,18 @@ class LazyTensor(RunnableTensor):
 
     # Implementations
 
-    def run(self) -> Tensor:
+    def run(self, partial: Tuple[int, int] | None = None) -> Tensor:
         data = self._data
         if isinstance(data, Tensor):
-            return data
-
-        return data.run()
+            if partial is None or self._batch is None:
+                return data
+            else:
+                (low, high) = partial
+                return data.index_select(
+                    self._batch.index, torch.tensor(list(range(low, high)))
+                )
+        else:
+            return data.run(partial)
 
     def visit(self, nodes: Dict[int, TensorLike]) -> None:
         data = self._data
@@ -198,27 +198,6 @@ class LazyTensor(RunnableTensor):
             nodes[hash(self)] = self
 
         assert hash(self) in nodes.keys()
-
-    def take_batch(self, low: int, high: int) -> Tensor:
-        logger.debug(
-            "LazyTensor taking batch: (%s, %s), low=%s, high=%s",
-            self.size(),
-            self.batch(),
-            low,
-            high,
-        )
-
-        if isinstance(self._data, Tensor):
-            if self._batch is None:
-                result = self._data
-            else:
-                result = self._data.index_select(
-                    self._batch.index, torch.tensor(list(range(low, high)))
-                )
-        else:
-            result = self._data.take_batch(low, high)
-
-        return result
 
     @overload
     def size(self) -> Tuple[int, ...]:
@@ -457,7 +436,7 @@ class LazyTensor(RunnableTensor):
                 self.buffer_memory(), self._batch.value
             ):
                 logger.debug("Using mini batch size: %d.", mini_batch_size)
-                mini_batch = self.take_batch(total, total + mini_batch_size)
+                mini_batch = self.run((total, total + mini_batch_size))
                 total += mini_batch_size
                 mini_batch.backward()
 
@@ -497,68 +476,33 @@ def lazy(val: Any, batch: int | None = None) -> Any:
 
 
 @overload
-def run(val: LazyTensor) -> Tensor:
+def run(val: LazyTensor, partial: Tuple[int, int] | None = None) -> Tensor:
     ...
 
 
 @overload
-def run(val: RunnableTensor) -> Tensor:
+def run(val: RunnableTensor, partial: Tuple[int, int] | None = None) -> Tensor:
     ...
 
 
 @overload
-def run(val: Runnable[T]) -> T:
+def run(val: Runnable[T], partial: Tuple[int, int] | None = None) -> T:
     ...
 
 
 @overload
-def run(val: T) -> T:
+def run(val: T, partial: Tuple[int, int] | None = None) -> T:
     ...
 
 
-def run(val: Any) -> Any:
+def run(val: Any, partial: Tuple[int, int] | None = None) -> Any:
+    if isinstance(val, RunnableTensor):
+        return val.run(partial)
 
     if isinstance(val, Runnable):
         return val.run()
 
     return val
-
-
-@overload
-def take_batch(tensor: TensorLike, low: int, high: int) -> Tensor:
-    ...
-
-
-@overload
-def take_batch(tensor: int, low: int, high: int) -> int:
-    ...
-
-
-@overload
-def take_batch(tensor: float, low: int, high: int) -> float:
-    ...
-
-
-@overload
-def take_batch(tensor: bool, low: int, high: int) -> bool:
-    ...
-
-
-def take_batch(
-    tensor: TensorLike | int | float | bool, low: int, high: int
-) -> Tensor | int | float | bool:
-
-    if isinstance(tensor, RunnableTensor):
-        logger.debug(
-            "Generic taking batch: (%s, %s), low=%s, high=%s",
-            tensor.size(),
-            tensor.batch(),
-            low,
-            high,
-        )
-        return tensor.take_batch(low, high)
-
-    return tensor
 
 
 def lazy_forward(
