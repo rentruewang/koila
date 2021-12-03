@@ -7,7 +7,7 @@ from pynvml.smi import nvidia_smi
 from torch import cuda
 
 from . import constants
-from .interfaces import BatchNoBatch
+from .interfaces import BatchedPair
 
 NVSMI = None
 
@@ -77,7 +77,7 @@ def free_memory() -> int | None:
         return None
 
 
-def maximum_batch(memory: BatchNoBatch, total_memory: int | None = None) -> int | None:
+def maximum_batch(memory: BatchedPair, total_memory: int | None = None) -> int | None:
     # batch * x + no_batch = unused_memoroy
     if total_memory is None:
         total_memory = free_memory()
@@ -89,7 +89,7 @@ def maximum_batch(memory: BatchNoBatch, total_memory: int | None = None) -> int 
 
 
 def split_batch(
-    memory: BatchNoBatch, current_batch: int, total_memory: int | None = None
+    memory: BatchedPair, current_batch: int, total_memory: int | None = None
 ) -> Generator[int, None, None]:
     max_batch = maximum_batch(memory, total_memory)
 

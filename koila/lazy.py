@@ -30,7 +30,7 @@ from torch import dtype as DType
 
 from . import gpus, interfaces, prepasses
 from .errors import UnsupportedError
-from .interfaces import BatchInfo, Runnable, RunnableTensor, TensorLike
+from .interfaces import BatchInfo, RunnableTensor, TensorLike
 from .prepasses import PrePass, PrePassFunc
 
 T = TypeVar("T")
@@ -88,8 +88,8 @@ class Evaluation(RunnableTensor):
         return id(self)
 
     def _run(self, partial: Tuple[int, int] | None = None) -> Tensor:
-        real_args = [run(arg, partial) for arg in self.args]
-        real_kwargs = {k: run(v, partial) for (k, v) in self.kwargs.items()}
+        real_args = [interfaces.run(arg, partial) for arg in self.args]
+        real_kwargs = {k: interfaces.run(v, partial) for (k, v) in self.kwargs.items()}
 
         result = self.func(*real_args, **real_kwargs)
 
@@ -182,7 +182,8 @@ class LazyTensor(RunnableTensor):
             else:
                 (low, high) = partial
                 return data.index_select(
-                    self._batch.index, torch.tensor(list(range(low, high)))
+                    self._batch.index,
+                    torch.tensor(list(range(low, high)), device=data.device),
                 )
         else:
             return data.run(partial)
@@ -370,7 +371,7 @@ class LazyTensor(RunnableTensor):
             partial = functools.partial(lazy_forward, method, shape_impl, self)
         else:
             logger.debug("No custom methods found. Evaluating eagerly.")
-            partial = functools.partial(method, run(self))
+            partial = functools.partial(method, interfaces.run(self))
 
         return wrapper(partial)
 
@@ -400,8 +401,8 @@ class LazyTensor(RunnableTensor):
             return lazy_forward(func, shape_impl, *args, **kwargs)
         else:
             logger.debug("No custom method found. Evaluating eagerly.")
-            args = [run(arg) for arg in args]
-            kwargs = {k: run(v) for (k, v) in kwargs.items()}
+            args = [interfaces.run(arg) for arg in args]
+            kwargs = {k: interfaces.run(v) for (k, v) in kwargs.items()}
             return func(*args, **kwargs)
 
     @property
@@ -476,36 +477,6 @@ def lazy(val: Any, batch: int | None = None) -> Any:
     return val
 
 
-@overload
-def run(val: LazyTensor, partial: Tuple[int, int] | None = None) -> Tensor:
-    ...
-
-
-@overload
-def run(val: RunnableTensor, partial: Tuple[int, int] | None = None) -> Tensor:
-    ...
-
-
-@overload
-def run(val: Runnable[T], partial: Tuple[int, int] | None = None) -> T:
-    ...
-
-
-@overload
-def run(val: T, partial: Tuple[int, int] | None = None) -> T:
-    ...
-
-
-def run(val: Any, partial: Tuple[int, int] | None = None) -> Any:
-    if isinstance(val, RunnableTensor):
-        return val.run(partial)
-
-    if isinstance(val, Runnable):
-        return val.run()
-
-    return val
-
-
 def lazy_forward(
     func: Callable[..., Any], shape_func: PrePassFunc, *args: Any, **kwargs: Any
 ) -> TensorLike:
@@ -514,8 +485,8 @@ def lazy_forward(
         logger.debug("lazy forward %s, %s", out.size(), out.batch())
         return out
     else:
-        run_args = [run(arg) for arg in args]
-        run_kwargs = {k: run(v) for (k, v) in kwargs.items()}
+        run_args = [interfaces.run(arg) for arg in args]
+        run_kwargs = {k: interfaces.run(v) for (k, v) in kwargs.items()}
         out = func(*run_args, **run_kwargs)
         logger.debug("eager forward (%s, %s) -> %s", run_args, run_kwargs, out)
         return out

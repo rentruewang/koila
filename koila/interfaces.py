@@ -4,6 +4,7 @@ import functools
 import operator
 from abc import abstractmethod
 from typing import (
+    Any,
     Callable,
     Dict,
     NamedTuple,
@@ -21,6 +22,7 @@ from torch import dtype as DType
 
 from . import constants
 
+E = TypeVar("E")
 T = TypeVar("T", covariant=True)
 V = TypeVar("V", contravariant=True)
 
@@ -63,7 +65,7 @@ class TensorMixin(Protocol):
         ...
 
 
-class BatchNoBatch(NamedTuple):
+class BatchedPair(NamedTuple):
     batch: int
     no_batch: int
 
@@ -96,16 +98,16 @@ class RunnableTensor(Runnable[Tensor], TensorMixin, Protocol):
         self.visit(nodes)
         return nodes
 
-    def buffer_numel(self) -> BatchNoBatch:
+    def buffer_numel(self) -> BatchedPair:
         buffer = self.buffer().values()
-        return BatchNoBatch(
+        return BatchedPair(
             sum(t.numel() for t in buffer if bat(t) is not None),
             sum(t.numel() for t in buffer if bat(t) is None),
         )
 
-    def buffer_memory(self) -> BatchNoBatch:
+    def buffer_memory(self) -> BatchedPair:
         buffer = self.buffer().values()
-        return BatchNoBatch(
+        return BatchedPair(
             sum(mem(t) for t in buffer if bat(t) is not None),
             sum(mem(t) for t in buffer if bat(t) is None),
         )
@@ -131,6 +133,10 @@ def dev(tensor: TensorLike) -> str | Device:
 def mem(tensor: TensorLike) -> int:
     dt = dtyp(tensor)
     numel = tensor.numel()
+
+    if (batch := bat(tensor)) is not None:
+        numel //= batch.value
+
     return constants.MEMORY_BYTES[dt] * numel
 
 
@@ -141,3 +147,28 @@ def bat(tensor: TensorLike) -> BatchInfo | None:
 
 
 TensorLike = Union[Tensor, RunnableTensor]
+
+
+@overload
+def run(val: RunnableTensor, partial: Tuple[int, int] | None = None) -> Tensor:
+    ...
+
+
+@overload
+def run(val: Runnable[E], partial: Tuple[int, int] | None = None) -> E:
+    ...
+
+
+@overload
+def run(val: E, partial: Tuple[int, int] | None = None) -> E:
+    ...
+
+
+def run(val: Any, partial: Tuple[int, int] | None = None) -> Any:
+    if isinstance(val, RunnableTensor):
+        return val.run(partial)
+
+    if isinstance(val, Runnable):
+        return val.run()
+
+    return val
