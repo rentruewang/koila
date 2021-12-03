@@ -14,7 +14,7 @@ setuptools.setup(
     name="koila",
     version="0.1",
     author="RenChu Wang",
-    description="Never worry about OOM again, even with gigantic batch sizes.",
+    description="Prevent PyTorch's `CUDA error: out of memory` in one line of code.",
     long_description=long_desc,
     long_description_content_type="text/markdown",
     packages=setuptools.find_packages(exclude=["examples", "tests"]),
