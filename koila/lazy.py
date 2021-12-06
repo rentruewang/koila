@@ -87,7 +87,7 @@ class Evaluation(RunnableTensor):
         # Evaluations are unique.
         return id(self)
 
-    def _run(self, partial: Tuple[int, int] | None = None) -> Tensor:
+    def run(self, partial: Tuple[int, int] | None = None) -> Tensor:
         real_args = [interfaces.run(arg, partial) for arg in self.args]
         real_kwargs = {k: interfaces.run(v, partial) for (k, v) in self.kwargs.items()}
 
@@ -111,8 +111,6 @@ class Evaluation(RunnableTensor):
             result = callback(result)
 
         return result
-
-    run = _run
 
     def visit(self, nodes: Dict[int, TensorLike]) -> None:
         if hash(self) in nodes.keys():
@@ -444,12 +442,12 @@ class LazyTensor(RunnableTensor):
 
 
 @overload
-def lazy(val: Tensor, batch: int | None = None) -> LazyTensor:
+def lazy(val: Tensor | LazyTensor, batch: int | None = None) -> LazyTensor:
     ...
 
 
 @overload
-def lazy(val: LazyTensor) -> LazyTensor:
+def lazy(*val: Tensor | LazyTensor, batch: int | None = None) -> Tuple[LazyTensor, ...]:
     ...
 
 
@@ -459,7 +457,17 @@ def lazy(val: int) -> int:
 
 
 @overload
+def lazy(*val: int) -> Tuple[int, ...]:
+    ...
+
+
+@overload
 def lazy(val: float) -> float:
+    ...
+
+
+@overload
+def lazy(*val: float) -> Tuple[float, ...]:
     ...
 
 
@@ -468,13 +476,25 @@ def lazy(val: bool) -> bool:
     ...
 
 
-def lazy(val: Any, batch: int | None = None) -> Any:
-    logger.debug("lazy %s, %s", type(val), interfaces.bat(val))
+@overload
+def lazy(*val: bool) -> Tuple[bool, ...]:
+    ...
 
-    if isinstance(val, Tensor):
-        val = LazyTensor(val, batch)
 
-    return val
+def lazy(*values: Any, batch: int | None = None) -> Any:
+    results = []
+    for val in values:
+        logger.debug("lazy %s, %s", type(val), interfaces.bat(val))
+
+        if isinstance(val, Tensor):
+            val = LazyTensor(val, batch)
+
+        results.append(val)
+
+    if len(results) == 1:
+        return results[0]
+
+    return tuple(results)
 
 
 def lazy_forward(

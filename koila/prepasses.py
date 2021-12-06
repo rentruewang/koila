@@ -366,15 +366,12 @@ def loss(
 ) -> PrePass:
     mute_unused_args(*args, **kwargs)
 
-    # Currently only supports tensors of the same size.
-    if (shape := input.size()) != target.size():
-        raise UnsupportedError
-
+    # Currently only supports tensors of the same batch size.
     if (batch := interfaces.bat(input)) != interfaces.bat(target):
         raise UnsupportedError
 
     output_shape = {
-        "none": shape,
+        "none": input.size(),
         "mean": (),
         "sum": (),
     }[reduction]
