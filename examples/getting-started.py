@@ -10,7 +10,7 @@ from koila import LazyTensor, lazy
 
 loggers = [logging.getLogger(name) for name in logging.root.manager.loggerDict]
 for logger in loggers:
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
 
 # It works on cpu and cuda.
 DEVICE = "cpu"
@@ -58,7 +58,7 @@ network = NeuralNetwork().to(DEVICE)
 input = torch.randn(BATCH, 28, 28).to(DEVICE)
 
 # The original label.
-label = torch.randint(0, 10, [BATCH])
+label = torch.randint(0, 10, [BATCH]).to(DEVICE)
 
 # The loss function.
 loss_fn = CrossEntropyLoss()
@@ -81,7 +81,8 @@ grads = [tensor_clone(p.grad) for p in network.parameters()]
 # Specify the dimension for batch in order to know which dimension to parallelize.
 # You can now never worry about out of memory errors,
 # because it's automatically handled for you.
-lazy_input = lazy(input, batch=0)
+(lazy_input, lazy_label) = lazy(input, label, batch=0)
+
 
 # Using the same operations.
 lazy_out = network(lazy_input)
@@ -90,7 +91,7 @@ lazy_out = network(lazy_input)
 # The output would automatically be a LazyTensor
 # but don't worry, no code modification is needed.
 # When backward is called, the LazyTensors would be automatically evaluated.
-lazy_loss = loss_fn(lazy_out, label)
+lazy_loss = loss_fn(lazy_out, lazy_label)
 assert isinstance(lazy_loss, LazyTensor), type(lazy_loss)
 network.zero_grad()
 lazy_loss.backward()
