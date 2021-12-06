@@ -713,7 +713,7 @@ SHAPE_OPS = MethodFunction[PrePassFunc](
         "l1_loss": prepasses.loss,
         "smooth_l1_loss": prepasses.loss,
         "mse_loss": prepasses.loss,
-        "cross_entropy": prepasses.loss,
+        # "cross_entropy": prepasses.loss,
         "binary_cross_entropy": prepasses.loss,
         "binary_cross_entropy_with_logits": prepasses.loss,
         "elu": prepasses.identity,

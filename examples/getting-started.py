@@ -91,7 +91,7 @@ lazy_out = network(lazy_input)
 # but don't worry, no code modification is needed.
 # When backward is called, the LazyTensors would be automatically evaluated.
 lazy_loss = loss_fn(lazy_out, label)
-assert isinstance(lazy_loss, LazyTensor), type(lazy_loss)
+# assert isinstance(lazy_loss, LazyTensor), type(lazy_loss)
 network.zero_grad()
 lazy_loss.backward()
 
