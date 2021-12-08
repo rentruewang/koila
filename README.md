@@ -89,13 +89,13 @@ loss.backward()
 
 Ok. How to adapt the code to use `Koila`'s features?
 
-You change this line of code:
+You add this line of code:
 
 ```python
-# Wrap the input tensor.
+# Wrap the input tensor and label tensor.
 # If a batch argument is provided, that dimension of the tensor would be treated as the batch.
 # In this case, the first dimension (dim=0) is used as batch's dimension.
-input = lazy(torch.randn(8, 28, 28), batch=0)
+(input, label) = lazy(input, label, batch=0)
 ```
 
 Done. You will not run out of memory again.
