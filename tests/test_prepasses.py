@@ -139,16 +139,16 @@ def test_loss() -> None:
     common.call(
         common.assert_equal,
         [
-            [prepasses.loss(torch.randn(2, 4, 5), torch.randn((2, 4, 5))), ()],
+            [prepasses.loss(torch.randn(2, 4, 5), torch.randn(2, 4, 5)), ()],
             [
                 prepasses.loss(
-                    torch.randn(2, 4, 5), torch.randn((2, 4, 5)), reduction="sum"
+                    torch.randn(2, 4, 5), torch.randn(2, 4, 5), reduction="sum"
                 ),
                 (),
             ],
             [
                 prepasses.loss(
-                    torch.randn(2, 4, 5), torch.randn((2, 4, 5)), reduction="none"
+                    torch.randn(2, 4, 5), torch.randn(2, 4, 5), reduction="none"
                 ),
                 (2, 4, 5),
             ],
