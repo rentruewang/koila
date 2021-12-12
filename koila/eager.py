@@ -14,6 +14,10 @@ logger = logging.getLogger(__name__)
 logger.addHandler(RichHandler())
 logger.setLevel(logging.DEBUG)
 
+# So, it seems that torch's Tensor base class utilizes metaclass
+# to pretend to be a parent of LongTensor, FloatTensor etc.
+# Perhaps I'll be using the same paradigm.
+
 
 class EagerTensor(RunnableTensor):
     def __init__(self, data: Tensor) -> None:
