@@ -1,7 +1,7 @@
 from typing import NoReturn
 
 
-class UnsupportedError(Exception):
+class UnsupportedError(RuntimeError):
     "Sorry, this function is currently not supported."
 
     @classmethod

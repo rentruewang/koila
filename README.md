@@ -26,7 +26,7 @@
 Ever encountered `RuntimeError: CUDA error: out of memory`?
 We all love `PyTorch` because of its speed, efficiency, and transparency, but that means it doesn't do extra things. Things like preventing a very common error that has been bothering many users since [2017](https://github.com/pytorch/pytorch/issues/958#issuecomment-285090162).
 
-This library aims to prevent that by being a light-weight wrapper over native `PyTorch`. When a tensor is wrapped, the library **automatically computes the amount of remaining GPU memory and uses the right batch size**, saving everyone from having to manually finetune the batch size whenever a model is used.
+This library aims to prevent that by being a light-weight wrapper over native `PyTorch`. When a tensor is wrapped, the library **automatically computes the amount of remaining GPU memory and uses the right batch size**, saving everyone from having to manually fine-tune the batch size whenever a model is used.
 
 Also, the library automatically uses the right batch size to GPU. Did you know that using bigger batches doesn't always speed up processing? It's handled automatically in this library too.
 
@@ -134,13 +134,13 @@ In comparison, because `Koila` is a super lightweight PyTorch wrapper, it works 
 
 ## 📝 Todos
 
-- 🧩 Provide an extensible API to write custom functions for the users.
 - 😌 Simplify internal workings even further. (Especially interaction between `Tensor`s and `LazyTensor`s).
+- 🧩 Provide an extensible API to write custom functions for the users.
 - 🍪 Work with multiple GPUs.
 
 ## 🚧 Warning
 
-The code works on many cases, but it's still a work in progress. This is not (yet) a fully `PyTorch` compatible library due to limited time.
+The code works on many cases, but it's still a work in progress. This is not (yet) a fully `PyTorch` compatible library due to limited time. Avoid using it in production environments!
 
 ## 🥰 Contributing
 
