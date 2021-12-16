@@ -12,7 +12,7 @@ with open(WorkDir / "requirements.txt") as f:
 
 setuptools.setup(
     name="koila",
-    version="0.1",
+    version="0.1.1",
     author="RenChu Wang",
     description="Prevent PyTorch's `CUDA error: out of memory` in one line of code.",
     long_description=long_desc,
