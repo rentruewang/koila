@@ -124,13 +124,23 @@ This project was originally named _koala_, the laziest species in the world, and
 
 If you like what you see, please consider giving this a star (★)!
 
-## 🏗️ Why did I build this?
+## 🏗️ Why did I build this, despite similar libraries?
 
-Batch size search is not new. In fact, the mighty popular [PyTorch Lightning](https://github.com/PyTorchLightning/pytorch-lightning) has it. So why did I go through the trouble and build this project?
+Why did I go through the trouble and build this project, despite a lot of similar libraries on the internet?
+
+### 🔎 Batch size search
+
+Batch size search is not new. In fact, the mighty popular [PyTorch Lightning](https://pytorchlightning.ai/) has it.
 
 PyTorch Lightning's batch size search is deeply integrated in its own ecosystem. You have to use its `DataLoader`, subclass from their models, and train your models accordingly. While it works well with supervised learning tasks, it's really painful to use in a reinforcement learning task, where interacting with the environment is a must.
 
 In comparison, because `Koila` is a super lightweight PyTorch wrapper, it works when PyTorch works, thus providing maximum flexibility and minimal changes to existing code.
+
+### ♏ Symbolic pre-passing
+
+Likewise, passing an empty tensor to build a computational graph (AKA **static graph**) isn't a new idea, but thoroughly explored in the popular [TensorFlow](https://www.tensorflow.org/) library, and a similar `PyTorch` wrapper library [KeOps](https://www.kernel-operations.io/). These libraries suffer from the fact that debugging programs in them is unnecessarily complicated. For example, `TensorFlow` was known for its ease of deployment but pain in development, to the point that users switched to `PyTorch`. During debugging, people like to see what's _inside_ a variable, to see if it contains an incorrect value. However, because static graphs only define relations, the values are not computed, thus making debugging difficult.
+
+`Koila` solves that by eagerly evaluating when being converted to strings, integers, or any Python values. This way, when debugging
 
 ## 📝 Todos
 

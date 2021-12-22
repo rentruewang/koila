@@ -21,6 +21,7 @@ from torch import device as Device
 from torch import dtype as DType
 
 from . import constants
+from .tensors import TensorLike
 
 E = TypeVar("E")
 T = TypeVar("T", covariant=True)
@@ -36,20 +37,6 @@ class Runnable(Protocol[T]):
 
 @runtime_checkable
 class TensorMixin(Protocol):
-    @overload
-    @abstractmethod
-    def size(self) -> Tuple[int, ...]:
-        ...
-
-    @overload
-    @abstractmethod
-    def size(self, dim: int) -> int:
-        ...
-
-    @abstractmethod
-    def size(self, dim: int | None = None) -> int | Tuple[int, ...]:
-        ...
-
     def numel(self) -> int:
         return functools.reduce(operator.mul, self.size(), 1)
 
@@ -144,9 +131,6 @@ def bat(tensor: TensorLike) -> BatchInfo | None:
     if isinstance(tensor, RunnableTensor):
         return tensor.batch()
     return None
-
-
-TensorLike = Union[Tensor, RunnableTensor]
 
 
 @overload
