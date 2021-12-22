@@ -11,3 +11,4 @@ from .interfaces import (
 )
 from .lazy import Evaluation, LazyFunction, LazyTensor, lazy
 from .prepasses import CallBack, MetaData, PrePass, PrePassFunc
+from .tensors import TensorLike
