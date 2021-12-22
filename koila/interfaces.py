@@ -11,7 +11,6 @@ from typing import (
     Protocol,
     Tuple,
     TypeVar,
-    Union,
     overload,
     runtime_checkable,
 )
