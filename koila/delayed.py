@@ -15,6 +15,7 @@ from torch import dtype as DType
 from . import immediate
 from .prepasses import PrePass
 from .runnables import Runnable
+from .tensors import TensorLike
 
 logger = logging.getLogger(__name__)
 logger.addHandler(RichHandler())
@@ -24,7 +25,7 @@ logger.addHandler(RichHandler())
 
 @final
 @dataclass(init=False)
-class DelayedTensor(Runnable[Tensor]):
+class DelayedTensor(TensorLike):
     func: Callable[..., Tensor]
     prepass: PrePass
     args: Tuple[Runnable[Any], ...] = dcls.field(default_factory=tuple)
