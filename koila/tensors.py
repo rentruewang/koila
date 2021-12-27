@@ -3,7 +3,7 @@ from __future__ import annotations
 import functools
 import operator
 from abc import abstractmethod
-from typing import NamedTuple, NoReturn, Protocol, Tuple, overload, Callable
+from typing import Callable, NamedTuple, NoReturn, Protocol, Tuple, overload
 
 from torch import Tensor
 from torch import device as Device
