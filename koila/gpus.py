@@ -7,7 +7,7 @@ from pynvml.smi import nvidia_smi
 from torch import cuda
 
 from . import constants
-from .interfaces import BatchedPair
+from .runnables import BatchedPair
 
 NVSMI = None
 

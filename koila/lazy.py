@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import builtins
-import dataclasses as dcls
 import functools
 import logging
 from dataclasses import dataclass
@@ -28,10 +27,12 @@ from torch import Tensor, cuda
 from torch import device as Device
 from torch import dtype as DType
 
-from . import gpus, interfaces, prepasses
+from . import gpus, runnables, prepasses
+from .delayed import DelayedTensor
 from .errors import UnsupportedError
-from .interfaces import BatchInfo, RunnableTensor, TensorLike
 from .prepasses import PrePass, PrePassFunc
+from .runnables import BatchInfo, RunnableTensor
+from .tensors import TensorLike
 
 T = TypeVar("T")
 V = TypeVar("V", contravariant=True)
@@ -39,17 +40,18 @@ V = TypeVar("V", contravariant=True)
 logger = logging.getLogger(__name__)
 logger.addHandler(RichHandler())
 
+# FIXME: LazyTensor incompatible with new API.
 
 @dataclass(frozen=True)
 class LazyFunction(Generic[V]):
     func: Callable[..., Tensor]
     prepass_func: PrePassFunc
 
-    def __call__(self, *args: Any, **kwargs: Any) -> LazyTensor:
+    def __call__(self, *args: Any, **kwargs: Any) -> DelayedTensor:
         lazy_args = tuple(lazy(arg) for arg in args)
         lazy_kwargs = dict((k, lazy(v)) for (k, v) in kwargs.items())
         prepass = self.prepass_func(*args, **kwargs)
-        return LazyTensor(Evaluation(self.func, prepass, *lazy_args, **lazy_kwargs))
+        return DelayedTensor(self.func, prepass, *lazy_args, **lazy_kwargs)
 
     def __get__(self, obj: V, objtype: Type[V]) -> Callable[..., LazyTensor]:
         assert isinstance(obj, objtype), [type(obj), objtype]
@@ -57,95 +59,6 @@ class LazyFunction(Generic[V]):
             return self
         else:
             return functools.partial(self, obj)
-
-
-@final
-@dataclass(init=False)
-class Evaluation(RunnableTensor):
-    func: Callable[..., Tensor]
-    prepass: PrePass
-    args: Tuple[LazyTensor | Tensor | int | float | bool, ...] = dcls.field(
-        default_factory=tuple
-    )
-    kwargs: Dict[str, LazyTensor | Tensor | int | float | bool] = dcls.field(
-        default_factory=dict
-    )
-
-    def __init__(
-        self,
-        func: Callable[..., Tensor],
-        prepass: PrePass,
-        *args: LazyTensor | Tensor | int | float | bool,
-        **kwargs: LazyTensor | Tensor | int | float | bool,
-    ) -> None:
-        self.func = func
-        self.prepass = prepass
-        self.args = args
-        self.kwargs = kwargs
-
-    def __hash__(self) -> int:
-        # Evaluations are unique.
-        return id(self)
-
-    def run(self, partial: Tuple[int, int] | None = None) -> Tensor:
-        real_args = [interfaces.run(arg, partial) for arg in self.args]
-        real_kwargs = {k: interfaces.run(v, partial) for (k, v) in self.kwargs.items()}
-
-        result = self.func(*real_args, **real_kwargs)
-
-        # Checks the shape only when pre-passing.
-        # If partial is supplemented, it means the tensors are really evaluated
-        if partial is None:
-            assert self.prepass.shape == result.shape, [self.prepass, result.shape]
-        elif (reducer := self.prepass.reducer()) is None:
-            raise UnsupportedError("Cannot safely parallelize.")
-        else:
-            logger.debug(
-                "Evaluation taking batch: (%s, %s), low=%s, high=%s",
-                self.size(),
-                self.batch(),
-                partial[0],
-                partial[1],
-            )
-            callback = reducer(input, *self.args, **self.kwargs)
-            result = callback(result)
-
-        return result
-
-    def visit(self, nodes: Dict[int, TensorLike]) -> None:
-        if hash(self) in nodes.keys():
-            return
-
-        for arg in self.args:
-            if isinstance(arg, Tensor):
-                nodes[hash(arg)] = arg
-            elif isinstance(arg, RunnableTensor):
-                arg.visit(nodes)
-
-        for val in self.kwargs.values():
-            if isinstance(val, Tensor):
-                nodes[hash(val)] = val
-            elif isinstance(val, RunnableTensor):
-                val.visit(nodes)
-
-        assert hash(self) not in nodes.keys()
-        nodes[hash(self)] = self
-
-    def size(self, dim: int | None = None) -> int | Tuple[int, ...]:
-        shape = self.prepass.shape
-        if dim is not None:
-            return shape[dim]
-        else:
-            return shape
-
-    def dtype(self) -> DType:
-        return self.prepass.dtype()
-
-    def device(self) -> str | Device:
-        return self.prepass.device()
-
-    def batch(self) -> BatchInfo | None:
-        return self.prepass.batch()
 
 
 @final
@@ -158,7 +71,7 @@ class LazyTensor(RunnableTensor):
         if isinstance(data, LazyTensor):
             self._data = data._data
             self._batch = data._batch
-        elif isinstance(data, Evaluation):
+        elif isinstance(data, DelayedTensor):
             self._data = data
             self._batch = data.batch()
         else:
@@ -192,7 +105,7 @@ class LazyTensor(RunnableTensor):
         if hash(self) in nodes.keys():
             return
 
-        if isinstance(data, Evaluation):
+        if isinstance(data, DelayedTensor):
             data.visit(nodes)
         else:
             nodes[hash(self)] = self
@@ -215,10 +128,11 @@ class LazyTensor(RunnableTensor):
 
         return data.size(dim)
 
+    @property
     def dtype(self) -> DType:
-        dt = interfaces.dtyp(self._data)
-        return dt
+        return self._data.dtype
 
+    @property
     def device(self) -> str | Device:
         return interfaces.dev(self._data)
 

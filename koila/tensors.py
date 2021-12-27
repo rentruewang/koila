@@ -7,12 +7,11 @@ from typing import NoReturn, Protocol, Tuple, overload
 
 from torch import device as Device
 from torch import dtype as DType
-from torch.functional import Tensor
 
 
 class TensorLike(Protocol):
     dtype: DType
-    device: Device
+    device: str | Device
 
     @abstractmethod
     def __str__(self) -> str:
@@ -154,10 +153,66 @@ class TensorLike(Protocol):
     def __len__(self) -> int:
         ...
 
+    @abstractmethod
+    def add(self, other: TensorLike) -> TensorLike:
+        ...
+
+    @abstractmethod
+    def sub(self, other: TensorLike) -> TensorLike:
+        ...
+
+    @abstractmethod
+    def mul(self, other: TensorLike) -> TensorLike:
+        ...
+
+    @abstractmethod
+    def div(self, other: TensorLike) -> TensorLike:
+        ...
+
+    divide = truediv = div
+
+    @abstractmethod
+    def pow(self, other: TensorLike) -> TensorLike:
+        ...
+
+    @abstractmethod
+    def abs(self) -> TensorLike:
+        ...
+
+    @abstractmethod
+    def matmul(self, other: TensorLike) -> TensorLike:
+        ...
+
+    @abstractmethod
+    def eq(self, other: TensorLike) -> TensorLike:
+        return not self.ne(other)
+
+    @abstractmethod
+    def ne(self, other: TensorLike) -> TensorLike:
+        return not self.eq(other)
+
+    @abstractmethod
+    def gt(self, other: TensorLike) -> TensorLike:
+        ...
+
+    @abstractmethod
+    def ge(self, other: TensorLike) -> TensorLike:
+        ...
+
+    @abstractmethod
+    def lt(self, other: TensorLike) -> TensorLike:
+        ...
+
+    @abstractmethod
+    def le(self, other: TensorLike) -> TensorLike:
+        ...
+
+    @abstractmethod
     def dim(self) -> int:
         return len(self.size())
 
     @property
+    @abstractmethod
     def ndim(self) -> int:
         return self.dim()
 
@@ -176,16 +231,15 @@ class TensorLike(Protocol):
         ...
 
     @property
+    @abstractmethod
     def shape(self) -> Tuple[int, ...]:
         return self.size()
 
+    @abstractmethod
     def numel(self) -> int:
         return functools.reduce(operator.mul, self.size)
 
     @property
     @abstractmethod
     def T(self) -> TensorLike:
-        ...
-
-    def torch(self) -> Tensor:
         ...

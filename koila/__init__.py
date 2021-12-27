@@ -1,7 +1,9 @@
 from . import constants, gpus
-from .eager import EagerTensor
 from .errors import UnsupportedError
-from .interfaces import (
+from .immediate import ImmediateNumber, ImmediateTensor, immediate
+from .lazy import DelayedTensor, LazyFunction, LazyTensor, lazy
+from .prepasses import CallBack, MetaData, PrePass, PrePassFunc
+from .runnables import (
     BatchedPair,
     BatchInfo,
     Runnable,
@@ -9,6 +11,4 @@ from .interfaces import (
     TensorMixin,
     run,
 )
-from .lazy import Evaluation, LazyFunction, LazyTensor, lazy
-from .prepasses import CallBack, MetaData, PrePass, PrePassFunc
 from .tensors import TensorLike

@@ -22,9 +22,10 @@ from torch import device as Device
 from torch import dtype as DType
 from torch.functional import Tensor
 
-from . import constants, interfaces, shapes
+from . import constants, runnables, shapes
 from .errors import UnsupportedError
-from .interfaces import BatchInfo, TensorLike
+from .runnables import BatchInfo
+from .tensors import TensorLike
 
 logger = logging.getLogger(__name__)
 logger.addHandler(RichHandler())
@@ -82,9 +83,11 @@ class PrePass:
 
         return False
 
+    @property
     def dtype(self) -> DType:
         return self.metadata.dtype
 
+    @property
     def device(self) -> str | Device:
         return self.metadata.device
 
@@ -116,11 +119,11 @@ def same(
     tensors: Sequence[TensorLike], batch: BatchInfo | None, reducer: CallBack | None
 ) -> MetaData:
     assert len(tensors) > 0
-    dtypes = [interfaces.dtyp(t) for t in tensors]
+    dtypes = [t.dtype for t in tensors]
 
     max_dtype = max(dtypes, key=lambda typ: constants.MEMORY_BYTES[typ])
 
-    devices = [str(interfaces.dev(t)) for t in tensors]
+    devices = [str(t.device) for t in tensors]
 
     if len(set(devices)) != 1:
         raise ValueError(f"Expected tensors to be on the same device, got {devices}.")
@@ -131,7 +134,7 @@ def same(
 def identity(input: TensorLike, /, *args: Any, **kwargs: Any) -> PrePass:
     mute_unused_args(*args, **kwargs)
 
-    return PrePass(input.size(), same([input], interfaces.bat(input), trivial))
+    return PrePass(input.size(), same([input], input.batch(), trivial))
 
 
 def symmetric(
@@ -145,7 +148,7 @@ def symmetric(
         raise ValueError
 
     batch = None
-    if (b := interfaces.bat(input)) == interfaces.bat(other):
+    if (b := input.batch()) == other.batch():
         batch = b
 
     return PrePass(shape, same([input, other], batch, trivial))
@@ -163,11 +166,11 @@ def reduce_dims(
 
     (shape, dimensions) = shapes.reduce_dims(input.size(), dim, keepdim)
 
-    if interfaces.bat(input) in dimensions:
+    if input.batch() in dimensions:
         batch = None
         reducer = None
     else:
-        batch = interfaces.bat(input)
+        batch = input.batch()
         reducer = trivial
 
     return PrePass(shape, same([input], batch, reducer))
@@ -191,7 +194,7 @@ def mean(
 
     (shape, dimensions) = shapes.reduce_dims(input.size(), dim, keepdim)
 
-    if (b := interfaces.bat(input)) in dimensions:
+    if (b := input.batch()) in dimensions:
         batch = None
 
         def mean_callback(input: Tensor, *args: Any, **kwargs: Any) -> Reducer:
@@ -202,7 +205,7 @@ def mean(
 
         reducer = mean_callback
     else:
-        batch = interfaces.bat(input)
+        batch = input.batch()
         reducer = trivial
     return PrePass(shape, same([input], batch, reducer))
 
@@ -213,7 +216,7 @@ def permute(input: TensorLike, /, *dims: int, **kwargs: Any) -> PrePass:
     mapping = dict(enumerate(dims))
 
     batch = None
-    if (b := interfaces.bat(input)) is not None:
+    if (b := input.batch()) is not None:
         batch = b.map(lambda x: mapping[x])
 
     return PrePass(shapes.permute(input.size(), *dims), same([input], batch, trivial))
@@ -225,7 +228,7 @@ def reshape(input: TensorLike, /, *shape: int, **kwargs: Any) -> PrePass:
     shape = shapes.reshape(input.size(), *shape)
 
     batch = None
-    if (b := interfaces.bat(input)) is not None:
+    if (b := input.batch()) is not None:
         if b in shape:
             batch = b.map(shape.index)
 
@@ -238,7 +241,7 @@ def view(input: TensorLike, /, *shape: int, **kwargs: Any) -> PrePass:
     shape = shapes.view(input.size(), *shape)
 
     batch = None
-    if (b := interfaces.bat(input)) is not None:
+    if (b := input.batch()) is not None:
         if b in shape:
             batch = b.map(shape.index)
 
@@ -269,7 +272,7 @@ def flatten(
     )
 
     batch = None
-    if (b := interfaces.bat(input)) is not None:
+    if (b := input.batch()) is not None:
         if not (start_dim <= b.index <= end_dim):
             batch = b
 
@@ -282,7 +285,7 @@ def tranpose(
     mute_unused_args(*args, **kwargs)
 
     batch = None
-    if (b := interfaces.bat(input)) is not None:
+    if (b := input.batch()) is not None:
         batch = b.map(lambda x: {dim0: dim1, dim1: dim0}[x])
 
     return PrePass(
@@ -321,7 +324,7 @@ def select(
         sliced_idx = ()
 
     batch = None
-    if (b := interfaces.bat(input)) != dim:
+    if (b := input.batch()) != dim:
         batch = b
 
     return PrePass(
@@ -338,7 +341,7 @@ def embedding(
     shape = input.size()
     return PrePass(
         (*shape, weight.size(-1)),
-        same([input], interfaces.bat(input), trivial),
+        same([input], input.batch(), trivial),
     )
 
 
@@ -347,12 +350,12 @@ def matmul(
 ) -> PrePass:
     mute_unused_args(*args, **kwargs)
 
-    if (batch := interfaces.bat(input)) != interfaces.bat(other):
+    if (batch := input.batch()) != other.batch():
         raise UnsupportedError
 
     return PrePass(
         shapes.matmul(input.size(), other.size()),
-        same([input, other], interfaces.bat(input), trivial),
+        same([input, other], input.batch(), trivial),
     )
 
 
@@ -367,7 +370,7 @@ def loss(
     mute_unused_args(*args, **kwargs)
 
     # Currently only supports tensors of the same batch size.
-    if (batch := interfaces.bat(input)) != interfaces.bat(target):
+    if (batch := input.batch()) != target.batch():
         raise UnsupportedError
 
     output_shape = {
@@ -398,7 +401,7 @@ def linear(
     if result is None:
         raise ValueError
 
-    return PrePass(result, same([input, weight], interfaces.bat(input), trivial))
+    return PrePass(result, same([input, weight], input.batch(), trivial))
 
 
 def cat(
@@ -419,11 +422,11 @@ def cat(
                 f"Dimension should be equal outside dim {dim}. Got {shapes}."
             )
 
-    if len(set(interfaces.bat(t) for t in tensors)) != 1:
+    if len(set(t.batch() for t in tensors)) != 1:
         raise UnsupportedError
 
     batch = None
-    if (b := interfaces.bat(tensors[0])) != dim:
+    if (b := tensors[0].batch()) != dim:
         batch = b
 
     concat_size = sum(t[dim] for t in shapes)
@@ -455,7 +458,7 @@ def pad(input: TensorLike, pad: List[int], *args: Any, **kwargs: Any) -> PrePass
 
     return PrePass(
         [s + p0 + p1 for (s, p0, p1) in zip(shapes, pad0, pad1)],
-        same([input], interfaces.bat(input), trivial),
+        same([input], input.batch(), trivial),
     )
 
 
@@ -505,7 +508,7 @@ def conv(
 
     return PrePass(
         (batch, out_chan, *out_dims),
-        same([input, weight], interfaces.bat(input), trivial),
+        same([input, weight], input.batch(), trivial),
     )
 
 
@@ -547,7 +550,7 @@ def conv_transpose(
 
     return PrePass(
         (batch, out_chan, *out_dims),
-        same([input, weight], interfaces.bat(input), trivial),
+        same([input, weight], input.batch(), trivial),
     )
 
 
@@ -576,7 +579,7 @@ def pool(
     ]
 
     return PrePass(
-        (batch, chan, *out_dims), same([input], interfaces.bat(input), trivial)
+        (batch, chan, *out_dims), same([input], input.batch(), trivial)
     )
 
 
