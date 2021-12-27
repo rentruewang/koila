@@ -11,6 +11,10 @@
 
 ![Koila](./assets/koila.png)
 
+## 🚨 Warning
+
+**This project is currently being refactored. It will definitely not work, may not even `import`. If you wish to use some features that this project provides, visit [release v0.1.1 on PyPI](https://pypi.org/project/koila/#files) and download the source code there.**
+
 ## 🚀 Features
 
 - 🙅 Prevents `CUDA error: out of memory error` with one single line of code.
@@ -148,7 +152,7 @@ Likewise, passing an empty tensor to build a computational graph (AKA **static g
 - 🧩 Provide an extensible API to write custom functions for the users.
 - 🍪 Work with multiple GPUs.
 
-## 🚧 Warning
+## 🚧 Caution
 
 The code works on many cases, but it's still a work in progress. This is not (yet) a fully `PyTorch` compatible library due to limited time. Avoid using it in production environments!
 

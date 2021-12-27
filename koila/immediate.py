@@ -11,17 +11,19 @@ from rich.logging import RichHandler
 from torch import Tensor
 
 from .runnables import Runnable
-from .tensors import TensorLike
+from .tensors import BatchInfo, TensorLike
 
 logger = logging.getLogger(__name__)
 logger.addHandler(RichHandler())
 logger.setLevel(logging.DEBUG)
 
 
-class ImmediateTensor(Tensor, Runnable[Tensor], TensorLike):
+class ImmediateTensor(Tensor, TensorLike):
     """
     Immediate tensor is a thin wrapper for the `Tensor` class. It's basically a tensor.
     """
+
+    batch: BatchInfo | None = None
 
     def run(self, partial: Tuple[int, int] | None = None) -> Tensor:
         del partial
