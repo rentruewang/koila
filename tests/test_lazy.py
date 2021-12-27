@@ -7,14 +7,14 @@ from torch import Tensor
 from torch.nn import functional as F
 
 import koila
-from koila import Evaluation, LazyTensor, Runnable, RunnableTensor
+from koila import DelayedTensor, LazyTensor, Runnable, RunnableTensor
 
 from . import common
 
 
 def test_lazytensor_is_runnable() -> None:
-    assert issubclass(Evaluation, Runnable)
-    assert issubclass(Evaluation, RunnableTensor)
+    assert issubclass(DelayedTensor, Runnable)
+    assert issubclass(DelayedTensor, RunnableTensor)
     assert issubclass(LazyTensor, Runnable)
     assert issubclass(LazyTensor, RunnableTensor)
 

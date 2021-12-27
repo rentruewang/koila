@@ -6,7 +6,6 @@ from abc import abstractmethod
 from typing import (
     Any,
     Callable,
-    Dict,
     NamedTuple,
     Protocol,
     Tuple,
@@ -18,9 +17,6 @@ from typing import (
 from torch import Tensor
 from torch import device as Device
 from torch import dtype as DType
-
-from . import constants
-from .tensors import TensorLike
 
 E = TypeVar("E")
 T = TypeVar("T", covariant=True)
@@ -75,61 +71,42 @@ class RunnableTensor(Runnable[Tensor], TensorMixin, Protocol):
     def run(self, partial: Tuple[int, int] | None = None) -> Tensor:
         ...
 
-    @abstractmethod
-    def visit(self, nodes: Dict[int, TensorLike]) -> None:
-        ...
 
-    def buffer(self) -> Dict[int, TensorLike]:
-        nodes = {}
-        self.visit(nodes)
-        return nodes
+# @runtime_checkable
+# class RunnableTensor(Runnable[Tensor], TensorMixin, Protocol):
+#     @abstractmethod
+#     def batch(self) -> BatchInfo | None:
+#         ...
 
-    def buffer_numel(self) -> BatchedPair:
-        buffer = self.buffer().values()
-        return BatchedPair(
-            sum(t.numel() for t in buffer if bat(t) is not None),
-            sum(t.numel() for t in buffer if bat(t) is None),
-        )
+#     @abstractmethod
+#     def run(self, partial: Tuple[int, int] | None = None) -> Tensor:
+#         ...
 
-    def buffer_memory(self) -> BatchedPair:
-        buffer = self.buffer().values()
-        return BatchedPair(
-            sum(mem(t) for t in buffer if bat(t) is not None),
-            sum(mem(t) for t in buffer if bat(t) is None),
-        )
+#     @abstractmethod
+#     def visit(self, nodes: Dict[int, TensorLike]) -> None:
+#         ...
 
-    def memory(self) -> int:
-        return mem(self)
+#     def buffer(self) -> Dict[int, TensorLike]:
+#         nodes = {}
+#         self.visit(nodes)
+#         return nodes
 
+#     def buffer_numel(self) -> BatchedPair:
+#         buffer = self.buffer().values()
+#         return BatchedPair(
+#             sum(t.numel() for t in buffer if bat(t) is not None),
+#             sum(t.numel() for t in buffer if bat(t) is None),
+#         )
 
-def dtyp(tensor: TensorLike) -> DType:
-    if isinstance(tensor, Tensor):
-        return tensor.dtype
+#     def buffer_memory(self) -> BatchedPair:
+#         buffer = self.buffer().values()
+#         return BatchedPair(
+#             sum(mem(t) for t in buffer if bat(t) is not None),
+#             sum(mem(t) for t in buffer if bat(t) is None),
+#         )
 
-    return tensor.dtype()
-
-
-def dev(tensor: TensorLike) -> str | Device:
-    if isinstance(tensor, Tensor):
-        return tensor.device
-
-    return tensor.device()
-
-
-def mem(tensor: TensorLike) -> int:
-    dt = dtyp(tensor)
-    numel = tensor.numel()
-
-    if (batch := bat(tensor)) is not None:
-        numel //= batch.value
-
-    return constants.MEMORY_BYTES[dt] * numel
-
-
-def bat(tensor: TensorLike) -> BatchInfo | None:
-    if isinstance(tensor, RunnableTensor):
-        return tensor.batch()
-    return None
+#     def memory(self) -> int:
+#         return mem(self)
 
 
 @overload
