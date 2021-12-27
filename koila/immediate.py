@@ -4,7 +4,6 @@ import logging
 from dataclasses import dataclass
 from numbers import Number
 from typing import Tuple, overload
-import typing
 
 import torch
 from numpy import ndarray

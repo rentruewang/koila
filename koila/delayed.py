@@ -4,11 +4,13 @@ import dataclasses as dcls
 import logging
 from dataclasses import dataclass
 from numbers import Number
-from typing import Any, Callable, Dict, Tuple, TypeVar, final
+from typing import Any, Callable, Dict, Tuple, final
 
 from numpy import ndarray
 from rich.logging import RichHandler
-from torch import Tensor, dtype as DType, device as Device
+from torch import Tensor
+from torch import device as Device
+from torch import dtype as DType
 
 from . import immediate
 from .prepasses import PrePass

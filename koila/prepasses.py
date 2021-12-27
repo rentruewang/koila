@@ -22,7 +22,7 @@ from torch import device as Device
 from torch import dtype as DType
 from torch.functional import Tensor
 
-from . import constants, runnables, shapes
+from . import constants, shapes
 from .errors import UnsupportedError
 from .runnables import BatchInfo
 from .tensors import TensorLike
@@ -578,9 +578,7 @@ def pool(
         )
     ]
 
-    return PrePass(
-        (batch, chan, *out_dims), same([input], input.batch(), trivial)
-    )
+    return PrePass((batch, chan, *out_dims), same([input], input.batch(), trivial))
 
 
 def maxpool(
