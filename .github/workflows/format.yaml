@@ -18,8 +18,8 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: 3.9
-      - name: ⬇️ isort, black, autoflake
-        run: pip install isort black autoflake
+      - name: ⬇️ development tools
+        run: pip install -r requirements/dev.txt
       - name: 🏃 isort
         run: isort --profile=black .
       - name: 🏃 black
