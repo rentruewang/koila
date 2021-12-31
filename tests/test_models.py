@@ -4,7 +4,7 @@ from torch.nn import Flatten, Linear, Module, ReLU, Sequential
 
 from koila import BatchInfo, LazyTensor
 
-from . import common
+from . import utils
 
 
 def test_torch_tutorial() -> None:
@@ -45,11 +45,11 @@ def test_torch_tutorial() -> None:
     assert isinstance(lazy_output, LazyTensor)
 
     assert lazy_input.run((3, 6)).size() == (3, 28, 28)
-    common.assert_isclose(lazy_input.run((3, 6)), input[3:6])
+    utils.assert_isclose(lazy_input.run((3, 6)), input[3:6])
     tbout = lazy_output.run((3, 6))
     assert tbout.shape == (3, 10)
     assert isinstance(tbout, Tensor)
     assert not isinstance(tbout, LazyTensor)
-    common.assert_isclose(tbout, nn(input[3:6]))
+    utils.assert_isclose(tbout, nn(input[3:6]))
 
     assert lazy_output.batch() == BatchInfo(0, 9)

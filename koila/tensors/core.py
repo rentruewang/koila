@@ -27,9 +27,10 @@ from torch import Tensor, cuda
 from torch import device as Device
 from torch import dtype as DType
 
+from koila.errors import UnsupportedError
+
 from . import gpus, prepasses
 from .delayed import DelayedTensor
-from .errors import UnsupportedError
 from .prepasses import PrePass, PrePassFunc
 from .runnables import BatchInfo, RunnableTensor
 from .tensors import TensorLike
@@ -39,27 +40,6 @@ V = TypeVar("V", contravariant=True)
 
 logger = logging.getLogger(__name__)
 logger.addHandler(RichHandler())
-
-# FIXME: LazyTensor incompatible with new API.
-
-
-@dataclass(frozen=True)
-class LazyFunction(Generic[V]):
-    func: Callable[..., Tensor]
-    prepass_func: PrePassFunc
-
-    def __call__(self, *args: Any, **kwargs: Any) -> DelayedTensor:
-        lazy_args = tuple(lazy(arg) for arg in args)
-        lazy_kwargs = dict((k, lazy(v)) for (k, v) in kwargs.items())
-        prepass = self.prepass_func(*args, **kwargs)
-        return DelayedTensor(self.func, prepass, *lazy_args, **lazy_kwargs)
-
-    def __get__(self, obj: V, objtype: Type[V]) -> Callable[..., LazyTensor]:
-        assert isinstance(obj, objtype), [type(obj), objtype]
-        if obj is None:
-            return self
-        else:
-            return functools.partial(self, obj)
 
 
 @final

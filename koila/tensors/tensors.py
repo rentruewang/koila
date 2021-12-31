@@ -3,37 +3,20 @@ from __future__ import annotations
 import functools
 import operator
 from abc import abstractmethod
-from typing import Callable, NamedTuple, NoReturn, Protocol, Tuple, overload
+from typing import NoReturn, Protocol, Tuple, overload
 
 from torch import Tensor
 from torch import device as Device
 from torch import dtype as DType
 
-from .runnables import Runnable
 
-
-class BatchedPair(NamedTuple):
-    batch: int
-    no_batch: int
-
-
-class BatchInfo(NamedTuple):
-    index: int
-    value: int
-
-    def map(self, func: Callable[[int], int]) -> BatchInfo:
-        index = func(self.index)
-        return BatchInfo(index, self.value)
-
-
-class TensorLike(Runnable[Tensor], Protocol):
+class TensorLike(Protocol):
     """
     TensorLike is a protocol that mimics PyTorch's Tensor.
     """
 
     dtype: DType
     device: str | Device
-    batch: BatchInfo | None
 
     @abstractmethod
     def run(self, partial: Tuple[int, int] | None = None) -> Tensor:

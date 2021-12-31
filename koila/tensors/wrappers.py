@@ -10,8 +10,9 @@ from numpy import ndarray
 from rich.logging import RichHandler
 from torch import Tensor
 
+from .runnable_tensors import BatchInfo
 from .runnables import Runnable
-from .tensors import BatchInfo, TensorLike
+from .tensors import TensorLike
 
 logger = logging.getLogger(__name__)
 logger.addHandler(RichHandler())

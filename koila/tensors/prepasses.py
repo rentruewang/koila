@@ -22,8 +22,9 @@ from torch import device as Device
 from torch import dtype as DType
 from torch.functional import Tensor
 
+from koila.errors import UnsupportedError
+
 from . import constants, shapes
-from .errors import UnsupportedError
 from .runnables import BatchInfo
 from .tensors import TensorLike
 
