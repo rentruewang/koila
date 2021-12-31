@@ -14,7 +14,7 @@ jobs:
       - name: ⬇️ Python Dependencies
         uses: py-actions/py-dependency-install@v2
         with:
-          path: requirements.txt
+          path: requirements/prod.txt
           update-pip: true
           update-setuptools: true
           update-wheel: true
