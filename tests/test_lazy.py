@@ -200,9 +200,7 @@ def test_floordiv_op() -> None:
 
 def test_floordiv_method() -> None:
     utils.call(
-        lambda a, b, c: utils.assert_isclose(
-            a.div(b, rounding_mode="trunc").item(), c
-        ),
+        lambda a, b, c: utils.assert_isclose(a.div(b, rounding_mode="trunc").item(), c),
         [
             [LazyTensor(torch.tensor(4)), LazyTensor(torch.tensor(3)), 4 // 3],
             [torch.tensor(4), LazyTensor(torch.tensor(3)), 4 // 3],
