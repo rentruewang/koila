@@ -1,17 +1,18 @@
 from __future__ import annotations
 
 import dataclasses as dcls
+import functools
 import logging
 from dataclasses import dataclass
 from numbers import Number
-from typing import Any, Callable, Dict, Generic, Tuple, TypeVar, final, Type
+from typing import Any, Callable, Dict, Generic, Tuple, Type, TypeVar, final
 
 from numpy import ndarray
 from rich.logging import RichHandler
 from torch import Tensor
 from torch import device as Device
 from torch import dtype as DType
-import functools
+
 from . import wrappers
 from .prepasses import PrePass, PrePassFunc
 from .runnables import Runnable
