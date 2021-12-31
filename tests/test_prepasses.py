@@ -2,7 +2,7 @@ import torch
 
 from koila import PrePassFunc, prepasses
 
-from . import common
+from . import utils
 
 
 def test_compatibility() -> None:
@@ -26,8 +26,8 @@ def test_compatibility() -> None:
 
 
 def test_identity() -> None:
-    common.call(
-        common.assert_equal,
+    utils.call(
+        utils.assert_equal,
         [
             [prepasses.identity(torch.randn(1, 2, 3, 4, 5)), (1, 2, 3, 4, 5)],
             [prepasses.identity(torch.randn(4, 2, 5)), (4, 2, 5)],
@@ -37,8 +37,8 @@ def test_identity() -> None:
 
 
 def test_symmetric() -> None:
-    common.call(
-        common.assert_equal,
+    utils.call(
+        utils.assert_equal,
         [
             [prepasses.symmetric(torch.randn(2, 4, 5), torch.randn(())), (2, 4, 5)],
             [
@@ -58,8 +58,8 @@ def test_symmetric() -> None:
 
 
 def test_reduce_dims() -> None:
-    common.call(
-        common.assert_equal,
+    utils.call(
+        utils.assert_equal,
         [
             [prepasses.reduce_dims(torch.randn(1, 2, 3, 4, 5), 1), (1, 3, 4, 5)],
             [prepasses.reduce_dims(torch.randn(1, 2, 3, 4, 5), (2, 3)), (1, 2, 5)],
@@ -72,8 +72,8 @@ def test_reduce_dims() -> None:
 
 
 def test_scalar() -> None:
-    common.call(
-        common.assert_equal,
+    utils.call(
+        utils.assert_equal,
         [
             [prepasses.reduce_dims(torch.randn(5, 5, 2)), ()],
             [prepasses.reduce_dims(torch.randn(7, 8)), ()],
@@ -82,8 +82,8 @@ def test_scalar() -> None:
 
 
 def test_matmul() -> None:
-    common.call(
-        common.assert_equal,
+    utils.call(
+        utils.assert_equal,
         [
             [prepasses.matmul(torch.randn(8), torch.randn(8)), ()],
             [prepasses.matmul(torch.randn(8, 3), torch.randn(3)), (8,)],
@@ -100,15 +100,15 @@ def test_matmul() -> None:
 
 
 def test_transpose() -> None:
-    common.call(
-        common.assert_equal,
+    utils.call(
+        utils.assert_equal,
         [[prepasses.tranpose(torch.randn(3, 4, 5), 1, 2), (3, 5, 4)]],
     )
 
 
 def test_linear() -> None:
-    common.call(
-        common.assert_equal,
+    utils.call(
+        utils.assert_equal,
         [
             [
                 prepasses.linear(
@@ -123,10 +123,13 @@ def test_linear() -> None:
 
 
 def test_cat() -> None:
-    common.call(
-        common.assert_equal,
+    utils.call(
+        utils.assert_equal,
         [
-            [prepasses.cat([torch.randn(2, 3, 5), torch.randn(3, 3, 5)]), (5, 3, 5)],
+            [
+                prepasses.cat([torch.randn(2, 3, 5), torch.randn(3, 3, 5)]),
+                (5, 3, 5),
+            ],
             [
                 prepasses.cat([torch.randn(2, 3, 5), torch.randn(2, 4, 5)], dim=1),
                 (2, 7, 5),
@@ -136,8 +139,8 @@ def test_cat() -> None:
 
 
 def test_loss() -> None:
-    common.call(
-        common.assert_equal,
+    utils.call(
+        utils.assert_equal,
         [
             [prepasses.loss(torch.randn(2, 4, 5), torch.randn(2, 4, 5)), ()],
             [

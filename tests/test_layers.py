@@ -29,7 +29,7 @@ from torch.nn import (
 import koila
 from koila import LazyTensor
 
-from . import common
+from . import utils
 
 
 def test_linear_layer() -> None:
@@ -47,7 +47,7 @@ def test_linear_layer() -> None:
     assert lo.shape == (7, 11, 17)
     assert not isinstance(lo, Tensor)
     assert isinstance(lo, LazyTensor)
-    common.assert_isclose(lo.run(), out)
+    utils.assert_isclose(lo.run(), out)
 
 
 def test_batchnorm_layers() -> None:
@@ -66,7 +66,7 @@ def test_batchnorm_layers() -> None:
     assert lo.shape == (3, 5, 7)
     assert not isinstance(lo, Tensor)
     assert isinstance(lo, LazyTensor)
-    common.assert_isclose(lo.run(), out)
+    utils.assert_isclose(lo.run(), out)
 
     # 2D
     arr = torch.randn(3, 5, 7, 11)
@@ -83,7 +83,7 @@ def test_batchnorm_layers() -> None:
     assert lo.shape == (3, 5, 7, 11)
     assert not isinstance(lo, Tensor)
     assert isinstance(lo, LazyTensor)
-    common.assert_isclose(lo.run(), out)
+    utils.assert_isclose(lo.run(), out)
 
     # 3D
     arr = torch.randn(3, 5, 7, 11, 13)
@@ -100,7 +100,7 @@ def test_batchnorm_layers() -> None:
     assert lo.shape == (3, 5, 7, 11, 13)
     assert not isinstance(lo, Tensor)
     assert isinstance(lo, LazyTensor)
-    common.assert_isclose(lo.run(), out)
+    utils.assert_isclose(lo.run(), out)
 
 
 def test_layernorm_layers() -> None:
@@ -119,7 +119,7 @@ def test_layernorm_layers() -> None:
     assert lo.shape == (3, 5, 7)
     assert not isinstance(lo, Tensor)
     assert isinstance(lo, LazyTensor)
-    common.assert_isclose(lo.run(), out)
+    utils.assert_isclose(lo.run(), out)
 
 
 def test_dropout_layer() -> None:
@@ -154,7 +154,7 @@ def test_relu_layer() -> None:
     assert lo.shape == (7, 11)
     assert not isinstance(lo, Tensor)
     assert isinstance(lo, LazyTensor)
-    common.assert_isclose(lo.run(), out)
+    utils.assert_isclose(lo.run(), out)
 
 
 def test_leaky_relu_layer() -> None:
@@ -172,7 +172,7 @@ def test_leaky_relu_layer() -> None:
     assert lo.shape == (7, 11)
     assert not isinstance(lo, Tensor)
     assert isinstance(lo, LazyTensor)
-    common.assert_isclose(lo.run(), out)
+    utils.assert_isclose(lo.run(), out)
 
 
 def test_sigmoid_layer() -> None:
@@ -190,7 +190,7 @@ def test_sigmoid_layer() -> None:
     assert lo.shape == (7, 11)
     assert not isinstance(lo, Tensor)
     assert isinstance(lo, LazyTensor)
-    common.assert_isclose(lo.run(), out)
+    utils.assert_isclose(lo.run(), out)
 
 
 def test_softmax_layer() -> None:
@@ -208,7 +208,7 @@ def test_softmax_layer() -> None:
     assert lo.shape == (7, 11)
     assert not isinstance(lo, Tensor)
     assert isinstance(lo, LazyTensor)
-    common.assert_isclose(lo.run(), out)
+    utils.assert_isclose(lo.run(), out)
 
 
 def test_conv_layer() -> None:
@@ -226,7 +226,7 @@ def test_conv_layer() -> None:
     assert not isinstance(lo, Tensor)
     assert isinstance(lo, LazyTensor)
     assert lo.shape == out.shape
-    common.assert_isclose(lo.run(), out)
+    utils.assert_isclose(lo.run(), out)
 
     # 2D
     arr = torch.randn(7, 11, 13, 14)
@@ -242,7 +242,7 @@ def test_conv_layer() -> None:
     assert not isinstance(lo, Tensor)
     assert isinstance(lo, LazyTensor)
     assert lo.shape == out.shape
-    common.assert_isclose(lo.run(), out)
+    utils.assert_isclose(lo.run(), out)
 
     # 3D
     arr = torch.randn(7, 11, 13, 14, 15)
@@ -258,7 +258,7 @@ def test_conv_layer() -> None:
     assert not isinstance(lo, Tensor)
     assert isinstance(lo, LazyTensor)
     assert lo.shape == out.shape
-    common.assert_isclose(lo.run(), out)
+    utils.assert_isclose(lo.run(), out)
 
 
 def test_convtranspose_layer() -> None:
@@ -276,7 +276,7 @@ def test_convtranspose_layer() -> None:
     assert not isinstance(lo, Tensor)
     assert isinstance(lo, LazyTensor)
     assert lo.shape == out.shape
-    common.assert_isclose(lo.run(), out)
+    utils.assert_isclose(lo.run(), out)
 
     # 2D
     arr = torch.randn(7, 11, 13, 14)
@@ -292,7 +292,7 @@ def test_convtranspose_layer() -> None:
     assert not isinstance(lo, Tensor)
     assert isinstance(lo, LazyTensor)
     assert lo.shape == out.shape
-    common.assert_isclose(lo.run(), out)
+    utils.assert_isclose(lo.run(), out)
 
     # 3D
     arr = torch.randn(7, 11, 13, 14, 15)
@@ -308,7 +308,7 @@ def test_convtranspose_layer() -> None:
     assert not isinstance(lo, Tensor)
     assert isinstance(lo, LazyTensor)
     assert lo.shape == out.shape
-    common.assert_isclose(lo.run(), out)
+    utils.assert_isclose(lo.run(), out)
 
 
 def test_maxpool_layer() -> None:
@@ -326,7 +326,7 @@ def test_maxpool_layer() -> None:
     assert not isinstance(lo, Tensor)
     assert isinstance(lo, LazyTensor)
     assert lo.shape == out.shape
-    common.assert_isclose(lo.run(), out)
+    utils.assert_isclose(lo.run(), out)
 
     # 2D
     arr = torch.randn(7, 11, 13, 14)
@@ -342,7 +342,7 @@ def test_maxpool_layer() -> None:
     assert not isinstance(lo, Tensor)
     assert isinstance(lo, LazyTensor)
     assert lo.shape == out.shape
-    common.assert_isclose(lo.run(), out)
+    utils.assert_isclose(lo.run(), out)
 
     # 3D
     arr = torch.randn(7, 11, 13, 14, 15)
@@ -358,7 +358,7 @@ def test_maxpool_layer() -> None:
     assert not isinstance(lo, Tensor)
     assert isinstance(lo, LazyTensor)
     assert lo.shape == out.shape
-    common.assert_isclose(lo.run(), out)
+    utils.assert_isclose(lo.run(), out)
 
 
 def test_avgpool_layer() -> None:
@@ -376,7 +376,7 @@ def test_avgpool_layer() -> None:
     assert not isinstance(lo, Tensor)
     assert isinstance(lo, LazyTensor)
     assert lo.shape == out.shape
-    common.assert_isclose(lo.run(), out)
+    utils.assert_isclose(lo.run(), out)
 
     # 2D
     arr = torch.randn(7, 11, 13, 14)
@@ -392,7 +392,7 @@ def test_avgpool_layer() -> None:
     assert not isinstance(lo, Tensor)
     assert isinstance(lo, LazyTensor)
     assert lo.shape == out.shape
-    common.assert_isclose(lo.run(), out)
+    utils.assert_isclose(lo.run(), out)
 
     # 3D
     arr = torch.randn(7, 11, 13, 14, 15)
@@ -408,7 +408,7 @@ def test_avgpool_layer() -> None:
     assert not isinstance(lo, Tensor)
     assert isinstance(lo, LazyTensor)
     assert lo.shape == out.shape
-    common.assert_isclose(lo.run(), out)
+    utils.assert_isclose(lo.run(), out)
 
 
 def test_embedding_layer() -> None:
@@ -426,4 +426,4 @@ def test_embedding_layer() -> None:
     assert lo.shape == (5, 13)
     assert not isinstance(lo, Tensor)
     assert isinstance(lo, LazyTensor)
-    common.assert_isclose(lo.run(), out)
+    utils.assert_isclose(lo.run(), out)
