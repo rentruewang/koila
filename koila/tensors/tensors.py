@@ -3,9 +3,8 @@ from __future__ import annotations
 import functools
 import operator
 from abc import abstractmethod
-from typing import Any, NoReturn, Protocol, Tuple, TypeVar, overload
+from typing import NoReturn, Protocol, Tuple, TypeVar, overload
 
-from torch import Tensor
 from torch import device as Device
 from torch import dtype as DType
 
