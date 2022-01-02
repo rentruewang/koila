@@ -1,4 +1,0 @@
-numpy
-pynvml
-rich
-torch

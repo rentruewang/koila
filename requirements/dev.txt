@@ -1,4 +1,0 @@
-autoflake
-black
-isort
-pytest
