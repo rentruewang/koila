@@ -30,12 +30,12 @@ jobs:
           poetry-version: ${{ matrix.poetry-version }}
       - name: ⬇️ Python Dependencies
         run: poetry install
-      - name: 🏃 isort
-        run: isort --profile=black .
-      - name: 🏃 black
-        run: black .
       - name: 🏃 autoflake
-        run: autoflake -ir $(fd -e py | rg -vsF __init__.py) --remove-all-unused-imports
+        run: poetry run autoflake -ir $(fd -e py | rg -vsF __init__.py) --remove-all-unused-imports
+      - name: 🏃 isort
+        run: poetry run isort --profile=black .
+      - name: 🏃 black
+        run: poetry run black .
 
       - name: ⬆️ Add and Commit
         uses: EndBug/add-and-commit@v7
