@@ -1,50 +1,28 @@
 name: Unit Testing
 on: [push]
 jobs:
-  unit-test-py38:
-    runs-on: ubuntu-latest
+  unit-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.8, 3.9]
+        poetry-version: 1.1.12
+        os: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     steps:
       - name: 🔔 Check out
         uses: actions/checkout@v2
 
-      - name: 🏗️ python 3.8
+      - name: 🏗️ python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.8
-      - name: ⬇️ Library Dependencies
-        uses: py-actions/py-dependency-install@v2
+          python-version: ${{ matrix.python-version }}
+      - name: ⬇️ Python Poetry
+        uses: abatilo/actions-poetry@v2.0.0
         with:
-          path: requirements/prod.txt
-          update-pip: true
-          update-setuptools: true
-          update-wheel: true
-      - name: ⬇️ Development Dependencies
-        uses: py-actions/py-dependency-install@v2
-        with:
-          path: requirements/dev.txt
-          update-pip: true
-          update-setuptools: true
-          update-wheel: true
-      - name: 🏃 pytest
-        run: pytest -v
-
-  unit-test-py39:
-    runs-on: ubuntu-latest
-    steps:
-      - name: 🔔 Check out
-        uses: actions/checkout@v2
-
-      - name: 🏗️ python 3.9
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
+          poetry-version: ${{ matrix.poetry-version }}
       - name: ⬇️ Python Dependencies
-        uses: py-actions/py-dependency-install@v2
-        with:
-          path: requirements.txt
-          update-pip: true
-          update-setuptools: true
-          update-wheel: true
+        run: poetry install
       - name: ⬇️ pytest coverage
         run: pip install pytest coverage
       - name: 🏃 pytest
