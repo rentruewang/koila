@@ -3,7 +3,6 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import NoReturn, Protocol, Union, runtime_checkable
 
-
 Numeric = Union[int, float, bool]
 
 
