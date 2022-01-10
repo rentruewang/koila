@@ -13,7 +13,7 @@
 
 ## 🚨 Warning
 
-**This project is currently being refactored. It will definitely not work, may not even `import`. If you wish to use some features that this project provides, visit [release v0.1.1 on PyPI](https://pypi.org/project/koila/#files) and download the source code there.**
+**This project is currently being refactored. It will definitely not work, may not even `import`. If you wish to use some features that this project provides, download [release v0.1.1 here](https://github.com/rentruewang/koila/releases/tag/v0.1.1).**
 
 ## 🚀 Features
 
