@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import Protocol, TypeVar
 
-from .components import Arithmetic, MemoryInfo
+from .components import Arithmetic, MemoryInfo, WithBatch
 
 Number = TypeVar("Number", int, float)
 Numeric = TypeVar("Numeric", int, float, bool)
@@ -40,3 +40,6 @@ class TensorLike(Arithmetic, MemoryInfo, Protocol):
     @property
     def T(self) -> TensorLike:
         return self.transpose(0, 1)
+
+class BatchedTensorLike(TensorLike, WithBatch, Protocol):
+    pass

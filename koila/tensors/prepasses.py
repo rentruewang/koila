@@ -18,15 +18,13 @@ from typing import (
 )
 
 from rich.logging import RichHandler
+from torch import Tensor
 from torch import device as Device
 from torch import dtype as DType
-from torch.functional import Tensor
 
+from koila import constants, shapes
 from koila.errors import UnsupportedError
-
-from . import constants, shapes
-from .runnables import BatchInfo
-from .tensors import TensorLike
+from koila.interfaces import BatchedTensorLike, BatchInfo
 
 logger = logging.getLogger(__name__)
 logger.addHandler(RichHandler())
@@ -117,7 +115,9 @@ def trivial(input: Tensor, *args: Any, **kwargs: Any) -> Reducer:
 
 
 def same(
-    tensors: Sequence[TensorLike], batch: BatchInfo | None, reducer: CallBack | None
+    tensors: Sequence[BatchedTensorLike],
+    batch: BatchInfo | None,
+    reducer: CallBack | None,
 ) -> MetaData:
     assert len(tensors) > 0
     dtypes = [t.dtype for t in tensors]
@@ -132,14 +132,14 @@ def same(
     return MetaData(max_dtype, devices[0], batch, reducer)
 
 
-def identity(input: TensorLike, /, *args: Any, **kwargs: Any) -> PrePass:
+def identity(input: BatchedTensorLike, /, *args: Any, **kwargs: Any) -> PrePass:
     mute_unused_args(*args, **kwargs)
 
-    return PrePass(input.size(), same([input], input.batch(), trivial))
+    return PrePass(input.size(), same([input], input.batch, trivial))
 
 
 def symmetric(
-    input: TensorLike, other: TensorLike, /, *args: Any, **kwargs: Any
+    input: BatchedTensorLike, other: BatchedTensorLike, /, *args: Any, **kwargs: Any
 ) -> PrePass:
     mute_unused_args(*args, **kwargs)
 
@@ -149,14 +149,14 @@ def symmetric(
         raise ValueError
 
     batch = None
-    if (b := input.batch()) == other.batch():
+    if (b := input.batch) == other.batch:
         batch = b
 
     return PrePass(shape, same([input, other], batch, trivial))
 
 
 def reduce_dims(
-    input: TensorLike,
+    input: BatchedTensorLike,
     /,
     dim: int | Tuple[int, ...] | None = None,
     keepdim: bool = False,
@@ -167,24 +167,24 @@ def reduce_dims(
 
     (shape, dimensions) = shapes.reduce_dims(input.size(), dim, keepdim)
 
-    if input.batch() in dimensions:
+    if input.batch in dimensions:
         batch = None
         reducer = None
     else:
-        batch = input.batch()
+        batch = input.batch
         reducer = trivial
 
     return PrePass(shape, same([input], batch, reducer))
 
 
-def scalars(input: TensorLike, /, *args: Any, **kwargs: Any) -> PrePass:
+def scalars(input: BatchedTensorLike, /, *args: Any, **kwargs: Any) -> PrePass:
     mute_unused_args(*args, **kwargs)
 
     return reduce_dims(input, tuple(range(input.dim())))
 
 
 def mean(
-    input: TensorLike,
+    input: BatchedTensorLike,
     /,
     dim: int | Tuple[int, ...] | None = None,
     keepdim: bool = False,
@@ -195,7 +195,7 @@ def mean(
 
     (shape, dimensions) = shapes.reduce_dims(input.size(), dim, keepdim)
 
-    if (b := input.batch()) in dimensions:
+    if (b := input.batch) is not None and b.dimension in dimensions:
         batch = None
 
         def mean_callback(input: Tensor, *args: Any, **kwargs: Any) -> Reducer:
@@ -206,51 +206,54 @@ def mean(
 
         reducer = mean_callback
     else:
-        batch = input.batch()
+        batch = input.batch
         reducer = trivial
     return PrePass(shape, same([input], batch, reducer))
 
 
-def permute(input: TensorLike, /, *dims: int, **kwargs: Any) -> PrePass:
+def permute(input: BatchedTensorLike, /, *dims: int, **kwargs: Any) -> PrePass:
     mute_unused_args(**kwargs)
 
     mapping = dict(enumerate(dims))
 
     batch = None
-    if (b := input.batch()) is not None:
-        batch = b.map(lambda x: mapping[x])
+    if (b := input.batch) is not None:
+        batch = b
+        batch.dimension = mapping[batch.dimension]
 
     return PrePass(shapes.permute(input.size(), *dims), same([input], batch, trivial))
 
 
-def reshape(input: TensorLike, /, *shape: int, **kwargs: Any) -> PrePass:
+def reshape(input: BatchedTensorLike, /, *shape: int, **kwargs: Any) -> PrePass:
     mute_unused_args(**kwargs)
 
     shape = shapes.reshape(input.size(), *shape)
 
     batch = None
-    if (b := input.batch()) is not None:
+    if (b := input.batch) is not None:
         if b in shape:
-            batch = b.map(shape.index)
+            batch = b
+            batch.dimension = shape.index(batch.dimension)
 
     return PrePass(shape, same([input], batch, trivial))
 
 
-def view(input: TensorLike, /, *shape: int, **kwargs: Any) -> PrePass:
+def view(input: BatchedTensorLike, /, *shape: int, **kwargs: Any) -> PrePass:
     mute_unused_args(**kwargs)
 
     shape = shapes.view(input.size(), *shape)
 
     batch = None
-    if (b := input.batch()) is not None:
+    if (b := input.batch) is not None:
         if b in shape:
-            batch = b.map(shape.index)
+            batch = b
+            batch.dimension = shape.index(batch.dimension)
 
     return PrePass(shape, same([input], batch, trivial))
 
 
 def flatten(
-    input: TensorLike,
+    input: BatchedTensorLike,
     /,
     start_dim: int = 0,
     end_dim: int = -1,
@@ -273,21 +276,22 @@ def flatten(
     )
 
     batch = None
-    if (b := input.batch()) is not None:
-        if not (start_dim <= b.index <= end_dim):
+    if (b := input.batch) is not None:
+        if not (start_dim <= b.dimension <= end_dim):
             batch = b
 
     return PrePass(shape, same([input], batch, trivial))
 
 
 def tranpose(
-    input: TensorLike, dim0: int, dim1: int, /, *args: Any, **kwargs: Any
+    input: BatchedTensorLike, dim0: int, dim1: int, /, *args: Any, **kwargs: Any
 ) -> PrePass:
     mute_unused_args(*args, **kwargs)
 
     batch = None
-    if (b := input.batch()) is not None:
-        batch = b.map(lambda x: {dim0: dim1, dim1: dim0}[x])
+    if (b := input.batch) is not None:
+        batch = b
+        batch.dimension = {dim0: dim1, dim1: dim0}[batch.dimension]
 
     return PrePass(
         shapes.tranpose(input.size(), dim0, dim1), same([input], batch, trivial)
@@ -295,7 +299,7 @@ def tranpose(
 
 
 def select(
-    input: TensorLike,
+    input: BatchedTensorLike,
     dim: int | ... | None,
     index: int | Tensor,
     /,
@@ -325,7 +329,7 @@ def select(
         sliced_idx = ()
 
     batch = None
-    if (b := input.batch()) != dim:
+    if (b := input.batch) != dim:
         batch = b
 
     return PrePass(
@@ -335,34 +339,34 @@ def select(
 
 
 def embedding(
-    input: TensorLike, weight: TensorLike, /, *args: Any, **kwargs: Any
+    input: BatchedTensorLike, weight: BatchedTensorLike, /, *args: Any, **kwargs: Any
 ) -> PrePass:
     mute_unused_args(*args, **kwargs)
 
     shape = input.size()
     return PrePass(
         (*shape, weight.size(-1)),
-        same([input], input.batch(), trivial),
+        same([input], input.batch, trivial),
     )
 
 
 def matmul(
-    input: TensorLike, other: TensorLike, /, *args: Any, **kwargs: Any
+    input: BatchedTensorLike, other: BatchedTensorLike, /, *args: Any, **kwargs: Any
 ) -> PrePass:
     mute_unused_args(*args, **kwargs)
 
-    if (batch := input.batch()) != other.batch():
+    if (batch := input.batch) != other.batch:
         raise UnsupportedError
 
     return PrePass(
         shapes.matmul(input.size(), other.size()),
-        same([input, other], input.batch(), trivial),
+        same([input, other], input.batch, trivial),
     )
 
 
 def loss(
-    input: TensorLike,
-    target: TensorLike,
+    input: BatchedTensorLike,
+    target: BatchedTensorLike,
     /,
     reduction: Literal["none", "mean", "sum"] = "mean",
     *args: Any,
@@ -371,7 +375,7 @@ def loss(
     mute_unused_args(*args, **kwargs)
 
     # Currently only supports tensors of the same batch size.
-    if (batch := input.batch()) != target.batch():
+    if (batch := input.batch) != target.batch:
         raise UnsupportedError
 
     output_shape = {
@@ -386,9 +390,9 @@ def loss(
 
 
 def linear(
-    input: TensorLike,
-    weight: TensorLike,
-    bias: TensorLike | None = None,
+    input: BatchedTensorLike,
+    weight: BatchedTensorLike,
+    bias: BatchedTensorLike | None = None,
     *args: Any,
     **kwargs: Any,
 ) -> PrePass:
@@ -402,11 +406,11 @@ def linear(
     if result is None:
         raise ValueError
 
-    return PrePass(result, same([input, weight], input.batch(), trivial))
+    return PrePass(result, same([input, weight], input.batch, trivial))
 
 
 def cat(
-    tensors: Sequence[TensorLike], dim: int = 0, *args: Any, **kwargs: Any
+    tensors: Sequence[BatchedTensorLike], dim: int = 0, *args: Any, **kwargs: Any
 ) -> PrePass:
     mute_unused_args(*args, **kwargs)
 
@@ -423,11 +427,11 @@ def cat(
                 f"Dimension should be equal outside dim {dim}. Got {shapes}."
             )
 
-    if len(set(t.batch() for t in tensors)) != 1:
+    if len(set(t.batch for t in tensors)) != 1:
         raise UnsupportedError
 
     batch = None
-    if (b := tensors[0].batch()) != dim:
+    if (b := tensors[0].batch) != dim:
         batch = b
 
     concat_size = sum(t[dim] for t in shapes)
@@ -437,7 +441,7 @@ def cat(
     )
 
 
-def pad(input: TensorLike, pad: List[int], *args: Any, **kwargs: Any) -> PrePass:
+def pad(input: BatchedTensorLike, pad: List[int], *args: Any, **kwargs: Any) -> PrePass:
     mute_unused_args(*args, **kwargs)
 
     shapes = input.size()
@@ -459,7 +463,7 @@ def pad(input: TensorLike, pad: List[int], *args: Any, **kwargs: Any) -> PrePass
 
     return PrePass(
         [s + p0 + p1 for (s, p0, p1) in zip(shapes, pad0, pad1)],
-        same([input], input.batch(), trivial),
+        same([input], input.batch, trivial),
     )
 
 
@@ -473,9 +477,9 @@ def _int_to_tuple(value: int | Tuple[int, ...], length: int) -> Tuple[int, ...]:
 
 
 def conv(
-    input: TensorLike,
-    weight: TensorLike,
-    bias: TensorLike | None = None,
+    input: BatchedTensorLike,
+    weight: BatchedTensorLike,
+    bias: BatchedTensorLike | None = None,
     stride: int | Tuple[int, ...] = 1,
     padding: int | Tuple[int, ...] | str = "valid",
     dilation: int | Tuple[int, ...] = 1,
@@ -509,14 +513,14 @@ def conv(
 
     return PrePass(
         (batch, out_chan, *out_dims),
-        same([input, weight], input.batch(), trivial),
+        same([input, weight], input.batch, trivial),
     )
 
 
 def conv_transpose(
-    input: TensorLike,
-    weight: TensorLike,
-    bias: TensorLike | None = None,
+    input: BatchedTensorLike,
+    weight: BatchedTensorLike,
+    bias: BatchedTensorLike | None = None,
     stride: int | Tuple[int, ...] = 1,
     padding: int | Tuple[int, ...] = 0,
     output_padding: int | Tuple[int, ...] = 0,
@@ -551,12 +555,12 @@ def conv_transpose(
 
     return PrePass(
         (batch, out_chan, *out_dims),
-        same([input, weight], input.batch(), trivial),
+        same([input, weight], input.batch, trivial),
     )
 
 
 def pool(
-    input: TensorLike,
+    input: BatchedTensorLike,
     *,
     kernel_size: int | Tuple[int, ...],
     stride: int | Tuple[int, ...] = (),
@@ -579,11 +583,11 @@ def pool(
         )
     ]
 
-    return PrePass((batch, chan, *out_dims), same([input], input.batch(), trivial))
+    return PrePass((batch, chan, *out_dims), same([input], input.batch, trivial))
 
 
 def maxpool(
-    input: TensorLike,
+    input: BatchedTensorLike,
     kernel_size: int | Tuple[int, ...],
     stride: int | Tuple[int, ...] = (),
     padding: int | Tuple[int, ...] = 0,
@@ -609,7 +613,7 @@ def maxpool(
 
 
 def avgpool(
-    input: TensorLike,
+    input: BatchedTensorLike,
     kernel_size: int | Tuple[int, ...],
     stride: int | Tuple[int, ...] = (),
     padding: int | Tuple[int, ...] = 0,

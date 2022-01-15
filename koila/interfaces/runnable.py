@@ -3,8 +3,10 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import Protocol, TypeVar, runtime_checkable
 
-from .components import MemoryInfo
-from .tensorlike import TensorLike
+from koila.interfaces.components.withbatch import WithBatch
+
+from .components import MemoryInfo, WithBatch
+from .tensorlike import BatchedTensorLike, TensorLike
 
 T = TypeVar("T", covariant=True)
 
@@ -17,7 +19,7 @@ class Runnable(Protocol[T]):
 
 
 @runtime_checkable
-class RunnableTensor(Runnable[TensorLike], MemoryInfo, Protocol):
+class RunnableTensor(Runnable[TensorLike], BatchedTensorLike, Protocol):
     @abstractmethod
     def run(self, partial: range | None = None) -> TensorLike:
         ...

@@ -14,9 +14,9 @@ from torch import Tensor
 from torch import device as Device
 from torch import dtype as DType
 
+from koila.interfaces import BatchInfo, Runnable, RunnableTensor, TensorLike
+
 from .prepasses import PrePass, PrePassFunc
-from .runnables import BatchInfo, Runnable, RunnableTensor
-from .tensors import TensorLike
 
 logger = logging.getLogger(__name__)
 logger.addHandler(RichHandler())
@@ -93,7 +93,7 @@ class DelayedTensor(RunnableTensor):
         return self.prepass.device
 
 
-class ImmediateTensor(Tensor, RunnableTensor, TensorLike):
+class ImmediateTensor(Tensor, RunnableTensor):
     """
     Immediate tensor is a thin wrapper for the `Tensor` class. It's basically a tensor.
     """
