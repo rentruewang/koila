@@ -29,7 +29,7 @@ from torch import dtype as DType
 
 from koila import gpus, prepasses
 from koila.errors import UnsupportedError
-from koila.interfaces import RunnableTensor, TensorLike, WithBatch
+from koila.interfaces import RunnableTensor, TensorLike
 
 from .delayed import DelayedTensor, LazyFunction
 from .prepasses import PrePass, PrePassFunc

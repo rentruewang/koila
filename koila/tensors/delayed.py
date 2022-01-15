@@ -14,7 +14,7 @@ from torch import Tensor
 from torch import device as Device
 from torch import dtype as DType
 
-from koila.interfaces import BatchInfo, Runnable, RunnableTensor, TensorLike
+from koila.interfaces import BatchInfo, Runnable, RunnableTensor
 
 from .prepasses import PrePass, PrePassFunc
 
