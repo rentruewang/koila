@@ -27,13 +27,12 @@ from torch import Tensor, cuda
 from torch import device as Device
 from torch import dtype as DType
 
+from koila import gpus, prepasses
 from koila.errors import UnsupportedError
+from koila.interfaces import RunnableTensor, TensorLike, WithBatch
 
-from . import gpus, prepasses
-from .delayed import DelayedTensor
+from .delayed import DelayedTensor, LazyFunction
 from .prepasses import PrePass, PrePassFunc
-from .runnables import BatchInfo, RunnableTensor
-from .tensors import TensorLike
 
 T = TypeVar("T")
 V = TypeVar("V", contravariant=True)
@@ -46,7 +45,7 @@ logger.addHandler(RichHandler())
 @dataclass(init=False, repr=False)
 class LazyTensor(RunnableTensor):
     _data: TensorLike
-    _batch: BatchInfo | None = None
+    batch: int | None = None
 
     def __init__(self, data: TensorLike, batch: int | None = None) -> None:
         if isinstance(data, LazyTensor):
