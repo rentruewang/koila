@@ -41,5 +41,6 @@ class TensorLike(Arithmetic, MemoryInfo, Protocol):
     def T(self) -> TensorLike:
         return self.transpose(0, 1)
 
+
 class BatchedTensorLike(TensorLike, WithBatch, Protocol):
     pass

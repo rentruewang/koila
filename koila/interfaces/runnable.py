@@ -3,9 +3,6 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import Protocol, TypeVar, runtime_checkable
 
-from koila.interfaces.components.withbatch import WithBatch
-
-from .components import MemoryInfo, WithBatch
 from .tensorlike import BatchedTensorLike, TensorLike
 
 T = TypeVar("T", covariant=True)
