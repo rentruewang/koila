@@ -16,7 +16,7 @@ from torch import dtype as DType
 
 from koila.interfaces import BatchInfo, Runnable, RunnableTensor
 
-from .prepasses import PrePass, PrePassFunc
+from ..prepasses import PrePass, PrePassFunc
 
 logger = logging.getLogger(__name__)
 logger.addHandler(RichHandler())
