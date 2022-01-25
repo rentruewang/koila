@@ -1,4 +1,4 @@
-name: Formatting
+name: GitHub Pages
 on: [push]
 jobs:
   format-all:
