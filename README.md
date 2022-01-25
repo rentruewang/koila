@@ -19,7 +19,9 @@
 
 - 🙅 Prevents `CUDA error: out of memory error` with one single line of code.
 
-- 🦥 Lazily evaluates pytorch code to save computing power.
+- ⚗️ Automatically accumulates gradients when batch sizes are too large.
+
+- 🦥 Lazily evaluates PyTorch code to save computing power.
 
 - ✂️ Automatically splits along the batch dimension to more GPU friendly numbers (2's powers) to speed up the execution.
 

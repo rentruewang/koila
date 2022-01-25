@@ -1,0 +1,39 @@
+name: Formatting
+on: [push]
+jobs:
+  format-all:
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.9]
+        poetry-version: [1.1.12]
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: 🔔 Check out
+        uses: actions/checkout@v2
+
+      - name: 🏗️ Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - name: ⬇️ fd-find, ripgrep
+        run: cargo install fd-find ripgrep
+
+      - name: 🏗️ python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: ⬇️ Python Poetry
+        uses: abatilo/actions-poetry@v2.0.0
+        with:
+          poetry-version: ${{ matrix.poetry-version }}
+      - name: ⬇️ Python Dependencies
+        run: poetry install
+
+      - name: 📰 Publish docs
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+      - name: ⬆️ MkDocs deploy
+        run: poetry run python -m mkdocs gh-deploy
