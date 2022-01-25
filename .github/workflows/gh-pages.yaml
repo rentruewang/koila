@@ -1,7 +1,7 @@
 name: GitHub Pages
 on: [push]
 jobs:
-  format-all:
+  build-and-deploy:
     strategy:
       fail-fast: false
       matrix:
@@ -12,13 +12,6 @@ jobs:
     steps:
       - name: 🔔 Check out
         uses: actions/checkout@v2
-
-      - name: 🏗️ Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-      - name: ⬇️ fd-find, ripgrep
-        run: cargo install fd-find ripgrep
 
       - name: 🏗️ python
         uses: actions/setup-python@v2
@@ -36,4 +29,4 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
       - name: ⬆️ MkDocs deploy
-        run: poetry run python -m mkdocs gh-deploy
+        run: poetry run python -m mkdocs gh-deploy --force
