@@ -1,3 +1,16 @@
-site_name: My Docs
+site_name: Koila
 theme:
   name: material
+  font:
+    text: Open Sans
+    code: Fira Code
+  icon:
+    repo: material/github
+edit_uri: README.md
+repo_name: rentruewang/koila
+repo_url: https://github.com/rentruewang/koila
+plugins:
+  - git-revision-date:
+      enabled_if_env: CI
+  - git-revision-date-localized:
+      type: date

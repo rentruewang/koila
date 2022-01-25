@@ -32,6 +32,17 @@ python-versions = "*"
 pyflakes = ">=1.1.0"
 
 [[package]]
+name = "babel"
+version = "2.9.1"
+description = "Internationalization utilities"
+category = "dev"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+
+[package.dependencies]
+pytz = ">=2015.7"
+
+[[package]]
 name = "black"
 version = "21.12b0"
 description = "The uncompromising code formatter."
@@ -111,6 +122,28 @@ python-dateutil = ">=2.8.1"
 
 [package.extras]
 dev = ["twine", "markdown", "flake8", "wheel"]
+
+[[package]]
+name = "gitdb"
+version = "4.0.9"
+description = "Git Object Database"
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+smmap = ">=3.0.1,<6"
+
+[[package]]
+name = "gitpython"
+version = "3.1.26"
+description = "GitPython is a python library used to interact with Git repositories"
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+
+[package.dependencies]
+gitdb = ">=4.0.1,<5"
 
 [[package]]
 name = "importlib-metadata"
@@ -216,6 +249,32 @@ watchdog = ">=2.0"
 
 [package.extras]
 i18n = ["babel (>=2.9.0)"]
+
+[[package]]
+name = "mkdocs-git-revision-date-localized-plugin"
+version = "0.11.1"
+description = "Mkdocs plugin that enables displaying the localized date of the last git modification of a markdown file."
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+babel = ">=2.7.0"
+GitPython = "*"
+mkdocs = ">=1.0"
+
+[[package]]
+name = "mkdocs-git-revision-date-plugin"
+version = "0.3.1"
+description = "MkDocs plugin for setting revision date from git per markdown file."
+category = "dev"
+optional = false
+python-versions = ">=3.4"
+
+[package.dependencies]
+GitPython = "*"
+jinja2 = "*"
+mkdocs = ">=0.17"
 
 [[package]]
 name = "mkdocs-material"
@@ -387,6 +446,14 @@ python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,>=2.7"
 six = ">=1.5"
 
 [[package]]
+name = "pytz"
+version = "2021.3"
+description = "World timezone definitions, modern and historical"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "pyyaml"
 version = "6.0"
 description = "YAML parser and emitter for Python"
@@ -428,6 +495,14 @@ description = "Python 2 and 3 compatibility utilities"
 category = "dev"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
+
+[[package]]
+name = "smmap"
+version = "5.0.0"
+description = "A pure Python implementation of a sliding window memory map manager"
+category = "dev"
+optional = false
+python-versions = ">=3.6"
 
 [[package]]
 name = "toml"
@@ -490,7 +565,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "562bb090aa3ede26bc2f668b50e9ea0addb4ebb5e2f473108468a27a0524c400"
+content-hash = "57c68cd25851f0a75db3af038907a5b684ad50e3d6fc4e60b093462cbb66cfd3"
 
 [metadata.files]
 atomicwrites = [
@@ -503,6 +578,10 @@ attrs = [
 ]
 autoflake = [
     {file = "autoflake-1.4.tar.gz", hash = "sha256:61a353012cff6ab94ca062823d1fb2f692c4acda51c76ff83a8d77915fba51ea"},
+]
+babel = [
+    {file = "Babel-2.9.1-py2.py3-none-any.whl", hash = "sha256:ab49e12b91d937cd11f0b67cb259a57ab4ad2b59ac7a3b41d6c06c0ac5b0def9"},
+    {file = "Babel-2.9.1.tar.gz", hash = "sha256:bc0c176f9f6a994582230df350aa6e05ba2ebe4b3ac317eab29d9be5d2768da0"},
 ]
 black = [
     {file = "black-21.12b0-py3-none-any.whl", hash = "sha256:a615e69ae185e08fdd73e4715e260e2479c861b5740057fde6e8b4e3b7dd589f"},
@@ -572,6 +651,14 @@ coverage = [
 ghp-import = [
     {file = "ghp-import-2.0.2.tar.gz", hash = "sha256:947b3771f11be850c852c64b561c600fdddf794bab363060854c1ee7ad05e071"},
     {file = "ghp_import-2.0.2-py3-none-any.whl", hash = "sha256:5f8962b30b20652cdffa9c5a9812f7de6bcb56ec475acac579807719bf242c46"},
+]
+gitdb = [
+    {file = "gitdb-4.0.9-py3-none-any.whl", hash = "sha256:8033ad4e853066ba6ca92050b9df2f89301b8fc8bf7e9324d412a63f8bf1a8fd"},
+    {file = "gitdb-4.0.9.tar.gz", hash = "sha256:bac2fd45c0a1c9cf619e63a90d62bdc63892ef92387424b855792a6cabe789aa"},
+]
+gitpython = [
+    {file = "GitPython-3.1.26-py3-none-any.whl", hash = "sha256:26ac35c212d1f7b16036361ca5cff3ec66e11753a0d677fb6c48fa4e1a9dd8d6"},
+    {file = "GitPython-3.1.26.tar.gz", hash = "sha256:fc8868f63a2e6d268fb25f481995ba185a85a66fcad126f039323ff6635669ee"},
 ]
 importlib-metadata = [
     {file = "importlib_metadata-4.10.0-py3-none-any.whl", hash = "sha256:b7cf7d3fef75f1e4c80a96ca660efbd51473d7e8f39b5ab9210febc7809012a4"},
@@ -672,6 +759,14 @@ mkdocs = [
     {file = "mkdocs-1.2.3-py3-none-any.whl", hash = "sha256:a1fa8c2d0c1305d7fc2b9d9f607c71778572a8b110fb26642aa00296c9e6d072"},
     {file = "mkdocs-1.2.3.tar.gz", hash = "sha256:89f5a094764381cda656af4298727c9f53dc3e602983087e1fe96ea1df24f4c1"},
 ]
+mkdocs-git-revision-date-localized-plugin = [
+    {file = "mkdocs-git-revision-date-localized-plugin-0.11.1.tar.gz", hash = "sha256:ce19b3af90f076d1b55b68f841059c9fcb7c9d53f93b3323f0a493492f4cc841"},
+    {file = "mkdocs_git_revision_date_localized_plugin-0.11.1-py3-none-any.whl", hash = "sha256:397dae5482531c3df6a434db35d6a2eb10174a14693ec17060b9ade7fd1682e2"},
+]
+mkdocs-git-revision-date-plugin = [
+    {file = "mkdocs-git-revision-date-plugin-0.3.1.tar.gz", hash = "sha256:4abaef720763a64c952bed6829dcc180f67c97c60dd73914e90715e05d1cfb23"},
+    {file = "mkdocs_git_revision_date_plugin-0.3.1-py3-none-any.whl", hash = "sha256:8ae50b45eb75d07b150a69726041860801615aae5f4adbd6b1cf4d51abaa03d5"},
+]
 mkdocs-material = [
     {file = "mkdocs-material-8.1.3.tar.gz", hash = "sha256:b8014d8a77ba45879525e0e7619d0833d10897487a77d6697ef94240fed8c892"},
     {file = "mkdocs_material-8.1.3-py2.py3-none-any.whl", hash = "sha256:ee153b8130ae580acd57082af0e54d644fe2a37c62f2ec9400f77e389ac1b294"},
@@ -756,6 +851,10 @@ python-dateutil = [
     {file = "python-dateutil-2.8.2.tar.gz", hash = "sha256:0123cacc1627ae19ddf3c27a5de5bd67ee4586fbdd6440d9748f8abb483d3e86"},
     {file = "python_dateutil-2.8.2-py2.py3-none-any.whl", hash = "sha256:961d03dc3453ebbc59dbdea9e4e11c5651520a876d0f4db161e8674aae935da9"},
 ]
+pytz = [
+    {file = "pytz-2021.3-py2.py3-none-any.whl", hash = "sha256:3672058bc3453457b622aab7a1c3bfd5ab0bdae451512f6cf25f64ed37f5b87c"},
+    {file = "pytz-2021.3.tar.gz", hash = "sha256:acad2d8b20a1af07d4e4c9d2e9285c5ed9104354062f275f3fcd88dcef4f1326"},
+]
 pyyaml = [
     {file = "PyYAML-6.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:d4db7c7aef085872ef65a8fd7d6d09a14ae91f691dec3e87ee5ee0539d516f53"},
     {file = "PyYAML-6.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:9df7ed3b3d2e0ecfe09e14741b857df43adb5a3ddadc919a2d94fbdf78fea53c"},
@@ -802,6 +901,10 @@ rich = [
 six = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
     {file = "six-1.16.0.tar.gz", hash = "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926"},
+]
+smmap = [
+    {file = "smmap-5.0.0-py3-none-any.whl", hash = "sha256:2aba19d6a040e78d8b09de5c57e96207b09ed71d8e55ce0959eeee6c8e190d94"},
+    {file = "smmap-5.0.0.tar.gz", hash = "sha256:c840e62059cd3be204b0c9c9f74be2c09d5648eddd4580d9314c3ecde0b30936"},
 ]
 toml = [
     {file = "toml-0.10.2-py2.py3-none-any.whl", hash = "sha256:806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b"},
