@@ -1,4 +1,8 @@
 site_name: Koila
+nav:
+  - "README.md"
+  - "LICENCE.md"
+  - "CODE_OF_CONDUCT.md"
 theme:
   name: material
   font:
@@ -6,7 +10,7 @@ theme:
     code: Fira Code
   icon:
     repo: material/github
-edit_uri: README.md
+edit_uri: ""
 repo_name: rentruewang/koila
 repo_url: https://github.com/rentruewang/koila
 plugins:

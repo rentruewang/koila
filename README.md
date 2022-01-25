@@ -158,6 +158,6 @@ Likewise, passing an empty tensor to build a computational graph (AKA **static g
 
 The code works on many cases, but it's still a work in progress. This is not (yet) a fully `PyTorch` compatible library due to limited time. Avoid using it in production environments!
 
-## 🥰 Contributing
+## 🥰 Contributing and Using
 
-We take openness and inclusiveness very seriously. We have adopted the following [Code of Conduct](./CODE_OF_CONDUCT.md).
+Openness and inclusiveness are taken very seriously. The code is available under [MIT License](./LICENCE). Please follow the following [Code of Conduct](./CODE_OF_CONDUCT.md).
