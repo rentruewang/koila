@@ -3,9 +3,10 @@
 > Koila solves `CUDA error: out of memory error` painlessly.
 > Fix it with just one line of code, and forget it.
 
-![Type Checking](https://github.com/rentruewang/koila/actions/workflows/typecheck.yaml/badge.svg)
-![Formatting](https://github.com/rentruewang/koila/actions/workflows/format.yaml/badge.svg)
-![Unit testing](https://github.com/rentruewang/koila/actions/workflows/unittest.yaml/badge.svg)
+[![Unit Testing](https://github.com/rentruewang/koila/actions/workflows/unittest.yaml/badge.svg)](https://github.com/rentruewang/koila/actions/workflows/unittest.yaml)
+[![Type Checking](https://github.com/rentruewang/koila/actions/workflows/typecheck.yaml/badge.svg)](https://github.com/rentruewang/koila/actions/workflows/typecheck.yaml)
+[![GitHub Pages](https://github.com/rentruewang/koila/actions/workflows/gh-pages.yaml/badge.svg)](https://github.com/rentruewang/koila/actions/workflows/gh-pages.yaml)
+[![Formatting](https://github.com/rentruewang/koila/actions/workflows/format.yaml/badge.svg)](https://github.com/rentruewang/koila/actions/workflows/format.yaml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=Never%20worry%20about%20out%20of%20memory%20errors%20again&url=https://github.com/rentruewang/koila&hashtags=pytorch,outofmemory)
 
