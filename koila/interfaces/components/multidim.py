@@ -7,6 +7,10 @@ from typing import Protocol, Tuple, overload
 
 
 class MultiDimensional(Protocol):
+    """
+    A `MultiDimensional` tensor is an array that's multi-dimensional, as opposed to 1-dimensional like `list`s.
+    """
+
     def __len__(self) -> int:
         return self.size(0)
 
