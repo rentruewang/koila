@@ -6,6 +6,7 @@ from typing import Any, NoReturn, Protocol, Union, runtime_checkable
 Numeric = Union[int, float, bool]
 "Numeric is a union for `int`, `float`, and `bool`, which are all primitive values in C's sense."
 
+
 @runtime_checkable
 class Arithmetic(Protocol):
     """
