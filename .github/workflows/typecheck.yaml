@@ -38,4 +38,4 @@ jobs:
       - name: ⬇️ all packages
         run: npm install
       - name: 🏃 pyright
-        run: ./node_modules/.bin/pyright $(fd -e py)
+        run: npx pyright $(fd -e py)

@@ -14,7 +14,7 @@
 
 ## 🚨 Warning
 
-**This project is currently being refactored. It will definitely not work, may not even `import`. If you wish to use some features that this project provides, download [release v0.1.1 here](https://github.com/rentruewang/koila/releases/tag/v0.1.1).**
+**As it stands, 0.1.* is a proof of concept (that doesn't have full support over all operations and is not suited for production). To use it, download [release v0.1.1 here](https://github.com/rentruewang/koila/releases/tag/v0.1.1).**
 
 ## 🚀 Features
 
