@@ -5,7 +5,7 @@ from typing import Protocol, TypeVar, runtime_checkable
 
 from torch import Tensor
 
-from .tensorlike import BatchedTensorLike, TensorLike
+from .tensorlike import BatchedTensorLike
 
 T = TypeVar("T", covariant=True)
 
@@ -39,8 +39,7 @@ class RunnableTensor(Runnable[Tensor], BatchedTensorLike, Protocol):
     @abstractmethod
     def run(self, partial: range | None = None) -> Tensor:
         """
-        A solid `Tensor` is expected after running a `RunnableTensor`. 
+        A solid `Tensor` is expected after running a `RunnableTensor`.
         """
 
         ...
-        
