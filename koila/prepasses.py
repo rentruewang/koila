@@ -90,9 +90,11 @@ class PrePass:
     def device(self) -> str | Device:
         return self.metadata.device
 
+    @property
     def batch(self) -> BatchInfo | None:
         return self.metadata.batch
 
+    @property
     def reducer(self) -> CallBack | None:
         return self.metadata.reducer
 
@@ -104,13 +106,8 @@ class PrePassFunc(Protocol):
         ...
 
 
-def mute_unused_args(*args: Any, **kwargs: Any) -> None:
-    del args
-    del kwargs
-
-
 def trivial(input: Tensor, *args: Any, **kwargs: Any) -> Reducer:
-    mute_unused_args(input, *args, **kwargs)
+    del (input, args, kwargs)
     return lambda result: result
 
 
@@ -133,7 +130,7 @@ def same(
 
 
 def identity(input: BatchedTensorLike, /, *args: Any, **kwargs: Any) -> PrePass:
-    mute_unused_args(*args, **kwargs)
+    del (args, kwargs)
 
     return PrePass(input.size(), same([input], input.batch, trivial))
 
@@ -141,7 +138,7 @@ def identity(input: BatchedTensorLike, /, *args: Any, **kwargs: Any) -> PrePass:
 def symmetric(
     input: BatchedTensorLike, other: BatchedTensorLike, /, *args: Any, **kwargs: Any
 ) -> PrePass:
-    mute_unused_args(*args, **kwargs)
+    del (args, kwargs)
 
     shape = shapes.coerce(input.size(), other.size(), broadcast=True, scalars=True)
 
@@ -163,7 +160,7 @@ def reduce_dims(
     *args: Any,
     **kwargs: Any,
 ) -> PrePass:
-    mute_unused_args(*args, **kwargs)
+    del (args, kwargs)
 
     (shape, dimensions) = shapes.reduce_dims(input.size(), dim, keepdim)
 
@@ -191,7 +188,7 @@ def mean(
     *args: Any,
     **kwargs: Any,
 ) -> PrePass:
-    mute_unused_args(*args, **kwargs)
+    del (args, kwargs)
 
     (shape, dimensions) = shapes.reduce_dims(input.size(), dim, keepdim)
 
@@ -212,7 +209,7 @@ def mean(
 
 
 def permute(input: BatchedTensorLike, /, *dims: int, **kwargs: Any) -> PrePass:
-    mute_unused_args(**kwargs)
+    del kwargs
 
     mapping = dict(enumerate(dims))
 
@@ -224,8 +221,8 @@ def permute(input: BatchedTensorLike, /, *dims: int, **kwargs: Any) -> PrePass:
     return PrePass(shapes.permute(input.size(), *dims), same([input], batch, trivial))
 
 
-def reshape(input: BatchedTensorLike, /, *shape: int, **kwargs: Any) -> PrePass:
-    mute_unused_args(**kwargs)
+def reshape(input: TensorLike, /, *shape: int, **kwargs: Any) -> PrePass:
+    del kwargs
 
     shape = shapes.reshape(input.size(), *shape)
 
@@ -239,7 +236,7 @@ def reshape(input: BatchedTensorLike, /, *shape: int, **kwargs: Any) -> PrePass:
 
 
 def view(input: BatchedTensorLike, /, *shape: int, **kwargs: Any) -> PrePass:
-    mute_unused_args(**kwargs)
+    del kwargs
 
     shape = shapes.view(input.size(), *shape)
 
@@ -260,9 +257,9 @@ def flatten(
     *args: Any,
     **kwargs: Any,
 ) -> PrePass:
-    logger.debug("%s, %s, %s", input.size(), start_dim, end_dim)
+    del (args, kwargs)
 
-    mute_unused_args(*args, **kwargs)
+    logger.debug("%s, %s, %s", input.size(), start_dim, end_dim)
 
     start_dim %= input.dim()
     end_dim %= input.dim()
@@ -286,7 +283,7 @@ def flatten(
 def tranpose(
     input: BatchedTensorLike, dim0: int, dim1: int, /, *args: Any, **kwargs: Any
 ) -> PrePass:
-    mute_unused_args(*args, **kwargs)
+    del (args, kwargs)
 
     batch = None
     if (b := input.batch) is not None:
@@ -306,7 +303,7 @@ def select(
     *args: Any,
     **kwargs: Any,
 ) -> PrePass:
-    mute_unused_args(*args, **kwargs)
+    del (args, kwargs)
 
     shape = input.size()
 
@@ -341,7 +338,7 @@ def select(
 def embedding(
     input: BatchedTensorLike, weight: BatchedTensorLike, /, *args: Any, **kwargs: Any
 ) -> PrePass:
-    mute_unused_args(*args, **kwargs)
+    del (args, kwargs)
 
     shape = input.size()
     return PrePass(
@@ -353,14 +350,14 @@ def embedding(
 def matmul(
     input: BatchedTensorLike, other: BatchedTensorLike, /, *args: Any, **kwargs: Any
 ) -> PrePass:
-    mute_unused_args(*args, **kwargs)
+    del (args, kwargs)
 
     if (batch := input.batch) != other.batch:
         raise UnsupportedError
 
     return PrePass(
         shapes.matmul(input.size(), other.size()),
-        same([input, other], input.batch, trivial),
+        same([input, other], batch, trivial),
     )
 
 
@@ -372,7 +369,7 @@ def loss(
     *args: Any,
     **kwargs: Any,
 ) -> PrePass:
-    mute_unused_args(*args, **kwargs)
+    del (args, kwargs)
 
     # Currently only supports tensors of the same batch size.
     if (batch := input.batch) != target.batch:
@@ -396,7 +393,7 @@ def linear(
     *args: Any,
     **kwargs: Any,
 ) -> PrePass:
-    mute_unused_args(*args, **kwargs)
+    del (args, kwargs)
 
     result = shapes.matmul(input.size(), shapes.tranpose(weight.size(), -1, -2))
 
@@ -412,7 +409,7 @@ def linear(
 def cat(
     tensors: Sequence[BatchedTensorLike], dim: int = 0, *args: Any, **kwargs: Any
 ) -> PrePass:
-    mute_unused_args(*args, **kwargs)
+    del (args, kwargs)
 
     if len(tensors) == 0:
         raise ValueError("Expected a sequence of tensors. Got empty sequence.")
@@ -442,7 +439,7 @@ def cat(
 
 
 def pad(input: BatchedTensorLike, pad: List[int], *args: Any, **kwargs: Any) -> PrePass:
-    mute_unused_args(*args, **kwargs)
+    del (args, kwargs)
 
     shapes = input.size()
 
@@ -487,7 +484,7 @@ def conv(
     *args: Any,
     **kwargs: Any,
 ) -> PrePass:
-    mute_unused_args(groups, *args, **kwargs)
+    del (groups, args, kwargs)
 
     (batch, chan, *dims) = input.size()
     (out_chan, in_chan, *kernels) = weight.size()
@@ -529,7 +526,7 @@ def conv_transpose(
     *args: Any,
     **kwargs: Any,
 ) -> PrePass:
-    mute_unused_args(groups, *args, **kwargs)
+    del (groups, args, kwargs)
 
     (batch, chan, *dims) = input.size()
     (in_chan, out_chan, *kernels) = weight.size()
@@ -597,7 +594,7 @@ def maxpool(
     *args: Any,
     **kwargs: Any,
 ) -> PrePass:
-    mute_unused_args(*args, **kwargs)
+    del (args, kwargs)
 
     if return_indices:
         raise UnsupportedError
@@ -621,7 +618,7 @@ def avgpool(
     *args: Any,
     **kwargs: Any,
 ) -> PrePass:
-    mute_unused_args(*args, **kwargs)
+    del (args, kwargs)
 
     return pool(
         input,

@@ -15,6 +15,7 @@ from torch import device as Device
 from torch import dtype as DType
 
 from koila.interfaces import BatchInfo, Runnable, RunnableTensor
+from koila.interfaces import TensorLike, BatchedTensorLike
 
 from ..prepasses import PrePass, PrePassFunc
 
@@ -66,6 +67,39 @@ class DelayedTensor(RunnableTensor):
         self.args = tuple(delayed(arg) for arg in args)
         self.kwargs = dict((k, delayed(v)) for (k, v) in kwargs.items())
 
+    def __bool__(self) -> bool:
+        raise NotImplementedError
+
+    def __int__(self) -> int:
+        raise NotImplementedError
+
+    def __str__(self) -> str:
+        return f"{self.func}(*{self.args}, **{self.kwargs}) -> {self.prepass}"
+
+    def __invert__(self) -> Tensor:
+        raise NotImplementedError
+
+    def __getitem__(self, index: Tensor) -> Tensor:
+        del index
+
+        raise NotImplementedError
+
+    def __setitem__(self, index: Tensor, value: Tensor) -> None:
+        del index, value
+
+        raise NotImplementedError
+
+    @property
+    def dtype(self) -> DType:
+        return self.prepass.dtype
+
+    @property
+    def device(self) -> Device:
+        return self.prepass.device
+
+    def item(self) -> Tensor:
+        return self.run()
+
     def run(self, partial: range | None = None) -> Tensor:
         del partial
 
@@ -77,20 +111,20 @@ class DelayedTensor(RunnableTensor):
         assert self.prepass.shape == result.shape
         return result
 
+    @overload
+    def size(self) -> Tuple[int, ...]:
+        ...
+
+    @overload
+    def size(self, dim: int) -> int:
+        ...
+
     def size(self, dim: int | None = None) -> int | Tuple[int, ...]:
         shape = self.prepass.shape
         if dim is not None:
             return shape[dim]
         else:
             return shape
-
-    @property
-    def dtype(self) -> DType:
-        return self.prepass.dtype
-
-    @property
-    def device(self) -> str | Device:
-        return self.prepass.device
 
 
 class ImmediateTensor(Tensor, RunnableTensor):

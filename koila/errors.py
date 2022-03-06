@@ -6,6 +6,5 @@ class UnsupportedError(RuntimeError):
 
     @classmethod
     def raise_error(cls, *args, **kwargs) -> NoReturn:
-        del args
-        del kwargs
+        del (args, kwargs)
         raise cls

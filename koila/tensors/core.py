@@ -388,7 +388,7 @@ def lazy_forward(
 ) -> TensorLike:
     if torch.is_grad_enabled():
         out = LazyTensor(LazyFunction(func, shape_func)(*args, **kwargs))
-        logger.debug("lazy forward %s, %s", out.size(), out.batch())
+        logger.debug("lazy forward %s, %s", out.size(), out.batch)
         return out
     else:
         run_args = [a.run() for a in args]
