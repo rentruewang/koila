@@ -257,11 +257,11 @@ def test_truediv_function() -> None:
 
 def test_pow_op() -> None:
     utils.call(
-        lambda a, b, c: utils.assert_isclose((a**b).item(), c),
+        lambda a, b, c: utils.assert_isclose((a ** b).item(), c),
         [
-            [LazyTensor(torch.tensor(1.5)), LazyTensor(torch.tensor(2)), 1.5**2],
-            [torch.tensor(1.5), LazyTensor(torch.tensor(2)), 1.5**2],
-            [LazyTensor(torch.tensor(1.5)), torch.tensor(2), 1.5**2],
+            [LazyTensor(torch.tensor(1.5)), LazyTensor(torch.tensor(2)), 1.5 ** 2],
+            [torch.tensor(1.5), LazyTensor(torch.tensor(2)), 1.5 ** 2],
+            [LazyTensor(torch.tensor(1.5)), torch.tensor(2), 1.5 ** 2],
         ],
     )
 
@@ -270,9 +270,9 @@ def test_pow_method() -> None:
     utils.call(
         lambda a, b, c: utils.assert_isclose(a.pow(b).item(), c),
         [
-            [LazyTensor(torch.tensor(4)), LazyTensor(torch.tensor(3)), 4**3],
-            [torch.tensor(4), LazyTensor(torch.tensor(3)), 4**3],
-            [LazyTensor(torch.tensor(4)), torch.tensor(3), 4**3],
+            [LazyTensor(torch.tensor(4)), LazyTensor(torch.tensor(3)), 4 ** 3],
+            [torch.tensor(4), LazyTensor(torch.tensor(3)), 4 ** 3],
+            [LazyTensor(torch.tensor(4)), torch.tensor(3), 4 ** 3],
         ],
     )
 
@@ -281,9 +281,9 @@ def test_pow_function() -> None:
     utils.call(
         lambda a, b, c: utils.assert_isclose(torch.pow(a, b).item(), c),
         [
-            [LazyTensor(torch.tensor(9.0)), LazyTensor(torch.tensor(-2)), 9.0**-2],
-            [torch.tensor(9.0), LazyTensor(torch.tensor(-2)), 9.0**-2],
-            [LazyTensor(torch.tensor(9.0)), torch.tensor(-2), 9.0**-2],
+            [LazyTensor(torch.tensor(9.0)), LazyTensor(torch.tensor(-2)), 9.0 ** -2],
+            [torch.tensor(9.0), LazyTensor(torch.tensor(-2)), 9.0 ** -2],
+            [LazyTensor(torch.tensor(9.0)), torch.tensor(-2), 9.0 ** -2],
         ],
     )
 
@@ -410,7 +410,7 @@ def test_exp_method() -> None:
     utils.call(
         lambda a, c: utils.assert_isclose(a.exp().item(), c),
         [
-            [LazyTensor(torch.tensor(1.23)), math.e**1.23],
+            [LazyTensor(torch.tensor(1.23)), math.e ** 1.23],
             [LazyTensor(torch.tensor(0)), 1],
             [LazyTensor(torch.tensor(1)), math.e],
         ],
@@ -421,7 +421,7 @@ def test_exp_function() -> None:
     utils.call(
         lambda a, c: utils.assert_isclose(torch.exp(a).item(), c),
         [
-            [LazyTensor(torch.tensor(0.41)), math.e**0.41],
+            [LazyTensor(torch.tensor(0.41)), math.e ** 0.41],
             [LazyTensor(torch.tensor(0)), 1],
             [LazyTensor(torch.tensor(1)), math.e],
         ],
@@ -432,7 +432,7 @@ def test_exp2_method() -> None:
     utils.call(
         lambda a, c: utils.assert_isclose(a.exp2().item(), c),
         [
-            [LazyTensor(torch.tensor(10)), 2**10],
+            [LazyTensor(torch.tensor(10)), 2 ** 10],
             [LazyTensor(torch.tensor(0)), 1],
             [LazyTensor(torch.tensor(1)), 2],
         ],
@@ -443,7 +443,7 @@ def test_exp2_function() -> None:
     utils.call(
         lambda a, c: utils.assert_isclose(torch.exp2(a).item(), c),
         [
-            [LazyTensor(torch.tensor(-5)), 2**-5],
+            [LazyTensor(torch.tensor(-5)), 2 ** -5],
             [LazyTensor(torch.tensor(0)), 1],
             [LazyTensor(torch.tensor(1)), 2],
         ],
