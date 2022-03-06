@@ -47,4 +47,6 @@ class TensorLike(Arithmetic, Indexible, MemoryInfo, Protocol):
 
 
 class BatchedTensorLike(TensorLike, WithBatch, Protocol):
-    pass
+    """
+    `BatchedTensorLike` is `TensorLike` that adheres to the `WithBatch` protocol.
+    """

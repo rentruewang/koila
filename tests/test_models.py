@@ -36,7 +36,7 @@ def test_torch_tutorial() -> None:
     assert not isinstance(output, LazyTensor)
 
     lazy_input = LazyTensor(input, batch=0)
-    assert lazy_input.batch() == BatchInfo(0, 9)
+    assert lazy_input.batch == BatchInfo(0, 9)
     nn = NeuralNetwork()
 
     lazy_output = nn(lazy_input)
@@ -52,4 +52,4 @@ def test_torch_tutorial() -> None:
     assert not isinstance(tbout, LazyTensor)
     utils.assert_isclose(tbout, nn(input[3:6]))
 
-    assert lazy_output.batch() == BatchInfo(0, 9)
+    assert lazy_output.batch == BatchInfo(0, 9)
