@@ -66,38 +66,20 @@ class DelayedTensor(RunnableTensor):
         self.args = tuple(delayed(arg) for arg in args)
         self.kwargs = dict((k, delayed(v)) for (k, v) in kwargs.items())
 
-    def __bool__(self) -> bool:
-        raise NotImplementedError
-
-    def __int__(self) -> int:
-        raise NotImplementedError
-
     def __str__(self) -> str:
         return f"{self.func}(*{self.args}, **{self.kwargs}) -> {self.prepass}"
 
-    def __invert__(self) -> Tensor:
-        raise NotImplementedError
-
-    def __getitem__(self, index: Tensor) -> Tensor:
-        del index
-
-        raise NotImplementedError
-
-    def __setitem__(self, index: Tensor, value: Tensor) -> None:
-        del index, value
-
-        raise NotImplementedError
+    @property
+    def batch(self) -> BatchInfo | None:
+        return self.prepass.batch
 
     @property
     def dtype(self) -> DType:
         return self.prepass.dtype
 
     @property
-    def device(self) -> Device:
+    def device(self) -> str | Device:
         return self.prepass.device
-
-    def item(self) -> Tensor:
-        return self.run()
 
     def run(self, partial: range | None = None) -> Tensor:
         del partial
