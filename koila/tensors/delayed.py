@@ -4,7 +4,6 @@ import dataclasses as dcls
 import functools
 import logging
 from dataclasses import dataclass
-from numbers import Number
 from typing import Any, Callable, Dict, Generic, Tuple, Type, TypeVar, final, overload
 
 import torch
@@ -14,8 +13,8 @@ from torch import Tensor
 from torch import device as Device
 from torch import dtype as DType
 
-from koila.interfaces import BatchInfo, Runnable, RunnableTensor
 from koila import constants
+from koila.interfaces import BatchInfo, Runnable, RunnableTensor
 
 from ..prepasses import PrePass, PrePassFunc
 
