@@ -5,7 +5,7 @@ from typing import Protocol, TypeVar, runtime_checkable
 
 from torch import Tensor
 
-from koila.interfaces import WithBatch
+from koila.interfaces import DataType, WithBatch
 
 T = TypeVar("T", covariant=True)
 
@@ -31,7 +31,7 @@ class Runnable(Protocol[T]):
 
 
 @runtime_checkable
-class RunnableTensor(Runnable[Tensor], WithBatch, Protocol):
+class RunnableTensor(Runnable[Tensor], WithBatch, DataType, Protocol):
     """
     A `RunnableTensor` is a `Tensor` that's `Runnable`.
     """

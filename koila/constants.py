@@ -32,3 +32,5 @@ MEMORY_BYTES: Dict[dtype, int] = {
     torch.double: 8,
     torch.float64: 8,
 }
+
+ANY_DEVICE = "any"

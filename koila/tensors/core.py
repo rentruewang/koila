@@ -30,6 +30,8 @@ from torch import dtype as DType
 from koila import gpus, prepasses
 from koila.errors import UnsupportedError
 from koila.interfaces import BatchInfo, RunnableTensor, TensorLike
+from koila.interfaces.tensorlike import BatchedTensorLike
+from koila.tensors import delayed
 
 from ..prepasses import PrePass, PrePassFunc
 from .delayed import DelayedTensor, LazyFunction
@@ -44,44 +46,23 @@ logger.addHandler(RichHandler())
 @final
 @dataclass(init=False, repr=False)
 class LazyTensor(RunnableTensor):
-    _data: TensorLike
-    batch: int | None = None
+    data: RunnableTensor
 
-    def __init__(self, data: TensorLike, batch: int | None = None) -> None:
-        if isinstance(data, LazyTensor):
-            self._data = data._data
-            self._batch = data._batch
-        elif isinstance(data, DelayedTensor):
-            self._data = data
-            self._batch = data.batch
-        else:
-            self._data = data
-            if batch is None:
-                self._batch = None
-            else:
-                self._batch = BatchInfo(batch, data.size(batch))
+    def __init__(self, data: Tensor | RunnableTensor, batch: int | None = None) -> None:
+        self.data = delayed.delayed(data)
 
-        logger.debug("Creating LazyTensor. %s, %s", type(self._data), self._batch)
+        logger.debug("Creating LazyTensor. %s, %s", type(self.data), self._batch)
 
     # Implementations
 
-    def run(self, partial: Tuple[int, int] | None = None) -> TensorLike:
+    @property
+    def batch(self) -> BatchInfo | None:
+        return self.data.batch
+
+    def run(self, partial: Tuple[int, int] | None = None) -> Tensor:
         del partial
 
-        return self._data
-
-    def visit(self, nodes: Dict[int, TensorLike]) -> None:
-        data = self._data
-
-        if hash(self) in nodes.keys():
-            return
-
-        if isinstance(data, DelayedTensor):
-            data.visit(nodes)
-        else:
-            nodes[hash(self)] = self
-
-        assert hash(self) in nodes.keys()
+        return self.data.run(partial=partial)
 
     @overload
     def size(self) -> Tuple[int, ...]:
@@ -92,7 +73,7 @@ class LazyTensor(RunnableTensor):
         ...
 
     def size(self, dim: int | None = None) -> int | Tuple[int, ...]:
-        data = self._data
+        data = self.data
 
         if dim is None:
             return data.size()
@@ -101,14 +82,24 @@ class LazyTensor(RunnableTensor):
 
     @property
     def dtype(self) -> DType:
-        return self._data.dtype
+        return self.data.dtype
 
     @property
     def device(self) -> str | Device:
-        return self._data.device
+        return self.data.device
 
-    def batch(self) -> BatchInfo | None:
-        return self._batch
+    def visit(self, nodes: Dict[int, TensorLike]) -> None:
+        data = self.data
+
+        if hash(self) in nodes.keys():
+            return
+
+        if isinstance(data, DelayedTensor):
+            data.visit(nodes)
+        else:
+            nodes[hash(self)] = self
+
+        assert hash(self) in nodes.keys()
 
     # Magic methods
 
@@ -190,7 +181,7 @@ class LazyTensor(RunnableTensor):
 
     def __hash__(self) -> int:
         # LazyTensors are not unique. They are defined by their data.
-        return id(self._data)
+        return id(self.data)
 
     def __matmul__(self, other: TensorLike) -> TensorLike:
         return lazy_forward(Tensor.__matmul__, prepasses.matmul, self, other)
@@ -222,10 +213,10 @@ class LazyTensor(RunnableTensor):
     def __getitem__(
         self, index: int | slice | Tensor | List[Any] | Tuple[Any] | None
     ) -> Tensor:
-        if isinstance(self._data, RunnableTensor):
-            data = self._data.run()
+        if isinstance(self.data, RunnableTensor):
+            data = self.data.run()
         else:
-            data = self._data
+            data = self.data
         return data[index]
 
     def __setitem__(
@@ -233,10 +224,10 @@ class LazyTensor(RunnableTensor):
         index: int | slice | Tensor | List[Any] | Tuple[Any] | None,
         value: Tensor,
     ) -> None:
-        if isinstance(self._data, RunnableTensor):
+        if isinstance(self.data, RunnableTensor):
             raise UnsupportedError
 
-        self._data[index] = value
+        self.data[index] = value
 
     def __getattr__(self, name: str) -> Callable[..., Any]:
         logger.debug(
@@ -477,7 +468,7 @@ def _max(input: TensorLike, *args: Any, **kwargs: Any) -> TensorLike | _ValIdx:
 def _permute_function_shape(
     input: TensorLike, dims: int | Tuple[int, ...], *args: Any, **kwargs: Any
 ) -> PrePass:
-    prepasses.mute_unused_args(*args, **kwargs)
+    del (args, kwargs)
 
     if isinstance(dims, int):
         dims = (dims,)
@@ -486,15 +477,15 @@ def _permute_function_shape(
 
 
 def _reshape_function_shape(
-    input: TensorLike, dims: Tuple[int, ...], *args: Any, **kwargs: Any
+    input: BatchedTensorLike, dims: Tuple[int, ...], *args: Any, **kwargs: Any
 ) -> PrePass:
-    prepasses.mute_unused_args(*args, **kwargs)
+    del (args, kwargs)
 
     return prepasses.reshape(input, *dims)
 
 
-def _t_shape(input: TensorLike, *args: Any, **kwargs: Any) -> PrePass:
-    prepasses.mute_unused_args(*args, **kwargs)
+def _t_shape(input: BatchedTensorLike, *args: Any, **kwargs: Any) -> PrePass:
+    del (args, kwargs)
 
     return prepasses.tranpose(input, 0, 1)
 
