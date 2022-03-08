@@ -15,6 +15,7 @@ from torch import device as Device
 from torch import dtype as DType
 
 from koila.interfaces import BatchInfo, Runnable, RunnableTensor
+from koila import constants
 
 from ..prepasses import PrePass, PrePassFunc
 
@@ -58,8 +59,8 @@ class DelayedTensor(RunnableTensor):
         self,
         func: Callable[..., Tensor],
         prepass: PrePass,
-        *args: Runnable[Tensor] | Tensor | Number,
-        **kwargs: Runnable[Tensor] | Tensor | Number,
+        *args: RunnableTensor | Tensor,
+        **kwargs: RunnableTensor | Tensor,
     ) -> None:
         self.func = func
         self.prepass = prepass
@@ -102,18 +103,21 @@ class DelayedTensor(RunnableTensor):
 
     def size(self, dim: int | None = None) -> int | Tuple[int, ...]:
         shape = self.prepass.shape
+
         if dim is not None:
             return shape[dim]
         else:
             return shape
 
 
-class ImmediateTensor(Tensor, RunnableTensor):
+class ReadyTensor(Tensor, RunnableTensor):
     """
     Immediate tensor is a thin wrapper for the `Tensor` class. It's basically a tensor.
     """
 
     batch: BatchInfo | None = None
+
+    device: str | Device = constants.ANY_DEVICE
 
     def run(self, partial: range | None = None) -> Tensor:
         del partial
@@ -121,18 +125,8 @@ class ImmediateTensor(Tensor, RunnableTensor):
         return self
 
 
-@dataclass
-class ImmediateNumber(Runnable[Number]):
-    data: Number
-
-    def run(self, partial: range | None = None) -> Number:
-        del partial
-
-        return self.data
-
-
 @overload
-def delayed(input: Runnable[T]) -> Runnable[T]:
+def delayed(input: RunnableTensor) -> RunnableTensor:
     ...
 
 
@@ -141,22 +135,14 @@ def delayed(input: Tensor | ndarray) -> RunnableTensor:
     ...
 
 
-@overload
-def delayed(input: Number) -> Runnable[Number]:
-    ...
-
-
-def delayed(input: Runnable[Any] | Tensor | ndarray | Number) -> Runnable[Any]:
+def delayed(input: RunnableTensor | Tensor | ndarray) -> RunnableTensor:
     if isinstance(input, Runnable):
         return input
 
     if isinstance(input, ndarray):
         tensor = torch.from_numpy(input)
 
-    if isinstance(input, Number):
-        return ImmediateNumber(input)
-
     if isinstance(input, Tensor):
-        return tensor.as_subclass(ImmediateTensor)  # type: ignore
+        return tensor.as_subclass(ReadyTensor)  # type: ignore
 
     raise ValueError
