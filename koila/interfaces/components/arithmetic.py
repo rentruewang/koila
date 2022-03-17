@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
+from functools import wraps
 from typing import Any, NoReturn, Protocol, Union, runtime_checkable
 
 Numeric = Union[int, float, bool]
@@ -60,7 +61,7 @@ class Arithmetic(Protocol):
 
         return Arithmetic.add(other, self)
 
-    def add(self: Arithmetic, other: Arithmetic) -> Arithmetic:
+    def add(self, other: Arithmetic) -> Arithmetic:
         "The `+` operator."
 
         return self + other
@@ -75,12 +76,14 @@ class Arithmetic(Protocol):
 
         return Arithmetic.sub(other, self)
 
-    def sub(self: Arithmetic, other: Arithmetic) -> Arithmetic:
+    def sub(self, other: Arithmetic) -> Arithmetic:
         "The `-` operator."
 
         return self - other
 
-    subtract = sub
+    @wraps(sub)
+    def subtract(self, other: Arithmetic) -> Arithmetic:
+        return self.sub(other)
 
     def __mul__(self, other: Arithmetic) -> Arithmetic:
         "The `*` operator."
@@ -92,12 +95,14 @@ class Arithmetic(Protocol):
 
         return Arithmetic.mul(other, self)
 
-    def mul(self: Arithmetic, other: Arithmetic) -> Arithmetic:
+    def mul(self, other: Arithmetic) -> Arithmetic:
         "The `*` operator."
 
         return self * other
 
-    multiply = mul
+    @wraps(mul)
+    def multiply(self, other: Arithmetic) -> Arithmetic:
+        return self.mul(other)
 
     def __truediv__(self, other: Arithmetic) -> Arithmetic:
         "The `/` operator."
@@ -127,12 +132,18 @@ class Arithmetic(Protocol):
 
         raise NotImplementedError
 
-    def div(self: Arithmetic, other: Arithmetic) -> Arithmetic:
+    def div(self, other: Arithmetic) -> Arithmetic:
         "The `/` operator."
 
         return self / other
 
-    divide = truediv = div
+    @wraps(div)
+    def divide(self, other: Arithmetic) -> Arithmetic:
+        return self.div(other)
+
+    @wraps(div)
+    def truediv(self, other: Arithmetic) -> Arithmetic:
+        return self.div(other)
 
     def __pow__(self, other: Arithmetic) -> Arithmetic:
         "The `**` operator."
@@ -144,7 +155,7 @@ class Arithmetic(Protocol):
 
         return Arithmetic.pow(other, self)
 
-    def pow(self: Arithmetic, other: Arithmetic) -> Arithmetic:
+    def pow(self, other: Arithmetic) -> Arithmetic:
         "The `**` operator."
 
         return self ** other
@@ -164,7 +175,13 @@ class Arithmetic(Protocol):
 
         return self % other
 
-    fmod = remainder = mod
+    @wraps(mod)
+    def fmod(self, other: Arithmetic) -> Arithmetic:
+        return self.mod(other)
+
+    @wraps(mod)
+    def remainder(self, other: Arithmetic) -> Arithmetic:
+        return self.mod(other)
 
     def __divmod__(self, other: Arithmetic) -> NoReturn:
         "The `divmod` operator is not and should not be implemented."

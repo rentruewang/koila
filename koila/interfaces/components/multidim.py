@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import functools
+from functools import wraps
 import operator
 from abc import abstractmethod
 from typing import Protocol, Tuple, overload
@@ -21,7 +22,9 @@ class MultiDimensional(Protocol):
     def ndim(self) -> int:
         return self.dim()
 
-    ndimension = ndim
+    @property
+    def ndimension(self) -> int:
+        return self.ndim
 
     @overload
     @abstractmethod
