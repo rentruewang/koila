@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import functools
-from functools import wraps
 import operator
 from abc import abstractmethod
 from typing import Protocol, Tuple, overload
