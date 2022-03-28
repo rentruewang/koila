@@ -1,8 +1,6 @@
 {
   "devDependencies": {
+    "prettier": "^2.6.1",
     "pyright": "^1.1.187"
-  },
-  "dependencies": {
-    "prettier": "^2.4.1"
   }
 }
