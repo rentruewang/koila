@@ -147,7 +147,7 @@ In comparison, because `Koila` is a super lightweight PyTorch wrapper, it works 
 
 Likewise, passing an empty tensor to build a computational graph (AKA **static graph**) isn't a new idea, but thoroughly explored in the popular [TensorFlow](https://www.tensorflow.org/) library, and a similar `PyTorch` wrapper library [KeOps](https://www.kernel-operations.io/). These libraries suffer from the fact that debugging programs in them is unnecessarily complicated. For example, `TensorFlow` was known for its ease of deployment but pain in development, to the point that users switched to `PyTorch`. During debugging, people like to see what's _inside_ a variable, to see if it contains an incorrect value. However, because static graphs only define relations, the values are not computed, thus making debugging difficult.
 
-`Koila` solves that by eagerly evaluating when being converted to strings, integers, or any Python values. This way, when debugging
+`Koila` solves that by eagerly evaluating when being converted to strings, integers, or any Python values. This enables seamless debugging while maintaining the ability to perform memory management that simply isn't available for a more straight forward `PyTorch` program, which dynamically (when needed) allocates and frees memory on the fly.
 
 ## 📝 Todos
 
