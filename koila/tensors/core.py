@@ -103,7 +103,7 @@ class LazyTensor(RunnableTensor):
     # Magic methods
 
     def __str__(self) -> str:
-        return f"LazyTensor {self.run()}"
+        return f"LazyTensor({self.run()})"
 
     def __bool__(self) -> bool:
         return bool(self.item())
