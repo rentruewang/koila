@@ -30,10 +30,10 @@ from torch import dtype as DType
 from koila import gpus, prepasses
 from koila.errors import UnsupportedError
 from koila.interfaces import BatchedTensorLike, BatchInfo, RunnableTensor, TensorLike
-from koila.tensors import delayed
+from koila.prepasses import PrePass, PrePassFunc
 
-from ..prepasses import PrePass, PrePassFunc
-from .delayed import DelayedTensor, LazyFunction
+from . import delayed
+from .delayed import DelayedTensor, LazyFunction, delayed
 
 T = TypeVar("T")
 V = TypeVar("V", contravariant=True)
