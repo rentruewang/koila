@@ -20,7 +20,6 @@ from koila.prepasses import PrePass, PrePassFunc
 logger = logging.getLogger(__name__)
 logger.addHandler(RichHandler())
 
-# FIXME: do this within one month.
 T = TypeVar("T", covariant=True)
 V = TypeVar("V", contravariant=True)
 
