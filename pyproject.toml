@@ -4,6 +4,7 @@ version = "0.2.0"
 description = "Prevent PyTorch's `CUDA error out of memory` in a few lines of code."
 authors = ["rentruewang <patrick1031wang@gmail.com>"]
 license = "MIT"
+repository = "https://github.com/rentruewang/koila"
 
 [tool.poetry.dependencies]
 numpy = "^1.22.0"
