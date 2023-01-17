@@ -158,7 +158,7 @@ class Arithmetic(Protocol):
     def pow(self, other: Arithmetic) -> Arithmetic:
         "The `**` operator."
 
-        return self ** other
+        return self**other
 
     def __mod__(self, other: Arithmetic) -> Arithmetic:
         "The `%` operator."
