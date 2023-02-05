@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import torch
+from typing import Protocol
+
 from torch import Tensor as TorchTensor
 
 from koila.interfaces import TensorLike
-from typing import Protocol
 
 
 class Template(TensorLike, Protocol):
