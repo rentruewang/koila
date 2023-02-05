@@ -26,6 +26,8 @@ jobs:
       - name: ⬇️ pytest coverage
         run: pip install pytest coverage
       - name: 🏃 pytest
-        run: poetry run coverage run -m pytest -v
-      - name: 📊 coverage
-        run: coverage report -m
+        run: poetry run pytest -v
+      # - name: 🏃 pytest
+      #   run: poetry run coverage run -m pytest -v
+      # - name: 📊 coverage
+      #   run: coverage report -m

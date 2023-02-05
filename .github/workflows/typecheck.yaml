@@ -38,4 +38,4 @@ jobs:
       - name: ⬇️ all packages
         run: npm install
       - name: 🏃 pyright
-        run: npx pyright $(fd -e py)
+        run: poetry run npx pyright $(fd -e py)
