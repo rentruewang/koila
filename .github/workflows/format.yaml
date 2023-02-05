@@ -11,7 +11,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: 🔔 Check out
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: 🏗️ Rust toolchain
         uses: actions-rs/toolchain@v1
@@ -21,11 +21,11 @@ jobs:
         run: cargo install fd-find ripgrep
 
       - name: 🏗️ python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
       - name: ⬇️ Python Poetry
-        uses: abatilo/actions-poetry@v2.0.0
+        uses: abatilo/actions-poetry@v2
         with:
           poetry-version: ${{ matrix.poetry-version }}
       - name: ⬇️ Python Dependencies

@@ -96,7 +96,7 @@ loss.backward()
 
 Ok. How to adapt the code to use `Koila`'s features?
 
-You add this line of code:
+You add this line of code (as of v0.1.1):
 
 ```python
 # Wrap the input tensor and label tensor.
@@ -106,8 +106,6 @@ You add this line of code:
 ```
 
 Done. You will not run out of memory again.
-
-See `examples/getting-started.py` for the full example.
 
 ## 🏋️ How does it work under the hood?
 
