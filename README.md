@@ -14,7 +14,7 @@
 
 ## 🚨 Warning
 
-**As it stands, 0.1.* is a proof of concept (that doesn't have full support over all operations and is not suited for production). To use it, download [release v0.1.1 here](https://github.com/rentruewang/koila/releases/tag/v0.1.1).**
+**As it stands, 0.1.\* is a proof of concept (that doesn't have full support over all operations and is not suited for production). To use it, download [release v0.1.1 here](https://github.com/rentruewang/koila/releases/tag/v0.1.1).**
 
 ## 🚀 Features
 
@@ -137,11 +137,13 @@ Why did I go through the trouble and build this project, despite a lot of simila
 
 ### 🔎 Batch size search
 
-Batch size search is not new. In fact, the mighty popular [PyTorch Lightning](https://pytorchlightning.ai/) has it.
+Batch size search is not new. In fact, the mighty popular [Lightning](https://lightning.ai/) has it.
 
-PyTorch Lightning's batch size search is deeply integrated in its own ecosystem. You have to use its `DataLoader`, subclass from their models, and train your models accordingly. While it works well with supervised learning tasks, it's really painful to use in a reinforcement learning task, where interacting with the environment is a must.
+Lightning's batch size search is deeply integrated in its own ecosystem. You have to use its `DataLoader`, subclass from their models, and train your models accordingly. While refactoring supervised learning tasks to use lightning is relatively easy, it's really painful to do the same with a reinforcement learning code base, where interacting with the environment is a must.
 
 In comparison, because `Koila` is a super lightweight PyTorch wrapper, it works when PyTorch works, thus providing maximum flexibility and minimal changes to existing code.
+
+However, note that in the case where you're writing new code, Lightning is recommended as it enforces a better pattern of code style, which would benefit modularity in the long run.
 
 ### ♏ Symbolic pre-passing
 
