@@ -13,13 +13,6 @@ jobs:
       - name: 🔔 Check out
         uses: actions/checkout@v3
 
-      - name: 🏗️ Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-      - name: ⬇️ fd-find, ripgrep
-        run: cargo install fd-find ripgrep
-
       - name: 🏗️ python
         uses: actions/setup-python@v4
         with:
@@ -31,7 +24,7 @@ jobs:
       - name: ⬇️ Python Dependencies
         run: poetry install
       - name: 🏃 autoflake
-        run: poetry run autoflake -ir $(fd -e py | rg -vsF __init__.py) --remove-all-unused-imports
+        run: poetry run autoflake -ir $(find -iname "*.py" ! -name __init__.py) --remove-all-unused-imports
       - name: 🏃 isort
         run: poetry run isort --profile=black .
       - name: 🏃 black

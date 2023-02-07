@@ -24,13 +24,6 @@ jobs:
       - name: ⬇️ Python Dependencies
         run: poetry install --no-dev
 
-      - name: 🏗️ Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-      - name: ⬇️ fd-find
-        run: cargo install fd-find
-
       - name: 🏗️ node
         uses: actions/setup-node@v2
         with:
@@ -38,4 +31,4 @@ jobs:
       - name: ⬇️ all packages
         run: npm install
       - name: 🏃 pyright
-        run: poetry run npx pyright $(fd -e py)
+        run: poetry run npx pyright $(find -iname "*.py" ! -name __init__.py)
