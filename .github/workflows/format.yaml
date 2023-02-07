@@ -2,13 +2,7 @@ name: Formatting
 on: [push]
 jobs:
   format-all:
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.10"]
-        poetry-version: [1.3.2]
-        os: [ubuntu-latest]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
       - name: 🔔 Check out
         uses: actions/checkout@v3
@@ -16,11 +10,11 @@ jobs:
       - name: 🏗️ python
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.10"
       - name: ⬇️ Python Poetry
         uses: abatilo/actions-poetry@v2
         with:
-          poetry-version: ${{ matrix.poetry-version }}
+          poetry-version: "1.3.2"
       - name: ⬇️ Python Dependencies
         run: poetry install
       - name: 🏃 autoflake
