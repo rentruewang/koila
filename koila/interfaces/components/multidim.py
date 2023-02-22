@@ -3,7 +3,7 @@ from __future__ import annotations
 import functools
 import operator
 from abc import abstractmethod
-from typing import Protocol, Tuple, overload
+from typing import Protocol, overload
 
 
 class MultiDimensional(Protocol):
@@ -27,7 +27,7 @@ class MultiDimensional(Protocol):
 
     @overload
     @abstractmethod
-    def size(self) -> Tuple[int, ...]:
+    def size(self) -> tuple[int, ...]:
         ...
 
     @overload
@@ -36,11 +36,11 @@ class MultiDimensional(Protocol):
         ...
 
     @abstractmethod
-    def size(self, dim: int | None = None) -> int | Tuple[int, ...]:
+    def size(self, dim: int | None = None) -> int | tuple[int, ...]:
         ...
 
     @property
-    def shape(self) -> Tuple[int, ...]:
+    def shape(self) -> tuple[int, ...]:
         return self.size()
 
     def numel(self) -> int:
