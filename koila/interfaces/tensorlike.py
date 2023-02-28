@@ -12,6 +12,8 @@ Numeric = TypeVar("Numeric", int, float, bool)
 class TensorLike(Arithmetic, Indexible, MemoryInfo, Protocol):
     """
     TensorLike is a protocol that mimics PyTorch's Tensor.
+
+    TODO: TensorLike should also be mocking a PyTorch Tensor.
     """
 
     data: TensorLike

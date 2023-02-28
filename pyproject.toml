@@ -8,7 +8,7 @@ repository = "https://github.com/rentruewang/koila"
 
 [tool.poetry.dependencies]
 numpy = "^1.22.0"
-python = "^3.8"
+python = "^3.10"
 pynvml = "^11.4.1"
 rich = "^10.16.1"
 torch = "^1.10.1"
