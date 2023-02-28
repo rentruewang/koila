@@ -5,7 +5,7 @@ from typing import Protocol, TypeVar, runtime_checkable
 
 from torch import Tensor
 
-from koila.interfaces import DataType, WithBatch, TensorLike
+from koila.interfaces import DataType, TensorLike
 
 T = TypeVar("T", covariant=True)
 
