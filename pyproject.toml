@@ -10,19 +10,19 @@ repository = "https://github.com/rentruewang/koila"
 numpy = "^1.22.0"
 python = "^3.10"
 pynvml = "^11.4.1"
-rich = "^10.16.1"
-torch = "^1.10.1"
+rich = "^13.4.1"
+torch = "^2.0.1"
 
 [tool.poetry.group.dev.dependencies]
-autoflake = "^2.0.0"
-black = "^22.12.0"
-coverage = "^7.0.5"
-isort = "^5.11.4"
-mkdocs = "^1.4.2"
+autoflake = "^2.1.1"
+black = "^23.3.0"
+coverage = "^7.2.7"
+isort = "^5.12.0"
+mkdocs = "^1.4.3"
 mkdocs-git-revision-date-plugin = "^0.3.1"
 mkdocs-git-revision-date-localized-plugin = "^0.11.1"
-mkdocs-material = "^8.1.3"
-pytest = "^7.2.1"
+mkdocs-material = "^9.1.15"
+pytest = "^7.3.1"
 
 [build-system]
 requires = ["poetry-core"]
