@@ -14,15 +14,10 @@ jobs:
       - name: ⬇️ Python Poetry
         uses: abatilo/actions-poetry@v2
         with:
-          poetry-version: "1.3.2"
-      - name: ⬇️ Python Dependencies
-        run: poetry install --only main
+          poetry-version: "1.5.1"
 
-      - name: 🏗️ node
-        uses: actions/setup-node@v2
-        with:
-          node-verion: 16
-      - name: ⬇️ all packages
-        run: npm install
+      - name: ⬇️ Python Dependencies
+        run: poetry install
+
       - name: 🏃 pyright
-        run: poetry run npx pyright
+        run: poetry run pytype -j auto .

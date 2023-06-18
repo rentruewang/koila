@@ -7,7 +7,7 @@ from torch import Tensor
 
 from koila.interfaces import DataType, TensorLike
 
-T = TypeVar("T", covariant=True)
+T = TypeVar("T")
 
 
 @runtime_checkable
