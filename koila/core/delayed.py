@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Mapping, Sequence, Any, Callable
+from typing import Mapping, Sequence, Callable
 
 from torch import Tensor
 

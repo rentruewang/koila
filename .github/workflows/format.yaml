@@ -20,18 +20,12 @@ jobs:
       - name: ⬇️ Python Dependencies
         run: poetry install
 
-      - name: 🏃 autoflake, isort, black
+      - name: 🏃 autoflake
         run: |
-          poetry shell
-          autoflake -ir $(find -iname "*.py" ! -path '*/.venv/*' ! -name __init__.py) --remove-all-unused-imports
-          isort --profile black .
-          black .
-
-      - name: ⬆️ Add and Commit
-        uses: EndBug/add-and-commit@v9
-        with:
-          author_name: "github-actions[bot]"
-          author_email: "github-actions[bot]@users.noreply.github.com"
-          message: "🤖 RenTrueWang thinks you forgot to format your code!"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          poetry run autoflake -cr $(find -iname "*.py" ! -path '*/.venv/*' ! -name __init__.py) --remove-all-unused-imports
+      
+      - name: 🏃 isort
+          poetry run isort --check .
+        
+      - name: 🏃 black
+          poetry run black --check .
