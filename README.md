@@ -14,7 +14,7 @@
 
 ## 🚨 Warning
 
-**As it stands, 0.1.\* is a proof of concept (that doesn't have full support over all operations and is not suited for production). To use it, download [release v0.1.1 here](https://github.com/rentruewang/koila/releases/tag/v0.1.1).**
+**Main branch is a complete re-structure of the project (that is currently mostly empty due to me not having enough time to complete it). To see working code, checkout the `v0.1.1` tag for a proof of concept (that doesn't have full support over all operations and is not suited for production). To use it, download [release v0.1.1 here](https://github.com/rentruewang/koila/releases/tag/v0.1.1).**
 
 ## 🚀 Features
 
