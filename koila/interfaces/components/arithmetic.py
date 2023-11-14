@@ -1,14 +1,15 @@
 from __future__ import annotations
 
-from abc import abstractmethod
-from functools import wraps
-from typing import Any, NoReturn, Protocol, Union, runtime_checkable
+import abc
+import functools
+import typing
+from typing import Any, NoReturn, Protocol, Union
 
 Numeric = Union[int, float, bool]
 "Numeric is a union for `int`, `float`, and `bool`, which are all primitive values in C's sense."
 
 
-@runtime_checkable
+@typing.runtime_checkable
 class Arithmetic(Protocol):
     """
     `Arithmetic` is a type that supports arithmetic operations.
@@ -25,7 +26,7 @@ class Arithmetic(Protocol):
 
         return self.logical_not()
 
-    @abstractmethod
+    @abc.abstractmethod
     def logical_not(self) -> Arithmetic:
         "The `not` operator."
 
@@ -81,7 +82,7 @@ class Arithmetic(Protocol):
 
         return self - other
 
-    @wraps(sub)
+    @functools.wraps(sub)
     def subtract(self, other: Arithmetic) -> Arithmetic:
         return self.sub(other)
 
@@ -100,7 +101,7 @@ class Arithmetic(Protocol):
 
         return self * other
 
-    @wraps(mul)
+    @functools.wraps(mul)
     def multiply(self, other: Arithmetic) -> Arithmetic:
         return self.mul(other)
 
@@ -137,11 +138,11 @@ class Arithmetic(Protocol):
 
         return self / other
 
-    @wraps(div)
+    @functools.wraps(div)
     def divide(self, other: Arithmetic) -> Arithmetic:
         return self.div(other)
 
-    @wraps(div)
+    @functools.wraps(div)
     def truediv(self, other: Arithmetic) -> Arithmetic:
         return self.div(other)
 
@@ -175,11 +176,11 @@ class Arithmetic(Protocol):
 
         return self % other
 
-    @wraps(mod)
+    @functools.wraps(mod)
     def fmod(self, other: Arithmetic) -> Arithmetic:
         return self.mod(other)
 
-    @wraps(mod)
+    @functools.wraps(mod)
     def remainder(self, other: Arithmetic) -> Arithmetic:
         return self.mod(other)
 
@@ -234,7 +235,7 @@ class Arithmetic(Protocol):
 
         return self.eq(other)
 
-    @abstractmethod
+    @abc.abstractmethod
     def eq(self, other: Arithmetic | Numeric) -> Arithmetic:
         "The `==` operator. Variables on both sides of the operator are of the same type."
 
@@ -248,7 +249,7 @@ class Arithmetic(Protocol):
 
         return self.ne(other)
 
-    @abstractmethod
+    @abc.abstractmethod
     def ne(self, other: Arithmetic | Numeric) -> Arithmetic:
         "The `!=` operator. Variables on both sides of the operator are of the same type."
 

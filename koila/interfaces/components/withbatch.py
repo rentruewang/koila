@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+import dataclasses as dcls
 from typing import Protocol
 
 
-@dataclass
+@dcls.dataclass
 class BatchInfo:
     """
     `BatchInfo` contains information that marks a dimension as splittable.

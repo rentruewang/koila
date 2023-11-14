@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from abc import abstractmethod
+import abc
 from typing import Protocol, TypeVar
 
 from .components import Arithmetic, Indexible, MemoryInfo, WithBatch
@@ -19,7 +19,7 @@ class TensorLike(Arithmetic, Indexible, MemoryInfo, Protocol):
     data: TensorLike
     "The underlying data that backs the tensor."
 
-    @abstractmethod
+    @abc.abstractmethod
     def __str__(self) -> str:
         ...
 
@@ -32,7 +32,7 @@ class TensorLike(Arithmetic, Indexible, MemoryInfo, Protocol):
     def __float__(self) -> float:
         return float(self.item())
 
-    @abstractmethod
+    @abc.abstractmethod
     def item(self) -> Numeric:
         """
         Retrieve the underlying 0-d data.
@@ -45,7 +45,7 @@ class TensorLike(Arithmetic, Indexible, MemoryInfo, Protocol):
 
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def transpose(self, dim0: int, dim1: int) -> TensorLike:
         """
         Transposes swaps the order of the axises.
@@ -78,7 +78,7 @@ class TensorLike(Arithmetic, Indexible, MemoryInfo, Protocol):
         return self.transpose(0, 1)
 
     @property
-    @abstractmethod
+    @abc.abstractmethod
     def requires_grad(self) -> bool:
         """
         If true, operations performed on this tensor will be added to the gradient tape.
@@ -91,7 +91,7 @@ class TensorLike(Arithmetic, Indexible, MemoryInfo, Protocol):
 
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def backward(self) -> None:
         """
         Performs a backward pass when called. Only available if the tensor is recording gradient.

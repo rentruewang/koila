@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import abc
 import functools
 import operator
-from abc import abstractmethod
-from typing import Protocol, overload
+import typing
+from typing import Protocol
 
 
 class MultiDimensional(Protocol):
@@ -25,17 +26,17 @@ class MultiDimensional(Protocol):
     def ndimension(self) -> int:
         return self.ndim
 
-    @overload
-    @abstractmethod
+    @typing.overload
+    @abc.abstractmethod
     def size(self) -> tuple[int, ...]:
         ...
 
-    @overload
-    @abstractmethod
+    @typing.overload
+    @abc.abstractmethod
     def size(self, dim: int) -> int:
         ...
 
-    @abstractmethod
+    @abc.abstractmethod
     def size(self, dim: int | None = None) -> int | tuple[int, ...]:
         ...
 
