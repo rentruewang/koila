@@ -23,5 +23,8 @@ jobs:
       - name: 🚂 Activate environment
         run: echo "$(poetry env info --path)/bin" >> $GITHUB_PATH
 
-      - name: 🏃 pyright
-        uses: jakebailey/pyright-action@v1
+      - name: 🏃 pytype
+        uses: theahura/pytypes-action@main
+        with:
+          args: -d import-error -d not-supported-error
+
