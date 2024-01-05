@@ -15,12 +15,13 @@ jobs:
       - name: ⬇️ Python Poetry
         uses: abatilo/actions-poetry@v2
         with:
-          poetry-version: "1.5.1"
+          poetry-version: "1.7"
 
       - name: ⬇️ Python Dependencies
-        run: |
-          poetry install
-          echo "$(poetry env info --path)/bin" >> $GITHUB_PATH
+        run: poetry install
+
+      - name: 🚂 Activate environment
+        run: echo "$(poetry env info --path)/bin" >> $GITHUB_PATH
 
       - name: 🏃 pyright
         uses: jakebailey/pyright-action@v1
