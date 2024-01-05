@@ -3,9 +3,9 @@ from __future__ import annotations
 import abc
 import functools
 import typing
-from typing import Any, NoReturn, Protocol, Union
+from typing import Any, NoReturn, Protocol
 
-Numeric = Union[int, float, bool]
+Numeric = int | float | bool
 "Numeric is a union for `int`, `float`, and `bool`, which are all primitive values in C's sense."
 
 
