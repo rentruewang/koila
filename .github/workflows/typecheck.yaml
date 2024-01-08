@@ -23,8 +23,6 @@ jobs:
       - name: 🚂 Activate environment
         run: echo "$(poetry env info --path)/bin" >> $GITHUB_PATH
 
-      - name: 🏃 pytype
-        uses: theahura/pytypes-action@main
-        with:
-          args: -d import-error -d not-supported-error
+      - name: 🏃 mypy
+        run: mypy . --disable-error-code=import-untyped --disable-error-code=import-not-found
 
