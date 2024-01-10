@@ -1,30 +1,45 @@
-[tool.poetry]
+[project]
 name = "koila"
 version = "0.2.0"
-description = "Prevent PyTorch's `CUDA error out of memory` in a few lines of code."
-authors = ["rentruewang <patrick1031wang@gmail.com>"]
-license = "MIT"
-repository = "https://github.com/rentruewang/koila"
-
-[tool.poetry.dependencies]
-numpy = "^1.22.0"
-python = ">=3.10,<3.11"
-pynvml = "^11.4.1"
-rich = "^13.4.1"
-torch = "^2.0.1"
-
-[tool.poetry.group.dev.dependencies]
-autoflake = "^2.1.1"
-black = "^23.3.0"
-coverage = "^7.2.7"
-isort = "^5.12.0"
-mkdocs = "^1.4.3"
-mkdocs-git-revision-date-plugin = "^0.3.1"
-mkdocs-git-revision-date-localized-plugin = "^0.11.1"
-mkdocs-material = "^9.1.15"
-mypy = "^1.8.0"
-pytest = "^7.3.1"
+description = "Prevent PyTorch's `CUDA error out of memory` in a few lines of code"
+authors = [
+    {name = "RenChu Wang", email = "patrick1031wang@gmail.com"},
+]
+dependencies = [
+    "numpy>=1.26.3",
+    "scipy>=1.11.4",
+    "torch>=2.1.2",
+]
+requires-python = ">=3.10"
+readme = "README.md"
+license = {text = "Apache-2.0"}
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+
+[tool.pdm]
+package-type = "library"
+
+[tool.pdm.dev-dependencies]
+test = [
+    "coverage>=7.4.0",
+    "pytest>=7.4.4",
+    "pytest-cov>=4.1.0",
+    "pytest-xdist>=3.5.0",
+]
+format = [
+    "autoflake>=2.2.1",
+    "black>=23.12.1",
+    "isort>=5.13.2",
+]
+website = [
+    "mkdocs>=1.5.3",
+    "mkdocs-git-revision-date-plugin>=0.3.2",
+    "mkdocs-git-revision-date-localized-plugin>=1.2.2",
+    "mkdocs-material>=9.5.3",
+]
+type = [
+    "mypy>=1.8.0",
+]
