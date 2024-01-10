@@ -11,16 +11,20 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
-      - name: ⬇️ Python Poetry
-        uses: abatilo/actions-poetry@v2
-        with:
-          poetry-version: "1.5.1"
+
+      - name: ⬇️ Python PDM
+        uses: pdm-project/setup-pdm@v3
+
       - name: ⬇️ Python Dependencies
-        run: poetry install
+        run: pdm install
+
+      - name: 🚂 Activate environment
+        run: echo "$(pdm venv --path in-project)/bin" >> $GITHUB_PATH
 
       - name: 📰 Publish docs
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
+
       - name: ⬆️ MkDocs deploy
-        run: poetry run python -m mkdocs gh-deploy --force
+        run: python -m mkdocs gh-deploy --force
