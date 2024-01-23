@@ -2,6 +2,7 @@ name: Type Checking
 on: [push]
 jobs:
   type-check:
+    name: 👨‍⚕️ Type Checking
     runs-on: ubuntu-latest
     steps:
       - name: 🔔 Check out
@@ -16,11 +17,10 @@ jobs:
         uses: pdm-project/setup-pdm@v3
 
       - name: ⬇️ Python Dependencies
-        run: pdm install
+        run: pdm install -G:all
 
       - name: 🚂 Activate environment
         run: echo "$(pdm venv --path in-project)/bin" >> $GITHUB_PATH
 
       - name: 🏃 mypy
         run: mypy . --disable-error-code=import-untyped --disable-error-code=import-not-found
-

@@ -2,6 +2,7 @@ name: Unit Testing
 on: [push]
 jobs:
   unit-test:
+    name: 🧪 Unit Testing
     runs-on: ubuntu-latest
     steps:
       - name: 🔔 Check out
@@ -16,7 +17,7 @@ jobs:
         uses: pdm-project/setup-pdm@v3
 
       - name: ⬇️ Python Dependencies
-        run: pdm install
+        run: pdm install -G:all
 
       - name: 🚂 Activate environment
         run: echo "$(pdm venv --path in-project)/bin" >> $GITHUB_PATH
