@@ -2,6 +2,7 @@ name: GitHub Pages
 on: [push]
 jobs:
   build-and-deploy:
+    name: 📃 GitHub Pages
     runs-on: ubuntu-latest
     steps:
       - name: 🔔 Check out
