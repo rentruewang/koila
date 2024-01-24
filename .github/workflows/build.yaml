@@ -1,8 +1,8 @@
-name: GitHub Pages
+name: Build Pages
 on: [push]
 jobs:
   build-and-deploy:
-    name: 📃 GitHub Pages
+    name: 📃 Website Build
     runs-on: ubuntu-latest
     steps:
       - name: 🔔 Check out
@@ -28,4 +28,4 @@ jobs:
           git config user.email 'github-actions[bot]@users.noreply.github.com'
 
       - name: ⬆️ MkDocs deploy
-        run: python -m mkdocs gh-deploy --force
+        run: mkdocs gh-deploy --force
