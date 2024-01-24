@@ -160,4 +160,4 @@ The code works on many cases, but it's still a work in progress. This is not (ye
 
 ## 🥰 Contributing and Using
 
-Openness and inclusiveness are taken very seriously. The code is available under [MIT License](./LICENCE). Please follow the following [Code of Conduct](./CODE_OF_CONDUCT.md).
+Openness and inclusiveness are taken very seriously. The code is available under [Apache License](./LICENSE.md). Please follow the following [Code of Conduct](./CODE_OF_CONDUCT.md).
