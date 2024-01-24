@@ -20,7 +20,7 @@ build-backend = "hatchling.build"
 
 
 [tool.pdm]
-package-type = "library"
+distribution = true
 
 [tool.pdm.dev-dependencies]
 test = [
