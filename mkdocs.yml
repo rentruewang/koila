@@ -10,7 +10,6 @@ theme:
     code: Fira Code
   icon:
     repo: material/github
-docs_dir: mkdocs
 edit_uri: ""
 repo_name: rentruewang/koila
 repo_url: https://github.com/rentruewang/koila
