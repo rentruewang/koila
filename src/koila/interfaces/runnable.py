@@ -22,10 +22,8 @@ class Runnable(Protocol[T]):
         """
         Run function evaluates the value that a `Runnable` represents.
 
-        Returns
-        -------
-
-        The value that the `Runnable` represents. Must be overridden.
+        Returns:
+            The value that the `Runnable` represents. Must be overridden.
         """
 
         ...

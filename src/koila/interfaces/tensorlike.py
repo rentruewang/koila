@@ -20,8 +20,7 @@ class TensorLike(Arithmetic, Indexible, MemoryInfo, Protocol):
     "The underlying data that backs the tensor."
 
     @abc.abstractmethod
-    def __str__(self) -> str:
-        ...
+    def __str__(self) -> str: ...
 
     def __bool__(self) -> bool:
         return bool(self.item())
@@ -37,10 +36,8 @@ class TensorLike(Arithmetic, Indexible, MemoryInfo, Protocol):
         """
         Retrieve the underlying 0-d data.
 
-        Returns
-        -------
-
-        A boolean or an integer or a floating point number.
+        Returns:
+            A boolean or an integer or a floating point number.
         """
 
         ...
@@ -50,16 +47,13 @@ class TensorLike(Arithmetic, Indexible, MemoryInfo, Protocol):
         """
         Transposes swaps the order of the axises.
 
-        Parameters
-        ----------
+        Parameters:
+            dim0: The axises to swap.
+            dim1: The axises to swap.
 
-        `dim0: int,` `dim1: int`
-            The axises to swap.
 
-        Returns
-        -------
-
-        A `TensorLike` that with the given axises swapped.
+        Returns:
+            A `TensorLike` that with the given axises swapped.
         """
 
         ...
@@ -69,10 +63,8 @@ class TensorLike(Arithmetic, Indexible, MemoryInfo, Protocol):
         """
         The matrix operator T. It is equivalent to transposing the first and second axises.
 
-        Returns
-        -------
-
-        A `TensorLike` with first and second axises swapped.
+        Returns:
+            A `TensorLike` with first and second axises swapped.
         """
 
         return self.transpose(0, 1)
@@ -83,10 +75,8 @@ class TensorLike(Arithmetic, Indexible, MemoryInfo, Protocol):
         """
         If true, operations performed on this tensor will be added to the gradient tape.
 
-        Returns
-        -------
-
-        A boolean indicating if gradient recording is on.
+        Returns:
+            A boolean indicating if gradient recording is on.
         """
 
         ...
