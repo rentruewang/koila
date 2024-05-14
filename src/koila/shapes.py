@@ -62,7 +62,7 @@ def coerce(
     (input, other) = prepends(input, other, 1)
 
     shape = []
-    for (a, b) in zip(input, other):
+    for a, b in zip(input, other):
         if a <= 0 or b <= 0:
             raise ValueError
 
@@ -175,7 +175,7 @@ def matmul(input: Tuple[int, ...], other: Tuple[int, ...]) -> Tuple[int, ...]:
     (input, other) = prepends(input, other, 1)
 
     shapes = []
-    for (dimi, dimo) in zip(input[:-2], other[:-2]):
+    for dimi, dimo in zip(input[:-2], other[:-2]):
         if not compatible_dim(dimi, dimo):
             raise ValueError
         shapes.append(max(dimi, dimo))
@@ -204,7 +204,7 @@ def reduce_dims(
     else:
         dimensions = set(dim)
 
-    for (idx, dimsize) in enumerate(input):
+    for idx, dimsize in enumerate(input):
         if idx not in dimensions:
             shapes.append(dimsize)
             continue
