@@ -36,8 +36,8 @@ from .prepasses import PrePass, PrePassFunc
 T = TypeVar("T")
 V = TypeVar("V", contravariant=True)
 
-logger = logging.getLogger(__name__)
-logger.addHandler(RichHandler())
+LOGGER = logging.getLogger(__name__)
+LOGGER.addHandler(RichHandler())
 
 
 @dataclass(frozen=True)
@@ -100,7 +100,7 @@ class Evaluation(RunnableTensor):
         elif (reducer := self.prepass.reducer()) is None:
             raise UnsupportedError("Cannot safely parallelize.")
         else:
-            logger.debug(
+            LOGGER.debug(
                 "Evaluation taking batch: (%s, %s), low=%s, high=%s",
                 self.size(),
                 self.batch(),
@@ -168,7 +168,7 @@ class LazyTensor(RunnableTensor):
             else:
                 self._batch = BatchInfo(batch, data.size(batch))
 
-        logger.debug("Creating LazyTensor. %s, %s", type(self._data), self._batch)
+        LOGGER.debug("Creating LazyTensor. %s, %s", type(self._data), self._batch)
 
     # Implementations
 
@@ -354,7 +354,7 @@ class LazyTensor(RunnableTensor):
         self._data[index] = value
 
     def __getattr__(self, name: str) -> Callable[..., Any]:
-        logger.debug(
+        LOGGER.debug(
             f"__getattr__ called for {name}. Automatically resolving function."
         )
 
@@ -362,13 +362,13 @@ class LazyTensor(RunnableTensor):
         wrapper = functools.wraps(method)
 
         if (custom_impl := CUSTOM_OPS.lookup_method(name)) is not None:
-            logger.debug("A custom method definition is found.")
+            LOGGER.debug("A custom method definition is found.")
             partial = functools.partial(custom_impl, self)
         elif (shape_impl := SHAPE_OPS.lookup_method(name)) is not None:
-            logger.debug("A custom shape method is found. Lazy evaluation.")
+            LOGGER.debug("A custom shape method is found. Lazy evaluation.")
             partial = functools.partial(lazy_forward, method, shape_impl, self)
         else:
-            logger.debug("No custom methods found. Evaluating eagerly.")
+            LOGGER.debug("No custom methods found. Evaluating eagerly.")
             partial = functools.partial(method, interfaces.run(self))
 
         return wrapper(partial)
@@ -392,13 +392,13 @@ class LazyTensor(RunnableTensor):
         name = func.__name__
 
         if (custom_impl := CUSTOM_OPS.lookup_function(name)) is not None:
-            logger.debug("A custom function definition is found.")
+            LOGGER.debug("A custom function definition is found.")
             return custom_impl(*args, **kwargs)
         elif (shape_impl := SHAPE_OPS.lookup_function(name)) is not None:
-            logger.debug("A custom shape function is found. Lazy evaluation.")
+            LOGGER.debug("A custom shape function is found. Lazy evaluation.")
             return lazy_forward(func, shape_impl, *args, **kwargs)
         else:
-            logger.debug("No custom method found. Evaluating eagerly.")
+            LOGGER.debug("No custom method found. Evaluating eagerly.")
             args = [interfaces.run(arg) for arg in args]
             kwargs = {k: interfaces.run(v) for (k, v) in kwargs.items()}
             return func(*args, **kwargs)
@@ -423,7 +423,7 @@ class LazyTensor(RunnableTensor):
 
     def backward(self) -> None:
         if self._batch is None or not cuda.is_available():
-            logger.debug(
+            LOGGER.debug(
                 "Unable to parallelize across batches."
                 " "
                 "Running backward with native pytorch."
@@ -431,11 +431,11 @@ class LazyTensor(RunnableTensor):
             self.run().backward()
         else:
             total = 0
-            logger.debug("Able to parallelize across batches. Hooray!")
+            LOGGER.debug("Able to parallelize across batches. Hooray!")
             for mini_batch_size in gpus.split_batch(
                 self.buffer_memory(), self._batch.value
             ):
-                logger.debug("Using mini batch size: %d.", mini_batch_size)
+                LOGGER.debug("Using mini batch size: %d.", mini_batch_size)
                 mini_batch = self.run((total, total + mini_batch_size))
                 total += mini_batch_size
                 mini_batch.backward()
@@ -484,7 +484,7 @@ def lazy(*val: bool) -> Tuple[bool, ...]:
 def lazy(*values: Any, batch: int | None = None) -> Any:
     results = []
     for val in values:
-        logger.debug("lazy %s, %s", type(val), interfaces.bat(val))
+        LOGGER.debug("lazy %s, %s", type(val), interfaces.bat(val))
 
         if isinstance(val, Tensor):
             val = LazyTensor(val, batch)
@@ -501,14 +501,14 @@ def lazy_forward(
     func: Callable[..., Any], shape_func: PrePassFunc, *args: Any, **kwargs: Any
 ) -> TensorLike:
     if torch.is_grad_enabled():
-        out = LazyTensor(LazyFunction(func, shape_func)(*args, **kwargs))
-        logger.debug("lazy forward %s, %s", out.size(), out.batch())
+        out = LazyFunction(func, shape_func)(*args, **kwargs)
+        LOGGER.debug("lazy forward %s, %s", out.size(), out.batch())
         return out
     else:
         run_args = [interfaces.run(arg) for arg in args]
         run_kwargs = {k: interfaces.run(v) for (k, v) in kwargs.items()}
         out = func(*run_args, **run_kwargs)
-        logger.debug("eager forward (%s, %s) -> %s", run_args, run_kwargs, out)
+        LOGGER.debug("eager forward (%s, %s) -> %s", run_args, run_kwargs, out)
         return out
 
 

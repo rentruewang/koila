@@ -26,8 +26,8 @@ from . import constants, interfaces, shapes
 from .errors import UnsupportedError
 from .interfaces import BatchInfo, TensorLike
 
-logger = logging.getLogger(__name__)
-logger.addHandler(RichHandler())
+LOGGER = logging.getLogger(__name__)
+LOGGER.addHandler(RichHandler())
 
 
 class CallBack(Protocol):
@@ -253,7 +253,7 @@ def flatten(
     *args: Any,
     **kwargs: Any,
 ) -> PrePass:
-    logger.debug("%s, %s, %s", input.size(), start_dim, end_dim)
+    LOGGER.debug("%s, %s, %s", input.size(), start_dim, end_dim)
 
     mute_unused_args(*args, **kwargs)
 

@@ -10,9 +10,9 @@ from torch import dtype as DType
 
 from .interfaces import BatchInfo, RunnableTensor, TensorLike
 
-logger = logging.getLogger(__name__)
-logger.addHandler(RichHandler())
-logger.setLevel(logging.DEBUG)
+LOGGER = logging.getLogger(__name__)
+LOGGER.addHandler(RichHandler())
+LOGGER.setLevel(logging.DEBUG)
 
 # So, it seems that torch's Tensor base class utilizes metaclass
 # to pretend to be a parent of LongTensor, FloatTensor etc.
