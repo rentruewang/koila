@@ -200,12 +200,10 @@ class LazyTensor(RunnableTensor):
         assert hash(self) in nodes.keys()
 
     @overload
-    def size(self) -> Tuple[int, ...]:
-        ...
+    def size(self) -> Tuple[int, ...]: ...
 
     @overload
-    def size(self, dim: int) -> int:
-        ...
+    def size(self, dim: int) -> int: ...
 
     def size(self, dim: int | None = None) -> int | Tuple[int, ...]:
         data = self._data
@@ -442,43 +440,37 @@ class LazyTensor(RunnableTensor):
 
 
 @overload
-def lazy(val: Tensor | LazyTensor, batch: int | None = None) -> LazyTensor:
-    ...
+def lazy(val: Tensor | LazyTensor, batch: int | None = None) -> LazyTensor: ...
 
 
 @overload
-def lazy(*val: Tensor | LazyTensor, batch: int | None = None) -> Tuple[LazyTensor, ...]:
-    ...
+def lazy(
+    *val: Tensor | LazyTensor, batch: int | None = None
+) -> Tuple[LazyTensor, ...]: ...
 
 
 @overload
-def lazy(val: int) -> int:
-    ...
+def lazy(val: int) -> int: ...
 
 
 @overload
-def lazy(*val: int) -> Tuple[int, ...]:
-    ...
+def lazy(*val: int) -> Tuple[int, ...]: ...
 
 
 @overload
-def lazy(val: float) -> float:
-    ...
+def lazy(val: float) -> float: ...
 
 
 @overload
-def lazy(*val: float) -> Tuple[float, ...]:
-    ...
+def lazy(*val: float) -> Tuple[float, ...]: ...
 
 
 @overload
-def lazy(val: bool) -> bool:
-    ...
+def lazy(val: bool) -> bool: ...
 
 
 @overload
-def lazy(*val: bool) -> Tuple[bool, ...]:
-    ...
+def lazy(*val: bool) -> Tuple[bool, ...]: ...
 
 
 def lazy(*values: Any, batch: int | None = None) -> Any:
@@ -521,18 +513,15 @@ class _ValIdx(NamedTuple):
 
 
 @overload
-def _min(input: TensorLike) -> TensorLike:
-    ...
+def _min(input: TensorLike) -> TensorLike: ...
 
 
 @overload
-def _min(input: TensorLike, dim: int, keepdim: bool = False) -> _ValIdx:
-    ...
+def _min(input: TensorLike, dim: int, keepdim: bool = False) -> _ValIdx: ...
 
 
 @overload
-def _min(input: TensorLike, other: TensorLike) -> TensorLike:
-    ...
+def _min(input: TensorLike, other: TensorLike) -> TensorLike: ...
 
 
 @wraps(torch.min)
@@ -555,18 +544,15 @@ def _min(input: TensorLike, *args: Any, **kwargs: Any) -> TensorLike | _ValIdx:
 
 
 @overload
-def _max(input: TensorLike) -> TensorLike:
-    ...
+def _max(input: TensorLike) -> TensorLike: ...
 
 
 @overload
-def _max(input: TensorLike, dim: int, keepdim: bool = False) -> _ValIdx:
-    ...
+def _max(input: TensorLike, dim: int, keepdim: bool = False) -> _ValIdx: ...
 
 
 @overload
-def _max(input: TensorLike, other: TensorLike) -> TensorLike:
-    ...
+def _max(input: TensorLike, other: TensorLike) -> TensorLike: ...
 
 
 @wraps(torch.max)

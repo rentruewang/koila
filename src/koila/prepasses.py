@@ -32,14 +32,12 @@ LOGGER.addHandler(RichHandler())
 
 class CallBack(Protocol):
     @abstractmethod
-    def __call__(self, *args: Any, **kwargs: Any) -> Reducer:
-        ...
+    def __call__(self, *args: Any, **kwargs: Any) -> Reducer: ...
 
 
 class Reducer(Protocol):
     @abstractmethod
-    def __call__(self, result: Tensor, /) -> Tensor:
-        ...
+    def __call__(self, result: Tensor, /) -> Tensor: ...
 
 
 @dataclass(frozen=True)
@@ -63,12 +61,10 @@ class PrePass:
         return iter(self.shape)
 
     @overload
-    def __getitem__(self, index: int) -> int:
-        ...
+    def __getitem__(self, index: int) -> int: ...
 
     @overload
-    def __getitem__(self, index: slice) -> Tuple[int, ...]:
-        ...
+    def __getitem__(self, index: slice) -> Tuple[int, ...]: ...
 
     def __getitem__(self, index: int | slice) -> int | Tuple[int, ...]:
         return self.shape[index]
@@ -98,8 +94,7 @@ class PrePass:
 @runtime_checkable
 class PrePassFunc(Protocol):
     @abstractmethod
-    def __call__(self, *args: Any, **kwargs: Any) -> PrePass:
-        ...
+    def __call__(self, *args: Any, **kwargs: Any) -> PrePass: ...
 
 
 def mute_unused_args(*args: Any, **kwargs: Any) -> None:

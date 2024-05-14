@@ -30,25 +30,21 @@ V = TypeVar("V", contravariant=True)
 @runtime_checkable
 class Runnable(Protocol[T]):
     @abstractmethod
-    def run(self) -> T:
-        ...
+    def run(self) -> T: ...
 
 
 @runtime_checkable
 class TensorMixin(Protocol):
     @overload
     @abstractmethod
-    def size(self) -> Tuple[int, ...]:
-        ...
+    def size(self) -> Tuple[int, ...]: ...
 
     @overload
     @abstractmethod
-    def size(self, dim: int) -> int:
-        ...
+    def size(self, dim: int) -> int: ...
 
     @abstractmethod
-    def size(self, dim: int | None = None) -> int | Tuple[int, ...]:
-        ...
+    def size(self, dim: int | None = None) -> int | Tuple[int, ...]: ...
 
     def numel(self) -> int:
         return functools.reduce(operator.mul, self.size(), 1)
@@ -57,12 +53,10 @@ class TensorMixin(Protocol):
         return len(self.size())
 
     @abstractmethod
-    def dtype(self) -> DType:
-        ...
+    def dtype(self) -> DType: ...
 
     @abstractmethod
-    def device(self) -> str | Device:
-        ...
+    def device(self) -> str | Device: ...
 
 
 class BatchedPair(NamedTuple):
@@ -82,16 +76,13 @@ class BatchInfo(NamedTuple):
 @runtime_checkable
 class RunnableTensor(Runnable[Tensor], TensorMixin, Protocol):
     @abstractmethod
-    def batch(self) -> BatchInfo | None:
-        ...
+    def batch(self) -> BatchInfo | None: ...
 
     @abstractmethod
-    def run(self, partial: Tuple[int, int] | None = None) -> Tensor:
-        ...
+    def run(self, partial: Tuple[int, int] | None = None) -> Tensor: ...
 
     @abstractmethod
-    def visit(self, nodes: Dict[int, TensorLike]) -> None:
-        ...
+    def visit(self, nodes: Dict[int, TensorLike]) -> None: ...
 
     def buffer(self) -> Dict[int, TensorLike]:
         nodes = {}
@@ -150,18 +141,15 @@ TensorLike = Union[Tensor, RunnableTensor]
 
 
 @overload
-def run(val: RunnableTensor, partial: Tuple[int, int] | None = None) -> Tensor:
-    ...
+def run(val: RunnableTensor, partial: Tuple[int, int] | None = None) -> Tensor: ...
 
 
 @overload
-def run(val: Runnable[E], partial: Tuple[int, int] | None = None) -> E:
-    ...
+def run(val: Runnable[E], partial: Tuple[int, int] | None = None) -> E: ...
 
 
 @overload
-def run(val: E, partial: Tuple[int, int] | None = None) -> E:
-    ...
+def run(val: E, partial: Tuple[int, int] | None = None) -> E: ...
 
 
 def run(val: Any, partial: Tuple[int, int] | None = None) -> Any:
