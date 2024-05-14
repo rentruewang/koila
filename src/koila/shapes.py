@@ -7,8 +7,8 @@ from typing import Set, Tuple
 
 from rich.logging import RichHandler
 
-logger = logging.getLogger(__name__)
-logger.addHandler(RichHandler())
+LOGGER = logging.getLogger(__name__)
+LOGGER.addHandler(RichHandler())
 
 
 def compatible_dim(input: int, other: int, broadcast: bool = True) -> bool:
@@ -21,7 +21,7 @@ def compatible_dim(input: int, other: int, broadcast: bool = True) -> bool:
 def prepends(
     input: Tuple[int, ...], other: Tuple[int, ...], value: int
 ) -> Tuple[Tuple[int, ...], Tuple[int, ...]]:
-    logger.debug("Prepending %s and %s.", input, other)
+    LOGGER.debug("Prepending %s and %s.", input, other)
 
     prepended = (value,) * abs(len(input) - len(other))
     if len(input) >= len(other):
@@ -38,7 +38,7 @@ def coerce(
     broadcast: bool = True,
     scalars: bool = True,
 ) -> Tuple[int, ...] | None:
-    logger.debug(
+    LOGGER.debug(
         "Coercing %s and %s. Broadcasting: %s. Allow scalars: %s.",
         input,
         other,
@@ -75,7 +75,7 @@ def coerce(
 
 
 def permute(input: Tuple[int, ...], *dims: int) -> Tuple[int, ...]:
-    logger.debug("%s, %s", input, dims)
+    LOGGER.debug("%s, %s", input, dims)
 
     if not len(input) == len(dims):
         raise TypeError
@@ -94,7 +94,7 @@ def permute(input: Tuple[int, ...], *dims: int) -> Tuple[int, ...]:
 
 
 def reshape(input: Tuple[int, ...], *shape: int) -> Tuple[int, ...]:
-    logger.debug("%s, %s", input, shape)
+    LOGGER.debug("%s, %s", input, shape)
 
     if not functools.reduce(operator.mul, input) == functools.reduce(
         operator.mul, shape
@@ -104,7 +104,7 @@ def reshape(input: Tuple[int, ...], *shape: int) -> Tuple[int, ...]:
 
 
 def view(input: Tuple[int, ...], *shape: int) -> Tuple[int, ...]:
-    logger.debug("%s, %s", input, shape)
+    LOGGER.debug("%s, %s", input, shape)
 
     special_values = [x for x in shape if x < 0]
 
@@ -128,7 +128,7 @@ def view(input: Tuple[int, ...], *shape: int) -> Tuple[int, ...]:
 
 
 def tranpose(input: Tuple[int, ...], dim0: int, dim1: int) -> Tuple[int, ...]:
-    logger.debug("%s, %d, %d", input, dim0, dim1)
+    LOGGER.debug("%s, %d, %d", input, dim0, dim1)
 
     if len(input) < 2:
         raise ValueError
@@ -139,7 +139,7 @@ def tranpose(input: Tuple[int, ...], dim0: int, dim1: int) -> Tuple[int, ...]:
 
 
 def matmul(input: Tuple[int, ...], other: Tuple[int, ...]) -> Tuple[int, ...]:
-    logger.debug("%s, %s", input, other)
+    LOGGER.debug("%s, %s", input, other)
 
     if len(input) == 0 or len(other) == 0:
         raise ValueError(
@@ -193,7 +193,7 @@ def reduce_dims(
     dim: int | Tuple[int, ...] | None = None,
     keepdim: bool = False,
 ) -> Tuple[Tuple[int, ...], Set[int]]:
-    logger.debug("%s, %s", input, dim)
+    LOGGER.debug("%s, %s", input, dim)
 
     shapes = []
 
