@@ -1,0 +1,787 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+      
+        <link rel="next" href="LICENSE/">
+      
+      
+      <link rel="icon" href="assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.33">
+    
+    
+      
+        <title>Koila</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.3cba04c6.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,700,700i%7CFira+Code:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Open Sans";--md-code-font:"Fira Code"}</style>
+      
+    
+    
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#koila" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="." title="Koila" class="md-header__button md-logo" aria-label="Koila" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Koila
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              🐨 Koila
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var media,input,key,value,palette=__md_get("__palette");if(palette&&palette.color){"(prefers-color-scheme)"===palette.color.media&&(media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']"),palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent"));for([key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/rentruewang/koila" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2Z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    rentruewang/koila
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="Koila" class="md-nav__button md-logo" aria-label="Koila" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    Koila
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/rentruewang/koila" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2Z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    rentruewang/koila
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    🐨 Koila
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="." class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    🐨 Koila
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#warning" class="md-nav__link">
+    <span class="md-ellipsis">
+      🚨 Warning
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#features" class="md-nav__link">
+    <span class="md-ellipsis">
+      🚀 Features
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-koila" class="md-nav__link">
+    <span class="md-ellipsis">
+      🤔 Why Koila?
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      ⬇️ Installation
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getting-started" class="md-nav__link">
+    <span class="md-ellipsis">
+      🏃 Getting started
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-does-it-work-under-the-hood" class="md-nav__link">
+    <span class="md-ellipsis">
+      🏋️ How does it work under the hood?
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#it-sounds-slow-is-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      🐌 It sounds slow. Is it?
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-to-pronounce-koila" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔊 How to pronounce koila?
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#give-me-a-star" class="md-nav__link">
+    <span class="md-ellipsis">
+      ⭐ Give me a star!
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-did-i-build-this-despite-similar-libraries" class="md-nav__link">
+    <span class="md-ellipsis">
+      🏗️ Why did I build this, despite similar libraries?
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🏗️ Why did I build this, despite similar libraries?">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#batch-size-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔎 Batch size search
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#symbolic-pre-passing" class="md-nav__link">
+    <span class="md-ellipsis">
+      ♏ Symbolic pre-passing
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#todos" class="md-nav__link">
+    <span class="md-ellipsis">
+      📝 Todos
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#caution" class="md-nav__link">
+    <span class="md-ellipsis">
+      🚧 Caution
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributing-and-using" class="md-nav__link">
+    <span class="md-ellipsis">
+      🥰 Contributing and Using
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="LICENSE/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    LICENSE
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CODE_OF_CONDUCT/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contributor Code of Conduct
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#warning" class="md-nav__link">
+    <span class="md-ellipsis">
+      🚨 Warning
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#features" class="md-nav__link">
+    <span class="md-ellipsis">
+      🚀 Features
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-koila" class="md-nav__link">
+    <span class="md-ellipsis">
+      🤔 Why Koila?
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      ⬇️ Installation
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getting-started" class="md-nav__link">
+    <span class="md-ellipsis">
+      🏃 Getting started
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-does-it-work-under-the-hood" class="md-nav__link">
+    <span class="md-ellipsis">
+      🏋️ How does it work under the hood?
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#it-sounds-slow-is-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      🐌 It sounds slow. Is it?
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-to-pronounce-koila" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔊 How to pronounce koila?
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#give-me-a-star" class="md-nav__link">
+    <span class="md-ellipsis">
+      ⭐ Give me a star!
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-did-i-build-this-despite-similar-libraries" class="md-nav__link">
+    <span class="md-ellipsis">
+      🏗️ Why did I build this, despite similar libraries?
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🏗️ Why did I build this, despite similar libraries?">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#batch-size-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔎 Batch size search
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#symbolic-pre-passing" class="md-nav__link">
+    <span class="md-ellipsis">
+      ♏ Symbolic pre-passing
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#todos" class="md-nav__link">
+    <span class="md-ellipsis">
+      📝 Todos
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#caution" class="md-nav__link">
+    <span class="md-ellipsis">
+      🚧 Caution
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributing-and-using" class="md-nav__link">
+    <span class="md-ellipsis">
+      🥰 Contributing and Using
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+<h1 id="koila">🐨 Koila</h1>
+<blockquote>
+<p>Koila solves <code>CUDA error: out of memory error</code> painlessly.
+Fix it with just one line of code, and forget it.</p>
+</blockquote>
+<p><a href="https://github.com/rentruewang/koila/actions/workflows/unittest.yaml"><img alt="Unit Testing" src="https://github.com/rentruewang/koila/actions/workflows/unittest.yaml/badge.svg" /></a>
+<a href="https://github.com/rentruewang/koila/actions/workflows/typecheck.yaml"><img alt="Type Checking" src="https://github.com/rentruewang/koila/actions/workflows/typecheck.yaml/badge.svg" /></a>
+<a href="https://github.com/rentruewang/koila/actions/workflows/format.yaml"><img alt="Formatting" src="https://github.com/rentruewang/koila/actions/workflows/format.yaml/badge.svg" /></a>
+<a href="https://opensource.org/licenses/MIT"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg" /></a>
+<a href="https://twitter.com/intent/tweet?text=Never%20worry%20about%20out%20of%20memory%20errors%20again&amp;url=https://github.com/rentruewang/koila&amp;hashtags=pytorch,outofmemory"><img alt="Tweet" src="https://img.shields.io/twitter/url/http/shields.io.svg?style=social" /></a></p>
+<p><img alt="Koila" src="assets/koila.png" /></p>
+<h2 id="warning">🚨 Warning</h2>
+<p><strong>Main branch is a complete re-structure of the project (that is currently mostly empty due to me not having enough time to complete it). To see working code, checkout the <code>v0.1.1</code> tag for a proof of concept (that doesn't have full support over all operations and is not suited for production). To use it, download <a href="https://github.com/rentruewang/koila/releases/tag/v0.1.1">release v0.1.1 here</a>.</strong></p>
+<h2 id="features">🚀 Features</h2>
+<ul>
+<li>
+<p>🙅 Prevents <code>CUDA error: out of memory error</code> with one single line of code.</p>
+</li>
+<li>
+<p>⚗️ Automatically accumulates gradients when batch sizes are too large.</p>
+</li>
+<li>
+<p>🦥 Lazily evaluates PyTorch code to save computing power.</p>
+</li>
+<li>
+<p>✂️ Automatically splits along the batch dimension to more GPU friendly numbers (2's powers) to speed up the execution.</p>
+</li>
+<li>
+<p>🤏 Minimal API (wrapping all inputs will be enough).</p>
+</li>
+</ul>
+<h2 id="why-koila">🤔 Why Koila?</h2>
+<p>Ever encountered <code>RuntimeError: CUDA error: out of memory</code>?
+We all love <code>PyTorch</code> because of its speed, efficiency, and transparency, but that means it doesn't do extra things. Things like preventing a very common error that has been bothering many users since <a href="https://github.com/pytorch/pytorch/issues/958#issuecomment-285090162">2017</a>.</p>
+<p>This library aims to prevent that by being a light-weight wrapper over native <code>PyTorch</code>. When a tensor is wrapped, the library <strong>automatically computes the amount of remaining GPU memory and uses the right batch size</strong>, saving everyone from having to manually fine-tune the batch size whenever a model is used.</p>
+<p>Also, the library automatically uses the right batch size to GPU. Did you know that using bigger batches doesn't always speed up processing? It's handled automatically in this library too.</p>
+<p>Because <code>Koila</code> code is <code>PyTorch</code> code, as it runs <code>PyTorch</code> under the hood, you can use both together without worrying compatibility.</p>
+<p>Oh, and all that in 1 line of code! 😊</p>
+<h2 id="installation">⬇️ Installation</h2>
+<p><code>Koila</code> is available on <a href="https://pypi.org/project/koila/">PyPI</a>. To install, run the following command.</p>
+<pre><code class="language-bash">pip install koila
+</code></pre>
+<h2 id="getting-started">🏃 Getting started</h2>
+<p>The usage is dead simple. For example, you have the following <code>PyTorch</code> code (copied from <code>PyTorch</code>'s <a href="https://pytorch.org/tutorials/beginner/basics/buildmodel_tutorial.html">tutorial</a>)</p>
+<p>Define the input, label, and model:</p>
+<pre><code class="language-python"># A batch of MNIST image
+input = torch.randn(8, 28, 28)
+
+# A batch of labels
+label = torch.randn(0, 10, [8])
+
+class NeuralNetwork(Module):
+    def __init__(self):
+        super(NeuralNetwork, self).__init__()
+        self.flatten = Flatten()
+        self.linear_relu_stack = Sequential(
+            Linear(28 * 28, 512),
+            ReLU(),
+            Linear(512, 512),
+            ReLU(),
+            Linear(512, 10),
+        )
+
+    def forward(self, x):
+        x = self.flatten(x)
+        logits = self.linear_relu_stack(x)
+        return logits
+</code></pre>
+<p>Define the loss function, calculate output and losses.</p>
+<pre><code class="language-python">loss_fn = CrossEntropyLoss()
+
+# Calculate losses
+out = nn(t)
+loss = loss_fn(out, label)
+
+# Backward pass
+nn.zero_grad()
+loss.backward()
+</code></pre>
+<p>Ok. How to adapt the code to use <code>Koila</code>'s features?</p>
+<p>You add this line of code (as of v0.1.1):</p>
+<pre><code class="language-python"># Wrap the input tensor and label tensor.
+# If a batch argument is provided, that dimension of the tensor would be treated as the batch.
+# In this case, the first dimension (dim=0) is used as batch's dimension.
+(input, label) = lazy(input, label, batch=0)
+</code></pre>
+<p>Done. You will not run out of memory again.</p>
+<h2 id="how-does-it-work-under-the-hood">🏋️ How does it work under the hood?</h2>
+<p><code>CUDA error: out of memory</code> generally happens in forward pass, because temporary variables will need to be saved in memory.</p>
+<p><code>Koila</code> is a thin wrapper around <code>PyTorch</code>. It is inspired by TensorFlow's static/lazy evaluation. By building the graph first, and run the model only when necessarily, the model has access to all the information necessarily to determine how much resources is really need to compute the model.</p>
+<p>In terms of memory usage, only <strong>shapes of temporary variables are required to calculate the memory usage of those variables used in the model</strong>. For example, <code>+</code> takes in two tensors with equal sizes, and outputs a tensor with a size equal to the input size, and <code>log</code> takes in one tensor, and outputs another tensor with the same shape. Broadcasting makes it a little more complicated than that, but the general ideas are the same. By tracking all these shapes, one could easily tell how much memory is used in a forward pass. And select the optimal batch size accordingly.</p>
+<h2 id="it-sounds-slow-is-it">🐌 It sounds slow. Is it?</h2>
+<p><strong>NO</strong>. Indeed, calculating shapes and computing the size and memory usage sound like a lot of work. However, keep in mind that even a gigantic model like GPT-3, which has 96 layers, has only a few hundred nodes in its computing graph. Because <code>Koila</code>'s algorithms run in linear time, any modern computer will be able to handle a graph like this instantly.</p>
+<p>Most of the computing is spent on computing individual tensors, and transferring tensors across devices. And bear in mind that those checks happen in vanilla <code>PyTorch</code> anyways. So no, not slow at all.</p>
+<h2 id="how-to-pronounce-koila">🔊 How to pronounce koila?</h2>
+<p>This project was originally named <em>koala</em>, the laziest species in the world, and this project is about lazy evaluation of tensors. However, as that name is taken on <a href="https://pypi.org/project/koala/">PyPI</a>, I had no choice but to use another name. <code>Koila</code> is a word made up by me, pronounced similarly to <em>voila</em> (It's a French word), so sounds like koala.</p>
+<h2 id="give-me-a-star">⭐ Give me a star!</h2>
+<p>If you like what you see, please consider giving this a star (★)!</p>
+<h2 id="why-did-i-build-this-despite-similar-libraries">🏗️ Why did I build this, despite similar libraries?</h2>
+<p>Why did I go through the trouble and build this project, despite a lot of similar libraries on the internet?</p>
+<h3 id="batch-size-search">🔎 Batch size search</h3>
+<p>Batch size search is not new. In fact, the mighty popular <a href="https://lightning.ai/">Lightning</a> has it.</p>
+<p>Lightning's batch size search is deeply integrated in its own ecosystem. You have to use its <code>DataLoader</code>, subclass from their models, and train your models accordingly. While refactoring supervised learning tasks to use lightning is relatively easy, it's really painful to do the same with a reinforcement learning code base, where interacting with the environment is a must.</p>
+<p>In comparison, because <code>Koila</code> is a super lightweight PyTorch wrapper, it works when PyTorch works, thus providing maximum flexibility and minimal changes to existing code.</p>
+<p>However, note that in the case where you're writing new code, Lightning is recommended as it enforces a better pattern of code style, which would benefit modularity in the long run.</p>
+<h3 id="symbolic-pre-passing">♏ Symbolic pre-passing</h3>
+<p>Likewise, passing an empty tensor to build a computational graph (AKA <strong>static graph</strong>) isn't a new idea, but thoroughly explored in the popular <a href="https://www.tensorflow.org/">TensorFlow</a> library, and a similar <code>PyTorch</code> wrapper library <a href="https://www.kernel-operations.io/">KeOps</a>. These libraries suffer from the fact that debugging programs in them is unnecessarily complicated. For example, <code>TensorFlow</code> was known for its ease of deployment but pain in development, to the point that users switched to <code>PyTorch</code>. During debugging, people like to see what's <em>inside</em> a variable, to see if it contains an incorrect value. However, because static graphs only define relations, the values are not computed, thus making debugging difficult.</p>
+<p><code>Koila</code> solves that by eagerly evaluating when being converted to strings, integers, or any Python values. This enables seamless debugging while maintaining the ability to perform memory management that simply isn't available for a more straight forward <code>PyTorch</code> program, which dynamically (when needed) allocates and frees memory on the fly.</p>
+<h2 id="todos">📝 Todos</h2>
+<ul>
+<li>😌 Simplify internal workings even further. (Especially interaction between <code>Tensor</code>s and <code>LazyTensor</code>s).</li>
+<li>🧩 Provide an extensible API to write custom functions for the users.</li>
+<li>🍪 Work with multiple GPUs.</li>
+</ul>
+<h2 id="caution">🚧 Caution</h2>
+<p>The code works on many cases, but it's still a work in progress. This is not (yet) a fully <code>PyTorch</code> compatible library due to limited time. Avoid using it in production environments!</p>
+<h2 id="contributing-and-using">🥰 Contributing and Using</h2>
+<p>Openness and inclusiveness are taken very seriously. The code is available under <a href="LICENSE/">Apache License</a>. Please follow the following <a href="CODE_OF_CONDUCT/">Code of Conduct</a>.</p>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Last update">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1-2.1-2M12.5 7v5.2l4 2.4-1 1L11 13V7h1.5M11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2v1.8Z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">August 3, 2024</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": ".", "features": [], "search": "assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="assets/javascripts/bundle.af256bd8.min.js"></script>
+      
+    
+  </body>
+</html>
