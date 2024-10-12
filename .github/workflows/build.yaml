@@ -14,18 +14,25 @@ jobs:
           python-version: "3.10"
 
       - name: ⬇️ Python PDM
-        uses: pdm-project/setup-pdm@v3
+        uses: pdm-project/setup-pdm@v4
+        with:
+          python-version: "3.10"
+          cache: true
 
       - name: ⬇️ Python Dependencies
-        run: pdm install
+        run: pdm install -G:all
 
       - name: 🚂 Activate environment
         run: echo "$(pdm venv --path in-project)/bin" >> $GITHUB_PATH
 
-      - name: 📰 Publish docs
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email 'github-actions[bot]@users.noreply.github.com'
+      - name: 🚧 Jupyter build
+        run: jupyter book build docs
 
-      - name: ⬆️ MkDocs deploy
-        run: mkdocs gh-deploy --force
+      - name: 📰 Publish docs
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: ./docs/_build/html
+          git-config-name: "github-actions[bot]"
+          git-config-email: "github-actions[bot]@users.noreply.github.com"
+          commit-message: 🎉 Book deployed
