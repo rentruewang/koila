@@ -1,0 +1,30 @@
+title: Aioway
+author: RenChu Wang
+copyright: "2024"
+
+exclude_patterns: [_build]
+only_build_toc_files: false
+
+execute:
+  execute_notebooks: force
+
+sphinx:
+  extra_extensions: [
+    sphinx.ext.autodoc,
+    sphinx.ext.autosectionlabel,
+    sphinx.ext.intersphinx,
+    sphinx.ext.inheritance_diagram,
+    sphinx.ext.githubpages,
+    sphinx.ext.todo,
+    sphinx.ext.viewcode,
+    sphinxcontrib.mermaid,
+  ]
+  config:
+    myst_fence_as_directive: [mermaid]
+    autosectionlabel_prefix_document: true
+    todo_include_todos: true
+    intersphinx_mapping:
+      python: [https://docs.python.org/3, null]
+      numpy: [http://docs.scipy.org/doc/numpy, null]
+      pandas: [http://pandas.pydata.org/pandas-docs/dev, null]
+      torch: [https://pytorch.org/docs/main, null]
