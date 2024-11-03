@@ -12,10 +12,11 @@ import tensordict
 import torch
 from pandas import DataFrame
 from tensordict import TensorDict
+from tensordict.nn import TensorDictModule
 
 from aioway.logics import Schema
 
-from .columns import Column
+from .buffers import Buffer
 
 
 @dcls.dataclass(frozen=True)
@@ -23,21 +24,6 @@ class Block(Mapping):
     """
     ``Block`` represents a chunk / batch of data stored in memory.
     This is the core representation of in-memory data in ``aioway``.
-
-    Note:
-        ``Block`` does not inherit from ``Mapping`` even though it implements the interface
-        e.g. ``keys()``, ``values()``, ``items()`` etc, because it's too difficult to do,
-        given how many custom types ``TensorDict`` would return based on different input types.
-
-    Warning:
-        ``Block`` creation would fail if string type is passed into the ``__getitem__`` method,
-        because ``TensorDict`` would return a ``Tensor`` in that case,
-        and we want to enfoce that ``Block`` only contains ``TensorDict``s.
-
-    Todo:
-        Indexing operation needs more work.
-        Currently, index access would sometimes fail if the underlying data structure is ``Tensor``,
-        which happens when ``TensorDict`` gets a string index (would output a ``Tensor``).
     """
 
     data: TensorDict
@@ -58,16 +44,16 @@ class Block(Mapping):
         return key in self.data
 
     @typing.overload
-    def __getitem__(self, key: str) -> Column: ...
+    def __getitem__(self, key: str) -> Buffer: ...
 
     @typing.overload
-    def __getitem__(self, key: int | list[int]) -> Self: ...
+    def __getitem__(self, key: int | list[int] | slice) -> Self: ...
 
-    def __getitem__(self, key: str | int | list[int]) -> Self | Column:
+    def __getitem__(self, key: str | int | list[int] | slice) -> Self | Buffer:
         result = self.data[key]
 
         if isinstance(key, str):
-            return Column(result)
+            return Buffer(result)
 
         return type(self)(result)
 
@@ -107,7 +93,7 @@ class Block(Mapping):
 
         if not callable(op):
             raise ValueError(
-                f"Operation {op} is not callable. Must be a callabe with 2 arguments."
+                f"Operation {op} is not callable. Must be a callable with 2 arguments."
             )
 
         # We want to leverage the existing operators implemented by ``TensorDict``,
@@ -130,6 +116,10 @@ class Block(Mapping):
         for key in self.keys():
             yield key, self[key]
 
+    def tensordict_map(self, module: TensorDictModule) -> Self:
+        data = self.data.clone()
+        return type(self)(module(data))
+
     def all(self) -> bool:
         return self.data.all()
 
@@ -142,6 +132,9 @@ class Block(Mapping):
     def rename(self, **names: str) -> Self:
         return type(self)(self.data.rename(**names))
 
+    def product(self):
+        raise NotImplementedError("Join type is not implemented yet!")
+
     def project(self, *names: str) -> Self:
         return type(self)(self.data.select(*names))
 
@@ -150,7 +143,7 @@ class Block(Mapping):
 
     def concat(self, other: Self) -> Self:
         if keys := set(self.keys()) & set(other.keys()):
-            raise ValueError(f"Cannot concatentate blocks with the same keys: {keys}")
+            raise ValueError(f"Cannot concatenate blocks with the same keys: {keys}")
 
         if len(self) != len(other):
             raise ValueError(
@@ -161,6 +154,9 @@ class Block(Mapping):
 
     def union(self, other: Self) -> Self:
         return type(self)(tensordict.cat([self.data, other.data], dim=0))
+
+    def pandas(self) -> DataFrame:
+        return DataFrame({key: val.series() for key, val in self.items()})
 
     @property
     def dtype(self) -> str | None:
@@ -177,6 +173,14 @@ class Block(Mapping):
         """
 
         return Schema.mapping({key: val.datatype for key, val in self.items()})
+
+    @property
+    def batch_size(self) -> tuple[int, ...]:
+        return self.data.batch_size
+
+    @property
+    def requires_grad(self) -> bool:
+        return self.data.requires_grad
 
     @classmethod
     def from_pandas(cls, df: DataFrame, /) -> Self:

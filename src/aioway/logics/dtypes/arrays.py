@@ -4,7 +4,7 @@ import dataclasses as dcls
 import typing
 from typing import TypeVar
 
-from .dtypes import DataType
+from .dtypes import DataType, DataTypeVisitor
 from .primitives import BoolDtype, FloatDtype, IntDtype
 
 _T = TypeVar("_T")
@@ -12,7 +12,7 @@ _T = TypeVar("_T")
 
 @typing.final
 @dcls.dataclass(frozen=True)
-class ArrayDtype:
+class ArrayDtype(DataType):
     """
     The array data type.
     """
@@ -20,7 +20,7 @@ class ArrayDtype:
     shape: tuple[int | None, ...] | None = None
     dtype: BoolDtype | IntDtype | FloatDtype | None = None
 
-    def accept(self, visitor: DataType.Visitor[_T]) -> _T:
+    def accept(self, visitor: DataTypeVisitor[_T]) -> _T:
         return visitor.array(self)
 
     @property

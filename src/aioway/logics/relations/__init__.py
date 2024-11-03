@@ -4,7 +4,7 @@ from .bases import BaseRelation
 from .nodes import PlanNode
 from .products import ConcatRelation, Product, ProductRelation
 from .projections import ProjectionRelation
-from .relations import Relation
+from .relations import Relation, RelationVisitor
 from .renames import RenameRelation
 from .selections import SelectionRelation
 from .transforms import TransformRelation

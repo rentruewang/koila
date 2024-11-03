@@ -8,9 +8,10 @@ from typing import TypeVar
 from aioway.logics.dtypes import Schema
 
 from .nodes import PlanNode
-from .relations import Relation
+from .relations import Relation, RelationVisitor
 
 _T = TypeVar("_T")
+_P = TypeVar("_P", bound=PlanNode)
 
 
 class Product(StrEnum):
@@ -40,17 +41,17 @@ class Product(StrEnum):
 
 
 @dcls.dataclass(frozen=True)
-class ProductRelation(Relation):
+class ProductRelation(Relation[_P]):
     """
     The cartesian product of two relations in relational algebra, denoted by X.
     """
 
-    left: PlanNode
+    left: _P
     """
     The lhs of the product relation.
     """
 
-    right: PlanNode
+    right: _P
     """
     The rhs of the product relation.
     """
@@ -58,11 +59,11 @@ class ProductRelation(Relation):
     keys: tuple[str, str]
     prod: Product
 
-    def accept(self, visitor: Relation.Visitor[_T]) -> _T:
+    def accept(self, visitor: RelationVisitor[_P, _T]) -> _T:
         return visitor.product(self)
 
     @property
-    def sources(self) -> tuple[PlanNode, PlanNode]:
+    def sources(self) -> tuple[_P, _P]:
         return self.left, self.right
 
     @property
@@ -71,15 +72,15 @@ class ProductRelation(Relation):
 
 
 @dcls.dataclass(frozen=True)
-class ConcatRelation(Relation):
-    left: PlanNode
-    right: PlanNode
+class ConcatRelation(Relation[_P]):
+    left: _P
+    right: _P
 
-    def accept(self, visitor: Relation.Visitor[_T]) -> _T:
+    def accept(self, visitor: RelationVisitor[_P, _T]) -> _T:
         return visitor.concat(self)
 
     @property
-    def sources(self) -> tuple[PlanNode, PlanNode]:
+    def sources(self) -> tuple[_P, _P]:
         return self.left, self.right
 
     @property
