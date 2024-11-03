@@ -19,7 +19,7 @@ class Walker(Protocol[_T, _E]):
         """
         Converts from the input (of a tree type) to an output.
 
-        Parameters:
+        Args
             tree: The root node of the tree object to convert.
 
         Returns:

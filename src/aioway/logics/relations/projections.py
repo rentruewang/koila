@@ -7,13 +7,14 @@ from typing import TypeVar
 from aioway.logics.dtypes import Schema
 
 from .nodes import PlanNode
-from .relations import Relation
+from .relations import Relation, RelationVisitor
 
 _T = TypeVar("_T")
+_P = TypeVar("_P", bound=PlanNode)
 
 
 @dcls.dataclass(frozen=True)
-class ProjectionRelation(Relation):
+class ProjectionRelation(Relation[_P]):
     """
     The projection operator in relational algebra, denoted by π.
 
@@ -22,10 +23,9 @@ class ProjectionRelation(Relation):
         This means somehow this has to be associated with a resolver,
         which adds a ``Resolver`` dependency to the ``Relation`` nodes.
         Unsure if that is the right call.
-        See #67
     """
 
-    prev: PlanNode
+    prev: _P
     """
     The table for which to project.
     """
@@ -39,11 +39,11 @@ class ProjectionRelation(Relation):
         if len(set(self.columns)) != len(self.columns):
             raise ValueError("Columns must be unique.")
 
-    def accept(self, visitor: Relation.Visitor[_T]) -> _T:
+    def accept(self, visitor: RelationVisitor[_P, _T]) -> _T:
         return visitor.project(self)
 
     @property
-    def sources(self) -> tuple[PlanNode]:
+    def sources(self) -> tuple[_P]:
         return (self.prev,)
 
     @property

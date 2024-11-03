@@ -7,7 +7,6 @@ from typer import Typer
 
 from aioway import common
 
-LOGGER = logging.getLogger(__name__)
 app = Typer(pretty_exceptions_enable=not common.compiled())
 
 

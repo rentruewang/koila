@@ -5,7 +5,7 @@ from typing import TypeVar
 
 from aioway.backend.volatile import Block, UnaryExec
 
-from .tables import Table
+from .tables import Table, TableVisitor
 
 _T = TypeVar("_T")
 
@@ -28,7 +28,7 @@ class MapTable(Table):
         block = self.table()
         return self.executor(block)
 
-    def accept(self, visitor: Table.Visitor[_T]) -> _T:
+    def accept(self, visitor: TableVisitor[_T]) -> _T:
         return visitor.map(self)
 
     @property

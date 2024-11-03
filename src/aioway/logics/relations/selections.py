@@ -7,18 +7,19 @@ from aioway.logics.dtypes import Schema
 from aioway.logics.exprs import Expr
 
 from .nodes import PlanNode
-from .relations import Relation
+from .relations import Relation, RelationVisitor
 
 _T = TypeVar("_T", covariant=True)
+_P = TypeVar("_P", bound=PlanNode)
 
 
 @dcls.dataclass(frozen=True)
-class SelectionRelation(Relation):
+class SelectionRelation(Relation[_P]):
     """
     The selection operator in relational algebra, denoted by σ.
     """
 
-    prev: PlanNode
+    prev: _P
     """
     The input data to filter.
     """
@@ -28,11 +29,11 @@ class SelectionRelation(Relation):
     Condition for filtering the inputs.
     """
 
-    def accept(self, visitor: Relation.Visitor[_T]) -> _T:
+    def accept(self, visitor: RelationVisitor[_P, _T]) -> _T:
         return visitor.select(self)
 
     @property
-    def sources(self) -> tuple[PlanNode]:
+    def sources(self) -> tuple[_P]:
         return (self.prev,)
 
     @property

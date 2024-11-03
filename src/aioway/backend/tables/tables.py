@@ -1,6 +1,7 @@
 # Copyright (c) 2024 RenChu Wang - All Rights Reserved
 
 import abc
+import dataclasses as dcls
 import operator
 import typing
 from abc import ABC
@@ -13,7 +14,6 @@ from aioway.backend.volatile import BinaryExec, Block, UnaryExec
 from aioway.logics import BinaryExpr, Expr, LeafExpr, Node, Schema, UnaryExpr
 
 if typing.TYPE_CHECKING:
-    from .caches import CachedTable
     from .joins import JoinTable
     from .maps import MapTable
     from .sources import SourceTable
@@ -21,6 +21,7 @@ if typing.TYPE_CHECKING:
 _T = TypeVar("_T", covariant=True)
 
 
+@dcls.dataclass(frozen=True)
 class Table(Node["Table"], ABC):
     """
     ``Table`` is the main physical abstraction of the project,
@@ -48,33 +49,17 @@ class Table(Node["Table"], ABC):
         This is important to represent for example
     """
 
-    class Visitor(Protocol[_T]):
-        def __call__(self, table: "Table", /) -> _T:
-            return table.accept(self)
-
-        @abc.abstractmethod
-        def source(self, table: "SourceTable") -> _T: ...
-
-        @abc.abstractmethod
-        def cache(self, table: "CachedTable", /) -> _T: ...
-
-        @abc.abstractmethod
-        def map(self, table: "MapTable", /) -> _T: ...
-
-        @abc.abstractmethod
-        def join(self, table: "JoinTable", /) -> _T: ...
-
     @abc.abstractmethod
     def __call__(self) -> Block: ...
 
     @abc.abstractmethod
-    def accept(self, visitor: Visitor[_T]) -> _T: ...
+    def accept(self, visitor: "TableVisitor[_T]") -> _T: ...
 
     def map(self, op: UnaryExec, /) -> "MapTable":
         """
         Map operation to transform current ``Table`` into another ``Table``.
 
-        Parameters:
+        Args
             op: A unary function.
 
         Returns:
@@ -89,7 +74,7 @@ class Table(Node["Table"], ABC):
         """
         Join operation to compute joins between 2 ``Table``s.
 
-        Parameters:
+        Args
             other: The other table.
             op: A binary operator.
 
@@ -101,25 +86,11 @@ class Table(Node["Table"], ABC):
 
         return JoinTable(op, self, other)
 
-    def cache(self) -> "CachedTable":
-        """
-        Cache the current table s.t. it can be used multiple times without re-evaluation.
-
-        Returns:
-            A table that can be evaluated into data.
-            This table can be safely called multiple times,
-            and would cache the computation s.t. subsequent calls are free.
-        """
-
-        from .caches import CachedTable
-
-        return CachedTable(self)
-
     def all(self) -> bool:
-        return self.cache().all()
+        return self.all()
 
     def any(self) -> bool:
-        return self.cache().all()
+        return self.all()
 
     def select(self, expr: Expr):
         from .maps import MapTable
@@ -201,3 +172,17 @@ def _index_for_select(block: Block, expr: Expr) -> Tensor:
 
             return binary(eval_left, eval_right)
     raise ValueError
+
+
+class TableVisitor(Protocol[_T]):
+    def visit(self, table: "Table", /) -> _T:
+        return table.accept(self)
+
+    @abc.abstractmethod
+    def source(self, table: "SourceTable") -> _T: ...
+
+    @abc.abstractmethod
+    def map(self, table: "MapTable", /) -> _T: ...
+
+    @abc.abstractmethod
+    def join(self, table: "JoinTable", /) -> _T: ...

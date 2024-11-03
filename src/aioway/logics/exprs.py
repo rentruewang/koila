@@ -17,41 +17,41 @@ class Expr(Node["Expr"], Protocol):
     ``Expr`` represents an expression tree.
 
     There are 3 types of expressions, ``LeafExpr``, ``UnaryExpr``, and ``BinaryExpr``,
-    correspond to differenet operators.
+    correspond to different operators.
 
     Todo:
         Right now, the operators in unary and binary expressions are just strings.
         While this is very flexible, it does not provide any guarantees.
         I would like to make this an enum of some sort.
-
     """
-
-    class Visitor(Protocol[_T]):
-        """
-        The visitor for ``Expr``.
-
-        Todo:
-            Perhaps ``Visitor`` should have 2 type arguments.
-        """
-
-        def __call__(self, expr: "Expr", /) -> _T:
-            return expr.accept(self)
-
-        @abc.abstractmethod
-        def leaf(self, expr: "LeafExpr", /) -> _T: ...
-
-        @abc.abstractmethod
-        def unary(self, expr: "UnaryExpr", /) -> _T: ...
-
-        @abc.abstractmethod
-        def binary(self, expr: "BinaryExpr", /) -> _T: ...
 
     @property
     @abc.abstractmethod
     def sources(self) -> Sequence["Expr"]: ...
 
     @abc.abstractmethod
-    def accept(self, visitor: Visitor[_T], /) -> _T: ...
+    def accept(self, visitor: "ExprVisitor[_T]", /) -> _T: ...
+
+
+class ExprVisitor(Protocol[_T]):
+    """
+    The visitor for ``Expr``.
+
+    Todo:
+        Perhaps ``Visitor`` should have 2 type arguments.
+    """
+
+    def visit(self, expr: "Expr", /) -> _T:
+        return expr.accept(self)
+
+    @abc.abstractmethod
+    def leaf(self, expr: "LeafExpr", /) -> _T: ...
+
+    @abc.abstractmethod
+    def unary(self, expr: "UnaryExpr", /) -> _T: ...
+
+    @abc.abstractmethod
+    def binary(self, expr: "BinaryExpr", /) -> _T: ...
 
 
 @typing.final
@@ -70,7 +70,7 @@ class LeafExpr(Expr, Generic[_E]):
     def sources(self) -> tuple[()]:
         return ()
 
-    def accept(self, visitor: Expr.Visitor[_T]) -> _T:
+    def accept(self, visitor: ExprVisitor[_T]) -> _T:
         return visitor.leaf(self)
 
 
@@ -95,7 +95,7 @@ class UnaryExpr(Expr):
     def sources(self) -> tuple[Expr]:
         return (self.operand,)
 
-    def accept(self, visitor: Expr.Visitor[_T]) -> _T:
+    def accept(self, visitor: ExprVisitor[_T]) -> _T:
         return visitor.unary(self)
 
 
@@ -125,5 +125,5 @@ class BinaryExpr(Expr):
     def sources(self) -> tuple[Expr, Expr]:
         return self.left, self.right
 
-    def accept(self, visitor: Expr.Visitor[_T]) -> _T:
+    def accept(self, visitor: ExprVisitor[_T]) -> _T:
         return visitor.binary(self)

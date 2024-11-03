@@ -7,7 +7,7 @@ from pandas import DataFrame
 
 from aioway.backend.volatile import Block
 
-from .tables import Table
+from .tables import Table, TableVisitor
 
 _T = TypeVar("_T")
 
@@ -24,7 +24,7 @@ class SourceTable(Table):
     def __call__(self) -> Block:
         return self.block
 
-    def accept(self, visitor: Table.Visitor[_T]) -> _T:
+    def accept(self, visitor: TableVisitor[_T]) -> _T:
         return visitor.source(self)
 
     @property

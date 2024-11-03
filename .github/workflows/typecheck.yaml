@@ -27,7 +27,7 @@ jobs:
         run: echo "$(pdm venv --path in-project)/bin" >> $GITHUB_PATH
 
       - name: 📦 Install type stubs
-        run: mypy --install-types --non-interactive
+        run: mypy src --install-types --non-interactive
 
       - name: 🏃 mypy
         run: mypy src

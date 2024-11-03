@@ -4,8 +4,8 @@ from .dtypes import (
     ArrayDtype,
     BoolDtype,
     DataType,
+    DataTypeVisitor,
     DtypeFactory,
-    DtypeLike,
     DynamicType,
     FloatDtype,
     IntDtype,
@@ -13,7 +13,7 @@ from .dtypes import (
     Schema,
     StrDtype,
 )
-from .exprs import BinaryExpr, Expr, LeafExpr, UnaryExpr
+from .exprs import BinaryExpr, Expr, ExprVisitor, LeafExpr, UnaryExpr
 from .relations import (
     BaseRelation,
     ConcatRelation,
@@ -22,6 +22,7 @@ from .relations import (
     ProductRelation,
     ProjectionRelation,
     Relation,
+    RelationVisitor,
     RenameRelation,
     SelectionRelation,
     TransformRelation,

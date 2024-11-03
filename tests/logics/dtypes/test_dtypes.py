@@ -3,15 +3,19 @@
 from aioway.logics import (
     ArrayDtype,
     BoolDtype,
-    DataType,
+    DataTypeVisitor,
     DtypeFactory,
     FloatDtype,
     IntDtype,
     StrDtype,
 )
+from aioway.logics.dtypes.dtypes import DataType
 
 
-class DtypeStringer(DataType.Visitor[str]):
+class DtypeStringer(DataTypeVisitor[str]):
+    def __call__(self, dtype: DataType) -> str:
+        return super().visit(dtype)
+
     def boolean(self, dtype: BoolDtype) -> str:
         _ = dtype
         return "bool"

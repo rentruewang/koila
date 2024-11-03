@@ -1,28 +1,19 @@
 # Copyright (c) 2024 RenChu Wang - All Rights Reserved
 
 import dataclasses as dcls
-import functools
 import logging
 import re
 from collections.abc import Sequence
-from re import Pattern
 from typing import NamedTuple, Self
 
-LOGGER = logging.getLogger(__name__)
+_LOGGER = logging.getLogger(__name__)
 
 _PARAMS = r"\w+"
 _PARAM_LIST = r"[\w,]*"
 _EINSUM = rf"({_PARAM_LIST})->({_PARAM_LIST})"
 
-
-@functools.cache
-def einsum_parser() -> Pattern:
-    return re.compile(_EINSUM)
-
-
-@functools.cache
-def einsum_params() -> Pattern:
-    return re.compile(_PARAMS)
+_EINSUM_PARSER = re.compile(_EINSUM)
+_EINSUM_PARAMS = re.compile(_PARAMS)
 
 
 class EinsumError(ValueError):
@@ -54,7 +45,7 @@ class EinsumExpr(NamedTuple):
         """
         Parse the einsum expression and keys.
 
-        Parameters:
+        Args
             einsum: The einsum formatted string.
 
         Returns:
@@ -64,12 +55,9 @@ class EinsumExpr(NamedTuple):
             EinsumError: If the keys do not match the einsum expression.
         """
 
-        LOGGER.debug("Parsing einsum expression, einsum=%s", einsum)
+        _LOGGER.debug("Parsing einsum expression, einsum=%s", einsum)
 
-        parser = einsum_parser()
-        params = einsum_params()
-
-        if (result := parser.match(einsum)) is None:
+        if (result := _EINSUM_PARSER.match(einsum)) is None:
             raise EinsumError(f"Invalid einsum expression: {einsum}.")
 
         if result.group() != einsum:
@@ -77,8 +65,8 @@ class EinsumExpr(NamedTuple):
 
         left_match, right_match = result.groups()
 
-        left: list[str] = params.findall(left_match)
-        right: list[str] = params.findall(right_match)
+        left: list[str] = _EINSUM_PARAMS.findall(left_match)
+        right: list[str] = _EINSUM_PARAMS.findall(right_match)
 
         return cls(left, right)
 
@@ -111,7 +99,9 @@ class Einsum:
         Compute the output shapes based on the einsum expression and the input shapes.
         """
 
-        LOGGER.debug("Computing einsum shapes. einsum=%s, keys=%s", self.einsum, shapes)
+        _LOGGER.debug(
+            "Computing einsum shapes. einsum=%s, keys=%s", self.einsum, shapes
+        )
 
         inputs = self.inputs
 

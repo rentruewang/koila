@@ -20,65 +20,20 @@ if typing.TYPE_CHECKING:
     from .views import ViewRelation
 
 _T = TypeVar("_T", covariant=True)
+_P = TypeVar("_P", bound=PlanNode)
 
 
-class Relation(Protocol):
+class Relation(Protocol[_P]):
     """
     The base class for all relations in the relational algebra.
     """
 
-    class Visitor(Protocol[_T]):
-        """
-        The visitor for ``Relation``s.
-
-        Currently supports the following types:
-
-        - ``Base``
-        - ``CartesianProduct``
-        - ``Projection``
-        - ``Rename``
-        - ``Selection``
-        - ``Transform``
-        - ``Union``
-        - ``View``
-        """
-
-        def __call__(self, relation: "Relation", /) -> _T:
-            return relation.accept(self)
-
-        @abc.abstractmethod
-        def base(self, relation: "BaseRelation", /) -> _T: ...
-
-        @abc.abstractmethod
-        def concat(self, relation: "ConcatRelation") -> _T: ...
-
-        @abc.abstractmethod
-        def product(self, relation: "ProductRelation", /) -> _T: ...
-
-        @abc.abstractmethod
-        def project(self, relation: "ProjectionRelation", /) -> _T: ...
-
-        @abc.abstractmethod
-        def rename(self, relation: "RenameRelation", /) -> _T: ...
-
-        @abc.abstractmethod
-        def select(self, relation: "SelectionRelation", /) -> _T: ...
-
-        @abc.abstractmethod
-        def transform(self, relation: "TransformRelation", /) -> _T: ...
-
-        @abc.abstractmethod
-        def union(self, relation: "UnionRelation", /) -> _T: ...
-
-        @abc.abstractmethod
-        def view(self, relation: "ViewRelation", /) -> _T: ...
-
     @abc.abstractmethod
-    def accept(self, visitor: "Relation.Visitor[_T]", /) -> _T: ...
+    def accept(self, visitor: "RelationVisitor[_P,_T]", /) -> _T: ...
 
     @property
     @abc.abstractmethod
-    def sources(self) -> Sequence[PlanNode]:
+    def sources(self) -> Sequence[_P]:
         """
         The previous tables the relation comes from.
         The sequence length is at least 1 ``Node``.
@@ -101,3 +56,50 @@ class Relation(Protocol):
         """
 
         ...
+
+
+class RelationVisitor(Protocol[_P, _T]):
+    """
+    The visitor for ``Relation``s.
+
+    Currently supports the following types:
+
+    - ``Base``
+    - ``CartesianProduct``
+    - ``Projection``
+    - ``Rename``
+    - ``Selection``
+    - ``Transform``
+    - ``Union``
+    - ``View``
+    """
+
+    def visit(self, relation: "Relation[_P]", /) -> _T:
+        return relation.accept(self)
+
+    @abc.abstractmethod
+    def base(self, relation: "BaseRelation[_P]", /) -> _T: ...
+
+    @abc.abstractmethod
+    def concat(self, relation: "ConcatRelation[_P]") -> _T: ...
+
+    @abc.abstractmethod
+    def product(self, relation: "ProductRelation[_P]", /) -> _T: ...
+
+    @abc.abstractmethod
+    def project(self, relation: "ProjectionRelation[_P]", /) -> _T: ...
+
+    @abc.abstractmethod
+    def rename(self, relation: "RenameRelation[_P]", /) -> _T: ...
+
+    @abc.abstractmethod
+    def select(self, relation: "SelectionRelation[_P]", /) -> _T: ...
+
+    @abc.abstractmethod
+    def transform(self, relation: "TransformRelation[_P]", /) -> _T: ...
+
+    @abc.abstractmethod
+    def union(self, relation: "UnionRelation[_P]", /) -> _T: ...
+
+    @abc.abstractmethod
+    def view(self, relation: "ViewRelation[_P]", /) -> _T: ...

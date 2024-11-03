@@ -4,7 +4,7 @@ import dataclasses as dcls
 import typing
 from typing import TypeVar
 
-from .dtypes import DataType
+from .dtypes import DataType, DataTypeVisitor
 
 _T = TypeVar("_T")
 
@@ -18,5 +18,5 @@ class StrDtype(DataType):
 
     length: int | None = None
 
-    def accept(self, visitor: DataType.Visitor[_T]) -> _T:
+    def accept(self, visitor: DataTypeVisitor[_T]) -> _T:
         return visitor.string(self)

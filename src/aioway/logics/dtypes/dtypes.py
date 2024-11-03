@@ -19,27 +19,28 @@ class DataType(ABC):
     """
     ``DataType`` is the base class of all ``aioway`` data types.
     It is an empty base class, designed to be extended by concrete classes
-    and used with `Dtype.Visitor`, acting like tagged unions.
+    and used with `DataTypeVisitor`, acting like tagged unions.
     """
 
-    class Visitor(Protocol[_T]):
-        def __call__(self, dtype: "DataType", /) -> _T:
-            return dtype.accept(self)
+    @abc.abstractmethod
+    def accept(self, visitor: "DataTypeVisitor[_T]", /) -> _T: ...
 
-        @abc.abstractmethod
-        def boolean(self, dtype: "BoolDtype", /) -> _T: ...
 
-        @abc.abstractmethod
-        def integer(self, dtype: "IntDtype", /) -> _T: ...
-
-        @abc.abstractmethod
-        def floating(self, dtype: "FloatDtype", /) -> _T: ...
-
-        @abc.abstractmethod
-        def array(self, dtype: "ArrayDtype", /) -> _T: ...
-
-        @abc.abstractmethod
-        def string(self, dtype: "StrDtype", /) -> _T: ...
+class DataTypeVisitor(Protocol[_T]):
+    def visit(self, dtype: "DataType", /) -> _T:
+        return dtype.accept(self)
 
     @abc.abstractmethod
-    def accept(self, visitor: Visitor[_T], /) -> _T: ...
+    def boolean(self, dtype: "BoolDtype", /) -> _T: ...
+
+    @abc.abstractmethod
+    def integer(self, dtype: "IntDtype", /) -> _T: ...
+
+    @abc.abstractmethod
+    def floating(self, dtype: "FloatDtype", /) -> _T: ...
+
+    @abc.abstractmethod
+    def array(self, dtype: "ArrayDtype", /) -> _T: ...
+
+    @abc.abstractmethod
+    def string(self, dtype: "StrDtype", /) -> _T: ...

@@ -4,7 +4,7 @@ import dataclasses as dcls
 import typing
 from typing import Literal, TypeVar
 
-from .dtypes import DataType
+from .dtypes import DataType, DataTypeVisitor
 
 _T = TypeVar("_T")
 
@@ -16,7 +16,7 @@ class BoolDtype(DataType):
     The boolean data type.
     """
 
-    def accept(self, visitor: DataType.Visitor[_T]) -> _T:
+    def accept(self, visitor: DataTypeVisitor[_T]) -> _T:
         return visitor.boolean(self)
 
 
@@ -29,7 +29,7 @@ class IntDtype(DataType):
 
     precision: Literal[8, 16, 32, 64] = 64
 
-    def accept(self, visitor: DataType.Visitor[_T]) -> _T:
+    def accept(self, visitor: DataTypeVisitor[_T]) -> _T:
         return visitor.integer(self)
 
 
@@ -42,5 +42,5 @@ class FloatDtype(DataType):
 
     precision: Literal[16, 32, 64] = 32
 
-    def accept(self, visitor: DataType.Visitor[_T]) -> _T:
+    def accept(self, visitor: DataTypeVisitor[_T]) -> _T:
         return visitor.floating(self)
