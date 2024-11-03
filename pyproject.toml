@@ -1,0 +1,73 @@
+[project]
+name = "aioway"
+version = "0.1.0"
+description = "AI on the way"
+authors = [
+    {name = "RenChu Wang", email = "patrick1031wang@gmail.com"},
+]
+maintainers = [
+    {name = "RenChu Wang", email = "patrick1031wang@gmail.com"},
+]
+dependencies = [
+    "lark>=1.1.9",
+    "networkx>=3.3",
+    "numpy>=2.0.0",
+    "torch>=2.2.2",
+    "typer>=0.12.3",
+    "pandas>=2.2.3",
+    "tensordict>=0.6.0",
+]
+
+requires-python = ">=3.11"
+readme = "README.md"
+license = {text = "X"}
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.scripts]
+aioway = "aioway.cli:app"
+
+[tool.autoflake]
+in-place = true
+recursive = true
+exclude = "__init__.py"
+expand-star-imports = true
+remove-all-unused-imports = true
+remove-duplicate-keys = true
+
+[tool.black]
+line-length = 88
+
+[tool.isort]
+profile = "black"
+
+[tool.mypy]
+show_error_codes = true
+exclude = "tests"
+
+# Skipping analysis for some modules because they are not typed.
+[[tool.mypy.overrides]]
+module = [
+    "networkx.*",
+    "sklearn.*",
+    "sympy.*",
+    "tensordict.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
+]
+
+
+[tool.pdm]
+[dependency-groups]
+format = ["autoflake>=2.3.1", "black>=24.10.0", "isort>=5.13.2"]
+type = ["mypy>=1.11.2", "pip>=24.3.1"]
+build = ["cython>=3.0.11", "ninja>=1.11.1.1", "nuitka>=2.4.11", "setuptools>=75.3.0"]
+website = ["jupyter>=1.1.1", "jupyter-book>=1.0.3", "myst-parser>=2.0.0", "sphinxcontrib-mermaid>=1.0.0"]
+test = ["coverage>=7.6.1", "pytest>=8.1.1", "pytest-cov>=5.0.0", "pytest-xdist>=3.5.0", "pytest-sugar>=1.0.0"]
+debug = ["ipython>=8.29.0", "rich>=13.7.1"]

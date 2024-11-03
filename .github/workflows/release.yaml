@@ -1,0 +1,36 @@
+name: Publish
+on: workflow_dispatch
+
+jobs:
+  pypi-publish:
+    name: ⬆️ Upload release to PyPI
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # IMPORTANT: this permission is mandatory for trusted publishing
+    steps:
+      - name: 🔔 Check out
+        uses: actions/checkout@v3
+
+      - name: 🏗️ python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: ⬇️ Python PDM
+        uses: pdm-project/setup-pdm@v4
+        with:
+          python-version: "3.12"
+          version: head
+          cache: true
+
+      - name: ⬇️ Python Dependencies
+        run: pdm sync -G:all
+
+      - name: 🚂 Activate environment
+        run: |
+          eval $(pdm venv activate)
+          echo PATH=$PATH >> $GITHUB_ENV
+
+      - name: 🚧 Building distributions.
+        run: pdm publish

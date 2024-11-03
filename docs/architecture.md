@@ -1,0 +1,4 @@
+# Architecture of Aioway
+
+```{mermaid}
+```
