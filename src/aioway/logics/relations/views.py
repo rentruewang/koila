@@ -6,32 +6,28 @@ from typing import TypeVar
 from aioway.logics.dtypes import Schema
 
 from .nodes import PlanNode
-from .relations import Relation
+from .relations import Relation, RelationVisitor
 
 _T = TypeVar("_T")
+_P = TypeVar("_P", bound=PlanNode)
 
 
 @dcls.dataclass(frozen=True)
-class ViewRelation(Relation):
+class ViewRelation(Relation[_P]):
     """
     View node represents a terminal node in the relations.
     """
 
-    prev: PlanNode
+    prev: _P
     """
     The node for which to perform viewing (most likely IO operation).
     """
 
-    unique: str
-    """
-    The name of the terminal resource location. Maybe a file.
-    """
-
-    def accept(self, visitor: Relation.Visitor[_T]) -> _T:
+    def accept(self, visitor: RelationVisitor[_P, _T]) -> _T:
         return visitor.view(self)
 
     @property
-    def sources(self) -> tuple[PlanNode]:
+    def sources(self) -> tuple[_P]:
         return (self.prev,)
 
     @property

@@ -17,7 +17,7 @@ class MapTransform(Mapping[_K, _T], Generic[_K, _V, _T]):
 
     def __init__(self, mapping: Mapping[_K, _V], proc: Callable[[_V], _T]) -> None:
         """
-        Parameters:
+        Args
             mapping: The mapping object to be viewed.
             proc: The function to be applied to the values of the mapping.
         """

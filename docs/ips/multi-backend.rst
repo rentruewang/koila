@@ -39,6 +39,30 @@ All of which is nullified if it has to synchronize with, say, a local numpy back
 **Therefore, what I'm doing here with the backends
 is closer to applying strategy pattern to all the functionality the platform provides.**
 
+Must mix different backends
+***************************
+
+If I must mix different backends, there are a couple of ways to achieve it.
+
+#. Every step in the pipeline can use a different backend.
+#. Only across *blocks* of code you can switch to a different backend.
+
+These 2 conditions are fundamentally very similar,
+the only difference being the frequency of the switch.
+
+I believe that the second one is superior.
+
+The first one would have the following options
+
+    #. Serialize at every single step, use a common format across all backends.
+    #. Use dynamic programming and serialize only when necessary.
+
+Needless to say, the second option is better and work with the *block* strategy as well.
+
+However, the block strategy as another advantage,
+which happens when only 1 backend is used.
+In which case, we do not even need to serialize at all.
+
 Data formats
 ************
 

@@ -18,7 +18,7 @@ class LazyStr(Stringer):
 
     def __init__(self, string: str | Stringer) -> None:
         """
-        Parameters:
+        Args
             string: The string production factory or a plain ``str``.
         """
 

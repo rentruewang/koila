@@ -7,13 +7,14 @@ from numbers import Number
 from typing import Any, Self
 
 import torch
+from pandas import Series
 from torch import Tensor
 
 from aioway.logics import DataType, DtypeFactory
 
 
 @dcls.dataclass(frozen=True)
-class Column:
+class Buffer:
     """
     ``Column`` represents a single column in the ``Block`` stored in memory.
     This is the core representation of an in-memory column data type.
@@ -77,12 +78,15 @@ class Column:
 
         # We want to leverage the existing operators implemented by ``TensorDict``,
         # since they support built-in types and other ``TensorDict``s, but not our types.
-        if not isinstance(other, Column):
+        if not isinstance(other, Buffer):
             operand = other
         else:
             operand = other.data
 
         return type(self)(op(self.data, operand))
+
+    def series(self) -> Series:
+        return Series(self.data.detach().cpu().numpy())
 
     @property
     def dtype(self) -> str | None:

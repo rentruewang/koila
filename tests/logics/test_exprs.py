@@ -2,12 +2,15 @@
 
 import dataclasses as dcls
 
-from aioway.logics import BinaryExpr, Expr, LeafExpr, UnaryExpr
+from aioway.logics import BinaryExpr, Expr, ExprVisitor, LeafExpr, UnaryExpr
 
 
 @dcls.dataclass(frozen=True)
-class Calculator(Expr.Visitor[float]):
+class Calculator(ExprVisitor[float]):
     base_vals: dict[str, float]
+
+    def __call__(self, expr: Expr) -> float:
+        return super().visit(expr)
 
     def leaf(self, expr: LeafExpr) -> float:
         value = expr.value

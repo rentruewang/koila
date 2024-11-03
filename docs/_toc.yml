@@ -1,10 +1,7 @@
 format: jb-book
 root: index
 parts:
-  - caption: Overview
-    chapters:
-    - file: architecture
-  - caption: Improvment Proposals
+  - caption: Improvement Proposals
     chapters:
     - file: ips/multi-backend
     - file: ips/data
@@ -14,3 +11,11 @@ parts:
     - file: ips/indexing
     - file: ips/models
     - file: ips/time-series
+    - file: ips/resolutions
+    - file: ips/training
+    - file: ips/scaling
+    - file: ips/misc
+  - caption: Contribution
+    chapters:
+    - file: contrib
+    - file: coc
