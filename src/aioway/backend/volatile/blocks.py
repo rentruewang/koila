@@ -14,7 +14,7 @@ from pandas import DataFrame
 from tensordict import TensorDict
 from tensordict.nn import TensorDictModule
 
-from aioway.logics import Schema
+from aioway.schemas import TableSchema
 
 from .buffers import Buffer
 
@@ -167,12 +167,12 @@ class Block(Mapping):
         return str(self.data.device) if self.data.device is not None else None
 
     @property
-    def schema(self) -> Schema:
+    def schema(self) -> TableSchema:
         """
         The schema type from the current block.
         """
 
-        return Schema.mapping({key: val.datatype for key, val in self.items()})
+        return TableSchema.mapping({key: val.datatype for key, val in self.items()})
 
     @property
     def batch_size(self) -> tuple[int, ...]:
