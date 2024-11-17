@@ -10,7 +10,7 @@ import torch
 from pandas import Series
 from torch import Tensor
 
-from aioway.logics import DataType, DtypeFactory
+from aioway.schemas import DataType, DataTypeEnum
 
 
 @dcls.dataclass(frozen=True)
@@ -107,10 +107,10 @@ class Buffer:
         """
 
         FROM_TORCH_DTYPE = {
-            torch.long: DtypeFactory.INT[64](),
-            torch.int: DtypeFactory.INT[32](),
-            torch.float: DtypeFactory.FLOAT[32](),
-            torch.double: DtypeFactory.FLOAT[64](),
-            torch.bool: DtypeFactory.BOOL(),
+            torch.long: DataTypeEnum.INT[64](),
+            torch.int: DataTypeEnum.INT[32](),
+            torch.float: DataTypeEnum.FLOAT[32](),
+            torch.double: DataTypeEnum.FLOAT[64](),
+            torch.bool: DataTypeEnum.BOOL(),
         }
         return FROM_TORCH_DTYPE[self.data.dtype]

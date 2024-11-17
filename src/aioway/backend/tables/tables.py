@@ -11,7 +11,9 @@ from typing import Protocol, TypeVar
 from torch import Tensor
 
 from aioway.backend.volatile import BinaryExec, Block, UnaryExec
-from aioway.logics import BinaryExpr, Expr, LeafExpr, Node, Schema, UnaryExpr
+from aioway.plans import Node
+from aioway.relalg import BinaryExpr, Expr, LeafExpr, UnaryExpr
+from aioway.schemas import TableSchema
 
 if typing.TYPE_CHECKING:
     from .joins import JoinTable
@@ -118,7 +120,7 @@ class Table(Node["Table"], ABC):
         return JoinTable(lambda left, right: left.union(right), self, other)
 
     @property
-    def schema(self) -> Schema:
+    def schema(self) -> TableSchema:
         return self().schema
 
 

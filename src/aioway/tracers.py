@@ -6,7 +6,7 @@ from collections.abc import Sequence
 import pandas as pd
 
 from aioway.backend import SourceTable, Table
-from aioway.logics import (
+from aioway.relalg import (
     BaseRelation,
     ConcatRelation,
     Expr,
@@ -16,12 +16,12 @@ from aioway.logics import (
     Relation,
     RelationVisitor,
     RenameRelation,
-    Schema,
     SelectionRelation,
     TransformRelation,
     UnionRelation,
     ViewRelation,
 )
+from aioway.schemas import TableSchema
 
 
 @dcls.dataclass(frozen=True)
@@ -36,7 +36,7 @@ class Tracer:
     relation: Relation["Tracer"]
 
     @property
-    def schema(self) -> Schema:
+    def schema(self) -> TableSchema:
         return self.relation.schema
 
     @property
@@ -60,7 +60,7 @@ class Tracer:
     def select(self, expr: Expr) -> "Tracer":
         return type(self)(SelectionRelation(self, expr))
 
-    def transform(self, to: Schema) -> "Tracer":
+    def transform(self, to: TableSchema) -> "Tracer":
         return type(self)(TransformRelation(self, to))
 
     def union(self, other: "Tracer") -> "Tracer":
@@ -70,7 +70,7 @@ class Tracer:
         return type(self)(ViewRelation(self))
 
     @classmethod
-    def source(cls, schema: Schema, filename: str) -> "Tracer":
+    def source(cls, schema: TableSchema, filename: str) -> "Tracer":
         return cls(BaseRelation(schema, filename))
 
     def table(self) -> Table:
