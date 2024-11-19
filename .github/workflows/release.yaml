@@ -1,5 +1,8 @@
 name: Publish
-on: workflow_dispatch
+on:
+  push:
+    tags:
+      - v*
 
 jobs:
   pypi-publish:
@@ -17,20 +20,17 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: ⬇️ Python PDM
-        uses: pdm-project/setup-pdm@v4
+      - name: ⬇️ Python Poetry
+        uses: snok/install-poetry@v1
         with:
-          python-version: "3.12"
-          version: head
-          cache: true
+          version: 1.8.4
+          installer-parallel: true
 
       - name: ⬇️ Python Dependencies
-        run: pdm sync -G:all
+        run: poetry install --sync
 
-      - name: 🚂 Activate environment
-        run: |
-          eval $(pdm venv activate)
-          echo PATH=$PATH >> $GITHUB_ENV
+      - name: 🪶 Build with poetry
+        run: poetry build
 
-      - name: 🚧 Building distributions.
-        run: pdm publish
+      - name: 📰 Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1

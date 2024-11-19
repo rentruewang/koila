@@ -13,21 +13,17 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: ⬇️ Python PDM
-        uses: pdm-project/setup-pdm@v4
+      - name: ⬇️ Python Poetry
+        uses: snok/install-poetry@v1
         with:
-          python-version: "3.12"
-          version: head
-          cache: true
+          version: 1.8.4
+          installer-parallel: true
 
       - name: ⬇️ Python Dependencies
-        run: pdm sync -G:all
-
-      - name: 🚂 Activate environment
-        run: echo "$(pdm venv --path in-project)/bin" >> $GITHUB_PATH
+        run: poetry install --sync
 
       - name: 📦 Install type stubs
-        run: mypy src --install-types --non-interactive
+        run: poetry run mypy . --install-types --non-interactive
 
       - name: 🏃 mypy
-        run: mypy src
+        run: poetry run mypy .

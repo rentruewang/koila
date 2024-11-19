@@ -17,10 +17,9 @@ sphinx:
     sphinx.ext.githubpages,
     sphinx.ext.todo,
     sphinx.ext.viewcode,
-    sphinxcontrib.mermaid,
   ]
   config:
-    myst_fence_as_directive: [mermaid]
+    myst_fence_as_directive: []
     autosectionlabel_prefix_document: true
     todo_include_todos: true
     intersphinx_mapping:
