@@ -4,7 +4,7 @@ import pytest
 from pandas import DataFrame
 from tensordict import TensorDict
 
-from aioway.backend import Block
+from aioway.blocks import Block
 
 
 @pytest.fixture

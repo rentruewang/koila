@@ -5,7 +5,6 @@ from types import NoneType
 
 import pytest
 
-from aioway.compilers import Compiler
 from aioway.previews import Info, Preview, Registry
 from aioway.relalg import Relation
 from aioway.schemas import DataTypeEnum, Einsum
@@ -14,11 +13,6 @@ from aioway.schemas import DataTypeEnum, Einsum
 @pytest.fixture(scope="function")
 def registry() -> Registry[None]:
     return Registry[None]()
-
-
-@pytest.fixture(scope="function")
-def compiler(registry):
-    return Compiler(registry)
 
 
 @dcls.dataclass(frozen=True)
