@@ -13,20 +13,14 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: ⬇️ Python PDM
-        uses: pdm-project/setup-pdm@v4
+      - name: ⬇️ Python Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.8.4
+          installer-parallel: true
 
       - name: ⬇️ Python Dependencies
-        run: pdm install -G:all
-
-      - name: 🚂 Activate environment
-        run: echo "$(pdm venv --path in-project)/bin" >> $GITHUB_PATH
+        run: poetry install --sync
 
       - name: 🏃 pytest
-        run: pytest -xv
-
-      # - name: 🏃 pytest
-      #   run: coverage run -m pytest -v
-
-      # - name: 📊 coverage
-      #   run: coverage report -m
+        run: poetry run pytest -xv
