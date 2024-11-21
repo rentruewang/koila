@@ -13,19 +13,17 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: ⬇️ Python PDM
-        uses: pdm-project/setup-pdm@v4
+      - name: ⬇️ Python Poetry
+        uses: snok/install-poetry@v1
         with:
-          python-version: "3.10"
+          version: 1.8.4
+          installer-parallel: true
 
       - name: ⬇️ Python Dependencies
-        run: pdm install -G:all
-
-      - name: 🚂 Activate environment
-        run: echo "$(pdm venv --path in-project)/bin" >> $GITHUB_PATH
+        run: poetry install --sync
 
       - name: 🚧 Jupyter build
-        run: jupyter book build docs
+        run: poetry run jupyter book build docs
 
       - name: 📰 Publish docs
         uses: JamesIves/github-pages-deploy-action@v4
