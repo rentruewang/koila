@@ -23,7 +23,7 @@ jobs:
         run: poetry install --sync
 
       - name: 📦 Install type stubs
-        run: poetry run mypy src --install-types --non-interactive
+        run: poetry run mypy . --install-types --non-interactive
 
       - name: 🏃 mypy
-        run: poetry run mypy src
+        run: poetry run mypy .

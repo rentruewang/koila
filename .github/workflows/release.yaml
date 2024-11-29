@@ -1,5 +1,8 @@
 name: Publish
-on: workflow_dispatch
+on:
+  push:
+    tags:
+      - v*
 
 jobs:
   pypi-publish:
@@ -26,5 +29,8 @@ jobs:
       - name: ⬇️ Python Dependencies
         run: poetry install --sync
 
-      - name: 🚧 Building distributions.
-        run: poetry publish --build
+      - name: 🪶 Build with poetry
+        run: poetry build
+
+      - name: 📰 Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
