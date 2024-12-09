@@ -1,20 +1,17 @@
-# Copyright (c) 2024 RenChu Wang - All Rights Reserved
+# Copyright (c) RenChu Wang - All Rights Reserved
 
 import abc
 import dataclasses as dcls
 import typing
 from collections.abc import Sequence
-from typing import Generic, Protocol, TypeVar
+from typing import Protocol
 
 from aioway.plans import Node
 
 __all__ = ["BinaryExpr", "Expr", "ExprVisitor", "LeafExpr", "UnaryExpr"]
 
-T = TypeVar("T", covariant=True)
-E = TypeVar("E", covariant=True)
 
-
-class Expr(Node["Expr"], Protocol):
+class Expr[T](Node["Expr"], Protocol):
     """
     ``Expr`` represents an expression tree.
 
@@ -35,7 +32,7 @@ class Expr(Node["Expr"], Protocol):
     def accept(self, visitor: "ExprVisitor[T]", /) -> T: ...
 
 
-class ExprVisitor(Protocol[T]):
+class ExprVisitor[T](Protocol):
     """
     The visitor for ``Expr``.
 
@@ -58,7 +55,7 @@ class ExprVisitor(Protocol[T]):
 
 @typing.final
 @dcls.dataclass(frozen=True)
-class LeafExpr(Expr, Generic[E]):
+class LeafExpr[E, T](Expr):
     """
     Leaf node in an expression.
     """
@@ -97,7 +94,7 @@ class UnaryExpr(Expr):
     def sources(self) -> tuple[Expr]:
         return (self.operand,)
 
-    def accept(self, visitor: ExprVisitor[T]) -> T:
+    def accept[T](self, visitor: ExprVisitor[T]) -> T:
         return visitor.unary(self)
 
 
@@ -127,5 +124,5 @@ class BinaryExpr(Expr):
     def sources(self) -> tuple[Expr, Expr]:
         return self.left, self.right
 
-    def accept(self, visitor: ExprVisitor[T]) -> T:
+    def accept[T](self, visitor: ExprVisitor[T]) -> T:
         return visitor.binary(self)

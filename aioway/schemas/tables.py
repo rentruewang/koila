@@ -1,4 +1,4 @@
-# Copyright (c) 2024 RenChu Wang - All Rights Reserved
+# Copyright (c) RenChu Wang - All Rights Reserved
 
 import dataclasses as dcls
 import itertools
@@ -71,17 +71,17 @@ class TableSchema(Mapping[str, DataType]):
         return type(self).iterable(itertools.chain(self.columns, other.columns))
 
     @property
-    def names(self) -> Sequence[str]:
+    def names(self) -> list[str]:
         return [col.name for col in self.columns]
 
     @property
-    def dtypes(self) -> Sequence[DataType]:
+    def dtypes(self) -> list[DataType]:
         return [col.dtype for col in self.columns]
 
     def index(self, name: str):
         return self.names.index(name)
 
-    def ordered(self) -> Sequence[ColumnSchema]:
+    def ordered(self) -> list[ColumnSchema]:
         return sorted(self.columns, key=lambda c: c.name)
 
     @classmethod

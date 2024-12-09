@@ -1,9 +1,8 @@
-# Copyright (c) 2024 RenChu Wang - All Rights Reserved
+# Copyright (c) RenChu Wang - All Rights Reserved
 
 import logging
-from collections.abc import Callable
 from enum import Enum
-from typing import ParamSpec
+from typing import Any
 
 from .arrays import ArrayDtype
 from .primitives import BoolDtype, FloatDtype, IntDtype
@@ -11,7 +10,6 @@ from .types import DataType
 
 __all__ = ["DataTypeEnum"]
 
-P = ParamSpec("P")
 LOGGER = logging.getLogger(__name__)
 
 
@@ -45,13 +43,10 @@ class DataTypeEnum(Enum):
     and its dimensions are implicit (depending on the underlying data type).
     """
 
-    def __getitem__(self, *args: P.args, **kwargs: P.kwargs) -> Callable[[], DataType]:
+    def __call__(self, *args: Any, **kwargs: Any) -> DataType:
         LOGGER.debug(
             "Handle for %s with args = %s and kwargs = %s created.", self, args, kwargs
         )
 
         dtype = self.value
-        return lambda: dtype(*args, **kwargs)
-
-    def __call__(self) -> DataType:
-        return self.value()
+        return dtype(*args, **kwargs)

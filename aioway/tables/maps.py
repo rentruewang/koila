@@ -1,15 +1,11 @@
-# Copyright (c) 2024 RenChu Wang - All Rights Reserved
+# Copyright (c) RenChu Wang - All Rights Reserved
 
 import dataclasses as dcls
-from typing import TypeVar
 
-from aioway.blocks import Block, UnaryExec
-
+from .execs import UnaryExec
 from .tables import Table, TableVisitor
 
 __all__ = ["MapTable"]
-
-T = TypeVar("T")
 
 
 @dcls.dataclass(frozen=True)
@@ -26,11 +22,11 @@ class MapTable(Table):
     table: Table
     "The source of the current ``Table``."
 
-    def __call__(self) -> Block:
-        block = self.table()
-        return self.executor(block)
+    def __iter__(self):
+        for block in self.table:
+            yield self.executor(block)
 
-    def accept(self, visitor: TableVisitor[T]) -> T:
+    def accept[T](self, visitor: TableVisitor[T]) -> T:
         return visitor.map(self)
 
     @property

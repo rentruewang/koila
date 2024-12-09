@@ -1,4 +1,4 @@
-# Copyright (c) 2024 RenChu Wang - All Rights Reserved
+# Copyright (c) RenChu Wang - All Rights Reserved
 
 import abc
 import dataclasses as dcls
@@ -6,15 +6,13 @@ import functools
 import operator
 import typing
 from abc import ABC
-from typing import Protocol, TypeVar
+from typing import Protocol
 
 if typing.TYPE_CHECKING:
     from .arrays import ArrayDtype
     from .primitives import BoolDtype, FloatDtype, IntDtype
 
 __all__ = ["DataType", "DataTypeVisitor"]
-
-T = TypeVar("T", covariant=True)
 
 
 @dcls.dataclass(eq=False, frozen=True)
@@ -40,7 +38,7 @@ class DataType(ABC):
     @abc.abstractmethod
     def __repr__(self) -> str: ...
     @abc.abstractmethod
-    def accept(self, visitor: "DataTypeVisitor[T]", /) -> T: ...
+    def accept[T](self, visitor: "DataTypeVisitor[T]", /) -> T: ...
 
     @abc.abstractmethod
     def _size(self) -> tuple[int, ...]: ...
@@ -88,7 +86,7 @@ class DataType(ABC):
         return self._size()
 
 
-class DataTypeVisitor(Protocol[T]):
+class DataTypeVisitor[T](Protocol):
     def visit(self, dtype: "DataType", /) -> T:
         return dtype.accept(self)
 

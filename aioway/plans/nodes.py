@@ -1,31 +1,13 @@
-# Copyright (c) 2024 RenChu Wang - All Rights Reserved
+# Copyright (c) RenChu Wang - All Rights Reserved
 
 import abc
 from collections.abc import Sequence
-from typing import ClassVar, Protocol, TypeVar
+from typing import ClassVar, Protocol
 
 __all__ = ["Node"]
 
-T = TypeVar("T", bound="Node", covariant=True)
-"""
-The type variable for the ``Node`` protocol.
-Since some of the ``Node`` subclass would be purely abstract,
-using ``Self`` as type here doesn't work.
-Therefore, the ``T`` type variable is introduced.
 
-For example, ``Self`` type wouldn't have worked with the following:
-
->>> class Compute(Engine):
-...    sources: list[Storage]
-
->>> class Storage(Engine):
-...     sources: list[Compute]
-
->>> engine: Engine = ...
-"""
-
-
-class Node(Protocol[T]):
+class Node[T: "Node"](Protocol):
     """
     ``Node`` is a protocol that represents a node in a graph.
 

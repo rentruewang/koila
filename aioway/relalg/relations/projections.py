@@ -1,17 +1,17 @@
-# Copyright (c) 2024 RenChu Wang - All Rights Reserved
+# Copyright (c) RenChu Wang - All Rights Reserved
 
 import dataclasses as dcls
 from collections.abc import Sequence
 
 from aioway.schemas import TableSchema
 
-from .relations import P, Relation, RelationVisitor, T
+from .relations import Relation, RelationVisitor, RelNode
 
 __all__ = ["ProjectionRelation"]
 
 
 @dcls.dataclass(frozen=True)
-class ProjectionRelation(Relation[P]):
+class ProjectionRelation[P: RelNode](Relation[P]):
     """
     The projection operator in relational algebra, denoted by π.
 
@@ -36,7 +36,7 @@ class ProjectionRelation(Relation[P]):
         if len(set(self.columns)) != len(self.columns):
             raise ValueError("Columns must be unique.")
 
-    def accept(self, visitor: RelationVisitor[P, T]) -> T:
+    def accept[T](self, visitor: RelationVisitor[P, T]) -> T:
         return visitor.project(self)
 
     @property

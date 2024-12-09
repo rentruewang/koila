@@ -1,17 +1,17 @@
-# Copyright (c) 2024 RenChu Wang - All Rights Reserved
+# Copyright (c) RenChu Wang - All Rights Reserved
 
 import dataclasses as dcls
 from collections.abc import Mapping
 
 from aioway.schemas import TableSchema
 
-from .relations import P, Relation, RelationVisitor, T
+from .relations import Relation, RelationVisitor, RelNode
 
 __all__ = ["RenameRelation"]
 
 
 @dcls.dataclass(frozen=True)
-class RenameRelation(Relation[P]):
+class RenameRelation[P: RelNode](Relation[P]):
     """
     The rename operator in relational algebra, denoted by ρ.
 
@@ -31,7 +31,7 @@ class RenameRelation(Relation[P]):
     The column rename mapping.
     """
 
-    def accept(self, visitor: RelationVisitor[P, T]) -> T:
+    def accept[T](self, visitor: RelationVisitor[P, T]) -> T:
         return visitor.rename(self)
 
     @property

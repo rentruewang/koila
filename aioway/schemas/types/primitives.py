@@ -1,14 +1,12 @@
-# Copyright (c) 2024 RenChu Wang - All Rights Reserved
+# Copyright (c) RenChu Wang - All Rights Reserved
 
 import dataclasses as dcls
 import typing
-from typing import Literal, TypeVar
+from typing import Literal
 
 from .types import DataType, DataTypeVisitor
 
 __all__ = ["BoolDtype", "FloatDtype", "IntDtype"]
-
-T = TypeVar("T")
 
 
 @dcls.dataclass(eq=False, frozen=True, repr=False)
@@ -30,7 +28,7 @@ class BoolDtype(PrimitiveDtype):
     def bytes(self) -> int:
         return 1
 
-    def accept(self, visitor: DataTypeVisitor[T]) -> T:
+    def accept[T](self, visitor: DataTypeVisitor[T]) -> T:
         return visitor.boolean(self)
 
 
@@ -49,7 +47,7 @@ class IntDtype(PrimitiveDtype):
     def bytes(self) -> int:
         return self.precision // 8
 
-    def accept(self, visitor: DataTypeVisitor[T]) -> T:
+    def accept[T](self, visitor: DataTypeVisitor[T]) -> T:
         return visitor.integer(self)
 
 
@@ -68,5 +66,5 @@ class FloatDtype(PrimitiveDtype):
     def bytes(self) -> int:
         return self.precision // 8
 
-    def accept(self, visitor: DataTypeVisitor[T]) -> T:
+    def accept[T](self, visitor: DataTypeVisitor[T]) -> T:
         return visitor.floating(self)

@@ -1,16 +1,16 @@
-# Copyright (c) 2024 RenChu Wang - All Rights Reserved
+# Copyright (c) RenChu Wang - All Rights Reserved
 
 import dataclasses as dcls
 
 from aioway.schemas import TableSchema
 
-from .relations import P, Relation, RelationVisitor, T
+from .relations import Relation, RelationVisitor, RelNode
 
 __all__ = ["TransformRelation"]
 
 
 @dcls.dataclass(frozen=True)
-class TransformRelation(Relation[P]):
+class TransformRelation[P: RelNode](Relation[P]):
     """
     The transform operator, unique to ``aioway``, denoted by λ.
     """
@@ -25,7 +25,7 @@ class TransformRelation(Relation[P]):
     The output format.
     """
 
-    def accept(self, visitor: RelationVisitor[P, T]) -> T:
+    def accept[T](self, visitor: RelationVisitor[P, T]) -> T:
         return visitor.transform(self)
 
     @property
