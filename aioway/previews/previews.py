@@ -1,17 +1,12 @@
-# Copyright (c) 2024 RenChu Wang - All Rights Reserved
+# Copyright (c) RenChu Wang - All Rights Reserved
 
 import dataclasses as dcls
 from collections.abc import Callable
-from typing import Generic, TypeVar
 
 from aioway.relalg import Relation
-from aioway.schemas import DataType
-
-from ..schemas.shapes import EinsumError
+from aioway.schemas import DataType, EinsumError
 
 __all__ = ["Info", "Preview"]
-
-T = TypeVar("T")
 
 
 @dcls.dataclass(frozen=True)
@@ -36,7 +31,7 @@ class Info:
 
 
 @dcls.dataclass(frozen=True)
-class Preview(Generic[T]):
+class Preview[T]:
     relation: type[Relation]
     """
     The relation for which this preview module is for.

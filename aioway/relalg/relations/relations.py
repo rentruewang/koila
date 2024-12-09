@@ -1,9 +1,9 @@
-# Copyright (c) 2024 RenChu Wang - All Rights Reserved
+# Copyright (c) RenChu Wang - All Rights Reserved
 
 import abc
 import typing
 from collections.abc import Sequence
-from typing import Protocol, TypeVar
+from typing import Protocol
 
 from aioway.schemas import TableSchema
 
@@ -21,17 +21,14 @@ if typing.TYPE_CHECKING:
 
 __all__ = ["Relation", "RelationVisitor"]
 
-T = TypeVar("T", covariant=True)
-P = TypeVar("P", bound=RelNode)
 
-
-class Relation(Protocol[P]):
+class Relation[P: RelNode](Protocol):
     """
     The base class for all relations in the relational algebra.
     """
 
     @abc.abstractmethod
-    def accept(self, visitor: "RelationVisitor[P, T]", /) -> T: ...
+    def accept[T](self, visitor: "RelationVisitor[P, T]", /) -> T: ...
 
     @property
     @abc.abstractmethod
@@ -60,7 +57,7 @@ class Relation(Protocol[P]):
         ...
 
 
-class RelationVisitor(Protocol[P, T]):
+class RelationVisitor[P: RelNode, T](Protocol):
     """
     The visitor for ``Relation``s.
 

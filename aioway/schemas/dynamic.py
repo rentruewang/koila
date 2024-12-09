@@ -1,16 +1,14 @@
-# Copyright (c) 2024 RenChu Wang - All Rights Reserved
+# Copyright (c) RenChu Wang - All Rights Reserved
 
 import abc
 import typing
-from typing import Protocol, TypeVar
+from typing import Protocol
 
 __all__ = ["DynamicType"]
 
-T = TypeVar("T", covariant=True)
-
 
 @typing.runtime_checkable
-class DynamicType(Protocol[T]):
+class DynamicType[T](Protocol):
     """
     ``DynamicType`` is a protocol that carries its typing information at runtime.
     Due to Python's typing information being discarded at runtime,

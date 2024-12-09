@@ -1,19 +1,16 @@
-# Copyright (c) 2024 RenChu Wang - All Rights Reserved
+# Copyright (c) RenChu Wang - All Rights Reserved
 
 import dataclasses as dcls
-from typing import TypeVar
+import itertools
 
-from aioway.blocks import BinaryExec, Block
-
+from .execs import BinaryExec
 from .tables import Table, TableVisitor
 
-__all__ = ["JoinTable"]
-
-T = TypeVar("T")
+__all__ = ["CartesianTable"]
 
 
 @dcls.dataclass(frozen=True)
-class JoinTable(Table):
+class CartesianTable(Table):
     """
     ``JoinTable`` is a ``Table`` that depends on 2 ``Table``s.
     For example, products in relational algebra can be implemented using a ``JoinTable``.
@@ -28,14 +25,12 @@ class JoinTable(Table):
     right: Table
     "The right ``Table`` operator."
 
-    def __call__(self) -> Block:
-        l = self.left()
-        r = self.right()
-        output = self.executor(l, r)
-        return output
+    def __iter__(self):
+        for l, r in itertools.product(self.left, self.right):
+            yield self.executor(l, r)
 
-    def accept(self, visitor: TableVisitor[T]) -> T:
-        return visitor.join(self)
+    def accept[T](self, visitor: TableVisitor[T]) -> T:
+        return visitor.cartesian(self)
 
     @property
     def sources(self) -> tuple[Table, Table]:

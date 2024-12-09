@@ -1,4 +1,4 @@
-# Copyright (c) 2024 RenChu Wang - All Rights Reserved
+# Copyright (c) RenChu Wang - All Rights Reserved
 
 import dataclasses as dcls
 import enum
@@ -6,7 +6,7 @@ from enum import StrEnum
 
 from aioway.schemas import TableSchema
 
-from .relations import P, Relation, RelationVisitor, T
+from .relations import Relation, RelationVisitor, RelNode
 
 __all__ = ["ConcatRelation", "Product", "ProductRelation"]
 
@@ -38,7 +38,7 @@ class Product(StrEnum):
 
 
 @dcls.dataclass(frozen=True)
-class ProductRelation(Relation[P]):
+class ProductRelation[P: RelNode](Relation[P]):
     """
     The cartesian product of two relations in relational algebra, denoted by X.
     """
@@ -56,7 +56,7 @@ class ProductRelation(Relation[P]):
     keys: tuple[str, str]
     prod: Product
 
-    def accept(self, visitor: RelationVisitor[P, T]) -> T:
+    def accept[T](self, visitor: RelationVisitor[P, T]) -> T:
         return visitor.product(self)
 
     @property
@@ -69,11 +69,11 @@ class ProductRelation(Relation[P]):
 
 
 @dcls.dataclass(frozen=True)
-class ConcatRelation(Relation[P]):
+class ConcatRelation[P: RelNode](Relation[P]):
     left: P
     right: P
 
-    def accept(self, visitor: RelationVisitor[P, T]) -> T:
+    def accept[T](self, visitor: RelationVisitor[P, T]) -> T:
         return visitor.concat(self)
 
     @property

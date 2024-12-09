@@ -1,27 +1,28 @@
-# Copyright (c) 2024 RenChu Wang - All Rights Reserved
+# Copyright (c) RenChu Wang - All Rights Reserved
 
 import abc
 import dataclasses as dcls
 import operator
 import typing
 from abc import ABC
-from collections.abc import Callable
-from typing import Protocol, TypeVar
+from collections.abc import Callable, Iterator
+from typing import Protocol
 
 from torch import Tensor
 
-from aioway.blocks import BinaryExec, Block, UnaryExec
+from aioway.blocks import TensorBlock
 from aioway.plans import Node
 from aioway.relalg import BinaryExpr, Expr, LeafExpr, UnaryExpr
 
+from .execs import BinaryExec, UnaryExec
+
 if typing.TYPE_CHECKING:
-    from .joins import JoinTable
+    from .cartesian import CartesianTable
+    from .linear import LinearTable
     from .maps import MapTable
-    from .sources import SourceTable
+    from .zips import ZipTable
 
 __all__ = ["Table", "TableVisitor"]
-
-T = TypeVar("T", covariant=True)
 
 
 @dcls.dataclass(frozen=True)
@@ -29,10 +30,11 @@ class Table(Node["Table"], ABC):
     """
     ``Table`` is the main physical abstraction of the project,
     not only capturing symbolic relationships like ``PlanNode`` does,
-    but also stores iteration logic and computation between different nodes.
+    but also stores iteration logic and computation between different nodes,
+    as well as interacting with models and performing I/O operation.
 
     It is somewhat similar to RDD in spark,
-    except the abstraction is not a partitioned list, but rather an iterable.
+    except the abstraction is not a partitioned list.
 
     This is due to the format being most similar to most machine learning workflows,
     where most models follow a batched pattern because of the size of the dataset.
@@ -47,16 +49,25 @@ class Table(Node["Table"], ABC):
 
         Think about how to expand this into streaming contexts.
 
+    Note:
+        I was thinking whether or not ``Table`` handles too many things, however,
+        I decided to proceed because this approach is adopted by most other libraries,
+        including a few key libraries that ``aioway`` depends on,
+        like ``torch.nn.Module`` acting differently on 1 node vs in distributed settings.
+        Similarly, ``spark``'s ``RDD``s also handle data and computation this way, ``ibis`` as well.
+
+    Todo:
+        Reduce the number of member functions by using mixins.
+
     Todo:
         ``Table``s should possibly also have their own states.
-        This is important to represent for example
     """
 
     @abc.abstractmethod
-    def __call__(self) -> Block: ...
+    def __iter__(self) -> Iterator[TensorBlock]: ...
 
     @abc.abstractmethod
-    def accept(self, visitor: "TableVisitor[T]") -> T: ...
+    def accept[T](self, visitor: "TableVisitor[T]") -> T: ...
 
     def map(self, op: UnaryExec, /) -> "MapTable":
         """
@@ -73,7 +84,7 @@ class Table(Node["Table"], ABC):
 
         return MapTable(op, self)
 
-    def join(self, other: "Table", op: BinaryExec, /) -> "JoinTable":
+    def join(self, other: "Table", op: BinaryExec, /) -> "CartesianTable":
         """
         Join operation to compute joins between 2 ``Table``s.
 
@@ -85,9 +96,9 @@ class Table(Node["Table"], ABC):
             A table that can be evaluated into data.
         """
 
-        from .joins import JoinTable
+        from .cartesian import CartesianTable
 
-        return JoinTable(op, self, other)
+        return CartesianTable(op, self, other)
 
     def all(self) -> bool:
         return self.all()
@@ -110,22 +121,22 @@ class Table(Node["Table"], ABC):
 
         return MapTable(lambda block: block.rename(*renames), self)
 
-    def concat(self, other: "Table") -> "JoinTable":
-        from .joins import JoinTable
+    def concat(self, other: "Table") -> "CartesianTable":
+        from .cartesian import CartesianTable
 
-        return JoinTable(lambda left, right: left.concat(right), self, other)
+        return CartesianTable(lambda left, right: left.concat(right), self, other)
 
-    def union(self, other: "Table") -> "JoinTable":
-        from .joins import JoinTable
+    def union(self, other: "Table") -> "CartesianTable":
+        from .cartesian import CartesianTable
 
-        return JoinTable(lambda left, right: left.union(right), self, other)
+        return CartesianTable(lambda left, right: left.union(right), self, other)
 
 
-def _index_for_select(block: Block, expr: Expr) -> Tensor:
+def _index_for_select(block: TensorBlock, expr: Expr) -> Tensor:
 
     match expr:
         case LeafExpr(value):
-            if isinstance(value, str) and value in block.schema:
+            if isinstance(value, str) and value in block.schema():
                 return block.data[value]
             raise KeyError
         case UnaryExpr(op, operand):
@@ -173,15 +184,18 @@ def _index_for_select(block: Block, expr: Expr) -> Tensor:
     raise ValueError
 
 
-class TableVisitor(Protocol[T]):
+class TableVisitor[T](Protocol):
     def visit(self, table: "Table", /) -> T:
         return table.accept(self)
 
     @abc.abstractmethod
-    def source(self, table: "SourceTable") -> T: ...
+    def cartesian(self, table: "CartesianTable", /) -> T: ...
+
+    @abc.abstractmethod
+    def linear(self, table: "LinearTable") -> T: ...
 
     @abc.abstractmethod
     def map(self, table: "MapTable", /) -> T: ...
 
     @abc.abstractmethod
-    def join(self, table: "JoinTable", /) -> T: ...
+    def zip(self, table: "ZipTable", /) -> T: ...

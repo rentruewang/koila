@@ -8,6 +8,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.12"
+faiss-cpu = "^1.9.0.post1"
 ibis = "^3.3.0"
 lark = "^1.2.2"
 numpy = "^2.1.3"
@@ -23,7 +24,6 @@ autoflake = "^2.3.1"
 black = "^24.10.0"
 coverage = "^7.6.7"
 Cython = "^3.0.11"
-faker = "^33.1.0"
 ipython = "^8.29.0"
 isort = "^5.13.2"
 jupyter = "^1.1.1"
@@ -58,10 +58,12 @@ profile = "black"
 [tool.mypy]
 show_error_codes = true
 exclude = "tests"
+check_untyped_defs = true
 
 # Skipping analysis for some modules because they are not typed.
 [[tool.mypy.overrides]]
 module = [
+    "faiss.*",
     "tensordict.*",
 ]
 ignore_missing_imports = true
