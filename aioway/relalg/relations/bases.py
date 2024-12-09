@@ -1,16 +1,17 @@
-# Copyright (c) 2024 RenChu Wang - All Rights Reserved
+# Copyright (c) RenChu Wang - All Rights Reserved
 
 import dataclasses as dcls
 
 from aioway.schemas import TableSchema
 
-from .relations import P, Relation, RelationVisitor, T
+from .nodes import RelNode
+from .relations import Relation, RelationVisitor
 
 __all__ = ["BaseRelation"]
 
 
 @dcls.dataclass(frozen=True)
-class BaseRelation(Relation[P]):
+class BaseRelation[P: RelNode](Relation[P]):
     """
     Base class represents concrete / source data.
     """
@@ -26,7 +27,7 @@ class BaseRelation(Relation[P]):
     The resource locator of this relation.
     """
 
-    def accept(self, visitor: RelationVisitor[P, T]) -> T:
+    def accept[T](self, visitor: RelationVisitor[P, T]) -> T:
         return visitor.base(self)
 
     @property

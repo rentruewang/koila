@@ -1,17 +1,14 @@
-# Copyright (c) 2024 RenChu Wang - All Rights Reserved
+# Copyright (c) RenChu Wang - All Rights Reserved
 
 import abc
-from typing import Protocol, TypeVar
+from typing import Protocol
 
 from .nodes import Node
 
 __all__ = ["Walker"]
 
-T = TypeVar("T", bound=Node, contravariant=True)
-E = TypeVar("E", covariant=True)
 
-
-class Walker(Protocol[T, E]):
+class Walker[T: Node, E](Protocol):
     """
     ``Walker`` walks over a graph and convert it to something else.
     """

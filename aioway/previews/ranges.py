@@ -1,10 +1,10 @@
-# Copyright (c) 2024 RenChu Wang - All Rights Reserved
+# Copyright (c) RenChu Wang - All Rights Reserved
 
 import abc
 import dataclasses as dcls
 from abc import ABC
 from collections.abc import Iterable, Sequence
-from typing import Generic, Literal, TypeVar
+from typing import Literal
 
 __all__ = [
     "BoolChoice",
@@ -16,12 +16,9 @@ __all__ = [
     "StrChoice",
 ]
 
-T = TypeVar("T")
-N = TypeVar("N", int, float)
-
 
 @dcls.dataclass(frozen=True)
-class Range(Generic[T], ABC):
+class Range[T](ABC):
     """
     A closed interval class that checks if a value falls within the given interval or not.
     """
@@ -45,7 +42,7 @@ class Range(Generic[T], ABC):
 
 
 @dcls.dataclass(frozen=True)
-class Interval(Range[N], ABC):
+class Interval[N: (int, float)](Range[N], ABC):
     _: dcls.KW_ONLY
 
     lower: N
@@ -81,7 +78,7 @@ class Interval(Range[N], ABC):
 
 
 @dcls.dataclass(frozen=True)
-class Choice(Range[T], ABC):
+class Choice[T](Range[T], ABC):
     _: dcls.KW_ONLY
 
     options: Sequence[T]

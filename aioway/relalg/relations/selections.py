@@ -1,17 +1,17 @@
-# Copyright (c) 2024 RenChu Wang - All Rights Reserved
+# Copyright (c) RenChu Wang - All Rights Reserved
 
 import dataclasses as dcls
 
 from aioway.relalg.exprs import Expr
 from aioway.schemas import TableSchema
 
-from .relations import P, Relation, RelationVisitor, T
+from .relations import Relation, RelationVisitor, RelNode
 
 __all__ = ["SelectionRelation"]
 
 
 @dcls.dataclass(frozen=True)
-class SelectionRelation(Relation[P]):
+class SelectionRelation[P: RelNode](Relation[P]):
     """
     The selection operator in relational algebra, denoted by σ.
     """
@@ -26,7 +26,7 @@ class SelectionRelation(Relation[P]):
     Condition for filtering the inputs.
     """
 
-    def accept(self, visitor: RelationVisitor[P, T]) -> T:
+    def accept[T](self, visitor: RelationVisitor[P, T]) -> T:
         return visitor.select(self)
 
     @property

@@ -1,8 +1,8 @@
-# Copyright (c) 2024 RenChu Wang - All Rights Reserved
+# Copyright (c) RenChu Wang - All Rights Reserved
 
 import dataclasses as dcls
 from collections import defaultdict as DefaultDict
-from typing import Generic, Self, TypeVar
+from typing import Self
 
 from aioway.relalg import Relation
 
@@ -10,11 +10,9 @@ from .previews import Preview
 
 __all__ = ["Registry"]
 
-T = TypeVar("T")
-
 
 @dcls.dataclass(frozen=True)
-class Registry(Generic[T]):
+class Registry[T]:
     previews: list[Preview[T]] = dcls.field(default_factory=list)
 
     def __len__(self) -> int:

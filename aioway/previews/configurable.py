@@ -1,9 +1,9 @@
-# Copyright (c) 2024 RenChu Wang - All Rights Reserved
+# Copyright (c) RenChu Wang - All Rights Reserved
 
 import abc
 import dataclasses as dcls
 from abc import ABC
-from typing import Generic, Iterator, Mapping, NamedTuple, TypeVar
+from typing import Iterator, Mapping, NamedTuple
 
 from aioway.plans import Node
 
@@ -12,13 +12,11 @@ from .ranges import Range
 
 __all__ = ["ConcreteSet", "Configurable", "FreeSet", "ParamSet"]
 
-T = TypeVar("T")
-
 type Primitives = str | int | float | bool
 
 
 @dcls.dataclass(frozen=True)
-class ParamSet(Mapping[str, T]):
+class ParamSet[T](Mapping[str, T]):
     params: dict[str, T]
 
     def __iter__(self) -> Iterator[str]:
@@ -48,7 +46,7 @@ class ConcreteSet(Mapping[str, str | int | float | bool]):
 
 
 @dcls.dataclass(frozen=True)
-class Configurable(Node["Configurable[T]"], Generic[T], ABC):
+class Configurable[T](Node["Configurable[T]"], ABC):
     @abc.abstractmethod
     def __call__(self, params: FreeSet) -> Preview[T]: ...
 
