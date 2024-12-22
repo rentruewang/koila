@@ -1,3 +1,5 @@
+# Copyright (c) RenChu Wang - All Rights Reserved
+
 from typing import Dict
 
 import torch

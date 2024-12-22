@@ -1,3 +1,5 @@
+# Copyright (c) RenChu Wang - All Rights Reserved
+
 from . import constants, gpus
 from .eager import EagerTensor
 from .errors import UnsupportedError

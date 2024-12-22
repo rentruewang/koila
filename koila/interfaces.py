@@ -1,3 +1,5 @@
+# Copyright (c) RenChu Wang - All Rights Reserved
+
 from __future__ import annotations
 
 import functools
