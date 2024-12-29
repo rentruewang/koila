@@ -4,7 +4,9 @@ import dataclasses as dcls
 from collections.abc import Callable
 
 from aioway.relalg import Relation
-from aioway.schemas import DataType, EinsumError
+from aioway.schemas import DataType
+
+from .einsums import EinsumError
 
 __all__ = ["Info", "Preview"]
 

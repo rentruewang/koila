@@ -16,7 +16,7 @@ def schema(schema_dict) -> TableSchema:
 
 
 def test_init(schema_dict, schema):
-    assert TableSchema.mapping(schema_dict) == TableSchema.iterable(schema.ordered())
+    assert TableSchema.mapping(schema_dict) == TableSchema.iterable(schema.sorted())
     assert TableSchema.mapping(schema_dict) == TableSchema.tuples(
         list(schema_dict.items())
     )
@@ -41,14 +41,9 @@ def test_mapping(schema):
 
 def test_names(schema):
     assert sorted(schema.names) == ["hello", "world"]
-    assert [col.name for col in schema.ordered()] == sorted(schema.names)
+    assert [col.name for col in schema.sorted()] == sorted(schema.names)
 
 
 def test_dtypes(schema_dict, schema):
     assert set(schema.dtypes) == set(schema_dict.values())
-    assert {col.dtype for col in schema.ordered()} == set(schema.dtypes)
-
-
-def test_null():
-    assert TableSchema.null() == TableSchema.mapping({})
-    assert TableSchema.null() == TableSchema.iterable([])
+    assert {col.dtype for col in schema.sorted()} == set(schema.dtypes)
