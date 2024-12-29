@@ -5,16 +5,16 @@ import dataclasses as dcls
 import functools
 import logging
 import re
-from collections.abc import Sequence
-from typing import NamedTuple, Protocol, Self
+from collections.abc import Iterator, Sequence
+from typing import Protocol, Self
 
-__all__ = ["Einsum", "EinsumError", "EinsumExpr"]
+__all__ = ["Einsum", "EinsumError", "EinsumIO"]
 
 LOGGER = logging.getLogger(__name__)
 
-PARAMS = r"\w+"
-PARAM_LIST = r"[\w,]*"
-EINSUM = rf"({PARAM_LIST})->({PARAM_LIST})"
+_PARAMS = r"\w+"
+_PARAM_LIST = r"[\w,]*"
+_EINSUM = rf"({_PARAM_LIST})->({_PARAM_LIST})"
 
 
 type ShapeList = Sequence[tuple[int, ...]]
@@ -22,12 +22,12 @@ type ShapeList = Sequence[tuple[int, ...]]
 
 @functools.cache
 def _einsum_parser():
-    return re.compile(EINSUM)
+    return re.compile(_EINSUM)
 
 
 @functools.cache
 def _einsum_params():
-    return re.compile(PARAMS)
+    return re.compile(_PARAMS)
 
 
 class ShapeFunc(Protocol):
@@ -43,20 +43,39 @@ class EinsumError(ValueError):
     """
 
 
-class EinsumExpr(NamedTuple):
+@dcls.dataclass(frozen=True)
+class EinsumExpr:
+    expr: tuple[str, ...]
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self.expr)
+
+    def __len__(self) -> int:
+        return len(self.expr)
+
+    def __getitem__(self, idx: int) -> str:
+        return self.expr[idx]
+
+    @classmethod
+    def from_list(cls, expr: list[str]) -> Self:
+        return cls(tuple(expr))
+
+
+@dcls.dataclass(frozen=True)
+class EinsumIO:
     """
     Parsed einsum expression.
     Splits the einsum expression into inputs and outputs.
     """
 
-    inputs: Sequence[str]
+    inputs: EinsumExpr
     "The input dimensions."
 
-    outputs: Sequence[str]
+    outputs: EinsumExpr
     "The output dimensions."
 
     @property
-    def dims(self) -> Sequence[str]:
+    def dims(self) -> list[str]:
         return [*self.inputs, *self.outputs]
 
     @classmethod
@@ -87,7 +106,7 @@ class EinsumExpr(NamedTuple):
         left: list[str] = _einsum_params().findall(left_match)
         right: list[str] = _einsum_params().findall(right_match)
 
-        return cls(left, right)
+        return cls(EinsumExpr.from_list(left), EinsumExpr.from_list(right))
 
 
 @dcls.dataclass(frozen=True)
@@ -99,7 +118,7 @@ class Einsum(ShapeFunc):
         Add support for unbound variables.
     """
 
-    einsum: EinsumExpr
+    einsum: EinsumIO
 
     def __hash__(self) -> int:
         return hash(self.einsum)
@@ -151,15 +170,15 @@ class Einsum(ShapeFunc):
         return [tuple(mapped[d] for d in dims) for dims in self.outputs]
 
     @property
-    def inputs(self) -> Sequence[str]:
+    def inputs(self) -> EinsumExpr:
         return self.einsum.inputs
 
     @property
-    def outputs(self) -> Sequence[str]:
+    def outputs(self) -> EinsumExpr:
         return self.einsum.outputs
 
     @classmethod
     def parse(cls, einsum: str, /) -> Self:
-        einsum_expr = EinsumExpr.parse(einsum)
+        einsum_expr = EinsumIO.parse(einsum)
 
         return cls(einsum_expr)

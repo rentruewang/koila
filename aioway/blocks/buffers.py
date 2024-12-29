@@ -18,12 +18,8 @@ __all__ = ["Buffer"]
 @dcls.dataclass(frozen=True)
 class Buffer(ABC):
     """
-    ``Buffer`` represenets an in-memory column,
+    ``Buffer`` represenets an in-memory column, which is a set of homogenius items,
     acting as the most primitive operation in ``aioway``.
-
-    It is a thin wrapper for `torch.Tensor`, while providing additional checks,
-    as well as interfacing with the data structures in the project.
-    It handles indexing operations, as well as arithmetic operations.
     """
 
     def __len__(self) -> int:

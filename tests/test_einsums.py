@@ -5,9 +5,9 @@ from types import NoneType
 
 import pytest
 
-from aioway.previews import Info, Preview, Registry
+from aioway.previews import Einsum, Info, Preview, Registry
 from aioway.relalg import Relation
-from aioway.schemas import DataTypeEnum, Einsum
+from aioway.schemas import DataTypeEnum
 
 
 @pytest.fixture(scope="function")

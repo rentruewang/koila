@@ -49,6 +49,9 @@ class Table(Node["Table"], ABC):
 
         Think about how to expand this into streaming contexts.
 
+    Todo:
+        Document difference between ``Table``, ``Block``, ``DataFrame``.
+
     Note:
         I was thinking whether or not ``Table`` handles too many things, however,
         I decided to proceed because this approach is adopted by most other libraries,

@@ -3,7 +3,7 @@
 import dataclasses as dcls
 import itertools
 import typing
-from collections.abc import Iterable, Iterator, Mapping, Sequence
+from collections.abc import Iterable, Iterator, Mapping
 from typing import Self
 
 from .columns import ColumnSchema
@@ -15,7 +15,7 @@ __all__ = ["TableSchema"]
 @typing.final
 @dcls.dataclass(eq=False, frozen=True)
 class TableSchema(Mapping[str, DataType]):
-    columns: Sequence[ColumnSchema]
+    columns: tuple[ColumnSchema, ...]
     """
     The names and the types associated with the columns.
     """
@@ -30,18 +30,18 @@ class TableSchema(Mapping[str, DataType]):
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, TableSchema):
-            self_ord = self.ordered()
-            other_ord = other.ordered()
+            self_ord = self.sorted()
+            other_ord = other.sorted()
 
             return (
                 True
                 and len(self_ord) == len(other_ord)
-                and all(s.name == o.name for s, o in zip(self_ord, other_ord))
-                and all(s.dtype == o.dtype for s, o in zip(self_ord, other_ord))
+                and all(s == o for s, o in zip(self_ord, other_ord))
             )
 
         if isinstance(other, Mapping):
-            return all(col.dtype == other[col.name] for col in self.columns)
+            other_schema = self.mapping(other)
+            return self == other_schema
 
         return NotImplemented
 
@@ -68,7 +68,7 @@ class TableSchema(Mapping[str, DataType]):
         if not isinstance(other, type(self)):
             return NotImplemented
 
-        return type(self).iterable(itertools.chain(self.columns, other.columns))
+        return self.iterable(itertools.chain(self.columns, other.columns))
 
     @property
     def names(self) -> list[str]:
@@ -78,24 +78,39 @@ class TableSchema(Mapping[str, DataType]):
     def dtypes(self) -> list[DataType]:
         return [col.dtype for col in self.columns]
 
-    def index(self, name: str):
+    def index(self, name: str) -> int:
         return self.names.index(name)
 
-    def ordered(self) -> list[ColumnSchema]:
+    def sorted(self) -> list[ColumnSchema]:
         return sorted(self.columns, key=lambda c: c.name)
 
     @classmethod
     def iterable(cls, columns: Iterable[ColumnSchema]) -> Self:
+        """
+        Creates a ``TableSchema`` object from an iterable of ``ColumnSchema`` objects.
+        """
+
         return cls(tuple(columns))
 
     @classmethod
     def tuples(cls, columns: Iterable[tuple[str, DataType]], /) -> Self:
+        """
+        Creates a ``TableSchema`` object from an iterable of ``str`` and ``DataType``.
+        """
+
         return cls.iterable((ColumnSchema(name, type) for name, type in columns))
 
     @classmethod
     def mapping(cls, mapping: Mapping[str, DataType], /) -> Self:
-        return cls.tuples(mapping.items())
+        """
+        Creates a ``TableSchema`` object from a ``Mapping[str, DataType]``.
 
-    @classmethod
-    def null(cls) -> Self:
-        return cls([])
+
+        Args:
+            mapping: _description_
+
+        Returns:
+            _description_
+        """
+
+        return cls.tuples(mapping.items())
