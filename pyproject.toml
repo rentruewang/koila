@@ -16,6 +16,7 @@ pandas = "^2.2.3"
 rich = "^13.9.4"
 tensordict = "^0.6.2"
 torch = "^2.5.1"
+mypy = "^1.14.0"
 
 [tool.poetry.group.dev.dependencies]
 ansible = "^11.0.0"

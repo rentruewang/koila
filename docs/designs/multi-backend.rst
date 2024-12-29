@@ -76,54 +76,31 @@ s.t. computation can be accessed globally and locally (on data themselves).
 A good approach is to define all of the computation on the object itself, like spark,
 and have the global functions call the member functions (like torch and numpy).
 
-Architecture change
-*******************
+Physical abstractions
+*********************
 
-This would require some architecture change to go with the renewed backend.
+The main physical abstractions in the projects are `Table`s and `Block`s.
 
-Before
-======
+`Table` represents a more lazy, iterative, relational table like `spark`'s `RDD`,
+and `Block` is the actual `torch` based execution engine that is eager.
 
-.. mermaid::
+In this sense, `Table` would be the entry point to swap out to different implementations,
+and `Block` only needs to focus on making `torch` operations fast,
+as well as some distributed computing stuff.
 
-    graph TD;
-        lang --> relalg;
-        relalg --> compiler;
-        data --> compiler;
-        engine --> compiler;
-        compiler --> vms;
+I have previously thought about making the interface of `Block` abstract,
+supporting in-memory data backends like `pandas` at this level.
 
-        lang["Public API"];
-        relalg["Relational Algebra"];
-        data["I/O and storage"];
-        engine["Execution engine & ML model"];
-        compiler["Compiler"];
-        vms["Virtual Machine"]
+Right now, I'm leaning towards not doing that, simply because of the following reasons:
 
+1.  The `Table` abstraction is way better studied,
+    therefore is used by many other frameworks (spark, ibis, etc)
+2. As one `Table` (the more abstract layer) just uses one backend,
+    there would be minimal exchange between `pandas` and `torch` backends,
+    as converting data between frameworks is more trouble than it is worth,
+    when we are simply focused on in-memory computing.
 
-
-After
-=====
-
-.. mermaid::
-
-    graph TD;
-        lang --> relalg;
-        relalg --> compiler;
-        compiler --> provider;
-
-        lang["Public API"];
-        relalg["Relational Algebra"];
-        compiler["Compiler"];
-        provider["Provider"];
-
-Compiler would only compile if it is in training mode.
-In inference mode, it would look up from an existing registry the available models.
-
-Data and compuatation are contained in the new provider module,
-which is responsible for everything.
-
-Todo
-====
-
-Perhaps some synchronization between different providers is needed for visualization etc.
+However, if in a future investigation I notice other implementations,
+e.g. `pandas`, `arrow`, can be added with minimal code changes,
+and that new functionality does not depend on different internal implementations,
+then those would be added.

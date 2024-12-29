@@ -13,7 +13,6 @@ from tensordict import TensorDict
 from torch import Tensor
 
 from aioway.blocks._typing import Primitive
-from aioway.errors import AiowayError
 from aioway.schemas import TableSchema
 
 from .buffers import Buffer
@@ -75,11 +74,9 @@ class Block[B: Buffer](ABC):
             if types == {str}:
                 return self.project(*key)
 
-            raise BlockGetItemTypeError(
-                f"List must be a list of `int`s or `str`. Got {types}"
-            )
+            raise TypeError(f"List must be a list of `int`s or `str`. Got {types}")
 
-        raise BlockGetItemTypeError(f"{type(key)=} is not supported!")
+        raise TypeError(f"{type(key)=} is not supported!")
 
     @abc.abstractmethod
     def _col(self, idx: str) -> B: ...
@@ -144,10 +141,10 @@ class Block[B: Buffer](ABC):
     def rename(self, **names: str) -> Self: ...
 
     @abc.abstractmethod
-    def map(self, f: Callable[[TensorDict], TensorDict], /) -> Self: ...
+    def map(self, f: Callable[[Self], Self], /) -> Self: ...
 
     @abc.abstractmethod
-    def reduce[I](self, f: Callable[[TensorDict, I], I], init: I) -> I: ...
+    def reduce[I](self, f: Callable[[Self, I], I], init: I) -> I: ...
 
     @abc.abstractmethod
     def zip(self, other: Self) -> Self: ...
@@ -160,7 +157,7 @@ class Block[B: Buffer](ABC):
 
         if idx and (min(idx) < -len_self or max(idx) >= len_self):
             out_of_bounds = [i for i in idx if i >= len_self or i < -len_self]
-            raise BlockIndexOutOfBoundsError(
+            raise IndexError(
                 f"Index: {out_of_bounds} out of bounds for Block of length {len_self}."
             )
 
@@ -171,7 +168,7 @@ class Block[B: Buffer](ABC):
 
     def project(self, *cols: str) -> Self:
         if extras := set(cols).difference(names := self.schema().names):
-            raise BlockIndexOutOfBoundsError(
+            raise ValueError(
                 f"Columns: {extras} specified, "
                 f"but not found in schema's columns: {names}."
             )
@@ -220,9 +217,3 @@ class Block[B: Buffer](ABC):
     @classmethod
     @abc.abstractmethod
     def from_pandas(cls, df: DataFrame, /) -> Self: ...
-
-
-class BlockGetItemTypeError(AiowayError, TypeError): ...
-
-
-class BlockIndexOutOfBoundsError(AiowayError, IndexError): ...

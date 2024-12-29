@@ -88,6 +88,11 @@ class TensorBlock(Block[TensorBuffer]):
     data: TensorDict
     """
     The underlying data for the ``TorchDataFrame`` class.
+
+    Todo:
+        Since ``TensorDict`` itself is mutable,
+        consider making an immutable alternative such that only read operations are allowed.
+        This would help the entire (pure) functional approach.
     """
 
     def __post_init__(self) -> None:
@@ -136,9 +141,15 @@ class TensorBlock(Block[TensorBuffer]):
 
     _select = _slice_of_rows = _list_of_rows = __index_then_wrap
 
-    def map(self, module: Callable[[TensorDict], TensorDict]) -> Self:
-        data = self.data.clone()
-        return type(self)(module(data))
+    def map(self, f: Callable[[TensorDict], TensorDict]) -> Self:
+        return type(self)(f(self.data))
+
+    def filter(self, predicate: Callable[[Tensor], Tensor], on: str) -> Self:
+        keep = predicate(self.data[on])
+
+        assert keep.dtype is torch.bool
+
+        return type(self)(self.data[keep])
 
     def gather(self, dim: int, index: Sequence[int]) -> Self:
         return type(self)(self.data.gather(dim=dim, index=torch.tensor(index).long()))
@@ -189,9 +200,6 @@ class TensorBlock(Block[TensorBuffer]):
         if on not in other:
             raise KeyError(f"Rhs doesn't contain key {on}")
 
-        # if self.count() == 0 or other.count() == 0:
-        #     return type(self)(self._tensordict_init({}, names=self.columns))
-
         lhs: DefaultDict[Hashable, list[int]] = DefaultDict(list)
         for idx, key in enumerate(self[on]):
             lhs[key.item()].append(idx)
@@ -201,7 +209,7 @@ class TensorBlock(Block[TensorBuffer]):
             rhs[key.item()].append(idx)
 
         common_keys = {*lhs.keys()} & {*rhs.keys()}
-        print(common_keys)
+
         results: list[TensorDict] = []
         for k in common_keys:
             left_idx = lhs[k]
