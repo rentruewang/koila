@@ -21,6 +21,9 @@ class DataType(ABC):
     ``DataType`` is the base class of all ``aioway`` data types.
     It is an empty base class, designed to be extended by concrete classes
     and used with `DataTypeVisitor`, acting like tagged unions.
+
+    Todo:
+        Improve usability in both relational algebra domain and tensor domain.
     """
 
     def __hash__(self) -> int:

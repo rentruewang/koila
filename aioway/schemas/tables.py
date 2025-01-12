@@ -6,16 +6,16 @@ import typing
 from collections.abc import Iterable, Iterator, Mapping
 from typing import Self
 
-from .columns import ColumnSchema
+from .columns import NameDtype
 from .types import DataType
 
-__all__ = ["TableSchema"]
+__all__ = ["Schema"]
 
 
 @typing.final
 @dcls.dataclass(eq=False, frozen=True)
-class TableSchema(Mapping[str, DataType]):
-    columns: tuple[ColumnSchema, ...]
+class Schema(Mapping[str, DataType]):
+    columns: tuple[NameDtype, ...]
     """
     The names and the types associated with the columns.
     """
@@ -29,7 +29,7 @@ class TableSchema(Mapping[str, DataType]):
             )
 
     def __eq__(self, other: object) -> bool:
-        if isinstance(other, TableSchema):
+        if isinstance(other, Schema):
             self_ord = self.sorted()
             other_ord = other.sorted()
 
@@ -81,11 +81,11 @@ class TableSchema(Mapping[str, DataType]):
     def index(self, name: str) -> int:
         return self.names.index(name)
 
-    def sorted(self) -> list[ColumnSchema]:
+    def sorted(self) -> list[NameDtype]:
         return sorted(self.columns, key=lambda c: c.name)
 
     @classmethod
-    def iterable(cls, columns: Iterable[ColumnSchema]) -> Self:
+    def iterable(cls, columns: Iterable[NameDtype]) -> Self:
         """
         Creates a ``TableSchema`` object from an iterable of ``ColumnSchema`` objects.
         """
@@ -98,7 +98,7 @@ class TableSchema(Mapping[str, DataType]):
         Creates a ``TableSchema`` object from an iterable of ``str`` and ``DataType``.
         """
 
-        return cls.iterable((ColumnSchema(name, type) for name, type in columns))
+        return cls.iterable((NameDtype(name, type) for name, type in columns))
 
     @classmethod
     def mapping(cls, mapping: Mapping[str, DataType], /) -> Self:

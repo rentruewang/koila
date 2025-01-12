@@ -1,219 +1,83 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
 import abc
+import dataclasses as dcls
 import typing
 from abc import ABC
-from collections.abc import Callable, Sequence
-from pathlib import Path
+from collections.abc import KeysView
 from typing import Self
 
-import pandas as pd
-from pandas import DataFrame
-from tensordict import TensorDict
-from torch import Tensor
+import numpy as np
+from numpy.typing import NDArray
 
-from aioway.blocks._typing import Primitive
-from aioway.schemas import TableSchema
-
-from .buffers import Buffer
+from aioway.errors import AiowayError
 
 __all__ = ["Block"]
 
 
-class Block[B: Buffer](ABC):
+@dcls.dataclass(frozen=True)
+class Block[C, R](ABC):
     """
-    ``Block`` represents a chunk / batch of heterogenious data stored in memory,
-    it is the main physical abstraction in ``aioway`` to represent eager computation.
-
-    Think of it as a normal ``pandas.DataFrame`` or ``torch.Tensor`` or ``TensorDict``,
-    where computation happens eagerly, imperatively, and the result is stored in memory.
+    ``Block`` is a thin wrapper over ``TensorDict``,
+    while providing some additional functionality.
     """
 
-    def __len__(self) -> int:
-        return self.count()
-
     @abc.abstractmethod
-    def __contains__(self, key: object) -> bool: ...
+    def __len__(self) -> int: ...
 
     @typing.overload
-    def __getitem__(self, key: str) -> B: ...
+    def __getitem__(self, idx: str) -> C: ...
 
     @typing.overload
-    def __getitem__(self, key: list[str]) -> Self: ...
+    def __getitem__(self, idx: int) -> R: ...
 
     @typing.overload
-    def __getitem__(self, key: int) -> dict[str, Primitive]: ...
+    def __getitem__(self, idx: slice | list[str] | list[int] | NDArray) -> Self: ...
 
-    @typing.overload
-    def __getitem__(self, key: list[int] | slice | Tensor) -> Self: ...
+    def __getitem__(self, idx):
+        if isinstance(idx, str):
+            return self._getitem_str(idx)
 
-    def __getitem__(self, key):
-        if isinstance(key, str):
-            return self._col(key)
+        if isinstance(idx, int):
+            return self._getitem_int(idx)
 
-        if isinstance(key, int):
-            return self._row(key)
+        if isinstance(idx, slice):
+            return self._getitem_slice(idx)
 
-        if isinstance(key, slice):
-            return self._slice_of_rows(key)
+        # Columns must be a subset of the existing ones.
+        if isinstance(idx, list) and all(isinstance(i, str) for i in idx):
+            return self._getitem_cols(idx)
 
-        if isinstance(key, Tensor):
-            return self._list_of_rows(key)
-
-        if isinstance(key, list):
-            # Note:
-            #   Normally, here we would be using ``isinstance`` checks on each individual indices.
-            #   However, doing that is very time consuming,
-            #   and we would not want subclasses of ``int`` or ``str`` here anyways.
-            #   For example, ``bool`` is a subclass of ``int``, but is undesired here.
-            types = {type(i) for i in key}
-
-            if types == {int}:
-                return self._list_of_rows(key)
-
-            if types == {str}:
-                return self.project(*key)
-
-            raise TypeError(f"List must be a list of `int`s or `str`. Got {types}")
-
-        raise TypeError(f"{type(key)=} is not supported!")
+        # Other are ``ArrayLike``.
+        idx = np.array(idx)
+        return self._getitem_array(idx)
 
     @abc.abstractmethod
-    def _col(self, idx: str) -> B: ...
+    def __contains__(self, key: str) -> bool: ...
 
     @abc.abstractmethod
-    def _row(self, idx: int) -> dict[str, Primitive]: ...
+    def _getitem_str(self, idx: str) -> C: ...
 
     @abc.abstractmethod
-    def _slice_of_rows(self, idx: slice) -> Self: ...
+    def _getitem_int(self, idx: int) -> R: ...
 
     @abc.abstractmethod
-    def _list_of_rows(self, idx: list[int] | Tensor) -> Self: ...
+    def _getitem_slice(self, idx: slice) -> Self: ...
 
     @abc.abstractmethod
-    def __neg__(self) -> Self: ...
+    def _getitem_array(self, idx: list[int] | NDArray) -> Self: ...
 
     @abc.abstractmethod
-    def __invert__(self) -> Self: ...
+    def _getitem_cols(self, idx: list[str]) -> Self: ...
 
     @abc.abstractmethod
-    def __eq__(self, other: Self) -> Self:  # type: ignore[override]
-        ...
+    def keys(self) -> KeysView[str]: ...
 
     @abc.abstractmethod
-    def __ne__(self, other: Self) -> Self:  # type: ignore[override]
-        ...
+    def sort_values(self, columns: list[str]) -> Self: ...
 
     @abc.abstractmethod
-    def __ge__(self, other: Self) -> Self: ...
-
-    @abc.abstractmethod
-    def __gt__(self, other: Self) -> Self: ...
-
-    @abc.abstractmethod
-    def __le__(self, other: Self) -> Self: ...
-
-    @abc.abstractmethod
-    def __lt__(self, other: Self) -> Self: ...
-
-    @abc.abstractmethod
-    def __add__(self, other: Self) -> Self: ...
-
-    @abc.abstractmethod
-    def __sub__(self, other: Self) -> Self: ...
-
-    @abc.abstractmethod
-    def __mul__(self, other: Self) -> Self: ...
-
-    @abc.abstractmethod
-    def __truediv__(self, other: Self) -> Self: ...
-
-    @abc.abstractmethod
-    def __floordiv__(self, other: Self) -> Self: ...
-
-    @abc.abstractmethod
-    def __pow__(self, other: Self) -> Self: ...
-
-    @abc.abstractmethod
-    def gather(self, dim: int, index: Sequence[int]) -> Self: ...
-
-    @abc.abstractmethod
-    def rename(self, **names: str) -> Self: ...
-
-    @abc.abstractmethod
-    def map(self, f: Callable[[Self], Self], /) -> Self: ...
-
-    @abc.abstractmethod
-    def reduce[I](self, f: Callable[[Self, I], I], init: I) -> I: ...
+    def chain(self, other: Self) -> Self: ...
 
     @abc.abstractmethod
     def zip(self, other: Self) -> Self: ...
-
-    @abc.abstractmethod
-    def join(self, other: Self, on: str) -> Self: ...
-
-    def select(self, idx: list[int], /) -> Self:
-        len_self = self.count()
-
-        if idx and (min(idx) < -len_self or max(idx) >= len_self):
-            out_of_bounds = [i for i in idx if i >= len_self or i < -len_self]
-            raise IndexError(
-                f"Index: {out_of_bounds} out of bounds for Block of length {len_self}."
-            )
-
-        return self._select(idx)
-
-    @abc.abstractmethod
-    def _select(self, idx: list[int], /) -> Self: ...
-
-    def project(self, *cols: str) -> Self:
-        if extras := set(cols).difference(names := self.schema().names):
-            raise ValueError(
-                f"Columns: {extras} specified, "
-                f"but not found in schema's columns: {names}."
-            )
-
-        return self._project(*cols)
-
-    @abc.abstractmethod
-    def _project(self, *cols: str) -> Self: ...
-
-    @abc.abstractmethod
-    def schema(self) -> TableSchema:
-        """
-        The schema type from the current block.
-        """
-
-        ...
-
-    @abc.abstractmethod
-    def count(self) -> int: ...
-
-    @abc.abstractmethod
-    def max(self) -> dict[str, Primitive]: ...
-
-    @abc.abstractmethod
-    def min(self) -> dict[str, Primitive]: ...
-
-    @abc.abstractmethod
-    def to_pandas(self) -> DataFrame: ...
-
-    @abc.abstractmethod
-    def to_tensordict(self) -> TensorDict: ...
-
-    def to_csv(self, path: str | Path, /) -> None:
-        df = self.to_pandas()
-        return df.to_csv(path)
-
-    @property
-    def columns(self) -> list[str]:
-        return self.schema().names
-
-    @classmethod
-    def from_csv(cls, csv: str | Path, /) -> Self:
-        df = pd.read_csv(csv)
-        return cls.from_pandas(df)
-
-    @classmethod
-    @abc.abstractmethod
-    def from_pandas(cls, df: DataFrame, /) -> Self: ...
