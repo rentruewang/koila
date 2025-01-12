@@ -2,7 +2,7 @@
 
 import dataclasses as dcls
 
-from aioway.schemas import TableSchema
+from aioway.schemas import Schema
 
 from .relations import Relation, RelationVisitor, RelNode
 
@@ -28,5 +28,5 @@ class ViewRelation[P: RelNode](Relation[P]):
         return (self.prev,)
 
     @property
-    def schema(self) -> TableSchema:
+    def schema(self) -> Schema:
         return self.prev.schema

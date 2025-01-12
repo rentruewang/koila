@@ -3,8 +3,7 @@
 import dataclasses as dcls
 import operator
 import typing
-from collections import defaultdict as DefaultDict
-from collections.abc import Callable, Hashable, Iterator, Sequence
+from collections.abc import Callable, Iterator, Sequence
 from pathlib import Path
 from types import FunctionType
 from typing import Any, Self
@@ -13,20 +12,22 @@ import numpy as np
 import pandas as pd
 import tensordict
 import torch
+from numpy import ndarray as ArrayType
+from numpy.typing import NDArray
 from pandas import DataFrame
 from tensordict import TensorDict
 from torch import Tensor
 
-from aioway.blocks import Block
-from aioway.blocks._typing import TensorNumber
-from aioway.schemas import TableSchema
+from aioway.errors import AiowayError
+from aioway.schemas import Schema
 
-from .buffers import TensorBuffer
+from ..blocks.rows import Record
+from ..buffers.tensors import Buffer
 
-__all__ = ["TensorBlock"]
+__all__ = ["Frame"]
 
 
-def _unary_op[S: "TensorBlock"](op: Callable[[TensorDict], TensorDict]) -> FunctionType:
+def _unary_op[S: "Block"](op: Callable[[TensorDict], TensorDict]) -> FunctionType:
     def func(self: S) -> S:
         return type(self)(op(self.data))
 
@@ -34,7 +35,7 @@ def _unary_op[S: "TensorBlock"](op: Callable[[TensorDict], TensorDict]) -> Funct
     return func
 
 
-def _unary_tensor_op[S: "TensorBlock", E](op: Callable[[Tensor], E]) -> FunctionType:
+def _unary_tensor_op[S: "Block", E](op: Callable[[Tensor], E]) -> FunctionType:
     def func(self: S) -> S:
         mapping = {key: op(val) for key, val in self.data.items()}
         tensordict = self._tensordict_init(mapping)
@@ -44,11 +45,14 @@ def _unary_tensor_op[S: "TensorBlock", E](op: Callable[[Tensor], E]) -> Function
     return func
 
 
+_RHS = int | float | NDArray | Tensor
+
+
 def _binary_op[
-    S: "TensorBlock"
-](op: Callable[[TensorDict, TensorDict | TensorNumber], TensorDict]) -> FunctionType:
-    def func(self: S, other: S | TensorDict | TensorNumber) -> S:
-        if not isinstance(other, TensorBlock):
+    S: "Frame"
+](op: Callable[[TensorDict, S | _RHS | TensorDict], TensorDict]) -> FunctionType:
+    def func(self: S, other: S | S | _RHS | TensorDict) -> S:
+        if not isinstance(other, Frame):
             other_data = other
         else:
             other_data = other.data
@@ -59,20 +63,16 @@ def _binary_op[
     return func
 
 
-def _binary_tensor_op[
-    S: "TensorBlock"
-](op: Callable[[Tensor, TensorNumber], Tensor]) -> FunctionType:
+def _binary_tensor_op[S: "Block"](op: Callable[[Tensor, _RHS], Tensor]) -> FunctionType:
     def func(self: S, other: S) -> S:
-        other_data = other.data
-
         if sorted(self.columns) != sorted(other.columns):
             raise KeyError(
-                f"TorchBlocks have different keys, element-wise operation not allowed! "
-                f"{list(self)=}, {list(other)=}"
+                f"Blocks have different keys, element-wise operation not allowed! "
+                f"{sorted(self)=}, {sorted(other)=}"
             )
 
         # Note:
-        #   Making use of the implementation detail of ``TorchBuffer`` being backed by ``Tensor``.
+        #   Making use of the implementation detail of ``Buffer`` being backed by ``Tensor``.
         #   If this function is to generalize, this shall be changed.
         mapping = {key: op(self[key].data, other[key].data) for key in self}
         tensordict = self._tensordict_init(mapping)
@@ -82,16 +82,36 @@ def _binary_tensor_op[
     return func
 
 
-@typing.final
 @dcls.dataclass(frozen=True)
-class TensorBlock(Block[TensorBuffer]):
-    data: TensorDict
+class Frame:
     """
-    The underlying data for the ``TorchDataFrame`` class.
+    ``Frame`` represents a chunk / batch of heterogenious data stored in memory,
+    it is the main physical abstraction in ``aioway`` to represent eager computation.
+
+    Think of it as a normal ``pandas.DataFrame`` or ``torch.Tensor`` or ``TensorDict``,
+    where computation happens eagerly, imperatively, and the result is stored in memory.
 
     Todo:
+        I have decided that ``Frame`` is abstract,
+        and that it represents bounded, in-memory dataframe.
+
+        This means that memory layouts like ``arrow``, ``pandas`` can easily be supported.
+
+        However, to be fast, instead of serializing to python objects,
+        we serialize to a concrete ``Batch`` object (to be introduced),
+        that is a thin wrapper over ``TensorDict``, representing the current batch,
+        allowing computing on GPUs.
+
+        This way, UDFs can still be implemented, but native methods can be used as well.
+    """
+
+    data: TensorDict
+    """
+    The underlying data for the ``Frame`` class.
+
+    Note:
         Since ``TensorDict`` itself is mutable,
-        consider making an immutable alternative such that only read operations are allowed.
+        ``Block`` acts as an immutable wrapper such that only read operations are allowed.
         This would help the entire (pure) functional approach.
     """
 
@@ -104,8 +124,80 @@ class TensorBlock(Block[TensorBuffer]):
     def __contains__(self, key: object) -> bool:
         return key in self.data.keys()
 
+    def __len__(self) -> int:
+        return self.count()
+
     def __iter__(self) -> Iterator[str]:
-        return iter(self.data.keys())
+        return iter(self.data)
+
+    @typing.overload
+    def __getitem__(self, key: str) -> Buffer: ...
+
+    @typing.overload
+    def __getitem__(self, key: list[str]) -> Self: ...
+
+    @typing.overload
+    def __getitem__(self, key: int) -> Record: ...
+
+    @typing.overload
+    def __getitem__(self, key: slice | list[int] | NDArray) -> Self: ...
+
+    def __getitem__(self, key):
+        if isinstance(key, str):
+            return self._getitem_str(key)
+
+        if isinstance(key, int):
+            return self._getitem_int(key)
+
+        if isinstance(key, slice):
+            return self._slice_of_rows(key)
+
+        if isinstance(key, ArrayType):
+            return self._list_of_rows(key)
+
+        if isinstance(key, list):
+            # Note:
+            #   Normally, here we would be using ``isinstance`` checks on each individual indices.
+            #   However, doing that is very time consuming,
+            #   and we would not want subclasses of ``int`` or ``str`` here anyways.
+            #   For example, ``bool`` is a subclass of ``int``, but is undesired here.
+            types = {type(i) for i in key}
+
+            if types == {int}:
+                return self._list_of_rows(key)
+
+            if types == {str}:
+                return self.project(*key)
+
+            raise BlockGetItemTypeError(
+                f"List must be a list of `int`s or `str`. Got {types}"
+            )
+
+        raise BlockGetItemTypeError(f"{type(key)=} is not supported!")
+
+    def select(self, idx: list[int], /) -> Self:
+        len_self = self.count()
+
+        if idx and (min(idx) < -len_self or max(idx) >= len_self):
+            out_of_bounds = [i for i in idx if i >= len_self or i < -len_self]
+            raise IndexError(
+                f"Index: {out_of_bounds} out of bounds for Block of length {len_self}."
+            )
+
+        return self._select(idx)
+
+    def project(self, *cols: str) -> Self:
+        if extras := set(cols).difference(names := self.schema().names):
+            raise ValueError(
+                f"Columns: {extras} specified, "
+                f"but not found in schema's columns: {names}."
+            )
+
+        return self._project(*cols)
+
+    @property
+    def columns(self) -> list[str]:
+        return self.schema().names
 
     __invert__ = _unary_op(operator.invert)
     __neg__ = _unary_op(operator.neg)
@@ -134,7 +226,7 @@ class TensorBlock(Block[TensorBuffer]):
     def __index_no_wrap(self, idx):
         return self.data[idx]
 
-    _col = _row = __index_no_wrap
+    _getitem_str = _getitem_int = __index_no_wrap
 
     def __index_then_wrap(self, idx) -> Self:
         return type(self)(self.data[idx])
@@ -157,79 +249,8 @@ class TensorBlock(Block[TensorBuffer]):
     def rename(self, **names: str) -> Self:
         return type(self)(self.data.rename(**names))
 
-    def product(self):
-        raise NotImplementedError("Join type is not implemented yet!")
-
     def _project(self, *names: str) -> Self:
         return type(self)(self.data.select(*names))
-
-    def zip(self, other: Self) -> Self:
-        if same := set(self.data.keys()) & set(other.data.keys()):
-            raise ValueError(f"Cannot concatenate blocks with the same keys: {same}")
-
-        if len(self) != len(other):
-            raise ValueError(
-                "Cannot concatenate blocks with different lengths: "
-                f"{len(self)=} != {len(other)=}"
-            )
-
-        if self.batch_size != other.batch_size:
-            raise ValueError(
-                "Cannot concatenate blocks due to a batch_size mismatch: "
-                f"{self.batch_size=} != {other.batch_size=}"
-            )
-
-        return type(self)(
-            TensorDict(
-                {**self.data, **other.data},
-                device=self.device,
-                batch_size=self.batch_size,
-            )
-        )
-
-    def join(self, other: Self, on: str) -> Self:
-        """
-        Todo:
-            Right now the implementation is hash-based for simplicity.
-            Add support for both hash-based join and comparison-based join.
-        """
-
-        if on not in self:
-            raise KeyError(f"Lhs does not contain key {on}")
-
-        if on not in other:
-            raise KeyError(f"Rhs doesn't contain key {on}")
-
-        lhs: DefaultDict[Hashable, list[int]] = DefaultDict(list)
-        for idx, key in enumerate(self[on]):
-            lhs[key.item()].append(idx)
-
-        rhs: DefaultDict[Hashable, list[int]] = DefaultDict(list)
-        for idx, key in enumerate(other[on]):
-            rhs[key.item()].append(idx)
-
-        common_keys = {*lhs.keys()} & {*rhs.keys()}
-
-        results: list[TensorDict] = []
-        for k in common_keys:
-            left_idx = lhs[k]
-            right_idx = rhs[k]
-
-            left_cnt = len(left_idx)
-            right_cnt = len(right_idx)
-
-            left_keys = [left_idx[i] for i in range(left_cnt)] * right_cnt
-            right_keys = sum(([right_idx[i]] * left_cnt for i in range(right_cnt)), [])
-
-            left = self.select(left_keys).data
-            right = other.select(right_keys).data
-
-            assert (left[on] == right[on]).all().item()
-
-            result = tensordict.merge_tensordicts(left, right)
-            results.append(result)
-
-        return type(self)(tensordict.cat(results))
 
     def union(self, other: Self) -> Self:
         return type(self)(tensordict.cat([self.data, other.data], dim=0))
@@ -241,12 +262,12 @@ class TensorBlock(Block[TensorBuffer]):
     def dtype(self) -> str | None:
         return str(self.data.dtype) if self.data.dtype is not None else None
 
-    def schema(self) -> TableSchema:
+    def schema(self) -> Schema:
         """
         The schema type from the current block.
         """
 
-        return TableSchema.mapping({key: self[key].dtype for key in self})
+        return Schema.mapping({key: self[key].dtype() for key in self})
 
     @property
     def batch_size(self) -> tuple[int, ...]:
@@ -309,3 +330,9 @@ class TensorBlock(Block[TensorBuffer]):
     def from_csv(cls, csv: str | Path, /) -> Self:
         df = pd.read_csv(csv)
         return cls.from_pandas(df)
+
+
+class BlockGetItemTypeError(AiowayError, TypeError): ...
+
+
+class BlockIndexOutOfBoundsError(AiowayError, IndexError): ...

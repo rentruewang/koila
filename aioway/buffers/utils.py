@@ -5,7 +5,7 @@ import functools
 import torch
 from torch import Tensor
 
-from aioway.schemas import DataType, DataTypeEnum
+from aioway.schemas import ArrayDtype, DataTypeEnum
 
 
 @functools.cache
@@ -21,13 +21,10 @@ def _dtype_dict():
     }
 
 
-def batched_tensor_to_aioway_dtype(tensor: Tensor) -> DataType:
+def tensor_dtype(tensor: Tensor) -> ArrayDtype:
     if tensor.ndim == 0:
         raise ValueError("Tensor must be batched, therefore cannot be 0D.")
 
     dtype = _dtype_dict()[tensor.dtype]
 
-    if tensor.ndim == 1:
-        return dtype
-
-    return DataTypeEnum.ARRAY(tensor.shape[1:], dtype)
+    return ArrayDtype(shape=tensor.shape, dtype=dtype)

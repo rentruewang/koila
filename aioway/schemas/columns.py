@@ -4,10 +4,10 @@ from typing import NamedTuple
 
 from .types import DataType
 
-__all__ = ["ColumnSchema"]
+__all__ = ["NameDtype"]
 
 
-class ColumnSchema(NamedTuple):
+class NameDtype(NamedTuple):
     """
     ``ColumnType`` represents a column in a table, comparable by names.
 
