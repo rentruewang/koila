@@ -2,7 +2,7 @@
 
 import pytest
 
-from aioway.schemas import DataType, DataTypeEnum, TableSchema
+from aioway.schemas import DataType, DataTypeEnum, Schema
 
 
 @pytest.fixture
@@ -11,20 +11,18 @@ def schema_dict() -> dict[str, DataType]:
 
 
 @pytest.fixture
-def schema(schema_dict) -> TableSchema:
-    return TableSchema.mapping(schema_dict)
+def schema(schema_dict) -> Schema:
+    return Schema.mapping(schema_dict)
 
 
 def test_init(schema_dict, schema):
-    assert TableSchema.mapping(schema_dict) == TableSchema.iterable(schema.sorted())
-    assert TableSchema.mapping(schema_dict) == TableSchema.tuples(
-        list(schema_dict.items())
-    )
+    assert Schema.mapping(schema_dict) == Schema.iterable(schema.sorted())
+    assert Schema.mapping(schema_dict) == Schema.tuples(list(schema_dict.items()))
 
 
 def test_eq(schema_dict, schema):
     assert schema == schema_dict
-    assert schema == TableSchema.mapping(schema_dict)
+    assert schema == Schema.mapping(schema_dict)
 
 
 def test_string(schema):

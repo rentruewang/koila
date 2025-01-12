@@ -2,7 +2,7 @@
 
 import dataclasses as dcls
 
-from aioway.schemas import TableSchema
+from aioway.schemas import Schema
 
 from .relations import Relation, RelationVisitor, RelNode
 
@@ -20,7 +20,7 @@ class TransformRelation[P: RelNode](Relation[P]):
     The input data to transform.
     """
 
-    to: TableSchema
+    to: Schema
     """
     The output format.
     """
@@ -29,7 +29,7 @@ class TransformRelation[P: RelNode](Relation[P]):
         return visitor.transform(self)
 
     @property
-    def dtype(self) -> TableSchema:
+    def dtype(self) -> Schema:
         return self.to
 
     @property
@@ -37,5 +37,5 @@ class TransformRelation[P: RelNode](Relation[P]):
         return (self.prev,)
 
     @property
-    def schema(self) -> TableSchema:
+    def schema(self) -> Schema:
         return self.to
