@@ -5,14 +5,17 @@ import dataclasses as dcls
 import typing
 from abc import ABC
 from collections.abc import KeysView
-from typing import Self
+from typing import Literal, Self
 
 import numpy as np
 from numpy.typing import NDArray
+from pandas import DataFrame
+from tensordict import TensorDict
 
-from aioway.errors import AiowayError
+__all__ = ["Block", "BlockKind"]
 
-__all__ = ["Block"]
+
+type BlockKind = Literal["dataframe", "tensordict"]
 
 
 @dcls.dataclass(frozen=True)
@@ -20,6 +23,9 @@ class Block[C, R](ABC):
     """
     ``Block`` is a thin wrapper over ``TensorDict``,
     while providing some additional functionality.
+
+    As a ``Block`` symbols a batch of data, selected from the dataset,
+    it must be able to be converted to different formats like ``pandas`` or ``tensordict``.
     """
 
     @abc.abstractmethod
@@ -81,3 +87,13 @@ class Block[C, R](ABC):
 
     @abc.abstractmethod
     def zip(self, other: Self) -> Self: ...
+
+    @abc.abstractmethod
+    def tensordict(self) -> TensorDict: ...
+
+    @abc.abstractmethod
+    def pandas(self) -> DataFrame: ...
+
+    @classmethod
+    @abc.abstractmethod
+    def from_pandas(cls, df: DataFrame, /) -> Self: ...
