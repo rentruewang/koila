@@ -10,7 +10,7 @@ from .blocks import Block
 
 
 @dcls.dataclass(frozen=True)
-class DataFrameBlock(Block[Series, DataFrame]):
+class PandasBlock(Block[Series, DataFrame]):
     data: DataFrame
 
     def __len__(self) -> int:
