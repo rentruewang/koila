@@ -1,13 +1,11 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
 import dataclasses as dcls
-import typing
 from collections.abc import KeysView
 from typing import Self
 
 import numpy as np
 import torch
-from numpy.typing import NDArray
 from tensordict import TensorDict
 from torch import Tensor
 from torch import device as Device
@@ -21,11 +19,6 @@ __all__ = ["TensorBlock"]
 
 @dcls.dataclass(frozen=True)
 class TensorBlock(Block[Tensor, TensorDict]):
-    """
-    ``Batch`` is a thin wrapper over ``TensorDict``,
-    while providing some additional functionality.
-    """
-
     data: TensorDict
     """
     The underlying ``TensorDict`` that is treated as a batch.
