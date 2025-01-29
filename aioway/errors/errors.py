@@ -9,6 +9,9 @@ __all__ = ["AiowayError"]
 class AiowayError(Exception):
     """
     ``AiowayError`` is the error thrown by the ``aioway`` library.
+
+    Todo:
+        Make the messages configurable.
     """
 
     def __init__(self, *args: Any) -> None:

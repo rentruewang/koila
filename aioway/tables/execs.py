@@ -3,16 +3,18 @@
 import abc
 from typing import Protocol
 
-from aioway.blocks import TensorBlock
+from aioway.blocks import TensordictBlock
 
 __all__ = ["BinaryExec", "UnaryExec"]
 
 
 class UnaryExec(Protocol):
     @abc.abstractmethod
-    def __call__(self, block: TensorBlock, /) -> TensorBlock: ...
+    def __call__(self, block: TensordictBlock, /) -> TensordictBlock: ...
 
 
 class BinaryExec(Protocol):
     @abc.abstractmethod
-    def __call__(self, left: TensorBlock, right: TensorBlock, /) -> TensorBlock: ...
+    def __call__(
+        self, left: TensordictBlock, right: TensordictBlock, /
+    ) -> TensordictBlock: ...

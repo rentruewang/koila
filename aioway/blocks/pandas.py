@@ -1,17 +1,25 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
 import dataclasses as dcls
-from typing import Self
+from collections.abc import Mapping
+from typing import Any, Self
 
+import numpy as np
 import pandas as pd
-from pandas import DataFrame, Series
+from pandas import DataFrame
+from tensordict import TensorDict
+
+from aioway.buffers import NumpyBuffer
 
 from .blocks import Block
 
 
 @dcls.dataclass(frozen=True)
-class PandasBlock(Block[Series, DataFrame]):
+class PandasBlock(Block):
     data: DataFrame
+    """
+    The underlying data for the ``PandasBlock`` class.
+    """
 
     def __len__(self) -> int:
         return len(self.data)
@@ -31,11 +39,11 @@ class PandasBlock(Block[Series, DataFrame]):
     def zip(self, other: Self) -> Self:
         return type(self)(pd.concat([self.data, other.data], axis=1))
 
-    def _getitem_str(self, idx: str) -> Series:
-        return self.data[idx]
+    def _getitem_str(self, idx: str) -> NumpyBuffer:
+        return NumpyBuffer(np.array(self.data[idx]))
 
-    def _getitem_int(self, idx: int) -> DataFrame:
-        return self.data.iloc[idx : idx + 1]
+    def _getitem_int(self, idx: int) -> Mapping[str, Any]:
+        return self.data.iloc[idx : idx + 1].to_dict()
 
     def _getitem_cols(self, idx: list[str]) -> Self:
         return type(self)(self.data[idx])
@@ -44,3 +52,9 @@ class PandasBlock(Block[Series, DataFrame]):
         return type(self)(self.data.iloc[idx])
 
     _getitem_array = _getitem_slice = __getitem_iloc
+
+    def pandas(self) -> DataFrame:
+        return self.data
+
+    def tensordict(self) -> TensorDict:
+        return TensorDict(self.data.to_dict())
