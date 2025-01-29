@@ -4,7 +4,7 @@ import dataclasses as dcls
 
 import pytest
 
-from aioway.casters import Castable, Caster, TypeCastError
+from aioway.typings import Castable, Caster
 
 a_to_a = None
 
@@ -63,28 +63,28 @@ def cast_b():
     return result
 
 
-def test_castable_has_astype(cast_a):
-    assert callable(cast_a.astype)
+def test_castable_has_cast(cast_a):
+    assert callable(cast_a.cast)
 
 
 def test_undefined_cast_to_self(cast_a):
-    result = cast_a.astype("a")
+    result = cast_a.cast("a")
     assert result is cast_a
 
 
 def test_a_to_b(cast_a):
-    result = cast_a.astype("b")
+    result = cast_a.cast("b")
     assert result.source == "a"
     assert isinstance(result, CastableB)
 
 
 def test_b_to_a(cast_b):
-    result = cast_b.astype("a")
+    result = cast_b.cast("a")
     assert result.source == "b"
     assert isinstance(result, CastableA)
 
 
 def test_b_to_b(cast_b):
-    result = cast_b.astype("b")
+    result = cast_b.cast("b")
     assert isinstance(result, CastableB)
     assert result.source == "identity"

@@ -1,24 +1,25 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
 import dataclasses as dcls
-from collections.abc import KeysView
-from typing import Self
+from collections.abc import KeysView, Mapping
+from typing import Any, Self
 
 import numpy as np
 import torch
+from pandas import DataFrame
 from tensordict import TensorDict
-from torch import Tensor
 from torch import device as Device
 
+from aioway.buffers import TorchBuffer
 from aioway.errors import AiowayError
 
 from .blocks import Block
 
-__all__ = ["TensorBlock"]
+__all__ = ["TensordictBlock"]
 
 
 @dcls.dataclass(frozen=True)
-class TensorBlock(Block[Tensor, TensorDict]):
+class TensordictBlock(Block):
     data: TensorDict
     """
     The underlying ``TensorDict`` that is treated as a batch.
@@ -28,11 +29,8 @@ class TensorBlock(Block[Tensor, TensorDict]):
         if not isinstance(self.data, TensorDict):
             raise BatchTypeError(
                 "Underlying data for `Batch` should be of type `TensorDict`, "
-                f"sgot {type(self.data)=}"
+                f"got {type(self.data)=}"
             )
-
-        if not len(self.data):
-            raise NotBatchedError(f"TensorDict is not batched. {self.data.batch_size=}")
 
     def __len__(self) -> int:
         return len(self.data)
@@ -89,16 +87,19 @@ class TensorBlock(Block[Tensor, TensorDict]):
                 f"Got {self.device=} and {other.device=}"
             )
 
-    def _getitem_str(self, idx: str) -> Tensor:
-        return self.data[idx]
+    def _getitem_str(self, idx: str) -> TorchBuffer:
+        return TorchBuffer(self.data[idx])
 
     def _getitem_cols(self, idx: list[str]) -> Self:
         return type(self)(self.data.select(*idx))
 
+    def _getitem_int(self, idx) -> Mapping[str, Any]:
+        return self.data[idx].to_dict()
+
     def __getitem_direct(self, idx: object) -> Self:
         return type(self)(self.data[idx])
 
-    _getitem_int = _getitem_slice = _getitem_array = __getitem_direct
+    _getitem_slice = _getitem_array = __getitem_direct
 
     def _get_device(self) -> Device:
         return self.data.device or Device("cpu")
@@ -107,6 +108,12 @@ class TensorBlock(Block[Tensor, TensorDict]):
         self.data.to(device=device)
 
     device = property(fget=_get_device, fset=_set_device)
+
+    def tensordict(self) -> TensorDict:
+        return self.data
+
+    def pandas(self) -> DataFrame:
+        return DataFrame(self.data.to_dict())
 
 
 class BatchTypeError(AiowayError, TypeError): ...

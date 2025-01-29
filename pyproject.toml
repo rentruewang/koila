@@ -16,7 +16,6 @@ pandas = "^2.2.3"
 rich = "^13.9.4"
 tensordict = "^0.6.2"
 torch = "^2.5.1"
-mypy = "^1.14.0"
 
 [tool.poetry.group.dev.dependencies]
 ansible = "^11.0.0"
@@ -29,7 +28,7 @@ ipython = "^8.29.0"
 isort = "^5.13.2"
 jupyter = "^1.1.1"
 jupyter-book = "^1.0.3"
-mypy = "^1.13.0"
+mypy = "^1.14.1"
 ninja = "^1.11.1.1"
 pip = "^24.3.1"
 pytest = "^8.3.3"
@@ -37,6 +36,7 @@ pytest-cov = "^6.0.0"
 pytest-sugar = "^1.0.0"
 pytest-xdist = "^3.6.1"
 setuptools = "^75.6.0"
+mimesis = "^18.0.0"
 
 [build-system]
 requires = ["poetry-core"]

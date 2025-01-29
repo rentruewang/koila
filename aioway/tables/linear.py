@@ -5,7 +5,7 @@ from typing import Self
 
 from pandas import DataFrame
 
-from aioway.blocks import TensorBlock
+from aioway.blocks import TensordictBlock
 
 from .tables import TableVisitor
 
@@ -19,7 +19,7 @@ class LinearTable:
     representing an external data source.
     """
 
-    block: TensorBlock
+    block: TensordictBlock
     """
     The in-memory representation of the current table.
     The block itself is stored in CPU memory.
@@ -53,4 +53,6 @@ class LinearTable:
     def from_pandas(
         cls, df: DataFrame, /, batch_size: int, device: str = "cpu"
     ) -> Self:
-        return cls(TensorBlock.from_pandas(df), batch_size=batch_size, device=device)
+        return cls(
+            TensordictBlock.from_pandas(df), batch_size=batch_size, device=device
+        )
