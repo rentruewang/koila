@@ -1,24 +1,25 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
-import dataclasses as dcls
 
-from torch.nn import Module
+import tensordict
+from tensordict.nn import TensorDictModule
 
-from aioway.blocks import TensorBlock
+from aioway import blocks
+from aioway.blocks import Block
 
 __all__ = ["Model"]
 
 
-@dcls.dataclass(frozen=True)
-class Model(Module):
-    module: Module
+@tensordict.tensorclass(frozen=True)
+class Model:
+    module: TensorDictModule
     """
     The underlying module of the ``Model`` class.
     """
 
     device: str
 
-    def forward(self, block: TensorBlock) -> TensorBlock:
+    def forward(self, block: Block) -> Block:
         """
         The forward function of the model class.
 
@@ -30,4 +31,6 @@ class Model(Module):
             The result computed by the underlying module.
         """
 
-        return self.module(block)
+        inputs = block.tensordict()
+        result = self.module(inputs)
+        return blocks.block(result, "tensordict")

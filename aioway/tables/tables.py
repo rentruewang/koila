@@ -10,7 +10,7 @@ from typing import Protocol
 
 from torch import Tensor
 
-from aioway.blocks import TensorBlock
+from aioway.blocks import TensordictBlock
 from aioway.plans import Node
 from aioway.relalg import BinaryExpr, Expr, LeafExpr, UnaryExpr
 
@@ -67,7 +67,7 @@ class Table(Node["Table"], ABC):
     """
 
     @abc.abstractmethod
-    def __iter__(self) -> Iterator[TensorBlock]: ...
+    def __iter__(self) -> Iterator[TensordictBlock]: ...
 
     @abc.abstractmethod
     def accept[T](self, visitor: "TableVisitor[T]") -> T: ...
@@ -135,7 +135,7 @@ class Table(Node["Table"], ABC):
         return CartesianTable(lambda left, right: left.union(right), self, other)
 
 
-def _index_for_select(block: TensorBlock, expr: Expr) -> Tensor:
+def _index_for_select(block: TensordictBlock, expr: Expr) -> Tensor:
 
     match expr:
         case LeafExpr(value):

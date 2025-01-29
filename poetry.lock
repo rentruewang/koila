@@ -1948,6 +1948,21 @@ files = [
 ]
 
 [[package]]
+name = "mimesis"
+version = "18.0.0"
+description = "Mimesis: Fake Data Generator."
+optional = false
+python-versions = "<4.0,>=3.10"
+files = [
+    {file = "mimesis-18.0.0-py3-none-any.whl", hash = "sha256:a51854a5ce63ebf2bd6a98e8841412e04cede38593be7e16d1d712848e6273df"},
+    {file = "mimesis-18.0.0.tar.gz", hash = "sha256:7d7c76ecd680ae48afe8dc4413ef1ef1ee7ef20e16f9f9cb42892add642fc1b2"},
+]
+
+[package.extras]
+factory = ["factory-boy (>=3.3.0,<4.0.0)"]
+pytest = ["pytest (>=7.2,<8.0)"]
+
+[[package]]
 name = "mistune"
 version = "3.1.0"
 description = "A sane and fast Markdown parser with useful plugins and renderers"
@@ -4437,4 +4452,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "2def4e6324efa1a97a6034ddc77409718994e0cf43bace4742973854cfb05a99"
+content-hash = "d15d8e2605a09df5983cd0283b81435d5855887359b0e805e3b7558a80e02b0b"

@@ -1,27 +1,28 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
 import abc
-import dataclasses as dcls
 import typing
 from abc import ABC
-from collections.abc import KeysView
-from typing import Literal, Self
+from collections.abc import KeysView, Mapping
+from typing import Any, Literal, Self
 
 import numpy as np
 from numpy.typing import NDArray
 from pandas import DataFrame
 from tensordict import TensorDict
 
+from aioway.buffers import Buffer
+from aioway.typings import Castable, Caster, Slicer
+
 __all__ = ["Block", "BlockKind"]
 
 
-type BlockKind = Literal["dataframe", "tensordict"]
+type BlockKind = Literal["pandas", "tensordict"]
 
 
-@dcls.dataclass(frozen=True)
-class Block[C, R](ABC):
+class Block(Castable, ABC):
     """
-    ``Block`` is a thin wrapper over ``TensorDict``,
+    ``Block`` represents a batch that is immutable,
     while providing some additional functionality.
 
     As a ``Block`` symbols a batch of data, selected from the dataset,
@@ -32,10 +33,10 @@ class Block[C, R](ABC):
     def __len__(self) -> int: ...
 
     @typing.overload
-    def __getitem__(self, idx: str) -> C: ...
+    def __getitem__(self, idx: str) -> Buffer: ...
 
     @typing.overload
-    def __getitem__(self, idx: int) -> R: ...
+    def __getitem__(self, idx: int) -> Mapping[str, Any]: ...
 
     @typing.overload
     def __getitem__(self, idx: slice | list[str] | list[int] | NDArray) -> Self: ...
@@ -47,7 +48,10 @@ class Block[C, R](ABC):
         if isinstance(idx, int):
             return self._getitem_int(idx)
 
+        # Normalize the slices before passing in.
         if isinstance(idx, slice):
+            slicer = Slicer(len(self))
+            idx = slicer(idx)
             return self._getitem_slice(idx)
 
         # Columns must be a subset of the existing ones.
@@ -62,10 +66,10 @@ class Block[C, R](ABC):
     def __contains__(self, key: str) -> bool: ...
 
     @abc.abstractmethod
-    def _getitem_str(self, idx: str) -> C: ...
+    def _getitem_str(self, idx: str) -> Buffer: ...
 
     @abc.abstractmethod
-    def _getitem_int(self, idx: int) -> R: ...
+    def _getitem_int(self, idx: int) -> Mapping[str, Any]: ...
 
     @abc.abstractmethod
     def _getitem_slice(self, idx: slice) -> Self: ...
@@ -95,5 +99,22 @@ class Block[C, R](ABC):
     def pandas(self) -> DataFrame: ...
 
     @classmethod
-    @abc.abstractmethod
-    def from_pandas(cls, df: DataFrame, /) -> Self: ...
+    def _caster(cls) -> Caster:
+        from .pandas import PandasBlock
+        from .torch import TensordictBlock
+
+        def pandas_to_tensor(blk: PandasBlock):
+            return TensordictBlock(blk.tensordict())
+
+        def tensor_to_pandas(blk: TensordictBlock):
+            return PandasBlock(blk.pandas())
+
+        return Caster(
+            base=Block,
+            aliases=["tensordict", "pandas"],
+            klasses=[TensordictBlock, PandasBlock],
+            matrix=[
+                [None, tensor_to_pandas],
+                [pandas_to_tensor, None],
+            ],
+        )
