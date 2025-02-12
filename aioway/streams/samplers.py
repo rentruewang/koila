@@ -4,6 +4,8 @@ import abc
 from collections.abc import Iterator
 from typing import Protocol
 
+__all__ = ["Sampler"]
+
 
 class Sampler(Protocol):
     """
