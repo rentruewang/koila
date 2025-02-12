@@ -8,6 +8,8 @@ from aioway.blocks import Block
 
 from .streams import Stream
 
+__all__ = ["BatchStream"]
+
 
 @dcls.dataclass(frozen=True)
 class BatchStream(Stream):
