@@ -34,7 +34,10 @@ class Caster:
 
     Fixme:
         Work out the type issues documented in python/mypy#4717,
-        so that type hints can work properly.
+        so that type hints can work properly (does not need to be just `type`).
+
+    Todo:
+        Improve the usage of the the ``Caster``.
     """
 
     base: type
