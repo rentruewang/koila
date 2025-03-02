@@ -3,7 +3,7 @@
 import dataclasses as dcls
 from collections.abc import Mapping
 
-from aioway.schemas import Schema
+from aioway.attrs import TableSchema
 
 from .relations import Relation, RelationVisitor, RelNode
 
@@ -39,8 +39,8 @@ class RenameRelation[P: RelNode](Relation[P]):
         return (self.prev,)
 
     @property
-    def schema(self) -> Schema:
-        return Schema.mapping(
+    def schema(self) -> TableSchema:
+        return TableSchema.mapping(
             {
                 self.cols.get(name, name): dtype
                 for name, dtype in self.prev.schema.items()

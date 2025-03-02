@@ -5,7 +5,7 @@ import typing
 from collections.abc import Sequence
 from typing import Protocol
 
-from aioway.schemas import Schema
+from aioway.attrs import TableSchema
 
 if typing.TYPE_CHECKING:
     from .relations import Relation
@@ -31,7 +31,7 @@ class RelNode(Protocol):
         """
 
     @property
-    def schema(self) -> Schema:
+    def schema(self) -> TableSchema:
         """
         The names of the columns in this plan node.
 

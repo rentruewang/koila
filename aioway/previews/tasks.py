@@ -6,8 +6,8 @@ from abc import ABC
 from collections.abc import Sequence
 from typing import NamedTuple
 
+from aioway.attrs import TableSchema
 from aioway.plans import Dag
-from aioway.schemas import Schema
 
 from .einsums import Einsum
 
@@ -17,12 +17,12 @@ class Task(NamedTuple):
     The description of a task, with a list of defined inputs and a list of defined outputs.
     """
 
-    input: tuple[Schema, ...]
+    input: tuple[TableSchema, ...]
     """
     The schema of the input
     """
 
-    output: tuple[Schema, ...]
+    output: tuple[TableSchema, ...]
     """
     The schema of the output.
     """

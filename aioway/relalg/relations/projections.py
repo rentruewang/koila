@@ -3,7 +3,7 @@
 import dataclasses as dcls
 from collections.abc import Sequence
 
-from aioway.schemas import Schema
+from aioway.attrs import TableSchema
 
 from .relations import Relation, RelationVisitor, RelNode
 
@@ -44,5 +44,5 @@ class ProjectionRelation[P: RelNode](Relation[P]):
         return (self.prev,)
 
     @property
-    def schema(self) -> Schema:
-        return Schema.mapping({col: self.prev.schema[col] for col in self.columns})
+    def schema(self) -> TableSchema:
+        return TableSchema.mapping({col: self.prev.schema[col] for col in self.columns})
