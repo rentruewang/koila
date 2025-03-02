@@ -2,7 +2,7 @@
 
 import dataclasses as dcls
 
-from aioway.schemas import Schema
+from aioway.attrs import TableSchema
 
 from .relations import Relation, RelationVisitor, RelNode
 
@@ -39,5 +39,5 @@ class UnionRelation[P: RelNode](Relation[P]):
         return self.top, self.down
 
     @property
-    def schema(self) -> Schema:
+    def schema(self) -> TableSchema:
         return self.top.schema

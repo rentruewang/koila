@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from aioway.schemas import Device
+from aioway.attrs import Device
 
 
 def example_devices() -> list[str]:

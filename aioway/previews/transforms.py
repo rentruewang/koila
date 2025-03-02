@@ -3,7 +3,7 @@
 import abc
 from typing import Protocol
 
-from aioway.schemas import Schema
+from aioway.attrs import TableSchema
 
 
 class Tranformation(Protocol):
@@ -15,4 +15,4 @@ class Tranformation(Protocol):
     """
 
     @abc.abstractmethod
-    def __call__(self, schema: Schema, /) -> Schema: ...
+    def __call__(self, schema: TableSchema, /) -> TableSchema: ...

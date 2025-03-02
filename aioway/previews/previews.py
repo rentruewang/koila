@@ -3,8 +3,8 @@
 import dataclasses as dcls
 from collections.abc import Callable
 
+from aioway.attrs import DataType
 from aioway.relalg import Relation
-from aioway.schemas import DataType
 
 from .einsums import EinsumError
 
