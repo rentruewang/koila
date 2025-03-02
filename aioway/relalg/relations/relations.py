@@ -5,7 +5,7 @@ import typing
 from collections.abc import Sequence
 from typing import Protocol
 
-from aioway.schemas import Schema
+from aioway.attrs import TableSchema
 
 from .nodes import RelNode
 
@@ -45,7 +45,7 @@ class Relation[P: RelNode](Protocol):
 
     @property
     @abc.abstractmethod
-    def schema(self) -> Schema:
+    def schema(self) -> TableSchema:
         """
         The schema of the current relation.
 

@@ -2,8 +2,8 @@
 
 import dataclasses as dcls
 
+from aioway.attrs import TableSchema
 from aioway.relalg.exprs import Expr
-from aioway.schemas import Schema
 
 from .relations import Relation, RelationVisitor, RelNode
 
@@ -34,5 +34,5 @@ class SelectionRelation[P: RelNode](Relation[P]):
         return (self.prev,)
 
     @property
-    def schema(self) -> Schema:
+    def schema(self) -> TableSchema:
         return self.prev.schema

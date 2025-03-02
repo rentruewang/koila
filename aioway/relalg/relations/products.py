@@ -4,7 +4,7 @@ import dataclasses as dcls
 import enum
 from enum import StrEnum
 
-from aioway.schemas import Schema
+from aioway.attrs import TableSchema
 
 from .relations import Relation, RelationVisitor, RelNode
 
@@ -64,7 +64,7 @@ class ProductRelation[P: RelNode](Relation[P]):
         return self.left, self.right
 
     @property
-    def schema(self) -> Schema:
+    def schema(self) -> TableSchema:
         return self.left.schema | self.right.schema
 
 
@@ -81,5 +81,5 @@ class ConcatRelation[P: RelNode](Relation[P]):
         return self.left, self.right
 
     @property
-    def schema(self) -> Schema:
+    def schema(self) -> TableSchema:
         return self.left.schema | self.right.schema

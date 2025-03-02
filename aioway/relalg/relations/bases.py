@@ -2,7 +2,7 @@
 
 import dataclasses as dcls
 
-from aioway.schemas import Schema
+from aioway.attrs import TableSchema
 
 from .nodes import RelNode
 from .relations import Relation, RelationVisitor
@@ -16,7 +16,7 @@ class BaseRelation[P: RelNode](Relation[P]):
     Base class represents concrete / source data.
     """
 
-    base: Schema
+    base: TableSchema
     """
     The schema of the base relation.
     This acts as the source for all the internal nodes.
@@ -35,5 +35,5 @@ class BaseRelation[P: RelNode](Relation[P]):
         return ()
 
     @property
-    def schema(self) -> Schema:
+    def schema(self) -> TableSchema:
         return self.base
