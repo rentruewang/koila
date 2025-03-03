@@ -1,10 +1,9 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
 import dataclasses as dcls
-import typing
-from typing import Any, Protocol, Self
+from typing import Any, Self
 
-__all__ = ["Device", "HasDevice"]
+__all__ = ["Device"]
 
 
 @dcls.dataclass(eq=False, frozen=True)
@@ -29,12 +28,3 @@ class Device:
 
     def to(self, device: str) -> Self:
         return dcls.replace(self, name=device)
-
-
-@typing.runtime_checkable
-class HasDevice(Protocol):
-    """
-    ``HasDevice`` describes a type with a ``device`` attribute.
-    """
-
-    device: Device

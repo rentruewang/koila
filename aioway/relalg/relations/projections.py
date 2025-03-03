@@ -3,7 +3,7 @@
 import dataclasses as dcls
 from collections.abc import Sequence
 
-from aioway.attrs import TableSchema
+from aioway.schemas import TableSchema
 
 from .relations import Relation, RelationVisitor, RelNode
 

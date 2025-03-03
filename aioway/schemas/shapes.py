@@ -5,9 +5,9 @@ import functools
 import operator
 import typing
 from collections.abc import Sequence
-from typing import Any, Protocol, Self
+from typing import Any, Self
 
-__all__ = ["Shape", "HasShape"]
+__all__ = ["Shape"]
 
 
 @dcls.dataclass(eq=False, frozen=True)
@@ -60,12 +60,3 @@ class Shape(Sequence[int]):
         """
 
         return cls(tuple(sequence))
-
-
-@typing.runtime_checkable
-class HasShape(Protocol):
-    """
-    ``HasShape`` describes a type with a ``shape`` attribute.
-    """
-
-    shape: Shape

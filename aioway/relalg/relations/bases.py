@@ -2,7 +2,7 @@
 
 import dataclasses as dcls
 
-from aioway.attrs import TableSchema
+from aioway.schemas import TableSchema
 
 from .nodes import RelNode
 from .relations import Relation, RelationVisitor

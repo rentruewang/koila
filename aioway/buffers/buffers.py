@@ -5,6 +5,7 @@ import typing
 from abc import ABC
 from typing import Self
 
+import deprecated as dprc
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 from torch import Tensor
@@ -14,6 +15,7 @@ from aioway.typings import Castable, Caster, Slicer
 __all__ = ["Buffer"]
 
 
+@dprc.deprecated(reason="See issue #16")
 class Buffer(Castable, ABC):
     """
     ``Buffer`` is a thin wrapper for the underlying data structures,

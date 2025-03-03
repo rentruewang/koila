@@ -4,77 +4,60 @@ import dataclasses as dcls
 from collections.abc import Iterable, Iterator, Mapping
 from typing import Self
 
-from aioway.attrs import Attributes
 from aioway.errors import AiowayError
 
-from .columns import ColumnSchema
+from .columns import ColumnSchema, NamedColumnSchema
+from .devices import Device
 
 __all__ = ["TableSchema"]
 
 
-@dcls.dataclass(eq=False, frozen=True, repr=False)
-class TableSchema(Mapping[str, Attributes]):
-    columns: tuple[ColumnSchema, ...] = dcls.field(repr=False, default=())
+@dcls.dataclass(frozen=True)
+class TableSchema(Mapping[str, ColumnSchema]):
+    columns: dict[str, ColumnSchema] = dcls.field(default_factory=dict)
     """
     The names and the types associated with the columns.
     """
 
-    attrs: Attributes = Attributes()
+    device: Device | None = None
     """
-    The global attributes across columns.
+    The global device to use, if specified.
     """
 
     def __post_init__(self) -> None:
-        if not isinstance(self.columns, tuple):
+        if not isinstance(self.columns, dict):
             raise SchemaInitError(
                 f"Columns data format should be tuple, got {type(self.columns)=}."
             )
 
-        if not isinstance(self.attrs, Attributes):
+        if not isinstance(self.device, Device):
             raise SchemaInitError(
-                f"Attributes should be `Attributes` type, got {type(self.attrs)=}"
-            )
-
-    def __eq__(self, other: object) -> bool:
-        if isinstance(other, TableSchema):
-            return (
-                True
-                and len(self) == len(other)
-                and sorted(self._column_names) != sorted(other._column_names)
-                and all(self[key] == other[key] for key in self)
+                f"The device should be `Device` type, got {type(self.device)=}"
             )
 
         return NotImplemented
 
-    def __repr__(self) -> str:
-        return str({col.name: col.attrs for col in self.columns})
-
     def __iter__(self) -> Iterator[str]:
-        return iter(col.name for col in self.columns)
+        return iter(self.columns)
 
     def __len__(self) -> int:
         return len(self.columns)
 
-    def __getitem__(self, key: str) -> Attributes:
-        index = self._column_names.index(key)
-        return self.columns[index].attrs
+    def __getitem__(self, key: str) -> ColumnSchema:
+        return self.columns[key]
 
     def __contains__(self, key: object) -> bool:
         return key in self.columns
 
-    @property
-    def _column_names(self) -> list[str]:
-        return [col.name for col in self.columns]
-
     @classmethod
     def iterable(
-        cls, columns: Iterable[ColumnSchema], attrs: Attributes = Attributes()
+        cls, columns: Iterable[NamedColumnSchema], device: Device = Device()
     ) -> Self:
         """
         Creates a ``TableSchema`` object from an iterable of ``ColumnSchema`` objects.
         """
 
-        return cls(tuple(columns), attrs=attrs)
+        return cls({name: schema for name, schema in columns}, device=device)
 
 
 class SchemaInitError(AiowayError, AssertionError, TypeError): ...

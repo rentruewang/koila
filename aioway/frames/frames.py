@@ -2,64 +2,58 @@
 
 import abc
 from abc import ABC
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 
-from aioway.blocks import Block
-from aioway.buffers import Buffer
+from tensordict import TensorDict
+
+from aioway.errors import AiowayError
 
 __all__ = ["Frame"]
 
 
-class Frame(ABC):
+class Frame(Sequence[TensorDict], ABC):
     """
     ``Frame`` represents a chunk / batch of heterogenious data stored in memory,
     it is one of the main physical abstractions in ``aioway`` to represent eager computation.
 
-    Think of it as a normal ``pandas.DataFrame`` or ``torch.Tensor`` or ``TensorDict``,
+    Think of it as a normal ``Sequence`` of ``TensorDict``,
     where computation happens eagerly, imperatively, and the result is stored in memory.
-
-    Todo:
-        I have decided that ``Frame`` is abstract,
-        and that it represents bounded, in-memory dataframe.
-
-        This means that memory layouts like ``arrow``, ``pandas`` can easily be supported.
-
-        However, to be fast, instead of serializing to python objects,
-        we serialize to a concrete ``Batch`` object (to be introduced),
-        that is a thin wrapper over ``TensorDict``, representing the current batch,
-        allowing computing on GPUs.
-
-        This way, UDFs can still be implemented, but native methods can be used as well.
     """
 
     @abc.abstractmethod
-    def count(self) -> int:
+    def __len__(self) -> int:
         """
         Get the number of items (rows) in the current dataframe.
         """
 
         ...
 
-    @abc.abstractmethod
-    def cols(self, key: str) -> Buffer:
+    def __getitem__(self, idx: int | slice | Iterable[int]) -> TensorDict:
         """
-        Get the selected column in numpy array format.
-        """
-
-        ...
-
-    def rows(self, idx: Iterable[int]) -> Block:
-        """
-        Random access for the indices.
-
-        Args:
-            idx: An ``Iterable`` of indices to get the rows from.
-
-        Returns:
-            A tensordict representing the data of the selected batch.
+        Get individual items from the current dataframe.
         """
 
-        return self._rows(list(idx))
+        if isinstance(idx, int):
+            return self._rows_int(idx)
+
+        if isinstance(idx, slice):
+            return self._rows_slice(idx)
+
+        if isinstance(idx, Iterable):
+            return self._rows_list(list(idx))
+
+        raise FrameGetItemTypeError(
+            f"Unknown type: {type(idx)=}. Must be int or slice or iterable"
+        )
 
     @abc.abstractmethod
-    def _rows(self, idx: list[int]) -> Block: ...
+    def _rows_int(self, idx: int, /) -> TensorDict: ...
+
+    @abc.abstractmethod
+    def _rows_slice(self, idx: slice, /) -> TensorDict: ...
+
+    @abc.abstractmethod
+    def _rows_list(self, idx: list[int], /) -> TensorDict: ...
+
+
+class FrameGetItemTypeError(AiowayError, TypeError): ...

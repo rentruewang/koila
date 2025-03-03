@@ -2,26 +2,26 @@
 
 import abc
 from abc import ABC
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 
-from aioway.blocks import Block
+from tensordict import TensorDict
 
 __all__ = ["Stream"]
 
 
-class Stream(ABC):
+class Stream(Iterable[TensorDict], ABC):
     """
-    ``Stream`` represents a possibly unbound flow of data produced by a source,
-    it is one of the main physical abstractions in ``aioway``.
+    ``Stream`` represents a stream of heterogenious data being generated,
+    it is one of the main physical abstractions in ``aioway`` to represent eager computation.
+
+    It can be thought of as an ``Iterable`` of ``TensorDict``s,
+    where computation happens eagerly, imperatively, and the result is yielded.
     """
 
     @abc.abstractmethod
-    def __iter__(self) -> Iterator[Block]:
+    def __iter__(self) -> Iterator[TensorDict]:
         """
-        Iterator is the main API of a ``Stream``, where the input is batched and produced.
-
-        Yields:
-            The blocks coming in streams.
+        Coroutine to iterate over the current ``Stream``.
         """
 
         ...

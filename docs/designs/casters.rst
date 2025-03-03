@@ -12,6 +12,32 @@ This simply means that we would need to do our own casting and providing a unifi
 
 So, how do we do it?
 
+Assumption
+**********
+
+When we are using a framework,
+we make the assumption that using operations a framework supports natively should be the fastest.
+
+This is to say, having no external operation (like serializing and deserializing) is faster.
+
+For example, using the different list interfaces as examples;
+if we have a family of classes e.g. array list and linked list,
+normally we can convert them by hand or just transfer data in between “normally”.
+
+However, doing so means serializing and deserializing from device if the data is not locally on the same machine,
+or if serializing and deserializing is expensive e.g. numpy or torch,
+and this is where auto casting can help.
+This way numpy / torch can auto cast to the desired dtype.
+
+In this case, the frameworks are the classes (numpy array),
+and non native operations like loading into python slows it down.
+
+By doing auto casting, we optimize away the part where we would need to have to cast things manually.
+
+Primitive types also has this.
+And this should be completely hidden from the user.
+Otherwise, user casting has more benefit.
+
 Efficiency vs complexity
 ************************
 
