@@ -8,6 +8,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.12"
+deprecated = "^1.2.18"
 faiss-cpu = "^1.9.0.post1"
 ibis = "^3.3.0"
 lark = "^1.2.2"

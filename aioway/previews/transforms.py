@@ -3,7 +3,7 @@
 import abc
 from typing import Protocol
 
-from aioway.attrs import TableSchema
+from aioway.schemas import TableSchema
 
 
 class Tranformation(Protocol):

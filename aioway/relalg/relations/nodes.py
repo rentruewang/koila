@@ -5,7 +5,7 @@ import typing
 from collections.abc import Sequence
 from typing import Protocol
 
-from aioway.attrs import TableSchema
+from aioway.schemas import TableSchema
 
 if typing.TYPE_CHECKING:
     from .relations import Relation
