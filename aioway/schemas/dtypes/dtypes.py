@@ -2,15 +2,14 @@
 
 import abc
 import dataclasses as dcls
-import typing
 from abc import ABC
-from typing import Any, Protocol
+from typing import Any
 
 import numpy as np
 from numpy import dtype as NumpyDType
 from numpy.typing import DTypeLike
 
-__all__ = ["DType", "HasDtype"]
+__all__ = ["DType"]
 
 
 @dcls.dataclass(eq=False, frozen=True)
@@ -58,12 +57,3 @@ class DType(ABC):
             return factory(dtype)
         except UnsupportedDTypeError:
             return NotImplemented
-
-
-@typing.runtime_checkable
-class HasDtype(Protocol):
-    """
-    ``HasDtype`` describes a type with a ``dtype`` attribute.
-    """
-
-    dtype: DType

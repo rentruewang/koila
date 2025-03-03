@@ -4,7 +4,7 @@ import dataclasses as dcls
 import enum
 from enum import StrEnum
 
-from aioway.attrs import TableSchema
+from aioway.schemas import TableSchema
 
 from .relations import Relation, RelationVisitor, RelNode
 

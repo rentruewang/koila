@@ -6,6 +6,7 @@ from abc import ABC
 from collections.abc import KeysView, Mapping
 from typing import Any, Literal, Self
 
+import deprecated as dprc
 import numpy as np
 from numpy.typing import NDArray
 from pandas import DataFrame
@@ -20,6 +21,7 @@ __all__ = ["Block", "BlockKind"]
 type BlockKind = Literal["pandas", "tensordict"]
 
 
+@dprc.deprecated(reason="See issue #16")
 class Block(Castable, ABC):
     """
     ``Block`` represents a batch that is immutable,
@@ -101,18 +103,18 @@ class Block(Castable, ABC):
     @classmethod
     def _caster(cls) -> Caster:
         from .pandas import PandasBlock
-        from .torch import TensordictBlock
+        from .torch import TensorDictBlock
 
         def pandas_to_tensor(blk: PandasBlock):
-            return TensordictBlock(blk.tensordict())
+            return TensorDictBlock(blk.tensordict())
 
-        def tensor_to_pandas(blk: TensordictBlock):
+        def tensor_to_pandas(blk: TensorDictBlock):
             return PandasBlock(blk.pandas())
 
         return Caster(
             base=Block,
             aliases=["tensordict", "pandas"],
-            klasses=[TensordictBlock, PandasBlock],
+            klasses=[TensorDictBlock, PandasBlock],
             matrix=[
                 [None, tensor_to_pandas],
                 [pandas_to_tensor, None],

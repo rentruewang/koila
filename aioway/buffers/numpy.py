@@ -2,6 +2,7 @@
 
 import dataclasses as dcls
 
+import deprecated as dprc
 import torch
 from numpy import ndarray as ArrayType
 from numpy.typing import NDArray
@@ -12,6 +13,7 @@ from .buffers import Buffer
 __all__ = ["NumpyBuffer"]
 
 
+@dprc.deprecated(reason="See issue #16")
 @dcls.dataclass(frozen=True)
 class NumpyBuffer(Buffer):
     data: NDArray

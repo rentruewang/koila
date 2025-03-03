@@ -2,6 +2,7 @@
 
 import dataclasses as dcls
 
+import deprecated as dprc
 from numpy.typing import NDArray
 from torch import Tensor
 
@@ -10,6 +11,7 @@ from .buffers import Buffer
 __all__ = ["TorchBuffer"]
 
 
+@dprc.deprecated(reason="See issue #16")
 @dcls.dataclass(frozen=True)
 class TorchBuffer(Buffer):
 

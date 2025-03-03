@@ -4,6 +4,7 @@ import dataclasses as dcls
 from collections.abc import KeysView, Mapping
 from typing import Any, Self
 
+import deprecated as dprc
 import numpy as np
 import torch
 from pandas import DataFrame
@@ -15,11 +16,12 @@ from aioway.errors import AiowayError
 
 from .blocks import Block
 
-__all__ = ["TensordictBlock"]
+__all__ = ["TensorDictBlock"]
 
 
+@dprc.deprecated(reason="See issue #16")
 @dcls.dataclass(frozen=True)
-class TensordictBlock(Block):
+class TensorDictBlock(Block):
     data: TensorDict
     """
     The underlying ``TensorDict`` that is treated as a batch.

@@ -4,6 +4,7 @@ import dataclasses as dcls
 from collections.abc import Mapping
 from typing import Any, Self
 
+import deprecated as dprc
 import numpy as np
 import pandas as pd
 from pandas import DataFrame
@@ -13,7 +14,10 @@ from aioway.buffers import NumpyBuffer
 
 from .blocks import Block
 
+__all__ = ["PandasBlock"]
 
+
+@dprc.deprecated(reason="See issue #16")
 @dcls.dataclass(frozen=True)
 class PandasBlock(Block):
     data: DataFrame

@@ -3,7 +3,8 @@
 import dataclasses as dcls
 from collections.abc import Iterator
 
-from aioway.blocks import Block
+from tensordict import TensorDict
+
 from aioway.frames import Frame
 
 from .samplers import Sampler
@@ -24,6 +25,6 @@ class FrameStream(Stream):
     The sampler for which to access the original frame.
     """
 
-    def __iter__(self) -> Iterator[Block]:
+    def __iter__(self) -> Iterator[TensorDict]:
         for indices in self.sampler:
-            yield self.frame.rows(indices)
+            yield self.frame[indices]

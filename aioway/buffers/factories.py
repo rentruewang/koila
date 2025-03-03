@@ -3,6 +3,7 @@
 import typing
 from typing import Any, Literal
 
+import deprecated as dprc
 import numpy as np
 from torch import Tensor
 
@@ -11,6 +12,8 @@ from aioway.errors import UnknownTypeError
 from .buffers import Buffer
 from .numpy import NumpyBuffer
 from .torch import TorchBuffer
+
+__all__ = ["buffer"]
 
 
 @typing.overload
@@ -21,6 +24,7 @@ def buffer(data: Any, kind: Literal["numpy"]) -> NumpyBuffer: ...
 def buffer(data: Any, kind: Literal["torch"]) -> TorchBuffer: ...
 
 
+@dprc.deprecated(reason="See issue #16")
 def buffer(data, kind):
     buffer = _as_native_buffer(data=data)
 

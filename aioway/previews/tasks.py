@@ -6,8 +6,8 @@ from abc import ABC
 from collections.abc import Sequence
 from typing import NamedTuple
 
-from aioway.attrs import TableSchema
 from aioway.plans import Dag
+from aioway.schemas import TableSchema
 
 from .einsums import Einsum
 
