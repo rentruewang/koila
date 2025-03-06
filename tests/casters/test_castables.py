@@ -1,10 +1,11 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
 import dataclasses as dcls
+import typing
 
 import pytest
 
-from aioway.typings import Castable, Caster
+from aioway.casters import Castable, Caster
 
 a_to_a = None
 
@@ -26,6 +27,7 @@ def a_to_b(a):
 
 
 class CastableBase(Castable):
+    @typing.override
     @classmethod
     def _caster(cls):
         return Caster(
