@@ -1,6 +1,7 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
 import dataclasses as dcls
+import typing
 from typing import Literal
 
 from aioway.errors import AiowayError
@@ -40,6 +41,7 @@ class IntDType(PrecisionMixin, DType):
     equal to ``numpy``'s ``itemsize`` * 8.
     """
 
+    @typing.override
     def __str__(self) -> str:
         return f"int{self.precision}"
 
@@ -50,12 +52,14 @@ class FloatDType(PrecisionMixin, DType):
     The floating point dtype in ``aioway``.
     """
 
+    @typing.override
     def __str__(self) -> str:
         return f"float{self.precision}"
 
 
 @dcls.dataclass(eq=False, frozen=True)
 class BoolDType(DType):
+    @typing.override
     def __str__(self) -> Literal["bool"]:
         return "bool"
 

@@ -4,7 +4,6 @@
 import tensordict
 from tensordict.nn import TensorDictModule
 
-from aioway import blocks
 from aioway.blocks import Block
 
 __all__ = ["Model"]
@@ -31,6 +30,4 @@ class Model:
             The result computed by the underlying module.
         """
 
-        inputs = block.tensordict()
-        result = self.module(inputs)
-        return blocks.block(result, "tensordict")
+        raise NotImplementedError

@@ -1,43 +1,51 @@
 [tool.poetry]
 name = "aioway"
-version = "0.1.0"
+version = "0.0.1"
 description = "AI on the way"
 authors = ["RenChu Wang <patrick1031wang@gmail.com>"]
-license = "X"
+license = "BSD-3"
 readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.12"
-deprecated = "^1.2.18"
-faiss-cpu = "^1.9.0.post1"
-ibis = "^3.3.0"
 lark = "^1.2.2"
 numpy = "^2.1.3"
 pandas = "^2.2.3"
-rich = "^13.9.4"
 tensordict = "^0.6.2"
 torch = "^2.5.1"
 
 [tool.poetry.group.dev.dependencies]
-ansible = "^11.0.0"
-build = "^1.2.2.post1"
 autoflake = "^2.3.1"
 black = "^24.10.0"
 coverage = "^7.6.7"
-Cython = "^3.0.11"
-ipython = "^8.29.0"
 isort = "^5.13.2"
-jupyter = "^1.1.1"
-jupyter-book = "^1.0.3"
-mimesis = "^18.0.0"
 mypy = "^1.15.0"
-ninja = "^1.11.1.1"
-pip = "^24.3.1"
-pytest = "^8.3.3"
+
+[tool.poetry.group.ibis.dependencies]
+ibis = "^3.3.0"
+
+[tool.poetry.group.tests.dependencies]
+pytest = "^8.3.5"
 pytest-cov = "^6.0.0"
 pytest-sugar = "^1.0.0"
 pytest-xdist = "^3.6.1"
+
+[tool.poetry.group.interactive.dependencies]
+ipython = "^8.29.0"
+jupyter = "^1.1.1"
+jupyter-book = "^1.0.3"
+rich = "^13.9.4"
+
+[tool.poetry.group.build.dependencies]
+ansible = "^11.0.0"
+build = "^1.2.2.post1"
+cython = "^3.0.12"
+ninja = "^1.11.1.1"
+pip = "^24.3.1"
 setuptools = "^75.6.0"
+
+[tool.poetry.group.faiss.dependencies]
+faiss-cpu = "^1.10.0"
 
 [build-system]
 requires = ["poetry-core"]
@@ -67,6 +75,7 @@ check_untyped_defs = true
 module = [
     "faiss.*",
     "tensordict.*",
+    "sympy.*",
 ]
 ignore_missing_imports = true
 

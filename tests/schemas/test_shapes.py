@@ -13,13 +13,16 @@ def sample_shapes() -> list[list[int]]:
         return json.load(f)
 
 
-@pytest.mark.parametrize("shape", sample_shapes())
+@pytest.fixture(params=sample_shapes(), scope="module")
+def shape(request) -> list[int]:
+    return request.param
+
+
 def test_shapes_shape(shape):
     assert isinstance(shape, list)
     assert isinstance(Shape.from_seq(shape), Shape)
 
 
-@pytest.mark.parametrize("shape", sample_shapes())
 def test_shapes_eq(shape):
     assert len(Shape.from_seq(shape)) == len(shape)
     assert Shape.from_seq(shape) == list(shape)

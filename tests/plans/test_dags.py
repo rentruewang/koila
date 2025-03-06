@@ -14,7 +14,11 @@ def data_cases() -> dict[str, list[str]]:
         return json.load(f)
 
 
-@pytest.mark.parametrize("data", data_cases())
+@pytest.fixture(params=data_cases(), scope="module")
+def data(request) -> dict[str, list[str]]:
+    return request.param
+
+
 def test_dag(data):
     dag = Dag(data)
     ordered = tuple(dag.topo_sort())
