@@ -2,12 +2,13 @@
 
 import abc
 import dataclasses as dcls
+import typing
 from abc import ABC
 from typing import Any
 
 import numpy as np
 from numpy import dtype as NumpyDType
-from numpy.typing import DTypeLike
+from torch import dtype as TorchDType
 
 __all__ = ["DType"]
 
@@ -38,17 +39,28 @@ class DType(ABC):
             A boolean.
         """
 
-        if isinstance(other, DType):
-            return self.numpy() == other.numpy()
+        if (parsed := self.parse(other)) in [None, NotImplemented]:
+            return False
 
-        return self.numpy() == np.dtype(other)
+        return self.numpy() == parsed.numpy()
 
     def numpy(self) -> NumpyDType:
         return np.dtype(str(self))
 
+    @typing.overload
     @classmethod
-    def parse(cls, dtype: DTypeLike) -> "DType":
+    def parse(cls, dtype: "str | NumpyDType | DType | TorchDType") -> "DType": ...
+
+    @typing.overload
+    @classmethod
+    def parse(cls, dtype: None) -> None: ...
+
+    @classmethod
+    def parse(cls, dtype):
         from .factories import DTypeFactory, UnsupportedDTypeError
+
+        if dtype is None:
+            return None
 
         # In case it's a ``DTypeLike``, convert it to ``DType`` and use the same ``__eq__``.
         factory = DTypeFactory()

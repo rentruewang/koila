@@ -2,7 +2,7 @@
 
 import pytest
 
-from aioway.typings import Castable, Caster
+from aioway.casters import Castable, Caster
 
 
 class UncastableBase(Castable):

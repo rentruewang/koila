@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 import pytest
+import torch
 
 from aioway.schemas import Device
 
@@ -13,6 +14,12 @@ def example_devices() -> list[str]:
         return json.load(f)
 
 
-@pytest.mark.parametrize("device", example_devices())
+@pytest.fixture(params=example_devices(), scope="module")
+def device(request):
+    return request.param
+
+
 def test_devices_eq(device):
     assert Device(device) == device
+    assert Device(device) == torch.device(device)
+    assert Device.parse(device) == torch.device(device)
