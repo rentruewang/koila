@@ -4,8 +4,8 @@ import abc
 from abc import ABC
 from collections.abc import Iterable
 
+from aioway.datatypes import AttrSet
 from aioway.blocks import Block
-from aioway.schemas import TableSchema
 
 __all__ = ["Table"]
 
@@ -13,7 +13,7 @@ __all__ = ["Table"]
 class Table(Iterable[Block], ABC):
     @property
     @abc.abstractmethod
-    def schema(self) -> TableSchema:
+    def attrs(self) -> AttrSet:
         """
         The output schema of the current table.
         """

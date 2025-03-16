@@ -1,21 +1,20 @@
 format: jb-book
 root: index
 parts:
-  - caption: Improvement Proposals
+  - caption: Design
     chapters:
-    - file: ips/multi-backend
-    - file: ips/data
-    - file: ips/imperative
-    - file: ips/extensions
-    - file: ips/queries
-    - file: ips/indexing
-    - file: ips/models
-    - file: ips/time-series
-    - file: ips/resolutions
-    - file: ips/training
-    - file: ips/scaling
-    - file: ips/misc
+      - file: designs/multi-backend
+      - file: designs/data
+      - file: designs/imperative
+      - file: designs/extensions
+      - file: designs/queries
+      - file: designs/indexing
+      - file: designs/models
+      - file: designs/training
+      - file: designs/scaling
+      - file: designs/misc
+      - file: designs/schemas
   - caption: Contribution
     chapters:
-    - file: contrib
-    - file: coc
+      - file: contrib
+      - file: coc

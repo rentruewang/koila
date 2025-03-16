@@ -15,8 +15,8 @@ from tensordict import TensorDict
 from torch import Tensor
 from torch import device as TorchDevice
 
+from aioway.datatypes import Attr, AttrSet, Device, DType
 from aioway.errors import AiowayError
-from aioway.schemas import ColumnSchema, Device, DType, TableSchema
 
 __all__ = ["Block"]
 
@@ -214,29 +214,29 @@ class Block(Mapping[str, Tensor]):
             )
         )
 
-    def must_have_schema(self, schema: TableSchema, /) -> None:
+    def must_have_attrs(self, attr: AttrSet, /) -> None:
         """
         Promises that the current ``Block`` has a given ``TableSchema`` type.
         """
 
-        if schema.keys() != self.keys():
+        if attr.keys() != self.keys():
             raise BlockKeyError(
                 "Key mismatch. "
-                f"Required: {list(schema.keys())}. Actual: {list(self.keys())}"
+                f"Required: {list(attr.keys())}. Actual: {list(self.keys())}"
             )
 
-        if schema.device and self.device and schema.device != self.device:
+        if attr.device and self.device and attr.device != self.device:
             raise BlockDeviceError(
                 "Device mismatch with schema. "
-                f"Required: {schema.device}. Got: {self.device}."
+                f"Required: {attr.device}. Got: {self.device}."
             )
 
         for key in self.keys():
-            if schema[key].dtype == self[key].dtype:
+            if attr[key].dtype == self[key].dtype:
                 continue
 
             raise BlockDTypeError(
-                f"For {key=}, {schema[key].dtype=} incompatible with {self[key].dtype=}."
+                f"For {key=}, {attr[key].dtype=} incompatible with {self[key].dtype=}."
             )
 
     def _getitem_str(self, idx: str) -> Tensor:
@@ -299,9 +299,9 @@ class Block(Mapping[str, Tensor]):
     dtype = property(fget=_get_dtype)
 
     @property
-    def schema(self) -> TableSchema:
-        return TableSchema(
-            columns={key: ColumnSchema.parse_tensor(val) for key, val in self.items()},
+    def attrs(self) -> AttrSet:
+        return AttrSet(
+            columns={key: Attr.parse_tensor(val) for key, val in self.items()},
             device=self.device,
         )
 

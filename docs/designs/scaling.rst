@@ -45,3 +45,5 @@ Explainable AI
 If we keep each and every individual component small, then AI can inherently be explained.
 
 Optionally, explaining by corresponding data is also a great option.
+
+Or, explain
