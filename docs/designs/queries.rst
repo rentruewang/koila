@@ -10,7 +10,7 @@ because there are more things to do before this.
 Query optimization
 ******************
 
-After the logical plans are given (in the ``aioway.logics`` module),
+After the logical plans are given,
 query optimization can help in simplifying the plans according to some algorithms and heuristics.
 
 This might have some overlaps with `cost-based optimization`_, see the section below.

@@ -5,7 +5,7 @@ import math
 import typing
 
 from aioway.blocks import Block
-from aioway.schemas import TableSchema
+from aioway.datatypes import AttrSet
 
 from .frames import Frame
 
@@ -43,8 +43,8 @@ class BlockFrame(Frame):
 
     @property
     @typing.override
-    def schema(self) -> TableSchema:
-        return self.block.schema
+    def attrs(self) -> AttrSet:
+        return self.block.attrs
 
     @property
     def device(self):

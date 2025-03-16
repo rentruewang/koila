@@ -9,13 +9,13 @@ from .devices import Device
 from .dtypes import DType
 from .shapes import Shape
 
-__all__ = ["ColumnSchema"]
+__all__ = ["Attr", "AttrWithName"]
 
 
 @dcls.dataclass(frozen=True)
-class ColumnSchema:
+class Attr:
     """
-    ``ColumnSchema`` refers to the schema a column has.
+    ``Attr`` refers to the attributes a column uses.
     """
 
     dtype: DType | None = None
@@ -46,13 +46,13 @@ class ColumnSchema:
         return cls.parse(dtype=tensor.dtype, shape=tensor.shape, device=tensor.device)
 
 
-class NamedColumnSchema(NamedTuple):
+class AttrWithName(NamedTuple):
     name: str
     """
     The name of the column.
     """
 
-    schema: ColumnSchema
+    attr: Attr
     """
     The schema for the column.
     """

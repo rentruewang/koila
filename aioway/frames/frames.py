@@ -49,4 +49,4 @@ class Frame(Dataset[TensorDict], Table, ABC):
             for idx in range(len(self)):
                 yield self[idx]
 
-        return IteratorStream(iter(generator()), self.schema)
+        return IteratorStream(iter(generator()), self.attrs)

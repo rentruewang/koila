@@ -10,8 +10,8 @@ import torch
 from numpy.typing import NDArray
 
 from aioway.blocks import Block
+from aioway.datatypes import AttrSet
 from aioway.errors import AiowayError
-from aioway.schemas import TableSchema
 from aioway.streams.streams import Stream
 
 if typing.TYPE_CHECKING:
@@ -66,8 +66,8 @@ class _PartialCartesianStream(Stream):
         return self.__last_left_block[left_select].zip(right_item[right_select])
 
     @property
-    def schema(self) -> TableSchema:
-        return self.left.schema | self.right.schema
+    def attrs(self) -> AttrSet:
+        return self.left.attrs | self.right.attrs
 
     @abc.abstractmethod
     def _join(self, left: Block, right: Block) -> tuple[NDArray, NDArray]: ...
@@ -101,7 +101,7 @@ class ZipStream(Stream):
 
     def __post_init__(self) -> None:
         # Check intersection with the logic in ``TableSchema.__and__``.
-        _ = self.left.schema & self.right.schema
+        _ = self.left.attrs & self.right.attrs
 
     @typing.override
     def __length_hint__(self):
@@ -126,8 +126,8 @@ class ZipStream(Stream):
         return left.zip(right)
 
     @property
-    def schema(self) -> TableSchema:
-        return self.left.schema | self.right.schema
+    def attrs(self) -> AttrSet:
+        return self.left.attrs | self.right.attrs
 
 
 class ConcatLengthMismatchError(AiowayError, TypeError): ...
