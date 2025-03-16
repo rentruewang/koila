@@ -3,7 +3,6 @@
 import abc
 from abc import ABC
 from collections.abc import Iterable, Iterator
-from typing import Self
 
 from aioway.blocks import Block
 from aioway.tables import Table

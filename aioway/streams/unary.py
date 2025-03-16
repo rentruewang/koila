@@ -10,8 +10,8 @@ from numpy.typing import NDArray
 from sympy import Expr
 
 from aioway.blocks import Block
+from aioway.datatypes import AttrSet
 from aioway.errors import AiowayError
-from aioway.schemas import TableSchema
 
 from .streams import Stream
 
@@ -67,8 +67,8 @@ class FilterPredStream(Stream):
         return operator.length_hint(self.stream)
 
     @property
-    def schema(self) -> TableSchema:
-        return self.stream.schema
+    def attrs(self) -> AttrSet:
+        return self.stream.attrs
 
 
 @typing.final
@@ -94,8 +94,8 @@ class FilterExprStream(Stream):
         return operator.length_hint(self.stream)
 
     @property
-    def schema(self) -> TableSchema:
-        return self.stream.schema
+    def attrs(self) -> AttrSet:
+        return self.stream.attrs
 
 
 @typing.final
@@ -118,7 +118,7 @@ class MapStream(Stream):
     The computation on the input frame.
     """
 
-    output: TableSchema
+    output: AttrSet
     """
     Output schema of the ``MapFrame``.
     """
@@ -130,7 +130,7 @@ class MapStream(Stream):
         if not isinstance(result := self.compute(item), Block):
             raise MapTypeError(f"Output of {self.compute=} should be `Block`.")
 
-        result.must_have_schema(self.output)
+        result.must_have_attrs(self.output)
 
         return result
 
@@ -139,7 +139,7 @@ class MapStream(Stream):
         return operator.length_hint(self.stream)
 
     @property
-    def schema(self) -> TableSchema:
+    def attrs(self) -> AttrSet:
         return self.output
 
 
@@ -175,8 +175,8 @@ class ProjectStream(Stream):
         return item if self.subset is None else item[self.subset]
 
     @property
-    def schema(self) -> TableSchema:
-        schema = self.stream.schema
+    def attrs(self) -> AttrSet:
+        schema = self.stream.attrs
 
         if self.subset is None:
             return schema
@@ -220,8 +220,8 @@ class RenameStream(Stream):
         return operator.length_hint(self.stream)
 
     @property
-    def schema(self) -> TableSchema:
-        return self.stream.schema.rename(**self.renames)
+    def attrs(self) -> AttrSet:
+        return self.stream.attrs.rename(**self.renames)
 
 
 class FilterBatchSizeError(AiowayError, ValueError): ...

@@ -91,8 +91,8 @@ def filter_stream(request) -> Callable[[Stream], Stream]:
     return request.param
 
 
-def test_filter_stream_schema(filter_stream, block_frame):
-    assert filter_stream(iter(block_frame)).schema == block_frame.schema
+def test_filter_stream_attrs(filter_stream, block_frame):
+    assert filter_stream(iter(block_frame)).attrs == block_frame.attrs
 
 
 def test_filter_stream_next(filter_stream, block_frame):
@@ -111,8 +111,8 @@ def rename_stream(block_frame, rename_op):
     return RenameStream(iter(block_frame), **rename_op)
 
 
-def test_rename_stream_schema(rename_stream, block_frame, rename_op):
-    assert rename_stream.schema == block_frame.schema.rename(**rename_op)
+def test_rename_stream_attrs(rename_stream, block_frame, rename_op):
+    assert rename_stream.attrs == block_frame.attrs.rename(**rename_op)
 
 
 def test_rename_stream_next(rename_stream, block_frame):
@@ -132,7 +132,7 @@ def map_stream(block_frame, map_rename_op):
     return MapStream(
         iter(block_frame),
         lambda b: b.rename(**map_rename_op),
-        output=block_frame.schema.rename(**map_rename_op),
+        output=block_frame.attrs.rename(**map_rename_op),
     )
 
 
@@ -146,9 +146,9 @@ def project_stream(block_frame):
     return ProjectStream(iter(block_frame), subset=["f1d", "i2d"])
 
 
-def test_project_stream_schema(project_stream, block_frame):
-    selected = {key: block_frame.schema[key] for key in ["f1d", "i2d"]}
-    assert project_stream.schema == selected
+def test_project_stream_attrs(project_stream, block_frame):
+    selected = {key: block_frame.attrs[key] for key in ["f1d", "i2d"]}
+    assert project_stream.attrs == selected
 
 
 def test_project_stream_next(project_stream, block_frame):

@@ -4,8 +4,8 @@ import dataclasses as dcls
 import typing
 from collections.abc import Iterator
 
+from aioway.datatypes import AttrSet
 from aioway.blocks import Block
-from aioway.schemas import TableSchema
 
 from .streams import Stream
 
@@ -24,7 +24,7 @@ class IteratorStream(Stream):
     The ``Iterator`` that produces ``Block``s.
     """
 
-    _schema: TableSchema = dcls.field(repr=False)
+    _schema: AttrSet = dcls.field(repr=False)
     """
     The schema of the ``Stream``.
 
@@ -40,5 +40,5 @@ class IteratorStream(Stream):
         return item
 
     @property
-    def schema(self):
+    def attrs(self):
         return self._schema

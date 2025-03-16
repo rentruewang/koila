@@ -24,24 +24,5 @@ This can be a strong constraint for streaming backends, and needed to be handled
 This means that building and index either has to be incremental,
 or does not occur at all during inference, for instance.
 
-Planned backends
-****************
-
-There are 2 currently planned backend:
-
-Local / Torch distributed
-=========================
-
-Materialization can be very difficult because the torch backend assumes that everything is in minibatch.
-This means that materialization requires syncrhonization, and cannot be performed liberally,
-because CUDA: OOM is a frequent occurence.
-
-Therefore, some careful designs might be needed.
-
-Spark
-=====
-
-Materialization does not affect the spark backend all too much,
-considering that spark's RDD API is distributed, not streaming.
-
-It might pose a problem for spark structured streaming, though.
+For now, indexing on ``Frame``s is allowed,
+while on ``Stream`` it is not, because ``Frame``s are materialized and stored.

@@ -15,11 +15,27 @@ However, since it is required to access data sources accross different framework
 using a nosql database like redis might be a good way to approach this problem,
 and it has the benefit of being very scalable.
 
-``Block``s vs ``Table``s
-************************
 
-The main physical abstractions in this project, ``Block``s and ``Table``s, are very similar.
-Both of them have a ``DataFrame``-like API, which supports relational algebra.
-The main difference comes in the fact that ``Block`` is our in-memory data structure,
-similar to how a ``pandas.DataFrame`` operates, while ``Table`` is a producer of ``Block``,
-can possibly be lazily evaluated, and preserves relational information.
+Planned backends
+****************
+
+There are 2 currently planned backend:
+
+Local / Torch distributed
+=========================
+
+This is the default backend. Data are organized into ``Frame``s and ``Stream``s
+
+Materialization can be very difficult because the torch backend assumes that everything is in minibatch.
+This means that materialization requires syncrhonization, and cannot be performed liberally,
+because CUDA: OOM is a frequent occurence.
+
+Therefore, some careful designs might be needed.
+
+Spark
+=====
+
+Materialization does not affect the spark backend all too much,
+considering that spark's RDD API is distributed, not streaming.
+
+It might pose a problem for spark structured streaming, though.
