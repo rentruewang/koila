@@ -2,21 +2,20 @@
 
 import abc
 import dataclasses as dcls
-import typing
 from abc import ABC
 
 from tensordict import TensorDict
 from torch.utils.data import Dataset
 
 from aioway.blocks import Block
-from aioway.streams import IteratorStream, Stream
-from aioway.tables import Table
+from aioway.datatypes import AttrSet
+from aioway.execs import Exec, IteratorExec
 
 __all__ = ["Frame"]
 
 
 @dcls.dataclass(frozen=True)
-class Frame(Dataset[TensorDict], Table, ABC):
+class Frame(Dataset[TensorDict], ABC):
     """
     ``Frame`` represents a chunk / batch of heterogenious data stored in memory,
     it is one of the main physical abstractions in ``aioway`` to represent eager computation.
@@ -43,10 +42,13 @@ class Frame(Dataset[TensorDict], Table, ABC):
 
         ...
 
-    @typing.override
-    def __iter__(self) -> Stream:
+    @property
+    @abc.abstractmethod
+    def attrs(self) -> AttrSet: ...
+
+    def __iter__(self) -> Exec:
         def generator():
             for idx in range(len(self)):
                 yield self[idx]
 
-        return IteratorStream(iter(generator()), self.attrs)
+        return IteratorExec(iter(generator()), self.attrs)
