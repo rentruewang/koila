@@ -1,7 +1,6 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
 import dataclasses as dcls
-import operator
 import typing
 from collections.abc import Callable
 
@@ -13,23 +12,23 @@ from aioway.blocks import Block
 from aioway.datatypes import AttrSet
 from aioway.errors import AiowayError
 
-from .streams import Stream
+from .execs import Exec
 
 __all__ = [
-    "FilterPredStream",
-    "FilterExprStream",
-    "MapStream",
-    "RenameStream",
-    "ProjectStream",
+    "FilterPredExec",
+    "FilterExprExec",
+    "MapExec",
+    "RenameExec",
+    "ProjectExec",
 ]
 
 
 @typing.final
 @dcls.dataclass(frozen=True)
-class FilterPredStream(Stream):
-    stream: Stream
+class FilterPredExec(Exec):
+    exe: Exec
     """
-    The input ``Stream`` of the current ``Stream``.
+    The input ``Exec`` of the current ``Exec``.
     """
 
     predicate: Callable[[Block], NDArray]
@@ -39,7 +38,7 @@ class FilterPredStream(Stream):
 
     @typing.override
     def __next__(self) -> Block:
-        item = next(self.stream)
+        item = next(self.exe)
         pred = self.predicate(item)
 
         # Just to be extra fault tolerant.
@@ -62,21 +61,17 @@ class FilterPredStream(Stream):
 
         return item[pred]
 
-    @typing.override
-    def __length_hint__(self):
-        return operator.length_hint(self.stream)
-
     @property
     def attrs(self) -> AttrSet:
-        return self.stream.attrs
+        return self.exe.attrs
 
 
 @typing.final
 @dcls.dataclass(frozen=True)
-class FilterExprStream(Stream):
-    stream: Stream
+class FilterExprExec(Exec):
+    exe: Exec
     """
-    The input ``Stream`` of the current ``Stream``.
+    The input ``Exec`` of the current ``Exec``.
     """
 
     expr: str | Expr
@@ -86,29 +81,25 @@ class FilterExprStream(Stream):
 
     @typing.override
     def __next__(self) -> Block:
-        item = next(self.stream)
+        item = next(self.exe)
         return item.filter(self.expr)
-
-    @typing.override
-    def __length_hint__(self):
-        return operator.length_hint(self.stream)
 
     @property
     def attrs(self) -> AttrSet:
-        return self.stream.attrs
+        return self.exe.attrs
 
 
 @typing.final
 @dcls.dataclass(frozen=True)
-class MapStream(Stream):
+class MapExec(Exec):
     """
-    ``MapStream`` converts the input data stream with a custom function.
+    ``MapExec`` converts the input data stream with a custom function.
 
     Todo:
         Improve the initialization of this class.
     """
 
-    stream: Stream
+    exe: Exec
     """
     The input ``Frame`` to perform computation on.
     """
@@ -125,7 +116,7 @@ class MapStream(Stream):
 
     @typing.override
     def __next__(self) -> Block:
-        item = next(self.stream)
+        item = next(self.exe)
 
         if not isinstance(result := self.compute(item), Block):
             raise MapTypeError(f"Output of {self.compute=} should be `Block`.")
@@ -134,10 +125,6 @@ class MapStream(Stream):
 
         return result
 
-    @typing.override
-    def __length_hint__(self):
-        return operator.length_hint(self.stream)
-
     @property
     def attrs(self) -> AttrSet:
         return self.output
@@ -145,14 +132,14 @@ class MapStream(Stream):
 
 @typing.final
 @dcls.dataclass(frozen=True)
-class ProjectStream(Stream):
+class ProjectExec(Exec):
     """
     Select a subset of the columns.
     """
 
-    stream: Stream
+    exe: Exec
     """
-    The input ``Stream`` of the current ``Stream``.
+    The input ``Exec`` of the current ``Exec``.
     """
 
     subset: list[str] | None = None
@@ -171,12 +158,12 @@ class ProjectStream(Stream):
 
     @typing.override
     def __next__(self) -> Block:
-        item = next(self.stream)
+        item = next(self.exe)
         return item if self.subset is None else item[self.subset]
 
     @property
     def attrs(self) -> AttrSet:
-        schema = self.stream.attrs
+        schema = self.exe.attrs
 
         if self.subset is None:
             return schema
@@ -185,15 +172,15 @@ class ProjectStream(Stream):
 
 
 @typing.final
-@dcls.dataclass(frozen=True, init=False)
-class RenameStream(Stream):
+@dcls.dataclass(frozen=True, init=False, slots=True)
+class RenameExec(Exec):
     """
     Rename a couple of columns.
     """
 
-    stream: Stream
+    exe: Exec
     """
-    The input ``Stream`` of the current ``Stream``.
+    The input ``Exec`` of the current ``Exec``.
     """
 
     renames: dict[str, str] = dcls.field(default_factory=dict)
@@ -201,27 +188,23 @@ class RenameStream(Stream):
     The mapping dictionary names.
     """
 
-    def __init__(self, __stream: Stream, /, **renames: str) -> None:
+    def __init__(self, __exe: Exec, /, **renames: str) -> None:
         # This constructor is provideds.t. ``RenameStream``'s renames can be specified as **kwargs,
         # which means they will be variable names, consistent with what ``TensorDict`` provides.
         #
         # Even though I'm using a Python version with positional only argument,
-        # since ``stream`` is common, using ``__stream`` to avoid name collision (in keys).
-        object.__setattr__(self, "stream", __stream)
+        # since ``Exec`` is common, using ``__stream`` to avoid name collision (in keys).
+        object.__setattr__(self, "exe", __exe)
         object.__setattr__(self, "renames", renames)
 
     @typing.override
     def __next__(self) -> Block:
-        item = next(self.stream)
+        item = next(self.exe)
         return item.rename(**self.renames)
-
-    @typing.override
-    def __length_hint__(self):
-        return operator.length_hint(self.stream)
 
     @property
     def attrs(self) -> AttrSet:
-        return self.stream.attrs.rename(**self.renames)
+        return self.exe.attrs.rename(**self.renames)
 
 
 class FilterBatchSizeError(AiowayError, ValueError): ...

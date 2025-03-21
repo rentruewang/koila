@@ -7,24 +7,24 @@ license = "BSD-3"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.12,<3.13"
+python = ">=3.12"
 lark = "^1.2.2"
-numpy = "^2.1.3"
+numpy = "^2.2.4"
 pandas = "^2.2.3"
-tensordict = "^0.6.2"
-torch = "^2.5.1"
+tensordict = "^0.7.2"
+torch = "^2.6.0"
 
 [tool.poetry.group.dev.dependencies]
 autoflake = "^2.3.1"
-black = "^24.10.0"
-coverage = "^7.6.7"
-isort = "^5.13.2"
+black = "^25.1.0"
+isort = "^6.0.1"
 mypy = "^1.15.0"
 
 [tool.poetry.group.ibis.dependencies]
 ibis = "^3.3.0"
 
 [tool.poetry.group.tests.dependencies]
+coverage = "^7.6.7"
 pytest = "^8.3.5"
 pytest-cov = "^6.0.0"
 pytest-sugar = "^1.0.0"
@@ -67,7 +67,6 @@ profile = "black"
 
 [tool.mypy]
 show_error_codes = true
-exclude = "tests"
 check_untyped_defs = true
 
 # Skipping analysis for some modules because they are not typed.

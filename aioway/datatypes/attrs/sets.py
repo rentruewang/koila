@@ -16,6 +16,19 @@ __all__ = ["AttrSet"]
 class AttrSet(Mapping[str, Attr]):
     """
     ``AttrSet`` is a set of ``Attr``s, typically used to represent the a ``Block``'s data type.
+
+    ``AttrSet`` shows the schema of an entire table, vs ``Attr``'s description of a column.
+
+    An ``Attr`` can be used to initialize a ``AttrSet``,
+    which is a mapping of string to ``Attr``.
+
+    Note that ``Attr``s are not ``Schema``s, the latter is used for integrating with external DBs.
+
+    The benefit of separating ``Attr``s and ``Schema``s is that
+    we are able to ``encode`` data of schema to ``AttrSet`` schema,
+    which splits the internal and external data format handling,
+    allowing a wider range of support.
+
     """
 
     columns: Mapping[str, Attr] = dcls.field(default_factory=dict)

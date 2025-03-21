@@ -5,8 +5,8 @@ from collections import Counter
 import pytest
 from tensordict import TensorDict
 
+from aioway.execs import MatrixJoinExec, ZipExec
 from aioway.frames import BlockFrame
-from aioway.streams import MatrixJoinStream, ZipStream
 from tests import fake
 
 
@@ -37,7 +37,7 @@ def test_concat_stream_input_len(block_frame, concat_frame):
 
 
 def test_concat_stream_next(block_frame, concat_frame):
-    stream = ZipStream(iter(block_frame), iter(concat_frame))
+    stream = ZipExec(iter(block_frame), iter(concat_frame))
 
     for result, lhs, rhs in zip(stream, block_frame, concat_frame):
         concat = TensorDict({**lhs.data, **rhs.data}, device=result.data.device)
@@ -46,7 +46,8 @@ def test_concat_stream_next(block_frame, concat_frame):
 
 @pytest.fixture(scope="module")
 def joinable_frame(size, device):
-    return fake.unionable_block_ok(size=size, device=device)
+    block = fake.unionable_block_ok(size=size, device=device)
+    return BlockFrame(block, max_batch=size)
 
 
 def test_join_stream_input_len(block_frame, joinable_frame):
@@ -54,7 +55,7 @@ def test_join_stream_input_len(block_frame, joinable_frame):
 
 
 def test_join_stream_next(block_frame, joinable_frame):
-    stream = MatrixJoinStream(iter(block_frame), joinable_frame, on="i1d")
+    stream = MatrixJoinExec(iter(block_frame), joinable_frame, on="i1d")
     for idx, result in enumerate(stream):
         left_idx, right_idx = divmod(idx, len(joinable_frame))
 

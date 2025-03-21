@@ -52,7 +52,7 @@ the only difference being the frequency of the switch.
 
 I believe that the second one is superior.
 
-The first one would have the following options
+The first one would have the following options::
 
     #. Serialize at every single step, use a common format across all backends.
     #. Use dynamic programming and serialize only when necessary.
@@ -75,32 +75,3 @@ s.t. computation can be accessed globally and locally (on data themselves).
 
 A good approach is to define all of the computation on the object itself, like spark,
 and have the global functions call the member functions (like torch and numpy).
-
-Physical abstractions
-*********************
-
-The main physical abstractions in the projects are `Table`s and `Block`s.
-
-`Table` represents a more lazy, iterative, relational table like `spark`'s `RDD`,
-and `Block` is the actual `torch` based execution engine that is eager.
-
-In this sense, `Table` would be the entry point to swap out to different implementations,
-and `Block` only needs to focus on making `torch` operations fast,
-as well as some distributed computing stuff.
-
-I have previously thought about making the interface of `Block` abstract,
-supporting in-memory data backends like `pandas` at this level.
-
-Right now, I'm leaning towards not doing that, simply because of the following reasons:
-
-1.  The `Table` abstraction is way better studied,
-    therefore is used by many other frameworks (spark, ibis, etc)
-2. As one `Table` (the more abstract layer) just uses one backend,
-    there would be minimal exchange between `pandas` and `torch` backends,
-    as converting data between frameworks is more trouble than it is worth,
-    when we are simply focused on in-memory computing.
-
-However, if in a future investigation I notice other implementations,
-e.g. `pandas`, `arrow`, can be added with minimal code changes,
-and that new functionality does not depend on different internal implementations,
-then those would be added.

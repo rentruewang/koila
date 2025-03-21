@@ -2,7 +2,6 @@
 
 import abc
 import dataclasses as dcls
-import operator
 import typing
 from itertools import count as Count
 
@@ -12,24 +11,25 @@ from numpy.typing import NDArray
 from aioway.blocks import Block
 from aioway.datatypes import AttrSet
 from aioway.errors import AiowayError
-from aioway.streams.streams import Stream
+
+from .execs import Exec
 
 if typing.TYPE_CHECKING:
-    from aioway.frames.frames import Frame
+    from aioway.frames import Frame
 
-__all__ = ["MatrixJoinStream", "ZipStream"]
+__all__ = ["MatrixJoinExec", "ZipExec"]
 
 
 @dcls.dataclass
-class _PartialCartesianStream(Stream):
+class _PartialCartesianExec(Exec):
     """
-    The base class for ``Stream``s that are Cartesian products,
+    The base class for ``Exec``s that are Cartesian products,
     with LHS being an unbound stream, and RHS being bounded.
 
     Only handles the cases where join keys are stored within the frames themselves.
     """
 
-    left: Stream
+    left: Exec
     """
     The LHS of the operator.
     """
@@ -54,6 +54,20 @@ class _PartialCartesianStream(Stream):
     The number of iterations so far for this stream.
     """
 
+    def __post_init__(self) -> None:
+        # Import here to prevent circular depedency.
+        from aioway.frames import Frame
+
+        if not isinstance(self.left, Exec):
+            raise PartitionOperandTypeError(
+                f"LHS should be of type exec. Got {type(self.left)=}"
+            )
+
+        if not isinstance(self.right, Frame):
+            raise PartitionOperandTypeError(
+                f"RHS should be of type frame. Got {type(self.right)=}"
+            )
+
     @typing.override
     def __next__(self) -> Block:
         # Looped over right in the last iteration.
@@ -75,11 +89,7 @@ class _PartialCartesianStream(Stream):
 
 @typing.final
 @dcls.dataclass
-class MatrixJoinStream(_PartialCartesianStream):
-    @typing.override
-    def __length_hint__(self):
-        return operator.length_hint(self.left) * len(self.right)
-
+class MatrixJoinExec(_PartialCartesianExec):
     def _join(self, left: Block, right: Block) -> tuple[NDArray, NDArray]:
         left_key = left[self.on]
         right_key = right[self.on]
@@ -91,33 +101,17 @@ class MatrixJoinStream(_PartialCartesianStream):
 
 @typing.final
 @dcls.dataclass(frozen=True)
-class ZipStream(Stream):
+class ZipExec(Exec):
     """
-    ``ConcatStream`` merges 2 ``Stream``s that have identical length together.
+    ``ZipExec`` merges 2 ``Exec``s that have identical length together.
     """
 
-    left: Stream
-    right: Stream
+    left: Exec
+    right: Exec
 
     def __post_init__(self) -> None:
         # Check intersection with the logic in ``TableSchema.__and__``.
         _ = self.left.attrs & self.right.attrs
-
-    @typing.override
-    def __length_hint__(self):
-        left_hint = operator.length_hint(self.left)
-        right_hint = operator.length_hint(self.right)
-
-        # If ``__legnth_hint__`` is not defined,
-        # ``operator.length_hint`` would be 0.
-
-        if left_hint and right_hint:
-            return min(left_hint, right_hint)
-
-        if not left_hint and not right_hint:
-            return NotImplemented
-
-        return left_hint or right_hint
 
     @typing.override
     def __next__(self) -> Block:
@@ -128,6 +122,9 @@ class ZipStream(Stream):
     @property
     def attrs(self) -> AttrSet:
         return self.left.attrs | self.right.attrs
+
+
+class PartitionOperandTypeError(AiowayError, TypeError): ...
 
 
 class ConcatLengthMismatchError(AiowayError, TypeError): ...
