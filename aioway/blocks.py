@@ -28,8 +28,12 @@ class Block(Mapping[str, Tensor]):
     ``Block`` represents a batch that is immutable,
     while providing some additional functionality.
 
-    A ``Block`` is a simple wrapper around ``TensorDict``
-    to provide some additional checks and utilties.
+    A ``Block`` is currently a simple wrapper around ``TensorDict``,
+    a batch of data that can  move around different devices,
+    and some additional checks and utilties.
+
+    In the future, this might be generalized for models
+    that use the different length for the same inputs, such as ``torch_geometric``.
     """
 
     data: TensorDict

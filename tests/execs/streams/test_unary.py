@@ -6,15 +6,15 @@ from collections.abc import Callable
 
 import pytest
 
-from aioway.frames import BlockFrame
-from aioway.streams import (
-    FilterExprStream,
-    FilterPredStream,
-    MapStream,
-    ProjectStream,
-    RenameStream,
-    Stream,
+from aioway.execs import (
+    Exec,
+    FilterExprExec,
+    FilterPredExec,
+    MapExec,
+    ProjectExec,
+    RenameExec,
 )
+from aioway.frames import BlockFrame
 from tests import fake
 
 
@@ -54,7 +54,7 @@ def test_block_frame_getitem(block_frame):
 
 
 @pytest.fixture
-def block_frame_iter(block_frame) -> Stream:
+def block_frame_iter(block_frame) -> Exec:
     # Note:
     #   Do not use this iterator in tests for comparison,
     #   because the iterator is instantiated once for each tests.
@@ -70,7 +70,7 @@ def block_frame_iter(block_frame) -> Stream:
 
 
 def test_iterator_stream(block_frame_iter):
-    assert isinstance(block_frame_iter, Stream)
+    assert isinstance(block_frame_iter, Exec)
 
 
 def test_iterator_eq(block_frame, block_frame_iter):
@@ -78,16 +78,16 @@ def test_iterator_eq(block_frame, block_frame_iter):
         assert (fresh.data == iterator.data).all()
 
 
-def filter_expr_stream(stream: Stream):
-    return FilterExprStream(stream, "f1d > 0")
+def filter_expr_stream(stream: Exec):
+    return FilterExprExec(stream, "f1d > 0")
 
 
-def filter_pred_frame(stream: Stream):
-    return FilterPredStream(stream, predicate=lambda t: (t["f1d"] > 0).cpu().numpy())
+def filter_pred_frame(stream: Exec):
+    return FilterPredExec(stream, predicate=lambda t: (t["f1d"] > 0).cpu().numpy())
 
 
 @pytest.fixture(params=[filter_expr_stream, filter_pred_frame])
-def filter_stream(request) -> Callable[[Stream], Stream]:
+def filter_stream(request) -> Callable[[Exec], Exec]:
     return request.param
 
 
@@ -108,7 +108,7 @@ def rename_op():
 
 @pytest.fixture
 def rename_stream(block_frame, rename_op):
-    return RenameStream(iter(block_frame), **rename_op)
+    return RenameExec(iter(block_frame), **rename_op)
 
 
 def test_rename_stream_attrs(rename_stream, block_frame, rename_op):
@@ -129,7 +129,7 @@ def map_rename_op():
 
 @pytest.fixture
 def map_stream(block_frame, map_rename_op):
-    return MapStream(
+    return MapExec(
         iter(block_frame),
         lambda b: b.rename(**map_rename_op),
         output=block_frame.attrs.rename(**map_rename_op),
@@ -143,7 +143,7 @@ def test_map_stream_next(map_stream, block_frame, map_rename_op):
 
 @pytest.fixture
 def project_stream(block_frame):
-    return ProjectStream(iter(block_frame), subset=["f1d", "i2d"])
+    return ProjectExec(iter(block_frame), subset=["f1d", "i2d"])
 
 
 def test_project_stream_attrs(project_stream, block_frame):
