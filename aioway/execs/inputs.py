@@ -3,10 +3,6 @@
 import dataclasses as dcls
 import typing
 from collections.abc import Iterator
-from typing import Self
-
-from tensordict import TensorDict
-from torch.utils.data import DataLoader
 
 from aioway.blocks import Block
 from aioway.datatypes import AttrSet
@@ -47,19 +43,6 @@ class IteratorExec(Exec):
     @property
     def attrs(self):
         return self._attrs
-
-    @classmethod
-    def data_loader(cls, loader: DataLoader, attrs: AttrSet) -> Self:
-        def load_from_dl():
-            for batch in loader:
-                if not isinstance(batch, TensorDict):
-                    raise IteratorExecTypeError(
-                        f"`DataLoader` should yield instances of `TensorDict`. Got {type(batch)=}"
-                    )
-
-                yield Block(batch)
-
-        return cls(load_from_dl(), attrs)
 
 
 class IteratorExecTypeError(AiowayError, TypeError): ...

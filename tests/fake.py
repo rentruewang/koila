@@ -29,7 +29,8 @@ def cpu_and_maybe_cuda():
 
 
 def block_sizes():
-    return [1, 4, 16, 64, 256, 1024]
+    for i in range(0, 11, 2):
+        yield 2**i
 
 
 def tensordict_ok(*, size: int, device: str):
