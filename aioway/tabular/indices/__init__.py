@@ -57,5 +57,7 @@ or does not occur at all during inference, for instance.
 For now, indexing on ``Frame``s is allowed,
 while on ``Stream`` it is not, because ``Frame``s are materialized and stored.
 """
-from .faiss import *
+
 from .indices import *
+from .ops import *
+from .tmpls import *

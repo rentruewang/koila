@@ -4,12 +4,12 @@ import abc
 import dataclasses as dcls
 from abc import ABC
 
+import tensordict
 from tensordict import TensorDict
 from torch.utils.data import Dataset
 
-from aioway.blocks import Block
 from aioway.datatypes import AttrSet
-from aioway.execs import Exec, IteratorExec
+from aioway.execs import IteratorExec
 
 __all__ = ["Frame"]
 
@@ -35,20 +35,30 @@ class Frame(Dataset[TensorDict], ABC):
         ...
 
     @abc.abstractmethod
-    def __getitem__(self, idx: int) -> Block:
+    def __getitem__(self, idx: int, /) -> TensorDict:
         """
-        Get individual items from the current dataframe.
+        Get individual items from the current ``Frame``.
         """
 
         ...
+
+    @abc.abstractmethod
+    def __getitems__(self, idx: list[int], /) -> TensorDict:
+        """
+        Get a batch of items at once from the current ``Frame``.
+        """
+
+        return tensordict.stack([self[i] for i in idx], dim=0)
+
+    def __iter__(self):
+        raise NotImplementedError
 
     @property
     @abc.abstractmethod
     def attrs(self) -> AttrSet: ...
 
-    def __iter__(self) -> Exec:
-        def generator():
-            for idx in range(len(self)):
-                yield self[idx]
+    def iterate(self, **kwargs) -> IteratorExec:
+        from aioway.tabular import iters
 
-        return IteratorExec(iter(generator()), self.attrs)
+        iterator = iters.tabular_iterator(self, **kwargs)
+        return IteratorExec(iterator, self.attrs)

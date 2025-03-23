@@ -121,7 +121,7 @@ class MapExec(Exec):
         if not isinstance(result := self.compute(item), Block):
             raise MapTypeError(f"Output of {self.compute=} should be `Block`.")
 
-        result.must_have_attrs(self.output)
+        result.require_attrs(self.output)
 
         return result
 

@@ -108,6 +108,9 @@ class Block(Mapping[str, Tensor]):
         idx = np.array(idx)
         return self._getitem_array(idx)
 
+    # Implemented for ``DataLoader`` to be more efficient.
+    __getitems__ = __getitem__
+
     def __contains__(self, key: object) -> bool:
         return key in self.keys()
 
@@ -218,7 +221,7 @@ class Block(Mapping[str, Tensor]):
             )
         )
 
-    def must_have_attrs(self, attr: AttrSet, /) -> None:
+    def require_attrs(self, attr: AttrSet, /) -> None:
         """
         Promises that the current ``Block`` has a given ``TableSchema`` type.
         """
