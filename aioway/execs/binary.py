@@ -1,7 +1,7 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
-import abc
 import dataclasses as dcls
+import math
 import typing
 from itertools import count as Count
 
@@ -15,13 +15,14 @@ from aioway.errors import AiowayError
 from .execs import Exec
 
 if typing.TYPE_CHECKING:
-    from aioway.frames import Frame
+    from aioway.tabular import Frame
 
 __all__ = ["MatrixJoinExec", "ZipExec"]
 
 
+@typing.final
 @dcls.dataclass
-class _PartialCartesianExec(Exec):
+class MatrixJoinExec(Exec):
     """
     The base class for ``Exec``s that are Cartesian products,
     with LHS being an unbound stream, and RHS being bounded.
@@ -44,6 +45,11 @@ class _PartialCartesianExec(Exec):
     The column for which to join.
     """
 
+    rhs_batch: int
+    """
+    The batch size for RHS.
+    """
+
     __last_left_block: Block = dcls.field(init=False)
     """
     The last left block.
@@ -56,7 +62,7 @@ class _PartialCartesianExec(Exec):
 
     def __post_init__(self) -> None:
         # Import here to prevent circular depedency.
-        from aioway.frames import Frame
+        from aioway.tabular import Frame
 
         if not isinstance(self.left, Exec):
             raise PartitionOperandTypeError(
@@ -68,31 +74,41 @@ class _PartialCartesianExec(Exec):
                 f"RHS should be of type frame. Got {type(self.right)=}"
             )
 
-    @typing.override
     def __next__(self) -> Block:
         # Looped over right in the last iteration.
-        if (right_idx := next(self.__counter) % len(self.right)) == 0:
+        loop_idx = next(self.__counter)
+
+        num_rhs_batches = math.ceil(len(self.right) / self.rhs_batch)
+
+        rhs_batch_idx = loop_idx % num_rhs_batches
+
+        rhs_start = rhs_batch_idx * self.rhs_batch
+        rhs_end = rhs_start + self.rhs_batch
+
+        if rhs_batch_idx == 0:
             self.__last_left_block = next(self.left)
 
-        right_item = self.right[right_idx]
+        rhs_keys = list(range(len(self.right))[rhs_start:rhs_end])
+        right_batches = self.right.__getitems__(rhs_keys)
 
-        left_select, right_select = self._join(self.__last_left_block, right_item)
-        return self.__last_left_block[left_select].zip(right_item[right_select])
+        left_select, right_select = self._join(self.__last_left_block, right_batches)
+
+        left_chosen = self.__last_left_block[left_select]
+        right_chosen = right_batches[right_select]
+
+        return left_chosen.zip(right_chosen)
 
     @property
     def attrs(self) -> AttrSet:
         return self.left.attrs | self.right.attrs
 
-    @abc.abstractmethod
-    def _join(self, left: Block, right: Block) -> tuple[NDArray, NDArray]: ...
-
-
-@typing.final
-@dcls.dataclass
-class MatrixJoinExec(_PartialCartesianExec):
     def _join(self, left: Block, right: Block) -> tuple[NDArray, NDArray]:
-        left_key = left[self.on]
-        right_key = right[self.on]
+        return self.compute_matching(left=left, right=right, on=self.on)
+
+    @staticmethod
+    def compute_matching(left: Block, right: Block, on: str) -> tuple[NDArray, NDArray]:
+        left_key = left[on]
+        right_key = right[on]
 
         matrix = left_key[:, None] == right_key[None, :]
         l, r = torch.nonzero(matrix).cpu().numpy().T

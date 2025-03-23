@@ -1,6 +1,5 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
-import math
 import random
 from collections.abc import Callable
 
@@ -14,7 +13,7 @@ from aioway.execs import (
     ProjectExec,
     RenameExec,
 )
-from aioway.frames import BlockFrame
+from aioway.tabular import BlockFrame
 from tests import fake
 
 
@@ -29,32 +28,25 @@ def size(request) -> int:
 
 
 @pytest.fixture(scope="module")
-def block_frame(size: int, device: str):
+def block_frame(device: str):
     block = fake.block_ok(size=max(fake.block_sizes()), device=device)
-    return BlockFrame(block, max_batch=size)
+    return BlockFrame(block)
 
 
 def test_block_frame_len(block_frame):
-    assert len(block_frame) == math.ceil(
-        max(fake.block_sizes()) / block_frame.max_batch
-    )
+    assert len(block_frame) == max(fake.block_sizes())
 
 
 def test_block_frame_getitem(block_frame):
     idx = random.randrange(len(block_frame))
+    assert isinstance(idx, int)
 
-    start, stop = block_frame.max_batch * idx, block_frame.max_batch * (idx + 1)
-    assert (block_frame[idx].data == block_frame.block.data[start:stop]).all()
-
-    assert len(block_frame[idx]) == (
-        block_frame.max_batch
-        if stop < len(block_frame.block.data)
-        else len(block_frame.block.data) - start
-    )
+    assert (block_frame[idx].data == block_frame.block.data[idx]).all()
+    assert not block_frame[idx].batch_dims
 
 
 @pytest.fixture
-def block_frame_iter(block_frame) -> Exec:
+def block_frame_iter(block_frame, size) -> Exec:
     # Note:
     #   Do not use this iterator in tests for comparison,
     #   because the iterator is instantiated once for each tests.
@@ -66,15 +58,15 @@ def block_frame_iter(block_frame) -> Exec:
     #   >>>    assert a is not b
     #   Both sides of the equation uses the same iterator underneath,
     #   and it would create subtle bugs.
-    return iter(block_frame)
+    return block_frame.iterate(batch_size=size)
 
 
 def test_iterator_stream(block_frame_iter):
     assert isinstance(block_frame_iter, Exec)
 
 
-def test_iterator_eq(block_frame, block_frame_iter):
-    for fresh, iterator in zip(block_frame, block_frame_iter):
+def test_iterator_eq(block_frame, block_frame_iter, size):
+    for fresh, iterator in zip(block_frame.iterate(batch_size=size), block_frame_iter):
         assert (fresh.data == iterator.data).all()
 
 
@@ -91,13 +83,15 @@ def filter_stream(request) -> Callable[[Exec], Exec]:
     return request.param
 
 
-def test_filter_stream_attrs(filter_stream, block_frame):
-    assert filter_stream(iter(block_frame)).attrs == block_frame.attrs
+def test_filter_stream_attrs(filter_stream, block_frame, size):
+    assert (
+        filter_stream(block_frame.iterate(batch_size=size)).attrs == block_frame.attrs
+    )
 
 
-def test_filter_stream_next(filter_stream, block_frame):
-    stream = filter_stream(iter(block_frame))
-    for filtered, original in zip(stream, block_frame):
+def test_filter_stream_next(filter_stream, block_frame, size):
+    stream = filter_stream(block_frame.iterate(batch_size=size))
+    for filtered, original in zip(stream, block_frame.iterate(batch_size=size)):
         assert (filtered.data == original.filter("f1d > 0").data).all()
 
 
@@ -107,16 +101,16 @@ def rename_op():
 
 
 @pytest.fixture
-def rename_stream(block_frame, rename_op):
-    return RenameExec(iter(block_frame), **rename_op)
+def rename_stream(block_frame, rename_op, size):
+    return RenameExec(block_frame.iterate(batch_size=size), **rename_op)
 
 
 def test_rename_stream_attrs(rename_stream, block_frame, rename_op):
     assert rename_stream.attrs == block_frame.attrs.rename(**rename_op)
 
 
-def test_rename_stream_next(rename_stream, block_frame):
-    for renamed, original in zip(rename_stream, block_frame):
+def test_rename_stream_next(rename_stream, block_frame, size):
+    for renamed, original in zip(rename_stream, block_frame.iterate(batch_size=size)):
         assert (
             renamed.data == original.rename(f1d="f1", f2d="f2", i1d="i1", i2d="i2").data
         ).all()
@@ -128,22 +122,22 @@ def map_rename_op():
 
 
 @pytest.fixture
-def map_stream(block_frame, map_rename_op):
+def map_stream(block_frame, map_rename_op, size):
     return MapExec(
-        iter(block_frame),
+        block_frame.iterate(batch_size=size),
         lambda b: b.rename(**map_rename_op),
         output=block_frame.attrs.rename(**map_rename_op),
     )
 
 
-def test_map_stream_next(map_stream, block_frame, map_rename_op):
-    for mapped, original in zip(map_stream, block_frame):
+def test_map_stream_next(map_stream, block_frame, map_rename_op, size):
+    for mapped, original in zip(map_stream, block_frame.iterate(batch_size=size)):
         assert (mapped.data == original.rename(**map_rename_op).data).all()
 
 
 @pytest.fixture
-def project_stream(block_frame):
-    return ProjectExec(iter(block_frame), subset=["f1d", "i2d"])
+def project_stream(block_frame, size):
+    return ProjectExec(block_frame.iterate(batch_size=size), subset=["f1d", "i2d"])
 
 
 def test_project_stream_attrs(project_stream, block_frame):
@@ -151,6 +145,6 @@ def test_project_stream_attrs(project_stream, block_frame):
     assert project_stream.attrs == selected
 
 
-def test_project_stream_next(project_stream, block_frame):
-    for curr, other in zip(project_stream, block_frame):
+def test_project_stream_next(project_stream, block_frame, size):
+    for curr, other in zip(project_stream, block_frame.iterate(batch_size=size)):
         assert (curr.data == other[["f1d", "i2d"]].data).all()
