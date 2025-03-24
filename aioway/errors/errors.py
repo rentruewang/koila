@@ -11,7 +11,7 @@ class AiowayError(Exception):
     ``AiowayError`` is the error thrown by the ``aioway`` library.
 
     Todo:
-        Make the messages configurable.
+        Make the messages configurable, like ``logging.Logger``.
     """
 
     def __init__(self, *args: Any) -> None:

@@ -7,7 +7,6 @@ from tensordict import TensorDict
 from torch.utils.data import IterableDataset
 
 from aioway.datatypes import AttrSet
-from aioway.execs import IteratorExec
 
 __all__ = ["Stream"]
 
@@ -19,9 +18,3 @@ class Stream(IterableDataset[TensorDict], ABC):
     @property
     @abc.abstractmethod
     def attrs(self) -> AttrSet: ...
-
-    def iterate(self, **kwargs) -> IteratorExec:
-        from aioway.tabular import iters
-
-        iterator = iters.tabular_iterator(self, **kwargs)
-        return IteratorExec(iterator, self.attrs)
