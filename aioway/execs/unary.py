@@ -25,7 +25,7 @@ __all__ = [
 
 @typing.final
 @dcls.dataclass(frozen=True)
-class FilterPredExec(Exec):
+class FilterPredExec(Exec, key="FILTER_PRED"):
     exe: Exec
     """
     The input ``Exec`` of the current ``Exec``.
@@ -62,13 +62,14 @@ class FilterPredExec(Exec):
         return item[pred]
 
     @property
+    @typing.override
     def attrs(self) -> AttrSet:
         return self.exe.attrs
 
 
 @typing.final
 @dcls.dataclass(frozen=True)
-class FilterExprExec(Exec):
+class FilterExprExec(Exec, key="FILTER_EXPR"):
     exe: Exec
     """
     The input ``Exec`` of the current ``Exec``.
@@ -85,13 +86,14 @@ class FilterExprExec(Exec):
         return item.filter(self.expr)
 
     @property
+    @typing.override
     def attrs(self) -> AttrSet:
         return self.exe.attrs
 
 
 @typing.final
 @dcls.dataclass(frozen=True)
-class MapExec(Exec):
+class MapExec(Exec, key="MAP"):
     """
     ``MapExec`` converts the input data stream with a custom function.
 
@@ -126,13 +128,14 @@ class MapExec(Exec):
         return result
 
     @property
+    @typing.override
     def attrs(self) -> AttrSet:
         return self.output
 
 
 @typing.final
 @dcls.dataclass(frozen=True)
-class ProjectExec(Exec):
+class ProjectExec(Exec, key="PROJECT"):
     """
     Select a subset of the columns.
     """
@@ -162,6 +165,7 @@ class ProjectExec(Exec):
         return item if self.subset is None else item[self.subset]
 
     @property
+    @typing.override
     def attrs(self) -> AttrSet:
         schema = self.exe.attrs
 
@@ -172,8 +176,8 @@ class ProjectExec(Exec):
 
 
 @typing.final
-@dcls.dataclass(frozen=True, init=False, slots=True)
-class RenameExec(Exec):
+@dcls.dataclass(frozen=True, init=False)
+class RenameExec(Exec, key="RENAME"):
     """
     Rename a couple of columns.
     """
@@ -203,6 +207,7 @@ class RenameExec(Exec):
         return item.rename(**self.renames)
 
     @property
+    @typing.override
     def attrs(self) -> AttrSet:
         return self.exe.attrs.rename(**self.renames)
 

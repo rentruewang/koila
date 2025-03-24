@@ -15,7 +15,7 @@ from tensordict import TensorDict
 from torch import Tensor
 from torch import device as TorchDevice
 
-from aioway.datatypes import Attr, AttrSet, Device, DType
+from aioway.datatypes import Attr, AttrSet, Device, DType, Shape
 from aioway.errors import AiowayError
 
 __all__ = ["Block"]
@@ -57,6 +57,7 @@ class Block(Mapping[str, Tensor]):
                 "Underlying data for `Block` must have at least 1 batch dimension. Got 0."
             )
 
+    @typing.override
     def __eq__(self, other: object) -> Self:  # type: ignore[override]
         return self.__td_bin_op(operator.eq, other=other)
 
@@ -72,9 +73,11 @@ class Block(Mapping[str, Tensor]):
     def __lt__(self, other: object) -> Self:
         return self.__td_bin_op(operator.lt, other=other)
 
+    @typing.override
     def __len__(self) -> int:
         return self.data.batch_size[0]
 
+    @typing.override
     def __iter__(self) -> Iterator[str]:
         return iter(self.keys())
 
@@ -86,6 +89,7 @@ class Block(Mapping[str, Tensor]):
         self, idx: int | slice | list[str] | list[int] | NDArray | Tensor
     ) -> Self: ...
 
+    @typing.override
     def __getitem__(self, idx):
         if isinstance(idx, str):
             return self._getitem_str(idx)
@@ -111,9 +115,11 @@ class Block(Mapping[str, Tensor]):
     # Implemented for ``DataLoader`` to be more efficient.
     __getitems__ = __getitem__
 
+    @typing.override
     def __contains__(self, key: object) -> bool:
         return key in self.keys()
 
+    @typing.override
     def keys(self) -> KeysView[str]:
         return self.data.keys()
 
@@ -282,6 +288,20 @@ class Block(Mapping[str, Tensor]):
 
     _getitem_slice = _getitem_tensor = __getitem_direct
 
+    def to_dict(self) -> dict[str, Tensor]:
+        return self.data.to_dict()
+
+    def to_tensor(self) -> Tensor:
+        columns: list[Tensor] = []
+
+        for value in self.values():
+            columns.append(value.view(len(value), -1))
+
+        return torch.cat(columns, dim=1)
+
+    def detach(self) -> Self:
+        return type(self)(self.data.detach())
+
     def _check_other_device(self, other: Self, /) -> None:
         if self.device == other.device:
             return
@@ -304,6 +324,16 @@ class Block(Mapping[str, Tensor]):
         return DType.parse(self.data.dtype)
 
     dtype = property(fget=_get_dtype)
+
+    def _get_dtypes(self) -> list[DType]:
+        return [DType.parse(attr.dtype) for attr in self.attrs.columns.values()]
+
+    dtypes = property(fget=_get_dtypes)
+
+    def _get_shapes(self) -> list[Shape]:
+        return [attr.shape for attr in self.attrs.columns.values()]
+
+    shapes = property(fget=_get_shapes)
 
     @property
     def attrs(self) -> AttrSet:

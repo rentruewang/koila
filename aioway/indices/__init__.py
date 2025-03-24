@@ -58,6 +58,7 @@ For now, indexing on ``Frame``s is allowed,
 while on ``Stream`` it is not, because ``Frame``s are materialized and stored.
 """
 
+from .faiss import *
 from .indices import *
+from .mgrs import *
 from .ops import *
-from .tmpls import *

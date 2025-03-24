@@ -2,6 +2,8 @@
 
 import abc
 import dataclasses as dcls
+import functools
+import typing
 from abc import ABC
 
 import tensordict
@@ -9,7 +11,9 @@ from tensordict import TensorDict
 from torch.utils.data import Dataset
 
 from aioway.datatypes import AttrSet
-from aioway.execs import IteratorExec
+
+if typing.TYPE_CHECKING:
+    from aioway.indices import IndexManager
 
 __all__ = ["Frame"]
 
@@ -57,8 +61,8 @@ class Frame(Dataset[TensorDict], ABC):
     @abc.abstractmethod
     def attrs(self) -> AttrSet: ...
 
-    def iterate(self, **kwargs) -> IteratorExec:
-        from aioway.tabular import iters
+    @functools.cache
+    def index(self) -> "IndexManager":
+        from aioway.indices import IndexManager
 
-        iterator = iters.tabular_iterator(self, **kwargs)
-        return IteratorExec(iterator, self.attrs)
+        return IndexManager(self)
