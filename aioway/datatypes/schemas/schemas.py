@@ -13,7 +13,7 @@ class SchemaType:
     """
     ``SchemaType`` is the types of a normal SQL database schema.
 
-    Todo:
+    Note:
         Extend this class to handle real schema types.
     """
 

@@ -3192,6 +3192,22 @@ termcolor = ">=2.1.0"
 dev = ["black", "flake8", "pre-commit"]
 
 [[package]]
+name = "pytest-testmon"
+version = "2.1.3"
+description = "selects tests affected by changed files and methods"
+optional = false
+python-versions = ">=3.8"
+groups = ["tests"]
+files = [
+    {file = "pytest_testmon-2.1.3-py3-none-any.whl", hash = "sha256:53ba06d8a90ce24c3a191b196aac72ca4b788beff5eb1c1bffee04dc50ec7105"},
+    {file = "pytest_testmon-2.1.3.tar.gz", hash = "sha256:dad41aa7d501d74571750da1abd3f6673b63fd9dbf3023bd1623814999018c97"},
+]
+
+[package.dependencies]
+coverage = ">=6,<8"
+pytest = ">=5,<9"
+
+[[package]]
 name = "pytest-xdist"
 version = "3.6.1"
 description = "pytest xdist plugin for distributed testing, most importantly across multiple CPUs"
@@ -4618,7 +4634,7 @@ version = "0.45.1"
 description = "A built-package format for Python"
 optional = false
 python-versions = ">=3.8"
-groups = ["interactive"]
+groups = ["build", "interactive"]
 files = [
     {file = "wheel-0.45.1-py3-none-any.whl", hash = "sha256:708e7481cc80179af0e556bbf0cc00b8444c7321e2700b8d8580231d13017248"},
     {file = "wheel-0.45.1.tar.gz", hash = "sha256:661e1abd9198507b1409a20c02106d9670b2576e916d58f520316666abca6729"},
@@ -4662,4 +4678,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12"
-content-hash = "bd66ebfc55930827559b9707b546e69b27de0e8d77edfbfb6efa1dac293b8d08"
+content-hash = "ea07ec93f61866774039fbf07e7d2ae7c3e0a4f8a566db4ae98da20320b56b82"

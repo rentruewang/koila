@@ -11,6 +11,7 @@ and if we directly follow the abstraction of ``IterableDataset``,
 we have to process the tensor representation of the items 1 by 1, which can be inefficient.
 """
 
+from ._data_loader import *
 from .binary import *
 from .execs import *
 from .inputs import *

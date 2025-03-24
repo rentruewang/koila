@@ -1,6 +1,7 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
 import dataclasses as dcls
+import typing
 from collections.abc import Iterable, Iterator, Mapping
 from typing import Self
 
@@ -54,18 +55,37 @@ class AttrSet(Mapping[str, Attr]):
 
         return NotImplemented
 
+    @typing.override
     def __iter__(self) -> Iterator[str]:
         return iter(self.columns)
 
+    @typing.override
     def __len__(self) -> int:
         return len(self.columns)
 
-    def __getitem__(self, key: str) -> Attr:
-        return self.columns[key]
+    @typing.overload
+    def __getitem__(self, key: str) -> Attr: ...
 
+    @typing.overload
+    def __getitem__(self, key: list[str]) -> Self: ...
+
+    @typing.override
+    def __getitem__(self, key):
+        if isinstance(key, str):
+            return self.columns[key]
+
+        if isinstance(key, list) and all(isinstance(k, str) for k in key):
+            return type(self)(columns={k: self[k] for k in key}, device=self.device)
+
+        raise AttrGetKeyError(
+            "Key type mismatch. Must be a string or a list of strings."
+        )
+
+    @typing.override
     def __contains__(self, key: object) -> bool:
         return key in self.columns
 
+    @typing.override
     def __eq__(self, other: object):
         if isinstance(other, AttrSet):
             return sorted(self.columns) == sorted(other.columns)
@@ -147,6 +167,9 @@ class AttrSetInitError(AiowayError, AssertionError, TypeError): ...
 
 
 class AttrMergeError(AiowayError, KeyError): ...
+
+
+class AttrGetKeyError(AiowayError, KeyError): ...
 
 
 class AttrSetKeyError(AiowayError, KeyError): ...

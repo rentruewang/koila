@@ -34,6 +34,7 @@ class Shape(Sequence[int]):
 
         return NotImplemented
 
+    @typing.override
     def __len__(self) -> int:
         return len(self.shape)
 
@@ -43,6 +44,7 @@ class Shape(Sequence[int]):
     @typing.overload
     def __getitem__(self, idx: slice) -> Sequence[int]: ...
 
+    @typing.override
     def __getitem__(self, idx):
         return self.shape[idx]
 
@@ -59,4 +61,4 @@ class Shape(Sequence[int]):
         Convenient method to generate a ``Shape`` instance from a ``Sequence``.
         """
 
-        return cls(tuple(sequence))
+        return cls(tuple(map(int, sequence)))

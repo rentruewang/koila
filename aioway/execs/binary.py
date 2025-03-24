@@ -15,14 +15,14 @@ from aioway.errors import AiowayError
 from .execs import Exec
 
 if typing.TYPE_CHECKING:
-    from aioway.tabular import Frame
+    from aioway.frames import Frame
 
 __all__ = ["MatrixJoinExec", "ZipExec"]
 
 
 @typing.final
 @dcls.dataclass
-class MatrixJoinExec(Exec):
+class MatrixJoinExec(Exec, key="MATRIX_JOIN"):
     """
     The base class for ``Exec``s that are Cartesian products,
     with LHS being an unbound stream, and RHS being bounded.
@@ -62,7 +62,7 @@ class MatrixJoinExec(Exec):
 
     def __post_init__(self) -> None:
         # Import here to prevent circular depedency.
-        from aioway.tabular import Frame
+        from aioway.frames import Frame
 
         if not isinstance(self.left, Exec):
             raise PartitionOperandTypeError(
@@ -99,6 +99,7 @@ class MatrixJoinExec(Exec):
         return left_chosen.zip(right_chosen)
 
     @property
+    @typing.override
     def attrs(self) -> AttrSet:
         return self.left.attrs | self.right.attrs
 
@@ -117,7 +118,7 @@ class MatrixJoinExec(Exec):
 
 @typing.final
 @dcls.dataclass(frozen=True)
-class ZipExec(Exec):
+class ZipExec(Exec, key="ZIP"):
     """
     ``ZipExec`` merges 2 ``Exec``s that have identical length together.
     """
@@ -136,6 +137,7 @@ class ZipExec(Exec):
         return left.zip(right)
 
     @property
+    @typing.override
     def attrs(self) -> AttrSet:
         return self.left.attrs | self.right.attrs
 
