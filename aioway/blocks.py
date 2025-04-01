@@ -58,7 +58,8 @@ class Block(Mapping[str, Tensor]):
             )
 
     @typing.override
-    def __eq__(self, other: object) -> Self:  # type: ignore[override]
+    @typing.no_type_check
+    def __eq__(self, other: object) -> Self:
         return self.__td_bin_op(operator.eq, other=other)
 
     def __ge__(self, other: object) -> Self:

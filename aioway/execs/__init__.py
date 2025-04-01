@@ -14,5 +14,5 @@ we have to process the tensor representation of the items 1 by 1, which can be i
 from ._data_loader import *
 from .binary import *
 from .execs import *
-from .inputs import *
+from .iters import *
 from .unary import *

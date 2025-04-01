@@ -66,6 +66,11 @@ class FilterPredExec(Exec, key="FILTER_PRED"):
     def attrs(self) -> AttrSet:
         return self.exe.attrs
 
+    @property
+    @typing.override
+    def children(self) -> tuple[Exec]:
+        return (self.exe,)
+
 
 @typing.final
 @dcls.dataclass(frozen=True)
@@ -89,6 +94,11 @@ class FilterExprExec(Exec, key="FILTER_EXPR"):
     @typing.override
     def attrs(self) -> AttrSet:
         return self.exe.attrs
+
+    @property
+    @typing.override
+    def children(self) -> tuple[Exec]:
+        return (self.exe,)
 
 
 @typing.final
@@ -132,6 +142,11 @@ class MapExec(Exec, key="MAP"):
     def attrs(self) -> AttrSet:
         return self.output
 
+    @property
+    @typing.override
+    def children(self) -> tuple[Exec]:
+        return (self.exe,)
+
 
 @typing.final
 @dcls.dataclass(frozen=True)
@@ -174,6 +189,11 @@ class ProjectExec(Exec, key="PROJECT"):
 
         return schema.project(*self.subset)
 
+    @property
+    @typing.override
+    def children(self) -> tuple[Exec]:
+        return (self.exe,)
+
 
 @typing.final
 @dcls.dataclass(frozen=True, init=False)
@@ -210,6 +230,11 @@ class RenameExec(Exec, key="RENAME"):
     @typing.override
     def attrs(self) -> AttrSet:
         return self.exe.attrs.rename(**self.renames)
+
+    @property
+    @typing.override
+    def children(self) -> tuple[Exec]:
+        return (self.exe,)
 
 
 class FilterBatchSizeError(AiowayError, ValueError): ...

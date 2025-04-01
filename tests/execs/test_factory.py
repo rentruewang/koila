@@ -6,24 +6,29 @@ from aioway.execs import (
     Exec,
     FilterExprExec,
     FilterPredExec,
-    IteratorExec,
+    FrameStreamExec,
     MapExec,
     MatrixJoinExec,
     ProjectExec,
+    RawIteratorExec,
     RenameExec,
     ZipExec,
 )
+from aioway.factories import Factory
 
 
 @pytest.fixture(scope="module")
-def exec_factory() -> dict[str, type[Exec]]:
-    return Exec.FACTORY
+def exec_factory() -> Factory[type[Exec]]:
+    from aioway.execs import execs
+
+    return execs.FACTORY
 
 
 def _exec_key_cls_param():
     yield "MATRIX_JOIN", MatrixJoinExec
     yield "ZIP", ZipExec
-    yield "ITER", IteratorExec
+    yield "FRAME_STREAM", FrameStreamExec
+    yield "RAW_ITER", RawIteratorExec
     yield "FILTER_PRED", FilterPredExec
     yield "FILTER_EXPR", FilterExprExec
     yield "MAP", MapExec

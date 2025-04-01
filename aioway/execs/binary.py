@@ -11,6 +11,7 @@ from numpy.typing import NDArray
 from aioway.blocks import Block
 from aioway.datatypes import AttrSet
 from aioway.errors import AiowayError
+from aioway.frames.frames import Frame
 
 from .execs import Exec
 
@@ -103,6 +104,11 @@ class MatrixJoinExec(Exec, key="MATRIX_JOIN"):
     def attrs(self) -> AttrSet:
         return self.left.attrs | self.right.attrs
 
+    @property
+    @typing.override
+    def children(self) -> tuple[Exec, Frame]:
+        return self.left, self.right
+
     def _join(self, left: Block, right: Block) -> tuple[NDArray, NDArray]:
         return self.compute_matching(left=left, right=right, on=self.on)
 
@@ -140,6 +146,11 @@ class ZipExec(Exec, key="ZIP"):
     @typing.override
     def attrs(self) -> AttrSet:
         return self.left.attrs | self.right.attrs
+
+    @property
+    @typing.override
+    def children(self) -> tuple[Exec, Exec]:
+        return self.left, self.right
 
 
 class PartitionOperandTypeError(AiowayError, TypeError): ...
