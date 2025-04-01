@@ -9,7 +9,7 @@ from aioway.execs import (
     Exec,
     FilterExprExec,
     FilterPredExec,
-    IteratorExec,
+    FrameStreamExec,
     MapExec,
     ProjectExec,
     RenameExec,
@@ -59,21 +59,21 @@ def block_frame_iter(block_frame, size) -> Exec:
     #   >>>    assert a is not b
     #   Both sides of the equation uses the same iterator underneath,
     #   and it would create subtle bugs.
-    return IteratorExec.tabular(block_frame, {"batch_size": size})
+    return FrameStreamExec.tabular(block_frame, {"batch_size": size})
 
 
-def test_iterator_stream(block_frame_iter):
+def test_iterator_exec(block_frame_iter):
     assert isinstance(block_frame_iter, Exec)
 
 
 def test_iterator_eq(block_frame, block_frame_iter, size):
     for fresh, iterator in zip(
-        IteratorExec.tabular(block_frame, {"batch_size": size}), block_frame_iter
+        FrameStreamExec.tabular(block_frame, {"batch_size": size}), block_frame_iter
     ):
         assert (fresh.data == iterator.data).all()
 
 
-def filter_expr_stream(stream: Exec):
+def filter_expr_exec(stream: Exec):
     return FilterExprExec(stream, "f1d > 0")
 
 
@@ -81,22 +81,22 @@ def filter_pred_frame(stream: Exec):
     return FilterPredExec(stream, predicate=lambda t: (t["f1d"] > 0).cpu().numpy())
 
 
-@pytest.fixture(params=[filter_expr_stream, filter_pred_frame])
-def filter_stream(request) -> Callable[[Exec], Exec]:
+@pytest.fixture(params=[filter_expr_exec, filter_pred_frame])
+def filter_exec(request) -> Callable[[Exec], Exec]:
     return request.param
 
 
-def test_filter_stream_attrs(filter_stream, block_frame, size):
+def test_filter_exec_attrs(filter_exec, block_frame, size):
     assert (
-        filter_stream(IteratorExec.tabular(block_frame, {"batch_size": size})).attrs
+        filter_exec(FrameStreamExec.tabular(block_frame, {"batch_size": size})).attrs
         == block_frame.attrs
     )
 
 
-def test_filter_stream_next(filter_stream, block_frame, size):
-    stream = filter_stream(IteratorExec.tabular(block_frame, {"batch_size": size}))
+def test_filter_exec_next(filter_exec, block_frame, size):
+    stream = filter_exec(FrameStreamExec.tabular(block_frame, {"batch_size": size}))
     for filtered, original in zip(
-        stream, IteratorExec.tabular(block_frame, {"batch_size": size})
+        stream, FrameStreamExec.tabular(block_frame, {"batch_size": size})
     ):
         assert (filtered.data == original.filter("f1d > 0").data).all()
 
@@ -107,19 +107,19 @@ def rename_op():
 
 
 @pytest.fixture
-def rename_stream(block_frame, rename_op, size):
+def rename_exec(block_frame, rename_op, size):
     return RenameExec(
-        IteratorExec.tabular(block_frame, {"batch_size": size}), **rename_op
+        FrameStreamExec.tabular(block_frame, {"batch_size": size}), **rename_op
     )
 
 
-def test_rename_stream_attrs(rename_stream, block_frame, rename_op):
-    assert rename_stream.attrs == block_frame.attrs.rename(**rename_op)
+def test_rename_exec_attrs(rename_exec, block_frame, rename_op):
+    assert rename_exec.attrs == block_frame.attrs.rename(**rename_op)
 
 
-def test_rename_stream_next(rename_stream, block_frame, size):
+def test_rename_exec_next(rename_exec, block_frame, size):
     for renamed, original in zip(
-        rename_stream, IteratorExec.tabular(block_frame, {"batch_size": size})
+        rename_exec, FrameStreamExec.tabular(block_frame, {"batch_size": size})
     ):
         assert (
             renamed.data == original.rename(f1d="f1", f2d="f2", i1d="i1", i2d="i2").data
@@ -132,35 +132,36 @@ def map_rename_op():
 
 
 @pytest.fixture
-def map_stream(block_frame, map_rename_op, size):
+def map_exec(block_frame, map_rename_op, size):
     return MapExec(
-        IteratorExec.tabular(block_frame, {"batch_size": size}),
+        FrameStreamExec.tabular(block_frame, {"batch_size": size}),
         lambda b: b.rename(**map_rename_op),
         output=block_frame.attrs.rename(**map_rename_op),
     )
 
 
-def test_map_stream_next(map_stream, block_frame, map_rename_op, size):
+def test_map_exec_next(map_exec, block_frame, map_rename_op, size):
     for mapped, original in zip(
-        map_stream, IteratorExec.tabular(block_frame, {"batch_size": size})
+        map_exec, FrameStreamExec.tabular(block_frame, {"batch_size": size})
     ):
         assert (mapped.data == original.rename(**map_rename_op).data).all()
 
 
 @pytest.fixture
-def project_stream(block_frame, size):
+def project_exec(block_frame, size):
     return ProjectExec(
-        IteratorExec.tabular(block_frame, {"batch_size": size}), subset=["f1d", "i2d"]
+        FrameStreamExec.tabular(block_frame, {"batch_size": size}),
+        subset=["f1d", "i2d"],
     )
 
 
-def test_project_stream_attrs(project_stream, block_frame):
+def test_project_exec_attrs(project_exec, block_frame):
     selected = {key: block_frame.attrs[key] for key in ["f1d", "i2d"]}
-    assert project_stream.attrs == selected
+    assert project_exec.attrs == selected
 
 
-def test_project_stream_next(project_stream, block_frame, size):
+def test_project_exec_next(project_exec, block_frame, size):
     for curr, other in zip(
-        project_stream, IteratorExec.tabular(block_frame, {"batch_size": size})
+        project_exec, FrameStreamExec.tabular(block_frame, {"batch_size": size})
     ):
         assert (curr.data == other[["f1d", "i2d"]].data).all()

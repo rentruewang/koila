@@ -11,6 +11,7 @@ python = ">=3.12"
 lark = "^1.2.2"
 numpy = "^2.2.4"
 pandas = "^2.2.3"
+rich = "^13.9.4"
 tensordict = "^0.7.2"
 torch = "^2.6.0"
 
@@ -35,7 +36,6 @@ pytest-xdist = "^3.6.1"
 ipython = "^8.29.0"
 jupyter = "^1.1.1"
 jupyter-book = "^1.0.3"
-rich = "^13.9.4"
 
 [tool.poetry.group.build.dependencies]
 ansible = "^11.0.0"
