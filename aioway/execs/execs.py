@@ -8,11 +8,13 @@ from collections.abc import Iterable, Iterator
 from aioway.blocks import Block
 from aioway.datatypes import AttrSet
 from aioway.errors import AiowayError
+from aioway.factories import Factory
+from aioway.plans import PhysicalPlan
 
 __all__ = ["Exec"]
 
 
-class Exec(Iterator[Block], Iterable[Block], ABC):
+class Exec(Iterator[Block], Iterable[Block], PhysicalPlan, ABC):
     """
     ``Exec`` represents a stream of heterogenious data being generated,
     it is one of the main physical abstractions in ``aioway`` to represent eager computation.
@@ -22,11 +24,6 @@ class Exec(Iterator[Block], Iterable[Block], ABC):
 
     It can be thought of as an ``Iterator`` of ``Block``s,
     where computation happens eagerly, imperatively, and the result is yielded.
-    """
-
-    FACTORY: dict[str, type["Exec"]] = {}
-    """
-    The class factory for ``Exec``s.
     """
 
     @classmethod
@@ -41,13 +38,13 @@ class Exec(Iterator[Block], Iterable[Block], ABC):
                 f"Class: {cls} isn't given a key argument. Only valid for abstract classes."
             )
 
-        if exists := cls.FACTORY.get(key):
+        if key in FACTORY:
             raise ExecRegisterError(
                 f"Trying to insert key: {key} and class: {cls} "
-                f"but key is already used by class: {exists}"
+                f"but key is already used by class: {FACTORY[key]}"
             )
 
-        cls.FACTORY[key] = cls
+        FACTORY[key] = cls
 
     @abc.abstractmethod
     def __next__(self) -> Block:
@@ -57,6 +54,14 @@ class Exec(Iterator[Block], Iterable[Block], ABC):
 
         ...
 
+    def __str__(self) -> str:
+        """
+        Todo:
+            Use ``reprlib`` or ``pprint`` s.t. we do not rely on ``rich`` in explainer.
+        """
+
+        return repr(self)
+
     @property
     @abc.abstractmethod
     def attrs(self) -> AttrSet:
@@ -65,6 +70,12 @@ class Exec(Iterator[Block], Iterable[Block], ABC):
         """
 
         ...
+
+
+FACTORY = Factory(base_class=Exec)
+"""
+The class factory for ``Exec``s.
+"""
 
 
 class ExecRegisterError(AiowayError, KeyError): ...

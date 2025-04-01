@@ -7,7 +7,7 @@ import tensordict
 from tensordict import TensorDict
 
 from aioway.blocks import Block
-from aioway.execs import IteratorExec, MatrixJoinExec, ZipExec
+from aioway.execs import FrameStreamExec, MatrixJoinExec, ZipExec
 from aioway.frames import BlockFrame
 from tests import fake
 
@@ -34,20 +34,20 @@ def concat_frame(device) -> BlockFrame:
     return BlockFrame(block)
 
 
-def test_concat_stream_input_len(block_frame, concat_frame):
+def test_concat_exec_input_len(block_frame, concat_frame):
     assert len(block_frame) == len(concat_frame)
 
 
-def test_concat_stream_next(block_frame, concat_frame, size):
+def test_concat_exec_next(block_frame, concat_frame, size):
     stream = ZipExec(
-        IteratorExec.tabular(block_frame, {"batch_size": size}),
-        IteratorExec.tabular(concat_frame, {"batch_size": size}),
+        FrameStreamExec.tabular(block_frame, {"batch_size": size}),
+        FrameStreamExec.tabular(concat_frame, {"batch_size": size}),
     )
 
     for result, lhs, rhs in zip(
         stream,
-        IteratorExec.tabular(block_frame, {"batch_size": size}),
-        IteratorExec.tabular(concat_frame, {"batch_size": size}),
+        FrameStreamExec.tabular(block_frame, {"batch_size": size}),
+        FrameStreamExec.tabular(concat_frame, {"batch_size": size}),
     ):
         concat = TensorDict({**lhs.data, **rhs.data}, device=result.data.device)
         assert (result.data == concat).all()
@@ -59,7 +59,7 @@ def joinable_frame(device):
     return BlockFrame(block)
 
 
-def test_join_stream_input_len(block_frame, joinable_frame):
+def test_join_exec_input_len(block_frame, joinable_frame):
     assert len(block_frame) * len(joinable_frame)
 
 
@@ -68,9 +68,9 @@ def join_batch_size():
     return 64
 
 
-def test_join_stream_next(block_frame, joinable_frame, join_batch_size):
+def test_join_exec_next(block_frame, joinable_frame, join_batch_size):
     stream = MatrixJoinExec(
-        IteratorExec.tabular(block_frame, {"batch_size": join_batch_size}),
+        FrameStreamExec.tabular(block_frame, {"batch_size": join_batch_size}),
         joinable_frame,
         on="i1d",
         rhs_batch=join_batch_size,

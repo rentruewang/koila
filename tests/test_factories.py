@@ -1,48 +1,29 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
-from collections import defaultdict as DefaultDict
 
-import pytest
-
-from aioway.factories import Factory, Registry
+from aioway.factories import Factory
 
 
-@pytest.fixture(scope="function")
-def registry() -> Registry:
-    return DefaultDict(Factory)
+def test_factory_simple():
+    fac: Factory = Factory()
+    assert isinstance(fac, Factory)
 
-
-def test_factory_simple(registry):
     class A:
         pass
 
-    fac: Factory = Factory.of(A, reg=registry)
-    assert isinstance(fac, Factory)
+    fac["a"] = A
 
-    assert A in registry.keys()
-    assert len(registry) == 1
+    assert fac["a"] == A
+    assert fac[A] == "a"
 
+    assert len(fac) == 1
 
-def test_factory_registry(registry):
-    class A:
-        def __init_subclass__(cls, key: str):
-            fac: Factory = Factory.of(A, reg=registry)
-            fac[key] = cls
-
-    Factory.of(A, reg=registry)
-
-    assert A in registry.keys()
-    assert len(registry) == 1
-
-    @Factory.register(reg=registry)
     class B:
         pass
 
-    assert B in registry.keys()
-    assert len(registry) == 2
+    fac["b"] = B
 
-    class C(A, key="c"):
-        pass
+    assert fac["b"] == B
+    assert fac[B] == "b"
 
-    assert Factory.of(A, reg=registry)["c"] is C
-    assert Factory.of(A, reg=registry)("c") is C
+    assert len(fac) == 2
