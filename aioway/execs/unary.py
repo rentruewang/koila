@@ -8,8 +8,8 @@ import numpy as np
 from numpy.typing import NDArray
 from sympy import Expr
 
+from aioway.attrs import AttrSet
 from aioway.blocks import Block
-from aioway.datatypes import AttrSet
 from aioway.errors import AiowayError
 
 from .execs import Exec

@@ -7,7 +7,7 @@ from abc import ABC
 from tensordict import TensorDict
 from torch.utils.data import IterableDataset
 
-from aioway.datatypes import AttrSet
+from aioway.attrs import AttrSet
 from aioway.plans import PhysicalPlan
 
 __all__ = ["Stream"]

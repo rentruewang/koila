@@ -5,8 +5,8 @@ import typing
 
 from tensordict import TensorDict
 
+from aioway.attrs import AttrSet
 from aioway.blocks import Block
-from aioway.datatypes import AttrSet
 from aioway.errors import AiowayError
 
 from .frames import Frame

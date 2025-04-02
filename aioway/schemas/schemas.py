@@ -22,9 +22,6 @@ class SchemaType:
     The type of the current schema.
     """
 
-    def __post_init__(self) -> None:
-        pass
-
     def __repr__(self) -> str:
         return self.name
 
