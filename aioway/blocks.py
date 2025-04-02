@@ -15,7 +15,7 @@ from tensordict import TensorDict
 from torch import Tensor
 from torch import device as TorchDevice
 
-from aioway.datatypes import Attr, AttrSet, Device, DType, Shape
+from aioway.attrs import Attr, AttrSet, Device, DType, Shape
 from aioway.errors import AiowayError
 
 __all__ = ["Block"]

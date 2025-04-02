@@ -10,7 +10,7 @@ import tensordict
 from tensordict import TensorDict
 from torch.utils.data import Dataset
 
-from aioway.datatypes import AttrSet
+from aioway.attrs import AttrSet
 from aioway.plans import PhysicalPlan
 
 if typing.TYPE_CHECKING:

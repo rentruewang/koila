@@ -8,8 +8,8 @@ from itertools import count as Count
 import torch
 from numpy.typing import NDArray
 
+from aioway.attrs import AttrSet
 from aioway.blocks import Block
-from aioway.datatypes import AttrSet
 from aioway.errors import AiowayError
 from aioway.frames.frames import Frame
 

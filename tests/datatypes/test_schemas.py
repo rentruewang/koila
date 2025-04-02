@@ -2,7 +2,7 @@
 
 import pytest
 
-from aioway.datatypes import SchemaTypeParser
+from aioway.schemas import SchemaTypeParser
 
 
 def example_types_and_transformed():
