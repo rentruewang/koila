@@ -5,8 +5,8 @@ import typing
 from collections.abc import Iterator
 from typing import Any, Self
 
+from aioway.attrs import AttrSet
 from aioway.blocks import Block
-from aioway.datatypes import AttrSet
 from aioway.errors import AiowayError
 from aioway.execs import Exec
 from aioway.plans import PhysicalPlan

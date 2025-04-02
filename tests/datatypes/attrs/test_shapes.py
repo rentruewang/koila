@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from aioway.datatypes import Shape
+from aioway.attrs import Shape
 
 
 def sample_shapes() -> list[list[int]]:
