@@ -102,7 +102,7 @@ Aioway is intentionally designed to be flexible, due to uncertainty and my lack 
 Aioway does the following:
 
 1. Convert the language level (API level) syntax tree into a flow graph
-2. Optimize the flow graph, and then compile them into models. The compilation process would take into account the input / output format and the resources used by each model. 
+2. Optimize the flow graph, and then compile them into models. The compilation process would take into account the input / output format and the resources used by each model.
 3. Send the models into our runtime (Vm), which is responsible for running and connecting data sources and targets.
 4. If needed, Vm triggers compilation again (Just in time compilation) depending on the data.
 

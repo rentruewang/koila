@@ -1,0 +1,13 @@
+{
+    "pass": [
+        "cpu,cpu->cpu",
+        "cuda,cuda:1->cuda:2",
+        "cpu,cuda->cpu"
+    ],
+    "fail": [
+        "->",
+        "->cpu",
+        "cpu->",
+        "hello->world"
+    ]
+}

@@ -24,7 +24,14 @@ class DType(ABC):
     """
 
     @abc.abstractmethod
-    def __str__(self) -> str: ...
+    def __str__(self) -> str:
+        """
+        The ``str`` representation of the object.
+
+        Guranteed to be ``numpy`` compatible.
+        """
+
+        ...
 
     def __eq__(self, other: Any) -> bool:
         """
@@ -39,7 +46,17 @@ class DType(ABC):
             A boolean.
         """
 
-        if (parsed := self.parse(other)) in [None, NotImplemented]:
+        from .factories import UnsupportedDTypeError
+
+        # Try converting into something we know, if it fails,
+        # leave it to ``other`` to implement.
+        try:
+            parsed = self.parse(other)
+        except UnsupportedDTypeError:
+            return NotImplemented
+
+        # This would only happen if ``other`` is ``None``.
+        if parsed is None:
             return False
 
         return self.numpy() == parsed.numpy()
@@ -57,15 +74,17 @@ class DType(ABC):
 
     @classmethod
     def parse(cls, dtype):
-        from .factories import DTypeFactory, UnsupportedDTypeError
+        """
+        Parse the given dtype-like object, and return a ``DType`` instance.
+
+        If the dtype cannot be parsed by the ``DTypeFactory``,
+        ``NotImplemented`` is returned.
+        """
+        from .factories import DTypeFactory
 
         if dtype is None:
             return None
 
         # In case it's a ``DTypeLike``, convert it to ``DType`` and use the same ``__eq__``.
         factory = DTypeFactory()
-
-        try:
-            return factory(dtype)
-        except UnsupportedDTypeError:
-            return NotImplemented
+        return factory(dtype)
