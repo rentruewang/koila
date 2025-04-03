@@ -23,6 +23,14 @@ class Device:
     The name of the device. Defaults to "cpu".
     """
 
+    def __post_init__(self) -> None:
+        try:
+            TorchDevice(self.name)
+        except RuntimeError as re:
+            raise DeviceUnparsableError(
+                f"Device: {self.name} is not parsable by torch."
+            ) from re
+
     def __str__(self) -> str:
         return self.name
 
@@ -79,4 +87,4 @@ class Device:
         )
 
 
-class DeviceUnparsableError(AiowayError, TypeError): ...
+class DeviceUnparsableError(AiowayError, ValueError): ...

@@ -1,0 +1,15 @@
+{
+    "pass": [
+        "int,int->float",
+        "float,int->int",
+        "float32,int64->bool",
+        "float,int16->",
+        "->float",
+        "->"
+    ],
+    "fail": [
+        "int11->",
+        "abc->abc",
+        "ij,jk->jk"
+    ]
+}

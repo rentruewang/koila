@@ -1,0 +1,59 @@
+name: Pre Commit Checks
+on: [push]
+jobs:
+  format:
+    name: 📑 Formatting
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🔔 Check out
+        uses: actions/checkout@v3
+
+      - name: 🏗️ python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: ⬇️ Python Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 2.1.2
+          installer-parallel: true
+
+      - name: ⬇️ Python Dependencies
+        run: poetry install --sync
+
+      - name: 🏃 autoflake
+        run: poetry run pre-commit run --all-files autoflake
+
+      - name: 🏃 isort
+        run: poetry run pre-commit run --all-files isort
+
+      - name: 🏃 black
+        run: poetry run pre-commit run --all-files black
+
+  type:
+    name: 👨‍⚕️ Type Checking
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🔔 Check out
+        uses: actions/checkout@v3
+
+      - name: 🏗️ python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: ⬇️ Python Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 2.1.2
+          installer-parallel: true
+
+      - name: ⬇️ Python Dependencies
+        run: poetry install --sync
+
+      - name: 📦 Install type stubs
+        run: poetry run mypy . --install-types --non-interactive
+
+      - name: 🏃 mypy
+        run: poetry run pre-commit run --all-files black

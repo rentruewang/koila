@@ -23,7 +23,7 @@ jobs:
       - name: ⬇️ Python Poetry
         uses: snok/install-poetry@v1
         with:
-          version: 1.8.4
+          version: 2.1.2
           installer-parallel: true
 
       - name: ⬇️ Python Dependencies

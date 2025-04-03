@@ -1,15 +1,14 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
 import dataclasses as dcls
-from typing import NamedTuple, Self
+from typing import Self
 
 from torch import Tensor
 
+from aioway.attrs.devices import Device
+from aioway.attrs.dtypes import DType
+from aioway.attrs.shapes import Shape
 from aioway.errors import AiowayError
-
-from .devices import Device
-from .dtypes import DType
-from .shapes import Shape
 
 __all__ = ["Attr", "AttrWithName"]
 
@@ -18,6 +17,11 @@ __all__ = ["Attr", "AttrWithName"]
 class Attr:
     """
     ``Attr`` refers to the attributes a column uses.
+    """
+
+    _: dcls.KW_ONLY
+    """
+    Only allow keyword variables to prevent confusion.
     """
 
     dtype: DType
@@ -49,7 +53,7 @@ class Attr:
     def parse(cls, *, dtype, shape, device) -> Self:
         return cls(
             dtype=DType.parse(dtype),
-            shape=Shape.from_seq(shape),
+            shape=Shape.from_iterable(shape),
             device=Device.parse(device),
         )
 
@@ -70,15 +74,16 @@ class Attr:
         return cls.parse(dtype=tensor.dtype, shape=shape, device=tensor.device)
 
 
-class AttrWithName(NamedTuple):
+@dcls.dataclass(frozen=True)
+class AttrWithName(Attr):
+    _: dcls.KW_ONLY
+    """
+    Only allow keyword variables to prevent confusion.
+    """
+
     name: str
     """
     The name of the column.
-    """
-
-    attr: Attr
-    """
-    The schema for the column.
     """
 
 
