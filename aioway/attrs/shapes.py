@@ -4,7 +4,7 @@ import dataclasses as dcls
 import functools
 import operator
 import typing
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from typing import Any, Self
 
 __all__ = ["Shape"]
@@ -56,7 +56,7 @@ class Shape(Sequence[int]):
         return len(self.shape)
 
     @classmethod
-    def from_seq(cls, sequence: Sequence[int]) -> Self:
+    def from_iterable(cls, sequence: Iterable[int]) -> Self:
         """
         Convenient method to generate a ``Shape`` instance from a ``Sequence``.
         """

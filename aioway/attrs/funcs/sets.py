@@ -2,13 +2,15 @@
 
 import dataclasses as dcls
 import typing
-from collections.abc import Iterable, Iterator, Mapping
+from collections.abc import Callable, Iterable, Iterator, Mapping
 from typing import Self
 
+from aioway.attrs.devices import Device
+from aioway.attrs.dtypes import DType
+from aioway.attrs.shapes import Shape
 from aioway.errors import AiowayError
 
 from .attrs import Attr, AttrWithName
-from .devices import Device
 
 __all__ = ["AttrSet"]
 
@@ -32,9 +34,12 @@ class AttrSet(Mapping[str, Attr]):
 
     """
 
-    columns: Mapping[str, Attr] = dcls.field(default_factory=dict)
+    columns: dict[str, Attr] = dcls.field(default_factory=dict)
     """
     The names and the types associated with the columns.
+
+    Even though any mapping should work, the mapping must be order preserving.
+    Therefore, here, a ``dict`` is specified.
     """
 
     device: Device | None = None
@@ -152,15 +157,40 @@ class AttrSet(Mapping[str, Attr]):
 
         return self
 
+    @property
+    def names(self) -> list[str]:
+        return list(self.columns.keys())
+
+    @property
+    def shapes(self) -> list[Shape]:
+        return self._attr(lambda attr: attr.shape)
+
+    @property
+    def devices(self) -> list[Device]:
+        return self._attr(lambda attr: attr.device)
+
+    @property
+    def dtypes(self) -> list[DType]:
+        return self._attr(lambda attr: attr.dtype)
+
+    def _attr[T](self, getter: Callable[[Attr], T]) -> list[T]:
+        return [getter(val) for val in self.columns.values()]
+
     @classmethod
-    def iterable(
+    def from_iterable(
         cls, columns: Iterable[AttrWithName], device: Device = Device()
     ) -> Self:
         """
-        Creates a ``TableSchema`` object from an iterable of ``ColumnSchema`` objects.
+        Creates an ``AttrSet`` object from an iterable of ``AttrWithName`` objects.
         """
 
-        return cls({name: schema for name, schema in columns}, device=device)
+        return cls(
+            {
+                col.name: Attr(dtype=col.dtype, shape=col.shape, device=col.device)
+                for col in columns
+            },
+            device=device,
+        )
 
 
 class AttrSetInitError(AiowayError, AssertionError, TypeError): ...

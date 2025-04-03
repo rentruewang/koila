@@ -1,0 +1,15 @@
+{
+    "pass": [
+        "ij,jk->ij",
+        "bmm,m->b",
+        "i,k->ik",
+        "a,b->",
+        "->",
+        ",b->b"
+    ],
+    "fail": [
+        "ij,k->abc",
+        "i,j->j,k",
+        "i,j->jk"
+    ]
+}
