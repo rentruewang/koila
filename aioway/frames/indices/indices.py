@@ -1,5 +1,7 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
+__all__ = ["Index", "IndexContext"]
+
 import abc
 import dataclasses as dcls
 from abc import ABC
@@ -13,8 +15,6 @@ from aioway.execs import DataLoaderAdaptor, DataLoaderAdaptorLike, FrameStreamEx
 from aioway.frames import Frame
 
 from .ops import IndexOp
-
-__all__ = ["Index", "IndexContext"]
 
 
 @dcls.dataclass(frozen=True)
@@ -49,7 +49,7 @@ class Index(ABC):
         This is fine so long as most other constructs in the project
         are designed to be immutable, favoring creation over mutation.
 
-    Todo:
+    todo))
         Optionally support permutation on indices as optimizations.
     """
 

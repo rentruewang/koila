@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from aioway.attrs import ParsedEinsum
+from aioway.attrs import EinsumSignature
 
 
 @functools.cache
@@ -31,7 +31,7 @@ def test_einsum_parser_passing(passing, parser):
     assert isinstance(passing, str)
 
     parsed = parser(passing)
-    assert isinstance(parsed, ParsedEinsum)
+    assert isinstance(parsed, EinsumSignature)
 
     # ``Einsum`` would deal with the comparison.
     assert parsed == passing

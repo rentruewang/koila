@@ -32,10 +32,12 @@ def _test_einsum_func_init(name: str, einsum_func: type[EinsumAttrFunc]):
         def test_passing(self, passing, parser):
             einsum = parser(passing)
 
+            # Only verify that the checks all pass, which are in ``__post_init__``.
             func = einsum_func(einsum)
             assert func == passing
 
         def test_failing(self, failing, parser):
+            # Even the failing cases are supplied with parsable inputs.
             einsum = parser(failing)
 
             with pytest.raises(ValueError):

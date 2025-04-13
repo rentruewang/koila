@@ -1,5 +1,7 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
+__all__ = ["MatrixJoinExec", "ZipExec"]
+
 import dataclasses as dcls
 import math
 import typing
@@ -17,8 +19,6 @@ from .execs import Exec
 
 if typing.TYPE_CHECKING:
     from aioway.frames import Frame
-
-__all__ = ["MatrixJoinExec", "ZipExec"]
 
 
 @typing.final

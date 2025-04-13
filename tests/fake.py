@@ -13,10 +13,10 @@ def cpu_and_maybe_cuda():
     """
     The devices used in the tests.
 
-    Todo:
+    todo))
         Add multi-gpu support.
 
-    Todo:
+    todo))
         Test distributed.
     """
 

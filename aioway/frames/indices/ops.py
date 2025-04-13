@@ -1,12 +1,5 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
-import abc
-import dataclasses as dcls
-import typing
-from abc import ABC
-
-from aioway.errors import AiowayError
-
 __all__ = [
     "IndexOp",
     "IndexEq",
@@ -17,6 +10,13 @@ __all__ = [
     "IndexLt",
     "IndexLe",
 ]
+
+import abc
+import dataclasses as dcls
+import typing
+from abc import ABC
+
+from aioway.errors import AiowayError
 
 
 class IndexOp(ABC):

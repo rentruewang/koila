@@ -71,9 +71,12 @@ compared to the multiple class changes we have to do everytime someone updates t
 I think for now, let's simplify the costs first and then later add them back.
 """
 
+__all__ = ["Caster", "Castable"]
+
 import abc
 import dataclasses as dcls
 import functools
+import logging
 from abc import ABC
 from collections.abc import Callable, Sequence
 from typing import LiteralString, Self
@@ -82,7 +85,7 @@ import numpy as np
 
 from aioway.errors import AiowayError
 
-__all__ = ["Caster", "Castable"]
+LOGGER = logging.getLogger(__name__)
 
 
 def _checked[**P, T, E: Exception](unchecked: Callable[P, T], *err_types: type[E]):
@@ -90,6 +93,13 @@ def _checked[**P, T, E: Exception](unchecked: Callable[P, T], *err_types: type[E
 
     def checked(*args: P.args, **kwargs: P.kwargs) -> T:
         try:
+            LOGGER.debug(
+                "Passing computation to %s with args=%s and kwargs=%s",
+                unchecked,
+                args,
+                kwargs,
+            )
+
             return unchecked(*args, **kwargs)
         except err_types as e:
             raise CasterInternalError("Internal error encountered.") from e
@@ -103,11 +113,11 @@ class Caster:
     """
     The casting manager for a class.
 
-    Fixme:
+    fixme))
         Work out the type issues documented in python/mypy#4717,
         so that type hints can work properly (does not need to be just `type`).
 
-    Todo:
+    todo))
         Improve the usage of the the ``Caster``.
     """
 
@@ -133,6 +143,7 @@ class Caster:
 
     def __post_init__(self) -> None:
         for sub in self.klasses:
+            # If the convertion type is the base class.
             if sub == self.base:
                 raise CasterInitError(
                     f"Base class: {self.base} must be abstract, "
@@ -173,6 +184,7 @@ class Caster:
         Returns the conversion function from the matrix.
         """
 
+        LOGGER.debug("Matrix getitem called with idx=%s", idx)
         try:
             source, target = idx
         except ValueError as ve:

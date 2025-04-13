@@ -1,13 +1,16 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
+__all__ = ["Shape"]
+
 import dataclasses as dcls
 import functools
+import logging
 import operator
 import typing
 from collections.abc import Iterable, Sequence
 from typing import Any, Self
 
-__all__ = ["Shape"]
+LOGGER = logging.getLogger(__name__)
 
 
 @dcls.dataclass(eq=False, frozen=True)
@@ -22,6 +25,8 @@ class Shape(Sequence[int]):
     """
 
     def __eq__(self, other: Any) -> bool:
+        LOGGER.debug("Computing %s == %s", self, other)
+
         if isinstance(other, Shape):
             return self.shape == other.shape
 

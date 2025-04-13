@@ -1,5 +1,7 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
+__all__ = ["PhysicalPlan", "PlanExplainer"]
+
 import abc
 import dataclasses as dcls
 from abc import ABC
@@ -8,8 +10,6 @@ from collections.abc import Callable
 from rich.tree import Tree
 
 from .trees import TreeNode
-
-__all__ = ["PhysicalPlan", "PlanExplainer"]
 
 
 class PhysicalPlan(TreeNode["PhysicalPlan"], ABC):

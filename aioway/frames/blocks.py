@@ -1,5 +1,7 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
+__all__ = ["BlockFrame"]
+
 import dataclasses as dcls
 import typing
 
@@ -10,8 +12,6 @@ from aioway.blocks import Block
 from aioway.errors import AiowayError
 
 from .frames import Frame
-
-__all__ = ["BlockFrame"]
 
 
 @dcls.dataclass(frozen=True)

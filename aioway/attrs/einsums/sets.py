@@ -5,7 +5,7 @@ import logging
 from collections.abc import Callable
 from typing import Self
 
-from aioway.attrs.funcs import AttrSet, AttrWithName
+from aioway.attrs.attrs import AttrSet, NamedAttr
 from aioway.errors import AiowayError
 
 from .attrs import EinsumAttrFunc, EinsumDevice, EinsumDType, EinsumMap, EinsumShape
@@ -71,7 +71,7 @@ class EinsumAttrSetFunc:
         dtypes = self.dtypes(tuple(attrs.dtypes))
 
         return AttrSet.from_iterable(
-            AttrWithName(name=name, shape=shape, device=device, dtype=dtype)
+            NamedAttr(name=name, shape=shape, device=device, dtype=dtype)
             for name, shape, device, dtype in zip(names, shapes, devices, dtypes)
         )
 

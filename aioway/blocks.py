@@ -1,6 +1,9 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
+__all__ = ["Block"]
+
 import dataclasses as dcls
+import logging
 import operator
 import typing
 from collections.abc import Callable, Iterator, KeysView, Mapping
@@ -18,7 +21,7 @@ from torch import device as TorchDevice
 from aioway.attrs import Attr, AttrSet, Device, DType, Shape
 from aioway.errors import AiowayError
 
-__all__ = ["Block"]
+LOGGER = logging.getLogger(__name__)
 
 
 @typing.final
@@ -145,9 +148,10 @@ class Block(Mapping[str, Tensor]):
             The tensor.
         """
 
+        LOGGER.debug("Column expression: %s", str_or_expr)
+
         expr: Basic = sp.sympify(str_or_expr, evaluate=False)
 
-        args: tuple[Expr, ...] = expr.args
         # Convert symbols to their string representations.
         keys = [str(s) for s in expr.free_symbols]
 
@@ -156,6 +160,7 @@ class Block(Mapping[str, Tensor]):
                 f"Expression {expr} contains {keys}, not a subset of {self.keys()}"
             )
 
+        LOGGER.debug("Creating a function with expr=%s, args=%s", expr, keys)
         # Create a lambda function that works on self.
         func = sp.lambdify(keys, expr, "numpy")
 
@@ -166,6 +171,7 @@ class Block(Mapping[str, Tensor]):
             raise BlockSympyEvalError from te
 
     def filter(self, expr: str | Expr) -> Self:
+        LOGGER.debug("Filter called with expr=%s", expr)
         idx = self.eval_col_expr(expr).bool()
 
         if len(idx) != len(self):
@@ -178,6 +184,7 @@ class Block(Mapping[str, Tensor]):
         return self[idx]
 
     def rename(self, **names: str) -> Self:
+        LOGGER.debug("Renamed called with names=%s", names)
         return dcls.replace(
             self,
             data=TensorDict(
@@ -188,6 +195,20 @@ class Block(Mapping[str, Tensor]):
         )
 
     def chain(self, other: Self) -> Self:
+        """
+        Concatenate the current ``Block`` with another ``Block``, vertically.
+
+        Args:
+            other: The RHS of the concatenation.
+
+        Raises:
+            BlockChainError: If the length of the other is different.
+
+        Returns:
+            A new ``Block`` on the same device.
+        """
+
+        LOGGER.debug("Chain called with self=%s, other=%s", self, other)
         self._check_other_device(other)
 
         if self.keys() != other.keys():
@@ -200,7 +221,7 @@ class Block(Mapping[str, Tensor]):
 
     def zip(self, other: Self) -> Self:
         """
-        Concatenate the curernt ``Block`` with another ``Block``.
+        Concatenate the current ``Block`` with another ``Block``, horizontally.
 
         Args:
             other: The RHS of the concatenation.
@@ -211,6 +232,8 @@ class Block(Mapping[str, Tensor]):
         Returns:
             A new ``Block`` on the same device.
         """
+
+        LOGGER.debug("Zip called with self=%s, other=%s", self, other)
 
         self._check_other_device(other)
 
@@ -228,29 +251,33 @@ class Block(Mapping[str, Tensor]):
             )
         )
 
-    def require_attrs(self, attr: AttrSet, /) -> None:
+    def require_attrs(self, attrs: AttrSet, /) -> None:
         """
         Promises that the current ``Block`` has a given ``TableSchema`` type.
         """
 
-        if attr.keys() != self.keys():
+        LOGGER.debug(
+            "Requiring attrs of self: %s, other: %s to be equal", self.attrs, attrs
+        )
+
+        if attrs.keys() != self.keys():
             raise BlockKeyError(
                 "Key mismatch. "
-                f"Required: {list(attr.keys())}. Actual: {list(self.keys())}"
+                f"Required: {list(attrs.keys())}. Actual: {list(self.keys())}"
             )
 
-        if attr.device and self.device and attr.device != self.device:
+        if attrs.device and self.device and attrs.device != self.device:
             raise BlockDeviceError(
                 "Device mismatch with schema. "
-                f"Required: {attr.device}. Got: {self.device}."
+                f"Required: {attrs.device}. Got: {self.device}."
             )
 
         for key in self.keys():
-            if attr[key].dtype == self[key].dtype:
+            if attrs[key].dtype == self[key].dtype:
                 continue
 
             raise BlockDTypeError(
-                f"For {key=}, {attr[key].dtype=} incompatible with {self[key].dtype=}."
+                f"For {key=}, {attrs[key].dtype=} incompatible with {self[key].dtype=}."
             )
 
     def _getitem_str(self, idx: str) -> Tensor:
