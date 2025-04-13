@@ -1,14 +1,13 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
+__all__ = ["SchemaTypeParser", "SchemaTypeTransformer"]
+
 import dataclasses as dcls
 import functools
 from typing import Protocol, Self
 
 import lark
 from lark import Lark, Transformer
-
-__all__ = ["SchemaTypeParser", "SchemaTypeTransformer"]
-
 
 SCHEMA_TYPE_GRAMMAR = r"""
 ?start: bigint
@@ -58,6 +57,9 @@ decimal: "DECIMAL" "(" precision "," scale ")"
 class _Stringer(Protocol):
     """
     ``Stringer`` is something that can be converted to a string.
+
+    This is used as a common interface to accept both
+    objects that define ``__str__``, and ``str`` objects themselves.
     """
 
     def __str__(self) -> str: ...

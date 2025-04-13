@@ -1,5 +1,7 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
+__all__ = ["FilterPredExec", "FilterExprExec", "MapExec", "RenameExec", "ProjectExec"]
+
 import dataclasses as dcls
 import typing
 from collections.abc import Callable
@@ -13,14 +15,6 @@ from aioway.blocks import Block
 from aioway.errors import AiowayError
 
 from .execs import Exec
-
-__all__ = [
-    "FilterPredExec",
-    "FilterExprExec",
-    "MapExec",
-    "RenameExec",
-    "ProjectExec",
-]
 
 
 @typing.final
@@ -107,7 +101,7 @@ class MapExec(Exec, key="MAP"):
     """
     ``MapExec`` converts the input data stream with a custom function.
 
-    Todo:
+    todo))
         Improve the initialization of this class.
     """
 

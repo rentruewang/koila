@@ -1,5 +1,7 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
+__all__ = ["Exec"]
+
 import abc
 import inspect
 from abc import ABC
@@ -10,8 +12,6 @@ from aioway.blocks import Block
 from aioway.errors import AiowayError
 from aioway.factories import Factory
 from aioway.plans import PhysicalPlan
-
-__all__ = ["Exec"]
 
 
 class Exec(Iterator[Block], Iterable[Block], PhysicalPlan, ABC):
@@ -61,7 +61,7 @@ class Exec(Iterator[Block], Iterable[Block], PhysicalPlan, ABC):
 
     def __str__(self) -> str:
         """
-        Todo:
+        todo))
             Use ``reprlib`` or ``pprint`` s.t. we do not rely on ``rich`` in explainer.
         """
 

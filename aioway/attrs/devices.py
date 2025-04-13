@@ -1,6 +1,9 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
+__all__ = ["Device"]
+
 import dataclasses as dcls
+import logging
 import typing
 from typing import Any, Self
 
@@ -8,7 +11,7 @@ from torch import device as TorchDevice
 
 from aioway.errors import AiowayError
 
-__all__ = ["Device"]
+LOGGER = logging.getLogger(__name__)
 
 
 @typing.final
@@ -35,6 +38,8 @@ class Device:
         return self.name
 
     def __eq__(self, other: Any) -> bool:
+        LOGGER.debug("Computing %s == %s", self, other)
+
         if isinstance(other, Device):
             return self.name == other.name
 
@@ -70,6 +75,8 @@ class Device:
 
     @classmethod
     def parse(cls, device):
+        LOGGER.debug("Parsing %s", device)
+
         if device is None:
             return None
 

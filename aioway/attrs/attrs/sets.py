@@ -1,6 +1,9 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
+__all__ = ["AttrSet"]
+
 import dataclasses as dcls
+import logging
 import typing
 from collections.abc import Callable, Iterable, Iterator, Mapping
 from typing import Self
@@ -10,9 +13,10 @@ from aioway.attrs.dtypes import DType
 from aioway.attrs.shapes import Shape
 from aioway.errors import AiowayError
 
-from .attrs import Attr, AttrWithName
+from .attrs import Attr
+from .names import NamedAttr
 
-__all__ = ["AttrSet"]
+LOGGER = logging.getLogger(__name__)
 
 
 @dcls.dataclass(frozen=True)
@@ -76,6 +80,8 @@ class AttrSet(Mapping[str, Attr]):
 
     @typing.override
     def __getitem__(self, key):
+        LOGGER.debug("Getting key: %s on: %s", key, self)
+
         if isinstance(key, str):
             return self.columns[key]
 
@@ -92,6 +98,8 @@ class AttrSet(Mapping[str, Attr]):
 
     @typing.override
     def __eq__(self, other: object):
+        LOGGER.debug("Comparing %s == %s", lambda: self, lambda: other)
+
         if isinstance(other, AttrSet):
             return sorted(self.columns) == sorted(other.columns)
 
@@ -102,12 +110,16 @@ class AttrSet(Mapping[str, Attr]):
         return NotImplemented
 
     def __or__(self, other: Self) -> Self:
+        LOGGER.debug("Computing %s | %s", self, other)
+
         # Using the logic in ``__and__`` to verify intersection.
         _ = self & other
 
         return type(self)({**self.columns, **other.columns}, device=self.device)
 
     def __and__(self, other: Self) -> Self:
+        LOGGER.debug("Computing %s & %s", self, other)
+
         joint = set(self.keys()).intersection(other.keys())
 
         if not all(self[key] == other[key] for key in joint):
@@ -178,11 +190,13 @@ class AttrSet(Mapping[str, Attr]):
 
     @classmethod
     def from_iterable(
-        cls, columns: Iterable[AttrWithName], device: Device = Device()
+        cls, columns: Iterable[NamedAttr], device: Device = Device()
     ) -> Self:
         """
         Creates an ``AttrSet`` object from an iterable of ``AttrWithName`` objects.
         """
+
+        LOGGER.debug("Creating attribute set from iterable. %s", columns)
 
         return cls(
             {

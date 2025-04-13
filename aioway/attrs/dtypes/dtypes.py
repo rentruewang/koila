@@ -1,7 +1,10 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
+__all__ = ["DType"]
+
 import abc
 import dataclasses as dcls
+import logging
 import typing
 from abc import ABC
 from typing import Any
@@ -10,7 +13,7 @@ import numpy as np
 from numpy import dtype as NumpyDType
 from torch import dtype as TorchDType
 
-__all__ = ["DType"]
+LOGGER = logging.getLogger(__name__)
 
 
 @dcls.dataclass(eq=False, frozen=True)
@@ -19,7 +22,7 @@ class DType(ABC):
     ``DType`` represents ``aioway``'s internal primitive data types,
     which is most similar to ``numpy.dtype`` and ``torch.dtype``.
 
-    Todo:
+    todo))
         Add a visitor for ``DType``.
     """
 
@@ -45,6 +48,8 @@ class DType(ABC):
         Returns:
             A boolean.
         """
+
+        LOGGER.debug("Computing %s == %s", self, other)
 
         from .factories import UnsupportedDTypeError
 
@@ -80,6 +85,9 @@ class DType(ABC):
         If the dtype cannot be parsed by the ``DTypeFactory``,
         ``NotImplemented`` is returned.
         """
+
+        LOGGER.debug("Parsing %s", dtype)
+
         from .factories import DTypeFactory
 
         if dtype is None:
