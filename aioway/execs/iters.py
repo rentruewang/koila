@@ -1,5 +1,7 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
+__all__ = ["RawIteratorExec", "FrameStreamExec"]
+
 import dataclasses as dcls
 import typing
 from collections.abc import Iterator
@@ -17,8 +19,6 @@ from .execs import Exec
 if typing.TYPE_CHECKING:
     from aioway.frames import Frame
     from aioway.streams import Stream
-
-__all__ = ["RawIteratorExec", "FrameStreamExec"]
 
 
 @dcls.dataclass(frozen=True)

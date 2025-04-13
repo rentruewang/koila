@@ -1,5 +1,7 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
+__all__ = ["EinsumAttrFunc", "EinsumMap", "EinsumShape", "EinsumDType", "EinsumDevice"]
+
 import abc
 import dataclasses as dcls
 import functools
@@ -15,16 +17,14 @@ from aioway.attrs.dtypes import DType
 from aioway.attrs.shapes import Shape
 from aioway.errors import AiowayError
 
-from .parsers import ParsedEinsum
-
-__all__ = ["EinsumAttrFunc", "EinsumMap", "EinsumShape", "EinsumDType", "EinsumDevice"]
+from .parsers import EinsumSignature
 
 LOGGER = logging.getLogger(__name__)
 
 
 @dcls.dataclass(eq=False, frozen=True, repr=False)
 class EinsumAttrFunc[T](ABC):
-    einsum: ParsedEinsum
+    einsum: EinsumSignature
     """
     The einsum instance to use.
     """
@@ -36,7 +36,7 @@ class EinsumAttrFunc[T](ABC):
         if isinstance(other, type(self)):
             return self.einsum == other.einsum
 
-        if isinstance(other, str | ParsedEinsum):
+        if isinstance(other, str | EinsumSignature):
             return self.einsum == other
 
         return NotImplemented
@@ -66,7 +66,7 @@ class EinsumAttrFunc[T](ABC):
 
         If failing, subclass should raise ``RuntimeError``.
 
-        Fixme:
+        fixme))
             Subclass is currently raising ``RuntimError`` when failing,
             think about how to make this process better and more automatic.
         """
@@ -127,9 +127,6 @@ class EinsumMap(EinsumAttrFunc[str]):
 class EinsumShape(EinsumAttrFunc[Shape]):
     """
     Shape variant of ``Einsum``.
-
-    Todo:
-        Documentation and examples.
     """
 
     def __post_init__(self) -> None:

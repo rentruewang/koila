@@ -1,5 +1,7 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
+__all__ = ["EinsumSignature", "EinsumParser"]
+
 import dataclasses as dcls
 import logging
 import typing
@@ -11,8 +13,6 @@ import lark
 from lark import Lark, LarkError, Transformer
 
 from aioway.errors import AiowayError
-
-__all__ = ["ParsedEinsum", "EinsumParser"]
 
 LOGGER = logging.getLogger(__name__)
 
@@ -35,7 +35,7 @@ ellipsis: "..."
 
 @typing.final
 @dcls.dataclass(eq=False, frozen=True, repr=False)
-class ParsedEinsum:
+class EinsumSignature:
     """
     The parsed outcome of the ``EinsumParser``,
     with each parameter and result split into list of strings.
@@ -60,13 +60,13 @@ class ParsedEinsum:
             if isinstance(val, str):
                 continue
 
-            raise EinsumInitError(
+            raise EinsumSignInitError(
                 f"Value '{val}' must be of type string. Got {type(val)=}"
             )
 
     def __check_ellipsis_only_once(self) -> None:
         if self.params.count(...) > 1 or self.results.count(...) > 1:
-            raise EinsumInitError("'...' can only appear once in input or output")
+            raise EinsumSignInitError("'...' can only appear once in input or output")
 
     def __repr__(self) -> str:
         joined_params = ",".join(map(str, self.params))
@@ -131,7 +131,7 @@ def _convert_to_sequence(seq: Sequence[str] | str | None) -> tuple[str, ...]:
     if isinstance(seq, Sequence) and all(isinstance(s, str) for s in seq):
         return tuple(seq)
 
-    raise EinsumInitError(f"Unknown type: {type(seq)=}")
+    raise EinsumSignInitError(f"Unknown type: {type(seq)=}")
 
 
 @lark.v_args(inline=True)
@@ -140,7 +140,7 @@ class EinsumTransformer(Transformer):
     The transformer corresponding to lark grammar.
     """
 
-    expr = ParsedEinsum.init
+    expr = EinsumSignature.init
     argument = lambda self, text: str(text) if text else ""
     params = lambda self, *args: [arg if arg else "" for arg in args]
     ellipsis = lambda self, _: ...
@@ -184,7 +184,7 @@ class EinsumParser:
         except LarkError as le:
             raise EinsumParserError(f"Parsing expression failed: {expr}.") from le
 
-    def _parse(self, text: str) -> ParsedEinsum:
+    def _parse(self, text: str) -> EinsumSignature:
         LOGGER.debug("Parsing expression: %s", text)
 
         tree = self.parser.parse(text)
@@ -204,4 +204,4 @@ class EinsumParser:
 class EinsumParserError(AiowayError, ValueError): ...
 
 
-class EinsumInitError(AiowayError, TypeError): ...
+class EinsumSignInitError(AiowayError, TypeError): ...

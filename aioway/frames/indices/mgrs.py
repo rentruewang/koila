@@ -50,7 +50,7 @@ class IndexManager(Mapping[MultiCol, MultiOpIndex]):
     The ``IndexManager`` class is acts as a dictionary,
     providing some additional utility to make the API easy to use.
 
-    Todo:
+    todo))
         Improve efficiency as currently we are using lists and linear lookup.
     """
 

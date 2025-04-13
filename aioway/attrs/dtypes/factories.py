@@ -1,5 +1,6 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
+__all__ = ["DTypeFactory"]
 
 import numpy as np
 from numpy.typing import DTypeLike
@@ -9,8 +10,6 @@ from aioway.errors import AiowayError
 
 from .dtypes import DType
 from .primitives import BoolDType, FloatDType, IntDType
-
-__all__ = ["DTypeFactory"]
 
 
 class DTypeFactory:

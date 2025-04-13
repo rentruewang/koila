@@ -1,5 +1,6 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
+__all__ = ["FaissIndex"]
 
 import dataclasses as dcls
 import typing
@@ -16,15 +17,13 @@ from .ops import IndexAnn, IndexOp
 if typing.TYPE_CHECKING:
     from faiss import Index as FaissIdx
 
-__all__ = ["FaissIndex"]
-
 
 @dcls.dataclass(frozen=True)
 class FaissIndex(Index):
     """
     The ``Index`` backed by the ``faiss`` library.
 
-    Todo:
+    todo))
         GPU support.
     """
 

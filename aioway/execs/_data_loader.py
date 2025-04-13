@@ -1,5 +1,7 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
+__all__ = ["DataLoaderAdaptor", "DataLoaderAdaptorLike"]
+
 import dataclasses as dcls
 import typing
 from collections.abc import Callable, Iterator
@@ -15,8 +17,6 @@ from aioway.errors import AiowayError
 if typing.TYPE_CHECKING:
     from aioway.frames import Frame
     from aioway.streams import Stream
-
-__all__ = ["DataLoaderAdaptor", "DataLoaderAdaptorLike"]
 
 
 def maybe_stack_tensordict(items: TensorDict | list[TensorDict]) -> TensorDict:

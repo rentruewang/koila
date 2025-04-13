@@ -1,8 +1,8 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
-from .errors import AiowayError
-
 __all__ = ["PlannedButNotImplemented"]
+
+from .errors import AiowayError
 
 
 class PlannedButNotImplemented(AiowayError, NotImplementedError):

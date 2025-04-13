@@ -1,5 +1,7 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
+__all__ = ["Stream"]
+
 import abc
 import typing
 from abc import ABC
@@ -9,8 +11,6 @@ from torch.utils.data import IterableDataset
 
 from aioway.attrs import AttrSet
 from aioway.plans import PhysicalPlan
-
-__all__ = ["Stream"]
 
 
 class Stream(IterableDataset[TensorDict], PhysicalPlan, ABC):

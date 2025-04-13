@@ -1,7 +1,12 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
+__all__ = ["Attr", "AttrLike"]
+
 import dataclasses as dcls
-from typing import Self
+import logging
+import typing
+from collections.abc import Mapping
+from typing import Any, Protocol, Self, TypedDict
 
 from torch import Tensor
 
@@ -10,11 +15,32 @@ from aioway.attrs.dtypes import DType
 from aioway.attrs.shapes import Shape
 from aioway.errors import AiowayError
 
-__all__ = ["Attr", "AttrWithName"]
+LOGGER = logging.getLogger(__name__)
+
+
+class AttrDict(TypedDict):
+    dtype: Any
+    shape: Any
+    device: Any
+
+
+@typing.runtime_checkable
+class AttrObj(Protocol):
+    @property
+    def dtype(self) -> Any: ...
+
+    @property
+    def shape(self) -> Any: ...
+
+    @property
+    def device(self) -> Any: ...
+
+
+type AttrLike = AttrDict | AttrObj
 
 
 @dcls.dataclass(frozen=True)
-class Attr:
+class Attr[T: AttrLike]:
     """
     ``Attr`` refers to the attributes a column uses.
     """
@@ -50,12 +76,34 @@ class Attr:
             raise AttrNullMemberError("`Attr.device` cannot be `None`.")
 
     @classmethod
-    def parse(cls, *, dtype, shape, device) -> Self:
+    def __init(cls, *, dtype, shape, device) -> Self:
         return cls(
             dtype=DType.parse(dtype),
             shape=Shape.from_iterable(shape),
             device=Device.parse(device),
         )
+
+    @classmethod
+    def parse[S: Self](cls: S, like: T) -> S:
+        LOGGER.debug("Parsing: %s", like)
+
+        if isinstance(like, AttrObj):
+            return cls.__init(
+                device=like.device,
+                dtype=like.dtype,
+                shape=like.shape,
+            )
+
+        if isinstance(like, Mapping) and all(
+            key in like.keys() for key in AttrDict.__annotations__
+        ):
+            return cls.__init(
+                device=like["device"],
+                dtype=like["dtype"],
+                shape=like["shape"],
+            )
+
+        raise AttrInitTypeError(f"Cannot initialize non-attr-like {like}.")
 
     @classmethod
     def parse_tensor(cls, tensor: Tensor, /, discard_batch_dim: bool = True) -> Self:
@@ -71,20 +119,10 @@ class Attr:
 
         shape = tensor.shape[1:] if discard_batch_dim else tensor.shape
 
-        return cls.parse(dtype=tensor.dtype, shape=shape, device=tensor.device)
-
-
-@dcls.dataclass(frozen=True)
-class AttrWithName(Attr):
-    _: dcls.KW_ONLY
-    """
-    Only allow keyword variables to prevent confusion.
-    """
-
-    name: str
-    """
-    The name of the column.
-    """
+        return cls.__init(dtype=tensor.dtype, shape=shape, device=tensor.device)
 
 
 class AttrNullMemberError(AiowayError, ValueError): ...
+
+
+class AttrInitTypeError(AiowayError, TypeError): ...

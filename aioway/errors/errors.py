@@ -1,16 +1,16 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
+__all__ = ["AiowayError"]
+
 import hashlib
 from typing import Any
-
-__all__ = ["AiowayError"]
 
 
 class AiowayError(Exception):
     """
     ``AiowayError`` is the error thrown by the ``aioway`` library.
 
-    Todo:
+    todo))
         Make the messages configurable, like ``logging.Logger``.
     """
 

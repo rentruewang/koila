@@ -1,6 +1,7 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
-import typing
+__all__ = ["index_factory"]
+
 from typing import Any
 
 from aioway.errors import AiowayError
@@ -10,15 +11,10 @@ from .indices import Index, IndexContext
 from .lexsort import LexsortIndex
 from .ops import *
 
-if typing.TYPE_CHECKING:
-    pass
-
-__all__ = ["index_factory"]
-
 
 def index_factory(key: str | type[IndexOp], ctx: IndexContext, **kwargs: Any) -> Index:
     """
-    Todo:
+    todo))
         Currently ``index_factory`` would, based on what type of ``IndexOp`` is given,
         try to construct ``FaissIndex`` or ``LexsortIndex``.
 
