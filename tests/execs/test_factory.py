@@ -2,6 +2,7 @@
 
 import pytest
 
+from aioway import factories
 from aioway.execs import (
     Exec,
     FilterExprExec,
@@ -14,14 +15,12 @@ from aioway.execs import (
     RenameExec,
     ZipExec,
 )
-from aioway.factories import Factory
 
 
 @pytest.fixture(scope="module")
-def exec_factory() -> Factory[type[Exec]]:
-    from aioway.execs import execs
+def exec_factory():
 
-    return execs.FACTORY
+    return factories.of(Exec)
 
 
 def _exec_key_cls_param():

@@ -71,8 +71,6 @@ compared to the multiple class changes we have to do everytime someone updates t
 I think for now, let's simplify the costs first and then later add them back.
 """
 
-__all__ = ["Caster", "Castable"]
-
 import abc
 import dataclasses as dcls
 import functools
@@ -84,6 +82,8 @@ from typing import LiteralString, Self
 import numpy as np
 
 from aioway.errors import AiowayError
+
+__all__ = ["Caster", "Castable"]
 
 LOGGER = logging.getLogger(__name__)
 
@@ -108,17 +108,15 @@ def _checked[**P, T, E: Exception](unchecked: Callable[P, T], *err_types: type[E
     return checked
 
 
+# TODO
+#   Once type issues in python/mypy#4717 is fixed,
+#   don't use just `type`, but a `TypeVar`.
+#
+# TODO Make using `Caster` less painful.
 @dcls.dataclass(frozen=True)
 class Caster:
     """
     The casting manager for a class.
-
-    fixme))
-        Work out the type issues documented in python/mypy#4717,
-        so that type hints can work properly (does not need to be just `type`).
-
-    todo))
-        Improve the usage of the the ``Caster``.
     """
 
     base: type

@@ -1,7 +1,5 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
-__all__ = ["Shape"]
-
 import dataclasses as dcls
 import functools
 import logging
@@ -9,6 +7,8 @@ import operator
 import typing
 from collections.abc import Iterable, Sequence
 from typing import Any, Self
+
+__all__ = ["Shape"]
 
 LOGGER = logging.getLogger(__name__)
 

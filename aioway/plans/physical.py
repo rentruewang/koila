@@ -1,7 +1,5 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
-__all__ = ["PhysicalPlan", "PlanExplainer"]
-
 import abc
 import dataclasses as dcls
 from abc import ABC
@@ -11,14 +9,16 @@ from rich.tree import Tree
 
 from .trees import TreeNode
 
+__all__ = ["PhysicalPlan", "PlanExplainer"]
 
-class PhysicalPlan(TreeNode["PhysicalPlan"], ABC):
+
+class PhysicalPlan[T: "PhysicalPlan"](TreeNode[T], ABC):
     @abc.abstractmethod
     def __str__(self) -> str: ...
 
     @property
     @abc.abstractmethod
-    def children(self) -> tuple["PhysicalPlan", ...]: ...
+    def children(self) -> tuple[T, ...]: ...
 
 
 @dcls.dataclass(frozen=True)

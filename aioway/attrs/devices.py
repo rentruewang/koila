@@ -1,7 +1,5 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
-__all__ = ["Device"]
-
 import dataclasses as dcls
 import logging
 import typing
@@ -10,6 +8,8 @@ from typing import Any, Self
 from torch import device as TorchDevice
 
 from aioway.errors import AiowayError
+
+__all__ = ["Device"]
 
 LOGGER = logging.getLogger(__name__)
 

@@ -1,7 +1,5 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
-__all__ = ["AttrSet"]
-
 import dataclasses as dcls
 import logging
 import typing
@@ -15,6 +13,8 @@ from aioway.errors import AiowayError
 
 from .attrs import Attr
 from .names import NamedAttr
+
+__all__ = ["AttrSet"]
 
 LOGGER = logging.getLogger(__name__)
 
@@ -66,7 +66,7 @@ class AttrSet(Mapping[str, Attr]):
 
     @typing.override
     def __iter__(self) -> Iterator[str]:
-        return iter(self.columns)
+        yield from self.columns
 
     @typing.override
     def __len__(self) -> int:
@@ -112,7 +112,7 @@ class AttrSet(Mapping[str, Attr]):
     def __or__(self, other: Self) -> Self:
         LOGGER.debug("Computing %s | %s", self, other)
 
-        # Using the logic in ``__and__`` to verify intersection.
+        # Using the logic in `__and__` to verify intersection.
         _ = self & other
 
         return type(self)({**self.columns, **other.columns}, device=self.device)
@@ -143,7 +143,7 @@ class AttrSet(Mapping[str, Attr]):
         if on not in other:
             raise AttrSetKeyError(f"{other.columns=} must contain key={on}")
 
-        # Merging here is OK, as ``dict`` update overwrites the left side.
+        # Merging here is OK, as `dict` update overwrites the left side.
         return self | other
 
     def project(self, *columns: str) -> Self:

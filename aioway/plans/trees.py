@@ -1,8 +1,8 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
-__all__ = ["TreeNode"]
-
 from typing import Protocol
+
+__all__ = ["TreeNode"]
 
 
 class TreeNode[T: "TreeNode"](Protocol):
