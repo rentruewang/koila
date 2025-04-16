@@ -1,13 +1,16 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
-__all__ = ["Model"]
-
 import tensordict
 from tensordict.nn import TensorDictModule
 
 from aioway.blocks import Block
 
+__all__ = ["Model"]
 
+
+# TODO
+#   Should use `inspect.signature` to ensure that
+#   the wrapped module has a valid signature as described by `Einsum`.
 @tensordict.tensorclass(frozen=True)
 class Model:
     module: TensorDictModule
@@ -21,9 +24,6 @@ class Model:
         """
         The forward function of the model class.
 
-        todo))
-            Should use ``inspect.signature`` to ensure that
-            the wrapped module has a valid signature as described by ``Einsum``.
 
         Returns:
             The result computed by the underlying module.

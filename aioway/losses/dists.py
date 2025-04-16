@@ -16,36 +16,36 @@ __all__ = [
 ]
 
 
-class BceDistLoss(DistLoss):
+class BceDistLoss(LossFunc):
     def _compute(self, input, target):
         return F.binary_cross_entropy(input=input, target=target)
 
 
-class L1DistLoss(DistLoss):
+class L1DistLoss(LossFunc):
     def _compute(self, input: Tensor, target: Tensor) -> Tensor:
         return F.l1_loss(input=input, target=target)
 
 
-class MseDistLoss(DistLoss):
+class MseDistLoss(LossFunc):
     def _compute(self, input: Tensor, target: Tensor) -> Tensor:
         return F.mse_loss(input=input, target=target)
 
 
-class KlDivDistLoss(DistLoss):
+class KlDivDistLoss(LossFunc):
     def _compute(self, input: Tensor, target: Tensor) -> Tensor:
         return F.kl_div(input=input, target=target)
 
 
-class SmoothL1DistLoss(DistLoss):
+class SmoothL1DistLoss(LossFunc):
     def _compute(self, input: Tensor, target: Tensor) -> Tensor:
         return F.smooth_l1_loss(input=input, target=target)
 
 
-class CrossEntropyDistLoss(DistLoss):
+class CrossEntropyDistLoss(LossFunc):
     def _compute(self, input: Tensor, target: Tensor) -> Tensor:
         return F.cross_entropy(input=input, target=target)
 
 
-class NllDistLoss(DistLoss):
+class NllDistLoss(LossFunc):
     def _compute(self, input: Tensor, target: Tensor) -> Tensor:
         return F.nll_loss(input=input, target=target)

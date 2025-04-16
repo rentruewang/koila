@@ -1,7 +1,5 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
-__all__ = ["EinsumAttrFunc", "EinsumMap", "EinsumShape", "EinsumDType", "EinsumDevice"]
-
 import abc
 import dataclasses as dcls
 import functools
@@ -18,6 +16,8 @@ from aioway.attrs.shapes import Shape
 from aioway.errors import AiowayError
 
 from .parsers import EinsumSignature
+
+__all__ = ["EinsumAttrFunc", "EinsumMap", "EinsumShape", "EinsumDType", "EinsumDevice"]
 
 LOGGER = logging.getLogger(__name__)
 
@@ -65,12 +65,11 @@ class EinsumAttrFunc[T](ABC):
         Compute the target items, be it shape, dtype, device, etc.
 
         If failing, subclass should raise ``RuntimeError``.
-
-        fixme))
-            Subclass is currently raising ``RuntimError`` when failing,
-            think about how to make this process better and more automatic.
         """
 
+        # FIXME
+        #   Subclass is currently raising `RuntimError` when failing,
+        #   think about how to make this process better and more automatic.
         ...
 
     @property
@@ -243,7 +242,7 @@ def _check_in_out_parse(
 
     for val in einsum.in_out():
         try:
-            # Because in ``Einsum``, the null default is "" which is different from ``Attr``s.
+            # Because in `Einsum`, the null default is "" which is different from `Attr`s.
             parser.parse(val or None)
         except NotImplementedError as ne:
             raise error_type(f"The {kind} passed in: {val} is not parsable.") from ne

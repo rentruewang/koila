@@ -1,11 +1,11 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
-__all__ = ["SchemaType"]
-
 import dataclasses as dcls
 from typing import Self
 
 from aioway.errors import AiowayError
+
+__all__ = ["SchemaType"]
 
 
 @dcls.dataclass(frozen=True, repr=False)

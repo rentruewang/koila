@@ -10,17 +10,14 @@ from aioway.errors import AiowayError
 __all__ = ["DistLoss"]
 
 
-class DistLoss(ABC):
+# TODO Integrate this with `Attr` / `AttrSet`
+# TODO
+#   How do I give the constraints on the inputs?
+#   Perhaps we need to add more metadata on the outputs range.
+class LossFunc(ABC):
     """
     The loss used in supervisied learning,
     computes the distances between the input and the target.
-
-    todo))
-        How do I integrate this with ``Attr`` and ``AttrSet``?
-
-    todo))
-        How do I give the constraints on the inputs?
-        Perhaps we need to add more metadata on the outputs range.
     """
 
     def __call__(self, input: Tensor, target: Tensor, /) -> Tensor:

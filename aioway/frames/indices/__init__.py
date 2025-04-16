@@ -56,6 +56,9 @@ or does not occur at all during inference, for instance.
 
 For now, indexing on ``Frame``s is allowed,
 while on ``Stream`` it is not, because ``Frame``s are materialized and stored.
+
+todo))
+   Use this compoent, test this component.
 """
 
 from .faiss import *

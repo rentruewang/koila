@@ -1,7 +1,5 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
-__all__ = ["FilterPredExec", "FilterExprExec", "MapExec", "RenameExec", "ProjectExec"]
-
 import dataclasses as dcls
 import typing
 from collections.abc import Callable
@@ -15,6 +13,8 @@ from aioway.blocks import Block
 from aioway.errors import AiowayError
 
 from .execs import Exec
+
+__all__ = ["FilterPredExec", "FilterExprExec", "MapExec", "RenameExec", "ProjectExec"]
 
 
 @typing.final
@@ -95,14 +95,12 @@ class FilterExprExec(Exec, key="FILTER_EXPR"):
         return (self.exe,)
 
 
+# TODO Improve the initialization of this class.
 @typing.final
 @dcls.dataclass(frozen=True)
 class MapExec(Exec, key="MAP"):
     """
     ``MapExec`` converts the input data stream with a custom function.
-
-    todo))
-        Improve the initialization of this class.
     """
 
     exe: Exec
@@ -207,11 +205,11 @@ class RenameExec(Exec, key="RENAME"):
     """
 
     def __init__(self, __exe: Exec, /, **renames: str) -> None:
-        # This constructor is provideds.t. ``RenameStream``'s renames can be specified as **kwargs,
-        # which means they will be variable names, consistent with what ``TensorDict`` provides.
+        # This constructor is provideds.t. `RenameStream`'s renames can be specified as **kwargs,
+        # which means they will be variable names, consistent with what `TensorDict` provides.
         #
         # Even though I'm using a Python version with positional only argument,
-        # since ``Exec`` is common, using ``__stream`` to avoid name collision (in keys).
+        # since `Exec` is common, using `__stream` to avoid name collision (in keys).
         object.__setattr__(self, "exe", __exe)
         object.__setattr__(self, "renames", renames)
 

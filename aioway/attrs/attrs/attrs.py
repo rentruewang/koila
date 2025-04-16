@@ -1,7 +1,5 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
-__all__ = ["Attr", "AttrLike"]
-
 import dataclasses as dcls
 import logging
 import typing
@@ -14,6 +12,8 @@ from aioway.attrs.devices import Device
 from aioway.attrs.dtypes import DType
 from aioway.attrs.shapes import Shape
 from aioway.errors import AiowayError
+
+__all__ = ["Attr", "AttrLike"]
 
 LOGGER = logging.getLogger(__name__)
 

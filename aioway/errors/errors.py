@@ -1,17 +1,15 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
-__all__ = ["AiowayError"]
-
 import hashlib
 from typing import Any
 
+__all__ = ["AiowayError"]
 
+
+# TODO Make the messages configurable, like `logging.Logger`.
 class AiowayError(Exception):
     """
     ``AiowayError`` is the error thrown by the ``aioway`` library.
-
-    todo))
-        Make the messages configurable, like ``logging.Logger``.
     """
 
     def __init__(self, *args: Any) -> None:

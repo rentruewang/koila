@@ -43,8 +43,8 @@ class PandasFrame(Frame):
     @typing.override
     def attrs(self) -> AttrSet:
         # Note:
-        #   No need for different devices because ``pandas`` stores on cpu.
-        #   No need for shape check because ``pandas`` dataframes stores scalars.
+        #   No need for different devices because `pandas` stores on cpu.
+        #   No need for shape check because `pandas` dataframes stores scalars.
         return AttrSet.from_iterable(
             NamedAttr.parse(
                 {"name": name, "dtype": dtype, "shape": (), "device": self.device}

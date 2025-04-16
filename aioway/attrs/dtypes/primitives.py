@@ -1,7 +1,5 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
-__all__ = ["IntDType", "FloatDType", "BoolDType"]
-
 import dataclasses as dcls
 import typing
 from typing import Literal
@@ -9,6 +7,8 @@ from typing import Literal
 from aioway.errors import AiowayError
 
 from .dtypes import DType
+
+__all__ = ["IntDType", "FloatDType", "BoolDType"]
 
 
 @dcls.dataclass(eq=False, frozen=True)

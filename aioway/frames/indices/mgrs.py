@@ -43,15 +43,14 @@ class _ColTypeIndex(NamedTuple):
     idx: Index
 
 
+# TODO
+#   Improve efficiency as currently we are using lists and linear lookup.
 @typing.final
 @dcls.dataclass(frozen=True)
 class IndexManager(Mapping[MultiCol, MultiOpIndex]):
     """
     The ``IndexManager`` class is acts as a dictionary,
     providing some additional utility to make the API easy to use.
-
-    todo))
-        Improve efficiency as currently we are using lists and linear lookup.
     """
 
     frame: Frame
@@ -81,7 +80,7 @@ class IndexManager(Mapping[MultiCol, MultiOpIndex]):
         # Filter out the desired indices.
         selected = [idx_info for idx_info in self.indices if idx_info.cols == key]
 
-        # We can directly do this without checking because ``create``
+        # We can directly do this without checking because `create`
         # prevents index collision.
         return MultiOpIndex(
             mgr=self, columns=key, indices={op: idx for _, op, idx in selected}
