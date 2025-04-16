@@ -1,8 +1,7 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
-__all__ = ["Block"]
-
 import dataclasses as dcls
+import functools
 import logging
 import operator
 import typing
@@ -10,7 +9,7 @@ from collections.abc import Callable, Iterator, KeysView, Mapping
 from typing import Self
 
 import numpy as np
-import sympy as sp
+import sympy as sym
 import torch
 from numpy.typing import ArrayLike, NDArray
 from sympy import Basic, Expr
@@ -20,6 +19,8 @@ from torch import device as TorchDevice
 
 from aioway.attrs import Attr, AttrSet, Device, DType, Shape
 from aioway.errors import AiowayError
+
+__all__ = ["Block"]
 
 LOGGER = logging.getLogger(__name__)
 
@@ -60,6 +61,9 @@ class Block(Mapping[str, Tensor]):
                 "Underlying data for `Block` must have at least 1 batch dimension. Got 0."
             )
 
+    def __hash__(self) -> int:
+        return id(self.data)
+
     @typing.override
     @typing.no_type_check
     def __eq__(self, other: object) -> Self:
@@ -83,7 +87,7 @@ class Block(Mapping[str, Tensor]):
 
     @typing.override
     def __iter__(self) -> Iterator[str]:
-        return iter(self.keys())
+        yield from self.keys()
 
     @typing.overload
     def __getitem__(self, idx: str) -> Tensor: ...
@@ -112,11 +116,11 @@ class Block(Mapping[str, Tensor]):
         if isinstance(idx, Tensor):
             return self._getitem_tensor(idx)
 
-        # Other are ``ArrayLike``.
+        # Other are `ArrayLike`.
         idx = np.array(idx)
         return self._getitem_array(idx)
 
-    # Implemented for ``DataLoader`` to be more efficient.
+    # Implemented for `DataLoader` to be more efficient.
     __getitems__ = __getitem__
 
     @typing.override
@@ -150,7 +154,7 @@ class Block(Mapping[str, Tensor]):
 
         LOGGER.debug("Column expression: %s", str_or_expr)
 
-        expr: Basic = sp.sympify(str_or_expr, evaluate=False)
+        expr: Basic = sym.sympify(str_or_expr, evaluate=False)
 
         # Convert symbols to their string representations.
         keys = [str(s) for s in expr.free_symbols]
@@ -162,10 +166,10 @@ class Block(Mapping[str, Tensor]):
 
         LOGGER.debug("Creating a function with expr=%s, args=%s", expr, keys)
         # Create a lambda function that works on self.
-        func = sp.lambdify(keys, expr, "numpy")
+        func = sym.lambdify(keys, expr, "numpy")
 
         try:
-            # Unpacking is OK because self is of type ``Mapping``.
+            # Unpacking is OK because self is of type `Mapping`.
             return func(**self[keys])
         except TypeError as te:
             raise BlockSympyEvalError from te
@@ -180,7 +184,7 @@ class Block(Mapping[str, Tensor]):
                 f"Got {len(idx)=} and {len(self)=}."
             )
 
-        # No conversion needed because we know that ``index`` must be ``Tensor``.
+        # No conversion needed because we know that `index` must be `Tensor`.
         return self[idx]
 
     def rename(self, **names: str) -> Self:
@@ -287,8 +291,8 @@ class Block(Mapping[str, Tensor]):
         return type(self)(self.data.select(*idx))
 
     def _getitem_int(self, idx: int) -> Self:
-        # Using a ``list`` instead of passing ``int`` directly,
-        # because ``Block`` requires ``batch`` to not be null.
+        # Using a `list` instead of passing `int` directly,
+        # because `Block` requires `batch` to not be null.
         return type(self)(self.data[[idx]])
 
     def _getitem_array(self, idx: ArrayLike):
@@ -363,8 +367,12 @@ class Block(Mapping[str, Tensor]):
 
     shapes = property(fget=_get_shapes)
 
-    @property
+    @functools.cached_property
     def attrs(self) -> AttrSet:
+        """
+        Returns the attributes of the current ``Block``.
+        """
+
         return AttrSet(
             columns={key: Attr.parse_tensor(val) for key, val in self.items()},
             device=self.device,

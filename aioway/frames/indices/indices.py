@@ -1,7 +1,5 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
-__all__ = ["Index", "IndexContext"]
-
 import abc
 import dataclasses as dcls
 from abc import ABC
@@ -15,6 +13,8 @@ from aioway.execs import DataLoaderAdaptor, DataLoaderAdaptorLike, FrameStreamEx
 from aioway.frames import Frame
 
 from .ops import IndexOp
+
+__all__ = ["Index", "IndexContext"]
 
 
 @dcls.dataclass(frozen=True)
@@ -38,19 +38,17 @@ class IndexContext:
         return f"{self.frame}({col_args})"
 
 
+# NOTE
+#   `Index` currently is static. i.e. it does not support updating.
+#   This is fine so long as most other constructs in the project
+#   are designed to be immutable, favoring creation over mutation.
+#
+# TODO Optionally support permutation on indices as optimizations.
 @dcls.dataclass(frozen=True, eq=False)
 class Index(ABC):
     """
     ``Index`` corresponds to different types of backends, e.g. ``faiss``, ``b-tree``,
     and is responsible for routing to different ``Index`` types.
-
-    Note:
-        `Index` currently is static. i.e. it does not support updating.
-        This is fine so long as most other constructs in the project
-        are designed to be immutable, favoring creation over mutation.
-
-    todo))
-        Optionally support permutation on indices as optimizations.
     """
 
     ctx: IndexContext
@@ -106,7 +104,7 @@ class Index(ABC):
 
         dl_opts = DataLoaderAdaptor.parse(dl_opts)
 
-        # Dims should be the flattened shapes, due to ``to_tensor``'s logic.
+        # Dims should be the flattened shapes, due to `to_tensor`'s logic.
         dims = sum(ctx.frame.attrs[col].shape.numel() for col in ctx.columns)
         values = np.concatenate(
             [

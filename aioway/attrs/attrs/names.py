@@ -1,7 +1,5 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
-__all__ = ["NamedAttr", "NamedAttrLike"]
-
 import dataclasses as dcls
 import logging
 import typing
@@ -13,6 +11,8 @@ from aioway.attrs.dtypes import DType
 from aioway.attrs.shapes import Shape
 
 from .attrs import Attr, AttrDict, AttrInitTypeError, AttrObj
+
+__all__ = ["NamedAttr", "NamedAttrLike"]
 
 LOGGER = logging.getLogger(__name__)
 

@@ -1,7 +1,5 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
-__all__ = ["DTypeFactory"]
-
 import numpy as np
 from numpy.typing import DTypeLike
 from torch import dtype as TorchDType
@@ -10,6 +8,8 @@ from aioway.errors import AiowayError
 
 from .dtypes import DType
 from .primitives import BoolDType, FloatDType, IntDType
+
+__all__ = ["DTypeFactory"]
 
 
 class DTypeFactory:
@@ -36,7 +36,7 @@ class DTypeFactory:
             return dtype
 
         # This is a little hacky since I'm a little lazy to implement
-        # a lookup table with all ``torch``'s ``dtype``s.
+        # a lookup table with all `torch`'s `dtype`s.
         if isinstance(dtype, TorchDType):
             return self(str(dtype).removeprefix("torch."))
 

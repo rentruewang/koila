@@ -33,7 +33,7 @@ def test_einsum_parser_passing(passing, parser):
     parsed = parser(passing)
     assert isinstance(parsed, EinsumSignature)
 
-    # ``Einsum`` would deal with the comparison.
+    # `Einsum` would deal with the comparison.
     assert parsed == passing
 
 

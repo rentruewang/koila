@@ -1,29 +1,24 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
+import typing
 
-from aioway.factories import Factory
+from aioway import factories
 
 
-def test_factory_simple():
-    fac: Factory = Factory()
-    assert isinstance(fac, Factory)
+@typing.no_type_check
+def test_factory_init_subclass():
+    class Base:
+        __init_subclass__ = factories.init_subclass(lambda: Base)
 
-    class A:
-        pass
+    class A(Base, key="a"): ...
 
-    fac["a"] = A
+    class B(Base, key="b"): ...
 
-    assert fac["a"] == A
-    assert fac[A] == "a"
+    class C(Base, key="c"): ...
 
-    assert len(fac) == 1
-
-    class B:
-        pass
-
-    fac["b"] = B
-
-    assert fac["b"] == B
-    assert fac[B] == "b"
-
-    assert len(fac) == 2
+    fac = factories.of(Base)
+    assert len(fac) == 3
+    assert fac.keys() == set("abc")
+    assert fac["a"] is A
+    assert fac["b"] is B
+    assert fac["c"] is C

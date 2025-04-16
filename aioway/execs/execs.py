@@ -1,17 +1,17 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
-__all__ = ["Exec"]
-
 import abc
-import inspect
+import typing
 from abc import ABC
 from collections.abc import Iterable, Iterator
 
+from aioway import factories
 from aioway.attrs import AttrSet
 from aioway.blocks import Block
 from aioway.errors import AiowayError
-from aioway.factories import Factory
 from aioway.plans import PhysicalPlan
+
+__all__ = ["Exec"]
 
 
 class Exec(Iterator[Block], Iterable[Block], PhysicalPlan, ABC):
@@ -31,25 +31,27 @@ class Exec(Iterator[Block], Iterable[Block], PhysicalPlan, ABC):
     we have to process the tensor representation of the items 1 by 1, which can be inefficient.
     """
 
-    @classmethod
-    def __init_subclass__(cls, key: str = "") -> None:
-        if not key:
-            # Allow abstract classes, which would not be initialized,
-            # to not define keys, as factories are used to store leaf nodes.
-            if inspect.isabstract(cls):
-                return
+    # NOTE Keep until the issue python/mypy#18987 is fixed.
+    if typing.TYPE_CHECKING:
 
-            raise ExecRegisterError(
-                f"Class: {cls} isn't given a key argument. Only valid for abstract classes."
-            )
+        def __init_subclass__(cls, *, key: str = ""): ...
 
-        if key in FACTORY:
-            raise ExecRegisterError(
-                f"Trying to insert key: {key} and class: {cls} "
-                f"but key is already used by class: {FACTORY[key]}"
-            )
+    else:
+        __init_subclass__ = factories.init_subclass(lambda: Exec)
 
-        FACTORY[key] = cls
+    def __hash__(self) -> int:
+        """
+        The unique identifier of each node, representing computation.
+
+        This means that ``__hash__`` would be the same for shared computation.
+
+        For now, it is the ``id`` of the object itself,
+        and the object itself is the unique identifier of the computation.
+        However, in the future, we might want to use a more sophisticated way to identify computation
+        for distributed execution and caching.
+        """
+
+        return id(self)
 
     @abc.abstractmethod
     def __next__(self) -> Block:
@@ -60,11 +62,7 @@ class Exec(Iterator[Block], Iterable[Block], PhysicalPlan, ABC):
         ...
 
     def __str__(self) -> str:
-        """
-        todo))
-            Use ``reprlib`` or ``pprint`` s.t. we do not rely on ``rich`` in explainer.
-        """
-
+        # TODO Use `reprlib` or `pprint` s.t. we do not rely on `rich` in explainer.
         return repr(self)
 
     @property
@@ -75,12 +73,6 @@ class Exec(Iterator[Block], Iterable[Block], PhysicalPlan, ABC):
         """
 
         ...
-
-
-FACTORY = Factory(base_class=Exec)
-"""
-The class factory for ``Exec``s.
-"""
 
 
 class ExecRegisterError(AiowayError, KeyError): ...

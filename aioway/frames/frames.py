@@ -1,7 +1,5 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
-__all__ = ["Frame"]
-
 import abc
 import dataclasses as dcls
 import functools
@@ -17,6 +15,8 @@ from aioway.plans import PhysicalPlan
 
 if typing.TYPE_CHECKING:
     from aioway.frames.indices import IndexManager
+
+__all__ = ["Frame"]
 
 
 @dcls.dataclass(frozen=True)

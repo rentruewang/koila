@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "aioway"
-version = "0.0.1"
+version = "0.0.2"
 description = "AI on the way"
 authors = ["RenChu Wang <patrick1031wang@gmail.com>"]
 license = "BSD-3"

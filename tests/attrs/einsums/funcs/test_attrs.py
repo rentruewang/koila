@@ -32,7 +32,7 @@ def _test_einsum_func_init(name: str, einsum_func: type[EinsumAttrFunc]):
         def test_passing(self, passing, parser):
             einsum = parser(passing)
 
-            # Only verify that the checks all pass, which are in ``__post_init__``.
+            # Only verify that the checks all pass, which are in `__post_init__`.
             func = einsum_func(einsum)
             assert func == passing
 
