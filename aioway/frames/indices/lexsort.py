@@ -31,7 +31,7 @@ class LexsortIndex(Index):
     ) -> Self:
         arr = cls.load_frame(ctx=ctx, dl_opts=dl_opts)
 
-        # Reverse and sort s.t. `lexsort` would sort in the order of columns in `arr`.
+        # Reverse and sort s.t. ``lexsort`` would sort in the order of columns in ``arr``.
         rev = arr[:, ::-1]
 
         result = np.lexsort(rev)

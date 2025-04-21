@@ -75,6 +75,7 @@ class MatrixJoinExec(Exec, key="MATRIX_JOIN"):
                 f"RHS should be of type frame. Got {type(self.right)=}"
             )
 
+    @typing.override
     def __next__(self) -> Block:
         # Looped over right in the last iteration.
         loop_idx = next(self.__counter)
@@ -133,7 +134,7 @@ class ZipExec(Exec, key="ZIP"):
     right: Exec
 
     def __post_init__(self) -> None:
-        # Check intersection with the logic in `TableSchema.__and__`.
+        # Check intersection with the logic in ``TableSchema.__and__``.
         _ = self.left.attrs & self.right.attrs
 
     @typing.override

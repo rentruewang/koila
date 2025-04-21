@@ -16,7 +16,7 @@ __all__ = ["DType"]
 LOGGER = logging.getLogger(__name__)
 
 
-# TODO Add a visitor for `DType`.
+# TODO Add a visitor for ``DType``.
 @dcls.dataclass(eq=False, frozen=True)
 class DType(ABC):
     """
@@ -53,13 +53,13 @@ class DType(ABC):
         from .factories import UnsupportedDTypeError
 
         # Try converting into something we know, if it fails,
-        # leave it to `other` to implement.
+        # leave it to ``other`` to implement.
         try:
             parsed = self.parse(other)
         except UnsupportedDTypeError:
             return NotImplemented
 
-        # This would only happen if `other` is `None`.
+        # This would only happen if ``other`` is ``None``.
         if parsed is None:
             return False
 
@@ -92,6 +92,6 @@ class DType(ABC):
         if dtype is None:
             return None
 
-        # In case it's a `DTypeLike`, convert it to `DType` and use the same `__eq__`.
+        # In case it's a ``DTypeLike``, convert it to ``DType`` and use the same ``__eq__``.
         factory = DTypeFactory()
         return factory(dtype)
