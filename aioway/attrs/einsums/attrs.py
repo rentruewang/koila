@@ -68,7 +68,7 @@ class EinsumAttrFunc[T](ABC):
         """
 
         # FIXME
-        #   Subclass is currently raising `RuntimError` when failing,
+        #   Subclass is currently raising ``RuntimError`` when failing,
         #   think about how to make this process better and more automatic.
         ...
 
@@ -242,7 +242,7 @@ def _check_in_out_parse(
 
     for val in einsum.in_out():
         try:
-            # Because in `Einsum`, the null default is "" which is different from `Attr`s.
+            # Because in ``Einsum``, the null default is "" which is different from ``Attr``s.
             parser.parse(val or None)
         except NotImplementedError as ne:
             raise error_type(f"The {kind} passed in: {val} is not parsable.") from ne

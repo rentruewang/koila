@@ -120,7 +120,7 @@ class EinsumSignature:
 
 
 def _convert_to_sequence(seq: Sequence[str] | str | None) -> tuple[str, ...]:
-    # Filter out both `None` and empty sequence,
+    # Filter out both ``None`` and empty sequence,
     # as those won't be valid empty input / empty output.
     seq = seq or ""
 

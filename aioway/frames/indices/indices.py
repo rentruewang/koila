@@ -104,7 +104,7 @@ class Index(ABC):
 
         dl_opts = DataLoaderAdaptor.parse(dl_opts)
 
-        # Dims should be the flattened shapes, due to `to_tensor`'s logic.
+        # Dims should be the flattened shapes, due to ``to_tensor``'s logic.
         dims = sum(ctx.frame.attrs[col].shape.numel() for col in ctx.columns)
         values = np.concatenate(
             [

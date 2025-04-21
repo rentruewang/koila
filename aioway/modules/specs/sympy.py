@@ -8,6 +8,8 @@ from aioway.errors import AiowayError
 
 from .specs import Spec
 
+__all__ = ["SympySetSpec"]
+
 
 @dcls.dataclass(frozen=True)
 class SympySetSpec(Spec):

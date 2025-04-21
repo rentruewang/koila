@@ -2,17 +2,21 @@
 
 import abc
 import dataclasses as dcls
+import typing
 from abc import ABC
 from collections.abc import Callable
 
 from rich.tree import Tree
 
-from .trees import TreeNode
+from .nodes import TreeNode
 
-__all__ = ["PhysicalPlan", "PlanExplainer"]
+if typing.TYPE_CHECKING:
+    pass
+
+__all__ = ["PlanNode"]
 
 
-class PhysicalPlan[T: "PhysicalPlan"](TreeNode[T], ABC):
+class PlanNode[T: "PlanNode"](TreeNode[T], ABC):
     @abc.abstractmethod
     def __str__(self) -> str: ...
 
@@ -21,15 +25,18 @@ class PhysicalPlan[T: "PhysicalPlan"](TreeNode[T], ABC):
     def children(self) -> tuple[T, ...]: ...
 
 
+# TODO: Move to reducers.
 @dcls.dataclass(frozen=True)
 class PlanExplainer:
-    plan: PhysicalPlan
+    plan: PlanNode
 
-    def tree(self, render: Callable[[PhysicalPlan], str] = str) -> Tree:
+    def __rich__(self, render: Callable[[PlanNode], str] = str) -> Tree:
+        # TODO Use ``reprlib`` or ``pprint`` s.t. we do not rely on ``rich`` in explainer.
+
         tree = Tree(label=render(self.plan))
 
         for child in self.plan.children:
-            sub_tree = type(self)(child).tree(render=render)
+            sub_tree = type(self)(child).__rich__(render=render)
             tree.add(sub_tree)
 
         return tree

@@ -188,7 +188,7 @@ class ProjectExec(Exec, key="PROJECT"):
 
 
 @typing.final
-@dcls.dataclass(frozen=True, init=False)
+@dcls.dataclass(init=False)
 class RenameExec(Exec, key="RENAME"):
     """
     Rename a couple of columns.
@@ -205,13 +205,13 @@ class RenameExec(Exec, key="RENAME"):
     """
 
     def __init__(self, __exe: Exec, /, **renames: str) -> None:
-        # This constructor is provideds.t. `RenameStream`'s renames can be specified as **kwargs,
-        # which means they will be variable names, consistent with what `TensorDict` provides.
+        # This constructor is provideds.t. ``RenameStream``'s renames can be specified as **kwargs,
+        # which means they will be variable names, consistent with what ``TensorDict`` provides.
         #
         # Even though I'm using a Python version with positional only argument,
-        # since `Exec` is common, using `__stream` to avoid name collision (in keys).
-        object.__setattr__(self, "exe", __exe)
-        object.__setattr__(self, "renames", renames)
+        # since ``Exec`` is common, using ``__exe`` to avoid name collision (in keys).
+        self.exe = __exe
+        self.renames = renames
 
     @typing.override
     def __next__(self) -> Block:
