@@ -3,7 +3,7 @@
 import dataclasses as dcls
 from collections.abc import Sequence
 
-from aioway.execs import Exec
+from .execs import Exec
 
 __all__ = ["ExecDag"]
 

@@ -80,7 +80,7 @@ class IndexManager(Mapping[MultiCol, MultiOpIndex]):
         # Filter out the desired indices.
         selected = [idx_info for idx_info in self.indices if idx_info.cols == key]
 
-        # We can directly do this without checking because `create`
+        # We can directly do this without checking because ``create``
         # prevents index collision.
         return MultiOpIndex(
             mgr=self, columns=key, indices={op: idx for _, op, idx in selected}

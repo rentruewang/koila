@@ -11,7 +11,6 @@ from tensordict import TensorDict
 from torch.utils.data import Dataset
 
 from aioway.attrs import AttrSet
-from aioway.plans import PhysicalPlan
 
 if typing.TYPE_CHECKING:
     from aioway.frames.indices import IndexManager
@@ -20,7 +19,7 @@ __all__ = ["Frame"]
 
 
 @dcls.dataclass(frozen=True)
-class Frame(Dataset[TensorDict], PhysicalPlan, ABC):
+class Frame(Dataset[TensorDict], ABC):
     """
     ``Frame`` represents a chunk / batch of heterogenious data stored in memory,
     it is one of the main physical abstractions in ``aioway`` to represent eager computation.
@@ -61,16 +60,6 @@ class Frame(Dataset[TensorDict], PhysicalPlan, ABC):
     @property
     @abc.abstractmethod
     def attrs(self) -> AttrSet: ...
-
-    @property
-    @typing.override
-    def children(self) -> tuple[()]:
-        """
-        ``Frame``s and ``Stream``s are by definition, sources of the data flow.
-        Therefore, they have no children.
-        """
-
-        return ()
 
     @functools.cache
     def index(self) -> "IndexManager":

@@ -10,7 +10,7 @@ __all__ = ["Model"]
 
 # TODO
 #   Should use `inspect.signature` to ensure that
-#   the wrapped module has a valid signature as described by `Einsum`.
+#   the wrapped module has a valid signature as described by ``Einsum``.
 @tensordict.tensorclass(frozen=True)
 class Model:
     module: TensorDictModule
