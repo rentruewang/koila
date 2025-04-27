@@ -15,6 +15,9 @@ class ExecDag:
     """
 
     outputs: Sequence[Exec]
+    """
+    The outputs of the DAG.
+    """
 
     def backtrace(self) -> list[Exec]:
         """

@@ -1,5 +1,7 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
+__all__ = ["LazyStr", "on_demand"]
+
 import dataclasses as dcls
 import typing
 from collections.abc import Callable
@@ -8,8 +10,6 @@ from types import MethodType
 from typing import Any, Protocol
 
 from aioway.errors import AiowayError
-
-__all__ = ["LazyStr", "on_demand"]
 
 
 @dcls.dataclass(eq=False, frozen=True)
