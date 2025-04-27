@@ -7,7 +7,7 @@ import tensordict
 from tensordict import TensorDict
 
 from aioway.blocks import Block
-from aioway.execs import FrameStreamExec, MatrixJoinExec, ZipExec
+from aioway.execs import FrameExec, NestedLoopExec, ZipExec
 from aioway.frames import BlockFrame
 from tests import fake
 
@@ -40,14 +40,14 @@ def test_concat_exec_input_len(block_frame, concat_frame):
 
 def test_concat_exec_next(block_frame, concat_frame, size):
     stream = ZipExec(
-        FrameStreamExec.tabular(block_frame, {"batch_size": size}),
-        FrameStreamExec.tabular(concat_frame, {"batch_size": size}),
+        FrameExec.from_frame(block_frame, {"batch_size": size}),
+        FrameExec.from_frame(concat_frame, {"batch_size": size}),
     )
 
     for result, lhs, rhs in zip(
         stream,
-        FrameStreamExec.tabular(block_frame, {"batch_size": size}),
-        FrameStreamExec.tabular(concat_frame, {"batch_size": size}),
+        FrameExec.from_frame(block_frame, {"batch_size": size}),
+        FrameExec.from_frame(concat_frame, {"batch_size": size}),
     ):
         concat = TensorDict({**lhs.data, **rhs.data}, device=result.data.device)
         assert (result.data == concat).all()
@@ -68,12 +68,11 @@ def join_batch_size():
     return 64
 
 
-def test_join_exec_next(block_frame, joinable_frame, join_batch_size):
-    stream = MatrixJoinExec(
-        FrameStreamExec.tabular(block_frame, {"batch_size": join_batch_size}),
-        joinable_frame,
+def test_nested_loop_exec_next(block_frame, joinable_frame, join_batch_size):
+    stream = NestedLoopExec(
+        FrameExec.from_frame(block_frame, {"batch_size": join_batch_size}),
+        FrameExec.from_frame(joinable_frame),
         on="i1d",
-        rhs_batch=join_batch_size,
     )
 
     results: list[TensorDict] = []
@@ -90,6 +89,3 @@ def test_join_exec_next(block_frame, joinable_frame, join_batch_size):
 
     for key in answer_count.keys():
         assert answer_count[key] == left_count[key] * right_count[key]
-
-
-set.difference

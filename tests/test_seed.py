@@ -1,3 +1,5 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
-from ..execs.dags import *
+
+def test_seed(seed):
+    assert seed == 42

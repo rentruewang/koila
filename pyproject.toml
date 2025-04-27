@@ -37,6 +37,8 @@ pytest-xdist = "^3.6.1"
 ipython = "^8.29.0"
 jupyter = "^1.1.1"
 jupyter-book = "^1.0.3"
+jupyterlab = "^4.4.1"
+httpcore = "^1.0.9"
 
 [tool.poetry.group.build.dependencies]
 ansible = "^11.0.0"

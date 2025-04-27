@@ -2,8 +2,11 @@
 
 import abc
 import inspect
+import logging
+import typing
 from abc import ABC
-from collections.abc import Iterable, Iterator
+from collections.abc import Callable, Iterable, Iterator
+from typing import Protocol
 
 from aioway.attrs import AttrSet
 from aioway.blocks import Block
@@ -13,8 +16,16 @@ from aioway.plans import PlanNode
 
 __all__ = ["Exec"]
 
+LOGGER = logging.getLogger(__name__)
 
-class Exec(Iterator[Block], Iterable[Block], PlanNode, ABC):
+
+class NextMethod(Protocol):
+    def __call__(self) -> Block: ...
+
+    def __get__(self, instance: "Exec", owner: type["Exec"]) -> Callable[[], Block]: ...
+
+
+class Exec(Iterator[Block], Iterable[Block], PlanNode["Exec"], ABC):
     """
     ``Exec`` represents a stream of heterogenious data being generated,
     it is one of the main physical abstractions in ``aioway`` to represent eager computation.
@@ -32,24 +43,13 @@ class Exec(Iterator[Block], Iterable[Block], PlanNode, ABC):
     """
 
     @classmethod
-    def __init_subclass__(cls, key: str | None = None) -> None:
-        if key is None:
-            # Allow abstract classes, which would not be initialized,
-            # to not define keys, as factories are used to store leaf nodes.
-            if inspect.isabstract(cls):
-                return
+    def __init_subclass__(cls, *, key: str | None = None) -> None:
+        # Register the class with the factory.
+        cls.__register_factory(key)
 
-            raise ExecRegisterError(
-                f"Class: {cls} isn't given a key argument. Only valid for abstract classes."
-            )
-
-        if key in FACTORY:
-            raise ExecRegisterError(
-                f"Trying to insert key: {key} and class: {cls} "
-                f"but key is already used by class: {FACTORY[key]}"
-            )
-
-        FACTORY[key] = cls
+        # Rewrite the next method, to provide additional functionality,
+        # without touching the recursive call.
+        cls.__rewrite_next()
 
     def __hash__(self) -> int:
         """
@@ -102,9 +102,6 @@ class Exec(Iterator[Block], Iterable[Block], PlanNode, ABC):
             #. Use decorators to manage the execution.
         """
 
-    def __str__(self) -> str:
-        return repr(self)
-
     @property
     @abc.abstractmethod
     def attrs(self) -> AttrSet:
@@ -113,6 +110,33 @@ class Exec(Iterator[Block], Iterable[Block], PlanNode, ABC):
         """
 
         ...
+
+    @classmethod
+    def __register_factory(cls, key: str | None, /) -> None:
+        # Allow abstract classes,
+        # only perform registration and modification for concrete classes.
+        if inspect.isabstract(cls):
+            LOGGER.debug(f"Class: {cls} is abstract, skipping registration.")
+            return
+
+        if key is None:
+            raise ExecRegisterError(
+                f"Class: {cls} isn't given a key argument. Only valid for abstract classes."
+            )
+
+        if key in FACTORY:
+            raise ExecRegisterError(
+                f"Trying to insert key: {key} and class: {cls} "
+                f"but key is already used by class: {FACTORY[key]}"
+            )
+
+        FACTORY[key] = cls
+
+    @classmethod
+    @typing.no_type_check
+    def __rewrite_next(cls) -> None:
+        # TODO: Doesn't do anything as of yet.
+        return
 
 
 FACTORY = Factory(base_class=Exec)

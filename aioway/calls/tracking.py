@@ -2,17 +2,20 @@
 
 import contextlib
 import dataclasses as dcls
+import logging
 import typing
 from collections.abc import Callable
 
-from .ctxs import CtxProc
+from .ctxs import CtxCall
 
-__all__ = ["ProcStack"]
+__all__ = ["StackCall", "LoggingProc"]
+
+LOGGER = logging.getLogger(__name__)
 
 
 @typing.final
 @dcls.dataclass(frozen=True)
-class ProcStack[**P, T](CtxProc):
+class StackCall[**P, T](CtxCall[P, T]):
     """
     The callstack for an ``Exec``.
     It is used to store the current state of the ``Exec``.
@@ -77,3 +80,21 @@ class ProcStack[**P, T](CtxProc):
         """
 
         return self.stack[0]
+
+
+class LoggingProc[**P, T](CtxCall):
+    """
+    A logging processor that logs the function call and its arguments.
+    """
+
+    @contextlib.contextmanager
+    def ctx(self, func: Callable[P, T]):
+        """
+        A context manager that logs the function call and its arguments.
+        """
+
+        LOGGER.debug(f"Preparing to call %s", func)
+
+        yield func
+
+        LOGGER.debug(f"Finished calling %s", func)

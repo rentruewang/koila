@@ -1,6 +1,7 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
 import dataclasses as dcls
+import functools
 import typing
 from collections.abc import Callable, Iterator
 from typing import Any, Self
@@ -17,11 +18,10 @@ from .execs import Exec
 
 if typing.TYPE_CHECKING:
     from aioway.frames import Frame
-    from aioway.streams import Stream
 
 __all__ = [
     "RawIteratorExec",
-    "FrameStreamExec",
+    "FrameExec",
     "DataLoaderAdaptor",
     "DataLoaderAdaptorLike",
 ]
@@ -53,7 +53,7 @@ class DataLoaderAdaptor:
     Collate function for the dataloader.
     """
 
-    def iterator_of(self, dataset: "Frame | Stream") -> Iterator[Block]:
+    def iterator_of(self, dataset: "Frame") -> Iterator[Block]:
         return _dl_iter(dataset, self)
 
     @classmethod
@@ -115,24 +115,69 @@ class RawIteratorExec(IteratorExec, key="RAW_ITER"):
 
 
 @typing.final
-@dcls.dataclass(frozen=True)
-class FrameStreamExec(IteratorExec, key="FRAME_STREAM"):
-    dataset: "Frame | Stream"
+@dcls.dataclass
+class FrameExec(Exec, key="FRAME"):
+    """
+    An ``Exec`` that wraps a ``Frame`` and a ``DataLoaderAdaptor``.
+    """
+
+    opt: DataLoaderAdaptor
+    """
+    The option for the ``DataLoaderAdaptor``,
+    which is responsible for iterating over the ``Frame``.
+    """
+
+    _dataset: "Frame" = dcls.field(repr=False)
+    """
+    The backing ``Frame``, stored in order to reset.
+    """
+
+    def __post_init__(self) -> None:
+        self.reset()
+
+    @typing.override
+    def __next__(self) -> Block:
+        item = next(self._iterator)
+        assert isinstance(item, Block), f"Item must be a `Block`, got {type(item)=}."
+        return item
+
+    def __len__(self) -> int:
+        return len(self._dataset)
+
+    def __getitem__(self, index: int) -> Block:
+        return self._dataset[index]
+
+    def __getitems__(self, indices: list[int]) -> Block:
+        return self._dataset.__getitems__(indices)
+
+    def reset(self) -> None:
+        if hasattr(self, "_iterator"):
+            del self._iterator
+
+    @functools.cached_property
+    def _iterator(self) -> Iterator[Block]:
+        """
+        The actual iterator that will be used to iterate over the ``Frame``.
+        """
+
+        return self._new_iterator()
+
+    def _new_iterator(self):
+        yield from self.opt.iterator_of(self._dataset)
 
     @property
     @typing.override
     def attrs(self) -> AttrSet:
-        return self.dataset.attrs
+        return self._dataset.attrs
 
     @classmethod
-    def tabular(
+    def from_frame(
         cls,
-        dataset: "Frame | Stream",
+        dataset: "Frame",
         opt: DataLoaderAdaptor | dict[str, Any] = DataLoaderAdaptor(),
     ) -> Self:
         opt = DataLoaderAdaptor.parse(opt)
-        iterator = opt.iterator_of(dataset)
-        return cls(iterator, dataset)
+        return cls(opt, dataset)
 
     @property
     @typing.override
@@ -189,7 +234,7 @@ def _check_tensordict_batched(td: TensorDict, /, *, is_batched: bool) -> None:
 
 
 def _dl_iter(
-    dataset: "Frame | Stream", opt: DataLoaderAdaptor | dict[str, Any]
+    dataset: "Frame", opt: DataLoaderAdaptor | dict[str, Any]
 ) -> Iterator[Block]:
     # Convert to ``DataLoaderOpt`` first to ensure that the default configs are set.
     opt = DataLoaderAdaptor.parse(opt)

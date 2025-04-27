@@ -9,7 +9,7 @@ import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
 from aioway.errors import AiowayError
-from aioway.execs import DataLoaderAdaptor, DataLoaderAdaptorLike, FrameStreamExec
+from aioway.execs import DataLoaderAdaptor, DataLoaderAdaptorLike, FrameExec
 from aioway.frames import Frame
 
 from .ops import IndexOp
@@ -109,7 +109,7 @@ class Index(ABC):
         values = np.concatenate(
             [
                 block[list(ctx.columns)].to_tensor().cpu().numpy()
-                for block in FrameStreamExec.tabular(ctx.frame, dl_opts)
+                for block in FrameExec.from_frame(ctx.frame, dl_opts)
             ],
             axis=0,
         )
