@@ -1,9 +1,9 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
 import dataclasses as dcls
-import math
+import functools
 import typing
-from itertools import count as Count
+from collections.abc import Iterator
 
 import torch
 from numpy.typing import NDArray
@@ -11,19 +11,19 @@ from numpy.typing import NDArray
 from aioway.attrs import AttrSet
 from aioway.blocks import Block
 from aioway.errors import AiowayError
-from aioway.frames.frames import Frame
 
 from .execs import Exec
+from .inputs import FrameExec
 
 if typing.TYPE_CHECKING:
-    from aioway.frames import Frame
+    pass
 
-__all__ = ["MatrixJoinExec", "ZipExec"]
+__all__ = ["NestedLoopExec", "ZipExec"]
 
 
 @typing.final
-@dcls.dataclass
-class MatrixJoinExec(Exec, key="MATRIX_JOIN"):
+@dcls.dataclass(frozen=True)
+class NestedLoopExec(Exec, key="NESTED_LOOP"):
     """
     The base class for ``Exec``s that are Cartesian products,
     with LHS being an unbound stream, and RHS being bounded.
@@ -36,7 +36,7 @@ class MatrixJoinExec(Exec, key="MATRIX_JOIN"):
     The LHS of the operator.
     """
 
-    right: "Frame"
+    right: FrameExec
     """
     The RHS of the operator.
     """
@@ -46,57 +46,24 @@ class MatrixJoinExec(Exec, key="MATRIX_JOIN"):
     The column for which to join.
     """
 
-    rhs_batch: int
-    """
-    The batch size for RHS.
-    """
-
-    __last_left_block: Block = dcls.field(init=False)
-    """
-    The last left block.
-    """
-
-    __counter: Count = dcls.field(init=False, default_factory=Count)
-    """
-    The number of iterations so far for this stream.
-    """
-
     def __post_init__(self) -> None:
-        # Import here to prevent circular depedency.
-        from aioway.frames import Frame
-
         if not isinstance(self.left, Exec):
             raise PartitionOperandTypeError(
                 f"LHS should be of type exec. Got {type(self.left)=}"
             )
 
-        if not isinstance(self.right, Frame):
+        if not isinstance(self.right, FrameExec):
             raise PartitionOperandTypeError(
                 f"RHS should be of type frame. Got {type(self.right)=}"
             )
 
     @typing.override
     def __next__(self) -> Block:
-        # Looped over right in the last iteration.
-        loop_idx = next(self.__counter)
+        left_block, right_block = next(self._iterator)
+        left_select, right_select = self._join(left=left_block, right=right_block)
 
-        num_rhs_batches = math.ceil(len(self.right) / self.rhs_batch)
-
-        rhs_batch_idx = loop_idx % num_rhs_batches
-
-        rhs_start = rhs_batch_idx * self.rhs_batch
-        rhs_end = rhs_start + self.rhs_batch
-
-        if rhs_batch_idx == 0:
-            self.__last_left_block = next(self.left)
-
-        rhs_keys = list(range(len(self.right))[rhs_start:rhs_end])
-        right_batches = self.right.__getitems__(rhs_keys)
-
-        left_select, right_select = self._join(self.__last_left_block, right_batches)
-
-        left_chosen = self.__last_left_block[left_select]
-        right_chosen = right_batches[right_select]
+        left_chosen = left_block[left_select]
+        right_chosen = right_block[right_select]
 
         return left_chosen.zip(right_chosen)
 
@@ -107,14 +74,30 @@ class MatrixJoinExec(Exec, key="MATRIX_JOIN"):
 
     @property
     @typing.override
-    def children(self) -> tuple[Exec, Frame]:
+    def children(self) -> tuple[Exec, FrameExec]:
         return self.left, self.right
 
+    @functools.cached_property
+    def _iterator(self) -> Iterator[tuple[Block, Block]]:
+        """
+        The actual iterator that will be used to iterate over the LHS.
+        """
+
+        return self._nested_loop()
+
+    def _nested_loop(self):
+        for left_block in self.left:
+            self.right.reset()
+            for right_block in self.right:
+                yield left_block, right_block
+
     def _join(self, left: Block, right: Block) -> tuple[NDArray, NDArray]:
-        return self.compute_matching(left=left, right=right, on=self.on)
+        return self._compute_matching(left=left, right=right, on=self.on)
 
     @staticmethod
-    def compute_matching(left: Block, right: Block, on: str) -> tuple[NDArray, NDArray]:
+    def _compute_matching(
+        left: Block, right: Block, on: str
+    ) -> tuple[NDArray, NDArray]:
         left_key = left[on]
         right_key = right[on]
 

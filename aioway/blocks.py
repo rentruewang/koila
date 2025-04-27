@@ -131,7 +131,7 @@ class Block(Mapping[str, Tensor]):
     def keys(self) -> KeysView[str]:
         return self.data.keys()
 
-    def eval_col_expr(self, str_or_expr: str | Basic, /) -> Tensor:
+    def col_expr(self, str_or_expr: str | Basic, /) -> Tensor:
         """
         Perform evaluate on columns, given a sympy expression.
 
@@ -174,9 +174,26 @@ class Block(Mapping[str, Tensor]):
         except TypeError as te:
             raise BlockSympyEvalError from te
 
+    def map(self, func: Callable[[TensorDict], TensorDict]) -> Self:
+        """
+        Map a function over the current ``Block``.
+        This is just a convenience function for ``TensorDict -> TensorDict``.
+
+        Args:
+            func: The function of ``TensorDict -> TensorDict``.
+        """
+
+        LOGGER.debug("Map called with func=%s", func)
+
+        return dcls.replace(self, data=func(self.data))
+
     def filter(self, expr: str | Expr) -> Self:
+        """
+        Filter the current ``Block`` with a given expression.
+        """
+
         LOGGER.debug("Filter called with expr=%s", expr)
-        idx = self.eval_col_expr(expr).bool()
+        idx = self.col_expr(expr).bool()
 
         if len(idx) != len(self):
             raise BlockIndexError(
@@ -188,6 +205,10 @@ class Block(Mapping[str, Tensor]):
         return self[idx]
 
     def rename(self, **names: str) -> Self:
+        """
+        Rename the columns of the current ``Block``.
+        """
+
         LOGGER.debug("Renamed called with names=%s", names)
         return dcls.replace(
             self,

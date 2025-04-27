@@ -7,9 +7,10 @@ from aioway.execs import (
     Exec,
     FilterExprExec,
     FilterPredExec,
-    FrameStreamExec,
+    FrameExec,
     MapExec,
-    MatrixJoinExec,
+    ModuleExec,
+    NestedLoopExec,
     ProjectExec,
     RawIteratorExec,
     RenameExec,
@@ -24,13 +25,14 @@ def exec_factory():
 
 
 def _exec_key_cls_param():
-    yield "MATRIX_JOIN", MatrixJoinExec
+    yield "NESTED_LOOP", NestedLoopExec
     yield "ZIP", ZipExec
-    yield "FRAME_STREAM", FrameStreamExec
+    yield "FRAME", FrameExec
     yield "RAW_ITER", RawIteratorExec
     yield "FILTER_PRED", FilterPredExec
     yield "FILTER_EXPR", FilterExprExec
     yield "MAP", MapExec
+    yield "MODULE", ModuleExec
     yield "PROJECT", ProjectExec
     yield "RENAME", RenameExec
 

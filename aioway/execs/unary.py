@@ -14,7 +14,7 @@ from aioway.errors import AiowayError
 
 from .execs import Exec
 
-__all__ = ["FilterPredExec", "FilterExprExec", "MapExec", "RenameExec", "ProjectExec"]
+__all__ = ["FilterPredExec", "FilterExprExec", "RenameExec", "ProjectExec"]
 
 
 @typing.final
@@ -88,51 +88,6 @@ class FilterExprExec(Exec, key="FILTER_EXPR"):
     @typing.override
     def attrs(self) -> AttrSet:
         return self.exe.attrs
-
-    @property
-    @typing.override
-    def children(self) -> tuple[Exec]:
-        return (self.exe,)
-
-
-# TODO Improve the initialization of this class.
-@typing.final
-@dcls.dataclass(frozen=True)
-class MapExec(Exec, key="MAP"):
-    """
-    ``MapExec`` converts the input data stream with a custom function.
-    """
-
-    exe: Exec
-    """
-    The input ``Frame`` to perform computation on.
-    """
-
-    compute: Callable[[Block], Block]
-    """
-    The computation on the input frame.
-    """
-
-    output: AttrSet
-    """
-    Output schema of the ``MapFrame``.
-    """
-
-    @typing.override
-    def __next__(self) -> Block:
-        item = next(self.exe)
-
-        if not isinstance(result := self.compute(item), Block):
-            raise MapTypeError(f"Output of {self.compute=} should be `Block`.")
-
-        result.require_attrs(self.output)
-
-        return result
-
-    @property
-    @typing.override
-    def attrs(self) -> AttrSet:
-        return self.output
 
     @property
     @typing.override
@@ -233,9 +188,6 @@ class FilterBatchSizeError(AiowayError, ValueError): ...
 
 
 class FitlerPredicateDTypeError(AiowayError, ValueError): ...
-
-
-class MapTypeError(AiowayError, TypeError): ...
 
 
 class ProjectColumnTypeError(AiowayError, TypeError): ...
