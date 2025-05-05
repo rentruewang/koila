@@ -5,7 +5,7 @@ import inspect
 import numpy as np
 import pytest
 
-from aioway.calls import OpaqueCall
+from aioway.procs import OpaqueProc
 
 from . import utils
 
@@ -27,7 +27,7 @@ def test_wrapper_proc_inspect(func):
     Test that WrapperProc preserves the wrapped function's metadata.
     """
 
-    wrapped = OpaqueCall(func)
+    wrapped = OpaqueProc(func)
 
     assert inspect.signature(wrapped) == inspect.signature(func)
 
@@ -38,6 +38,6 @@ def test_wrapper_proc_exec(func, data):
     Test that WrapperProc executes the wrapping logic defined in _wrap.
     """
 
-    wrapped = OpaqueCall(func)
+    wrapped = OpaqueProc(func)
     result = wrapped(data)
     assert func(data) == pytest.approx(result)

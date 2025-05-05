@@ -1,6 +1,6 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
-__all__ = ["LazyStr", "on_demand"]
+__all__ = ["LazyStr", "lazy_log"]
 
 import dataclasses as dcls
 import typing
@@ -10,6 +10,8 @@ from types import MethodType
 from typing import Any, Protocol
 
 from aioway.errors import AiowayError
+
+__all__ = ["LazyStr", "lazy_log"]
 
 
 @dcls.dataclass(eq=False, frozen=True)
@@ -74,7 +76,7 @@ class LazyLogger(Protocol):
 
 
 @typing.no_type_check
-def on_demand(log: LoggerMethod, /) -> LazyLogger:
+def lazy_log(log: LoggerMethod, /) -> LazyLogger:
     """
     Make a logger method lazy by accepting closures and evaluating them at runtime,
     if it turns out that the logging level is reached.

@@ -1,17 +1,15 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
 import abc
-import inspect
 import logging
-import typing
 from abc import ABC
 from collections.abc import Callable, Iterable, Iterator
 from typing import Protocol
 
+from aioway import factories
 from aioway.attrs import AttrSet
 from aioway.blocks import Block
 from aioway.errors import AiowayError
-from aioway.factories import Factory
 from aioway.plans import PlanNode
 
 __all__ = ["Exec"]
@@ -42,14 +40,9 @@ class Exec(Iterator[Block], Iterable[Block], PlanNode["Exec"], ABC):
     we have to process the tensor representation of the items 1 by 1, which can be inefficient.
     """
 
-    @classmethod
-    def __init_subclass__(cls, *, key: str | None = None) -> None:
-        # Register the class with the factory.
-        cls.__register_factory(key)
-
-        # Rewrite the next method, to provide additional functionality,
-        # without touching the recursive call.
-        cls.__rewrite_next()
+    def __init_subclass__(cls, *, key: str = ""):
+        init_factory_key = factories.init_subclass(lambda: Exec)
+        init_factory_key(cls, key=key)
 
     def __hash__(self) -> int:
         """
@@ -110,39 +103,6 @@ class Exec(Iterator[Block], Iterable[Block], PlanNode["Exec"], ABC):
         """
 
         ...
-
-    @classmethod
-    def __register_factory(cls, key: str | None, /) -> None:
-        # Allow abstract classes,
-        # only perform registration and modification for concrete classes.
-        if inspect.isabstract(cls):
-            LOGGER.debug(f"Class: {cls} is abstract, skipping registration.")
-            return
-
-        if key is None:
-            raise ExecRegisterError(
-                f"Class: {cls} isn't given a key argument. Only valid for abstract classes."
-            )
-
-        if key in FACTORY:
-            raise ExecRegisterError(
-                f"Trying to insert key: {key} and class: {cls} "
-                f"but key is already used by class: {FACTORY[key]}"
-            )
-
-        FACTORY[key] = cls
-
-    @classmethod
-    @typing.no_type_check
-    def __rewrite_next(cls) -> None:
-        # TODO: Doesn't do anything as of yet.
-        return
-
-
-FACTORY = Factory(base_class=Exec)
-"""
-The class factory for ``Exec``s.
-"""
 
 
 class ExecRegisterError(AiowayError, KeyError): ...

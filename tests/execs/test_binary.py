@@ -40,14 +40,14 @@ def test_concat_exec_input_len(block_frame, concat_frame):
 
 def test_concat_exec_next(block_frame, concat_frame, size):
     stream = ZipExec(
-        FrameExec.from_frame(block_frame, {"batch_size": size}),
-        FrameExec.from_frame(concat_frame, {"batch_size": size}),
+        FrameExec(block_frame, {"batch_size": size}),
+        FrameExec(concat_frame, {"batch_size": size}),
     )
 
     for result, lhs, rhs in zip(
         stream,
-        FrameExec.from_frame(block_frame, {"batch_size": size}),
-        FrameExec.from_frame(concat_frame, {"batch_size": size}),
+        FrameExec(block_frame, {"batch_size": size}),
+        FrameExec(concat_frame, {"batch_size": size}),
     ):
         concat = TensorDict({**lhs.data, **rhs.data}, device=result.data.device)
         assert (result.data == concat).all()
@@ -70,8 +70,8 @@ def join_batch_size():
 
 def test_nested_loop_exec_next(block_frame, joinable_frame, join_batch_size):
     stream = NestedLoopExec(
-        FrameExec.from_frame(block_frame, {"batch_size": join_batch_size}),
-        FrameExec.from_frame(joinable_frame),
+        FrameExec(block_frame, {"batch_size": join_batch_size}),
+        FrameExec(joinable_frame),
         on="i1d",
     )
 

@@ -4,13 +4,13 @@ import dataclasses as dcls
 import functools
 import typing
 
-from .opaque import OpaqueCall
+from .procs import OpaqueProc
 
-__all__ = ["MemoCall"]
+__all__ = ["MemoProc"]
 
 
 @dcls.dataclass(frozen=True)
-class MemoCall[**P, T](OpaqueCall[P, T]):
+class MemoProc[**P, T](OpaqueProc[P, T], key="MEMO"):
     """
     ``MemoProc`` is a processor that adds memoization to a function.
     """

@@ -58,9 +58,9 @@ def failing_case(request):
 
 
 def test_on_demand_wrap_logger_methods(passing_case):
-    logs.on_demand(passing_case)
+    logs.lazy_log(passing_case)
 
 
 def test_on_demand_fail_everything_else(failing_case):
     with pytest.raises(TypeError):
-        logs.on_demand(failing_case)
+        logs.lazy_log(failing_case)

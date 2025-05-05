@@ -7,7 +7,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from aioway.errors import AiowayError
-from aioway.execs import DataLoaderAdaptor, DataLoaderAdaptorLike
+from aioway.execs import DataLoaderCfg, DataLoaderCfgLike
 
 from .indices import Index, IndexContext
 
@@ -27,11 +27,11 @@ class LexsortIndex(Index):
     def create(
         cls,
         ctx: IndexContext,
-        dl_opts: DataLoaderAdaptorLike = DataLoaderAdaptor(),
+        dl_opts: DataLoaderCfgLike = DataLoaderCfg(),
     ) -> Self:
         arr = cls.load_frame(ctx=ctx, dl_opts=dl_opts)
 
-        # Reverse and sort s.t. ``lexsort`` would sort in the order of columns in ``arr``.
+        # Reverse and sort s.t. `lexsort` would sort in the order of columns in `arr`.
         rev = arr[:, ::-1]
 
         result = np.lexsort(rev)

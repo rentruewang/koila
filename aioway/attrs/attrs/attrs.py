@@ -13,7 +13,7 @@ from aioway.attrs.dtypes import DType
 from aioway.attrs.shapes import Shape
 from aioway.errors import AiowayError
 
-__all__ = ["Attr", "AttrLike"]
+__all__ = ["Attr"]
 
 LOGGER = logging.getLogger(__name__)
 
@@ -36,11 +36,8 @@ class AttrObj(Protocol):
     def device(self) -> Any: ...
 
 
-type AttrLike = AttrDict | AttrObj
-
-
 @dcls.dataclass(frozen=True)
-class Attr[T: AttrLike]:
+class Attr:
     """
     ``Attr`` refers to the attributes a column uses.
     """
@@ -84,7 +81,7 @@ class Attr[T: AttrLike]:
         )
 
     @classmethod
-    def parse[S: Self](cls: S, like: T) -> S:
+    def parse(cls, like: Any) -> Self:
         LOGGER.debug("Parsing: %s", like)
 
         if isinstance(like, AttrObj):

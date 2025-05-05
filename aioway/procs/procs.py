@@ -1,5 +1,6 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
+import abc
 import dataclasses as dcls
 import functools
 import inspect
@@ -9,11 +10,32 @@ from collections.abc import Callable
 from inspect import Signature
 from typing import Self
 
-__all__ = ["OpaqueCall"]
+from aioway import factories
+
+__all__ = ["Proc", "OpaqueProc"]
 
 
 @dcls.dataclass(frozen=True)
-class OpaqueCall[**P, T](ABC):
+class Proc[**P, T](ABC):
+    if typing.TYPE_CHECKING:
+
+        def __init_subclass__(cls, *, key: str = ""):
+            raise NotImplementedError
+
+    else:
+        __init_subclass__ = factories.init_subclass(lambda: Proc)
+
+    @abc.abstractmethod
+    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> T:
+        """
+        Call the processor with the given arguments and keyword arguments.
+        """
+
+        ...
+
+
+@dcls.dataclass(frozen=True)
+class OpaqueProc[**P, T](Proc[P, T], key="OPAQUE"):
     """
     A processor that wraps a function, and calls then function for you.
     """

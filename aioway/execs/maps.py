@@ -4,29 +4,26 @@ import abc
 import dataclasses as dcls
 import typing
 from abc import ABC
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Iterator, Sequence
 
 from tensordict import TensorDict
 from tensordict.nn import TensorDictModule
+from torch.nn import Parameter
 
 from aioway.attrs import AttrSet
 from aioway.blocks import Block
 from aioway.errors import AiowayError
 from aioway.execs import Exec
 
+from .unary import UnaryExec
+
 __all__ = ["MapExec", "ModuleExec"]
 
 
-# TODO Improve the initialization of this class.
-@dcls.dataclass(frozen=True)
-class MapExecBase(Exec, ABC):
+@dcls.dataclass
+class MapExecBase(UnaryExec, ABC):
     """
     ``MapExec`` converts the input data stream with a custom function.
-    """
-
-    exe: Exec
-    """
-    The input ``Frame`` to perform computation on.
     """
 
     output: AttrSet
@@ -65,19 +62,20 @@ class MapExecBase(Exec, ABC):
     def attrs(self) -> AttrSet:
         return self.output
 
-    @property
-    @typing.override
-    def children(self) -> tuple[Exec]:
-        return (self.exe,)
 
-
-# NOTE
-# Since `ModuleExec` is simply more powerful,
-# as `torch` `Module`s are simply functions,
-# with the only constraint being that they need to be `Module`s.
-# Do I remove this completely?
-@dcls.dataclass(frozen=True)
+@dcls.dataclass
 class MapExec(MapExecBase, key="MAP"):
+    """
+    ``MapExec`` is an ``Exec`` that applies a function to the input data,
+    and returns the result as a ``Block``.
+
+    Note:
+        Since ``MapExec`` is simply more powerful,
+        as ``torch`` ``Module``s are simply functions,
+        with the only constraint being that they need to be ``Module``s.
+        Do I remove this completely?
+    """
+
     _: dcls.KW_ONLY
     """
     Made some changes to data ordering. This is the safest.
@@ -93,8 +91,7 @@ class MapExec(MapExecBase, key="MAP"):
         return self.compute(item)
 
 
-# TODO Extract information from previews directly.
-@dcls.dataclass(frozen=True)
+@dcls.dataclass
 class ModuleExec(MapExecBase, key="MODULE"):
     """
     ``TensorDictModuleExec`` is an ``Exec`` that wraps a ``TensorDictModule``,
@@ -108,12 +105,37 @@ class ModuleExec(MapExecBase, key="MODULE"):
     The module to be executed on the input data.
     """
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.module, TensorDictModule):
+            raise MapTypeError(f"Module {self.module} is not a `TensorDictModule`.")
+
     @typing.override
     def _compute(self, item: Block) -> Block:
         result = self.module(item.data)
         if not isinstance(result, Block):
             raise ModuleExecError(f"Output of {self.module=} should be `Block`.")
         return result
+
+    def zero_grad(self, set_to_none: bool = True) -> None:
+        """
+        Zero the gradients of the module.
+        """
+
+        self.module.zero_grad(set_to_none=set_to_none)
+
+    def parameters(self) -> Iterator[Parameter]:
+        """
+        Returns the parameters of the module.
+        """
+
+        return self.module.parameters()
+
+    def named_parameters(self) -> Iterator[tuple[str, Parameter]]:
+        """
+        Returns the named parameters of the module.
+        """
+
+        return self.module.named_parameters()
 
     @classmethod
     def wrap(
