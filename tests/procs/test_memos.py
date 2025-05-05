@@ -6,7 +6,7 @@ from collections.abc import Callable
 import numpy as np
 import pytest
 
-from aioway.calls import MemoCall
+from aioway.procs import MemoProc
 
 from . import utils
 
@@ -60,7 +60,7 @@ def times(request):
     "proc_init,golden",
     [
         (lambda x: x, lambda x: x),
-        (MemoCall, lambda x: min(x, 1)),
+        (MemoProc, lambda x: min(x, 1)),
     ],
 )
 def test_memo_proc_call(func, times, data, proc_init, golden):

@@ -6,6 +6,10 @@ import typing
 from collections.abc import Callable, Iterable, Iterator, Mapping
 from typing import Self
 
+from tensordict import TensorDict
+from torch import Tensor
+
+from aioway import logs
 from aioway.attrs.devices import Device
 from aioway.attrs.dtypes import DType
 from aioway.attrs.shapes import Shape
@@ -101,7 +105,7 @@ class AttrSet(Mapping[str, Attr]):
         LOGGER.debug("Comparing %s == %s", lambda: self, lambda: other)
 
         if isinstance(other, AttrSet):
-            return sorted(self.columns) == sorted(other.columns)
+            return self.columns == other.columns
 
         # Do not check devices if RHS is mapping.
         if isinstance(other, Mapping):
@@ -112,7 +116,7 @@ class AttrSet(Mapping[str, Attr]):
     def __or__(self, other: Self) -> Self:
         LOGGER.debug("Computing %s | %s", self, other)
 
-        # Using the logic in ``__and__`` to verify intersection.
+        # Using the logic in `__and__` to verify intersection.
         _ = self & other
 
         return type(self)({**self.columns, **other.columns}, device=self.device)
@@ -143,7 +147,7 @@ class AttrSet(Mapping[str, Attr]):
         if on not in other:
             raise AttrSetKeyError(f"{other.columns=} must contain key={on}")
 
-        # Merging here is OK, as ``dict`` update overwrites the left side.
+        # Merging here is OK, as `dict` update overwrites the left side.
         return self | other
 
     def project(self, *columns: str) -> Self:
@@ -204,6 +208,31 @@ class AttrSet(Mapping[str, Attr]):
                 for col in columns
             },
             device=device,
+        )
+
+    @classmethod
+    def parse_tensor_dict(
+        cls, td: dict[str, Tensor] | TensorDict, device: str | None = None
+    ) -> Self:
+        """
+        Creates an ``AttrSet`` object from a dictionary of tensors.
+        """
+
+        def log_dicts():
+            return {
+                key: {
+                    "dtype": tensor.dtype,
+                    "shape": tensor.shape,
+                    "device": tensor.device,
+                }
+                for key, tensor in td.items()
+            }
+
+        logs.lazy_log(LOGGER.debug)("Creating attribute set from dict. %s", log_dicts)
+
+        return cls(
+            {key: Attr.parse_tensor(tensor) for key, tensor in td.items()},
+            device=Device.parse(device),
         )
 
 

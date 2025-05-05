@@ -49,7 +49,7 @@ class SpecSet:
         yield from self.specs
 
     def __contains__(self, mapping: object) -> bool:
-        # ``SpecSet`` specializes in checking if a mapping is valid.
+        # `SpecSet` specializes in checking if a mapping is valid.
         if not isinstance(mapping, Mapping):
             return False
 

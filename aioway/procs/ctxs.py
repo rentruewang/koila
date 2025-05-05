@@ -6,13 +6,13 @@ import typing
 from collections.abc import Callable
 from typing import ContextManager
 
-from .opaque import OpaqueCall
+from .procs import OpaqueProc
 
-__all__ = ["CtxCall"]
+__all__ = ["CtxProc"]
 
 
 @dcls.dataclass(frozen=True)
-class CtxCall[**P, T](OpaqueCall[P, T]):
+class CtxProc[**P, T](OpaqueProc[P, T], key="CTX"):
     """
     Context manager processor, which wraps a function with a context manager.
     """

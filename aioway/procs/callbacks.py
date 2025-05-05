@@ -4,13 +4,13 @@ import dataclasses as dcls
 import typing
 from collections.abc import Callable
 
-from .opaque import OpaqueCall
+from .procs import OpaqueProc
 
-__all__ = ["CallbackCall"]
+__all__ = ["CallbackProc"]
 
 
 @dcls.dataclass(frozen=True)
-class CallbackCall[**P, T](OpaqueCall[P, T]):
+class CallbackProc[**P, T](OpaqueProc[P, T], key="CALLBACK"):
     """
     A callback processor, which wraps a function with a callback function.
     """

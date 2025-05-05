@@ -17,7 +17,7 @@ from tensordict import TensorDict
 from torch import Tensor
 from torch import device as TorchDevice
 
-from aioway.attrs import Attr, AttrSet, Device, DType, Shape
+from aioway.attrs import AttrSet, Device, DType, Shape
 from aioway.errors import AiowayError
 
 __all__ = ["Block"]
@@ -116,11 +116,11 @@ class Block(Mapping[str, Tensor]):
         if isinstance(idx, Tensor):
             return self._getitem_tensor(idx)
 
-        # Other are ``ArrayLike``.
+        # Other are `ArrayLike`.
         idx = np.array(idx)
         return self._getitem_array(idx)
 
-    # Implemented for ``DataLoader`` to be more efficient.
+    # Implemented for `DataLoader` to be more efficient.
     __getitems__ = __getitem__
 
     @typing.override
@@ -169,7 +169,7 @@ class Block(Mapping[str, Tensor]):
         func = sym.lambdify(keys, expr, "numpy")
 
         try:
-            # Unpacking is OK because self is of type ``Mapping``.
+            # Unpacking is OK because self is of type `Mapping`.
             return func(**self[keys])
         except TypeError as te:
             raise BlockSympyEvalError from te
@@ -201,7 +201,7 @@ class Block(Mapping[str, Tensor]):
                 f"Got {len(idx)=} and {len(self)=}."
             )
 
-        # No conversion needed because we know that ``index`` must be ``Tensor``.
+        # No conversion needed because we know that `index` must be `Tensor`.
         return self[idx]
 
     def rename(self, **names: str) -> Self:
@@ -312,8 +312,8 @@ class Block(Mapping[str, Tensor]):
         return type(self)(self.data.select(*idx))
 
     def _getitem_int(self, idx: int) -> Self:
-        # Using a ``list`` instead of passing ``int`` directly,
-        # because ``Block`` requires ``batch`` to not be null.
+        # Using a `list` instead of passing `int` directly,
+        # because `Block` requires `batch` to not be null.
         return type(self)(self.data[[idx]])
 
     def _getitem_array(self, idx: ArrayLike):
@@ -394,10 +394,7 @@ class Block(Mapping[str, Tensor]):
         Returns the attributes of the current ``Block``.
         """
 
-        return AttrSet(
-            columns={key: Attr.parse_tensor(val) for key, val in self.items()},
-            device=self.device,
-        )
+        return AttrSet.parse_tensor_dict(self.data, device=self.device)
 
     @property
     def batch_dims(self) -> int:

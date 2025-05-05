@@ -12,12 +12,12 @@ __all__ = ["PlanNode"]
 
 class PlanNode[T: "PlanNode"](TreeNode[T], ABC):
     def __str__(self) -> str:
-        display = PlanDisplay()
-        return display.str(self)
+        display = PlanDisplay.str()
+        return display(self)
 
     def __rich__(self):
-        display = PlanDisplay()
-        return display.rich(self)
+        display = PlanDisplay.rich()
+        return display(self)
 
     @property
     @abc.abstractmethod

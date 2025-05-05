@@ -108,15 +108,17 @@ def _checked[**P, T, E: Exception](unchecked: Callable[P, T], *err_types: type[E
     return checked
 
 
-# TODO
-#   Once type issues in python/mypy#4717 is fixed,
-#   don't use just `type`, but a `TypeVar`.
-#
-# TODO Make using `Caster` less painful.
 @dcls.dataclass(frozen=True)
 class Caster:
     """
     The casting manager for a class.
+
+    Note:
+        Once type issues in python/mypy#4717 is fixed,
+        don't use just ``type``, but a ``TypeVar``.
+
+    Todo:
+        Make using this class easier.
     """
 
     base: type

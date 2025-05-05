@@ -8,11 +8,11 @@ from aioway.execs import (
     FilterExprExec,
     FilterPredExec,
     FrameExec,
+    IteratorExec,
     MapExec,
     ModuleExec,
     NestedLoopExec,
     ProjectExec,
-    RawIteratorExec,
     RenameExec,
     ZipExec,
 )
@@ -28,7 +28,7 @@ def _exec_key_cls_param():
     yield "NESTED_LOOP", NestedLoopExec
     yield "ZIP", ZipExec
     yield "FRAME", FrameExec
-    yield "RAW_ITER", RawIteratorExec
+    yield "ITER", IteratorExec
     yield "FILTER_PRED", FilterPredExec
     yield "FILTER_EXPR", FilterExprExec
     yield "MAP", MapExec

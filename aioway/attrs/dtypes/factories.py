@@ -36,7 +36,7 @@ class DTypeFactory:
             return dtype
 
         # This is a little hacky since I'm a little lazy to implement
-        # a lookup table with all ``torch``'s ``dtype``s.
+        # a lookup table with all `torch`'s `dtype`s.
         if isinstance(dtype, TorchDType):
             return self(str(dtype).removeprefix("torch."))
 

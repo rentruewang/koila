@@ -10,10 +10,6 @@ from aioway.errors import AiowayError
 __all__ = ["DistLoss"]
 
 
-# TODO Integrate this with `Attr` / `AttrSet`
-# TODO
-#   How do I give the constraints on the inputs?
-#   Perhaps we need to add more metadata on the outputs range.
 class LossFunc(ABC):
     """
     The loss used in supervisied learning,

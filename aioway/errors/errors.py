@@ -6,7 +6,6 @@ from typing import Any
 __all__ = ["AiowayError"]
 
 
-# TODO Make the messages configurable, like ``logging.Logger``.
 class AiowayError(Exception):
     """
     ``AiowayError`` is the error thrown by the ``aioway`` library.
