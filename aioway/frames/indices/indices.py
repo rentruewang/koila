@@ -9,7 +9,7 @@ import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
 from aioway.errors import AiowayError
-from aioway.execs import DataLoaderAdaptor, DataLoaderAdaptorLike, FrameExec
+from aioway.execs import DataLoaderCfg, DataLoaderCfgLike, FrameExec
 from aioway.frames import Frame
 
 from .ops import IndexOp
@@ -38,17 +38,16 @@ class IndexContext:
         return f"{self.frame}({col_args})"
 
 
-# NOTE
-#   `Index` currently is static. i.e. it does not support updating.
-#   This is fine so long as most other constructs in the project
-#   are designed to be immutable, favoring creation over mutation.
-#
-# TODO Optionally support permutation on indices as optimizations.
 @dcls.dataclass(frozen=True, eq=False)
 class Index(ABC):
     """
     ``Index`` corresponds to different types of backends, e.g. ``faiss``, ``b-tree``,
     and is responsible for routing to different ``Index`` types.
+
+    Note:
+        ``Index`` currently is static. i.e. it does not support updating.
+        This is fine so long as most other constructs in the project
+        are designed to be immutable, favoring creation over mutation.
     """
 
     ctx: IndexContext
@@ -86,7 +85,7 @@ class Index(ABC):
         ...
 
     @staticmethod
-    def load_frame(ctx: IndexContext, dl_opts: "DataLoaderAdaptorLike") -> NDArray:
+    def load_frame(ctx: IndexContext, dl_opts: "DataLoaderCfgLike") -> NDArray:
         """
         Load the frame's contents into an numpy array.
 
@@ -102,14 +101,14 @@ class Index(ABC):
             A 2D numpy array.
         """
 
-        dl_opts = DataLoaderAdaptor.parse(dl_opts)
+        dl_opts = DataLoaderCfg.parse(dl_opts)
 
-        # Dims should be the flattened shapes, due to ``to_tensor``'s logic.
+        # Dims should be the flattened shapes, due to `to_tensor`'s logic.
         dims = sum(ctx.frame.attrs[col].shape.numel() for col in ctx.columns)
         values = np.concatenate(
             [
                 block[list(ctx.columns)].to_tensor().cpu().numpy()
-                for block in FrameExec.from_frame(ctx.frame, dl_opts)
+                for block in FrameExec(ctx.frame, dl_opts)
             ],
             axis=0,
         )

@@ -6,16 +6,16 @@ import logging
 import typing
 from collections.abc import Callable
 
-from .ctxs import CtxCall
+from .ctxs import CtxProc
 
-__all__ = ["StackCall", "LoggingProc"]
+__all__ = ["StackProc", "LoggingProc"]
 
 LOGGER = logging.getLogger(__name__)
 
 
 @typing.final
 @dcls.dataclass(frozen=True)
-class StackCall[**P, T](CtxCall[P, T]):
+class StackProc[**P, T](CtxProc[P, T], key="STACK"):
     """
     The callstack for an ``Exec``.
     It is used to store the current state of the ``Exec``.
@@ -82,7 +82,7 @@ class StackCall[**P, T](CtxCall[P, T]):
         return self.stack[0]
 
 
-class LoggingProc[**P, T](CtxCall):
+class LoggingProc[**P, T](CtxProc, key="LOGGING"):
     """
     A logging processor that logs the function call and its arguments.
     """

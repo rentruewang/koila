@@ -4,7 +4,7 @@ from collections.abc import Callable
 
 import pytest
 
-from aioway.calls import StackCall
+from aioway.procs import StackProc
 
 
 @pytest.fixture(scope="function")
@@ -16,7 +16,7 @@ def test_stack_with_custom_functions(stack):
     """Test stack with actual functions from utils."""
 
     def wrap_stack_proc(func: Callable[[], None]):
-        return StackCall(func=func, stack=stack)
+        return StackProc(func=func, stack=stack)
 
     @wrap_stack_proc
     def func_1():

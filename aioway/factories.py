@@ -1,98 +1,92 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
-import dataclasses as dcls
+import inspect
 import logging
 import typing
 from abc import ABC
-from collections.abc import Iterator
+from collections import defaultdict as DefaultDict
+from collections.abc import Callable
+from typing import Protocol
 
 from aioway.errors import AiowayError
 
-__all__ = ["Factory"]
+__all__ = ["init_subclass", "of"]
 
 LOGGER = logging.getLogger(__name__)
 
 
-@typing.final
-@dcls.dataclass(frozen=True, slots=True)
-class Factory[T: type[ABC]]:
+class FactoryInitSubclass[T: type[ABC]](Protocol):
     """
-    The factory class.
-
-    Use ``Factory.of`` to create a factory of another class.
+    The ``__init_subclass__`` method of the classes making use of a factory.
     """
 
-    lookup: dict[str, T] = dcls.field(default_factory=dict)
+    def __call__(self, cls: T, *, key: str = "") -> None: ...
+
+
+def init_subclass[T: type[ABC]](base: Callable[[], T]) -> FactoryInitSubclass[T]:
     """
-    The per-type registry, storing the subclasses with their aliases as keys.
+    Initialize the subclass, with a given base class.
+
+    Args:
+        base:
+            The base class to be used for the factory.
+            This needs to be a lambda function because when ``__init_subclass__`` is defined,
+            the class definition is not yet done, so Python would give ``NameError``.
+
+    Returns:
+        A callable function that can be used as a decorator to initialize the subclass.
+
+    Examples:
+        >>> class Base:
+        ...     __init_subclass__ = init_subclass(lambda: Base)
+        ...
+        >>> class A(Base, key="a"): ...
+        >>> class B(Base, key="b"): ...
+        >>> fac = of(Base)
+        >>> assert len(fac) == 2
+        >>> assert fac.keys() == {"a", "b"}
+        >>> assert fac["a"] is A
+        >>> assert fac["b"] is B
+
+    Fixme:
+        Type hint issue about python/mypy#18987.
     """
 
-    inverse: dict[T, str] = dcls.field(default_factory=dict)
-    """
-    The inverse of per-type registry, from subclasses to aliases.
-    """
+    def __init_subclass__(cls, *, key: str = "") -> None:
+        base_class = base()
 
-    base_class: T = object  # type: ignore[assignment]
-    """
-    The base class that must be the superclass of all values in the factory.
-    """
+        factory = _GLOBAL_FACTORIES[base_class]
 
-    def __post_init__(self) -> None:
-        for key, val in self.lookup.items():
-            assert self.inverse[val] == key
+        if not key:
+            # Allow abstract classes, which would not be initialized,
+            # to not define keys, as factories are used to store leaf nodes.
+            if inspect.isabstract(cls):
+                return
 
-        for val, key in self.inverse.items():
-            assert self.lookup[key] == val
+            raise FactoryKeyError(
+                f"Class: {cls} isn't given a key argument. Only valid for abstract classes."
+            )
 
-    def __iter__(self) -> Iterator[str]:
-        yield from self.lookup.keys()
+        if key in factory:
+            raise FactoryKeyError(
+                f"Trying to insert key: {key} and class: {cls} "
+                f"but key is already used by class: {factory[key]}"
+            )
 
-    def __contains__(self, key: str) -> bool:
-        return key in self.lookup.keys()
+        factory[key] = cls
 
-    def __len__(self) -> int:
-        return len(self.lookup)
+    return __init_subclass__
 
-    @typing.overload
-    def __getitem__(self, key: str) -> T: ...
 
-    @typing.overload
-    def __getitem__(self, key: T) -> str: ...
+@typing.no_type_check
+def of[T: type[ABC]](cls: T) -> dict[str, T]:
+    return _GLOBAL_FACTORIES[cls]
 
-    def __getitem__(self, key):
-        logging.debug("Constructing type from %s", key)
 
-        if isinstance(key, str):
-            return self.lookup[key]
-
-        if issubclass(key, self.base_class):
-            return self.inverse[key]
-
-        raise FactoryKeyError("Factory's key must either be string or key.")
-
-    @typing.no_type_check
-    def __setitem__(self, key: str, val: T) -> None:
-        logging.debug("Storing type %s with key %s", val, key)
-
-        if not isinstance(key, str):
-            raise FactoryKeyError(f"Key must be a string. Got {type(key)=}")
-
-        if not issubclass(val, self.base_class):
-            raise FactoryKeyError(f"Value must be a type. Got {type(val)=}")
-
-        if key in self.lookup:
-            existing = self.lookup[key]
-            raise FactoryKeyError(f"Key: {key} already used for {existing}.")
-
-        self.lookup[key] = val
-        self.inverse[val] = key
-
-    def __delitem__(self, key: str) -> None:
-        logging.debug("Deleting key %s", key)
-
-        val = self.lookup[key]
-        del self.lookup[key]
-        del self.inverse[val]
+_GLOBAL_FACTORIES: dict[type, dict[str, type]] = DefaultDict(dict)
+"""
+A global dictionary to store all the factories.
+"""
 
 
 class FactoryKeyError(AiowayError, KeyError): ...

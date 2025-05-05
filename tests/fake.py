@@ -9,8 +9,6 @@ from torch import cuda
 from aioway.blocks import Block
 
 
-# TODO Add multi-gpu support.
-# TODO Test distributed.
 def cpu_and_maybe_cuda():
     """
     The devices used in the tests.

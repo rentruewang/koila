@@ -7,7 +7,7 @@ from typing import Self
 from numpy.typing import NDArray
 
 from aioway.errors import AiowayError
-from aioway.execs import DataLoaderAdaptor, DataLoaderAdaptorLike
+from aioway.execs import DataLoaderCfg, DataLoaderCfgLike
 
 from .indices import Index, IndexContext
 from .ops import IndexAnn, IndexOp
@@ -19,7 +19,6 @@ if typing.TYPE_CHECKING:
 __all__ = ["FaissIndex"]
 
 
-# TODO GPU support.
 @dcls.dataclass(frozen=True)
 class FaissIndex(Index):
     """
@@ -51,7 +50,7 @@ class FaissIndex(Index):
         cls,
         *,
         ctx: IndexContext,
-        dl_opts: DataLoaderAdaptorLike = DataLoaderAdaptor(),
+        dl_opts: DataLoaderCfgLike = DataLoaderCfg(),
         factory: str
     ) -> Self:
         import faiss

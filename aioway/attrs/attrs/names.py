@@ -12,7 +12,7 @@ from aioway.attrs.shapes import Shape
 
 from .attrs import Attr, AttrDict, AttrInitTypeError, AttrObj
 
-__all__ = ["NamedAttr", "NamedAttrLike"]
+__all__ = ["NamedAttr"]
 
 LOGGER = logging.getLogger(__name__)
 
@@ -27,11 +27,8 @@ class NamedAttrObj(AttrObj, Protocol):
     def name(self) -> Any: ...
 
 
-type NamedAttrLike = NamedAttrDict | NamedAttrObj
-
-
 @dcls.dataclass(frozen=True)
-class NamedAttr(Attr[NamedAttrLike]):
+class NamedAttr(Attr):
     _: dcls.KW_ONLY
     """
     Only allow keyword variables to prevent confusion.
@@ -52,10 +49,10 @@ class NamedAttr(Attr[NamedAttrLike]):
         )
 
     @classmethod
-    def parse(cls, like: NamedAttrLike) -> Self:
+    def parse(cls, like: Any) -> Self:
         logging.debug("Parsing %s", like)
 
-        if isinstance(like, AttrObj):
+        if isinstance(like, NamedAttrObj):
             return cls.__init(
                 device=like.device, dtype=like.dtype, shape=like.shape, name=like.name
             )

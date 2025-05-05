@@ -5,7 +5,7 @@ from collections.abc import Callable
 
 import pytest
 
-from aioway.calls import CallRewriteMgr
+from aioway.procs import ProcRewriteMgr
 
 
 @dcls.dataclass
@@ -36,7 +36,7 @@ def dynamic():
 @pytest.fixture(scope="function")
 def rewrite_manager(static, dynamic):
     """Create a ProcLifetimeManager with static and dynamic processors."""
-    return CallRewriteMgr(static=static, dynamic=dynamic)
+    return ProcRewriteMgr(static=static, dynamic=dynamic)
 
 
 def test_rewrite_manager_call(rewrite_manager, static, dynamic):

@@ -7,19 +7,21 @@ import typing
 from abc import ABC
 from collections.abc import Callable
 
-__all__ = ["CallRewrite", "StaticCallRewrite", "ChainCallRewrite"]
+from .procs import Proc
+
+__all__ = ["ProcRewrite", "OpaqueProcRewrite", "ChainProcRewrite"]
 
 LOGGER = logging.getLogger(__name__)
 
 
 @dcls.dataclass(frozen=True)
-class CallRewrite[**P, T](ABC):
+class ProcRewrite[**P, T](ABC):
     """
     Proxy processor, which wraps a function with a proxy function.
     """
 
     @abc.abstractmethod
-    def __call__(self, proc: Callable[P, T], /) -> Callable[P, T]:
+    def __call__(self, proc: Proc[P, T], /) -> Proc[P, T]:
         """
         Call the wrapped function with the given arguments and keyword arguments.
         """
@@ -28,32 +30,38 @@ class CallRewrite[**P, T](ABC):
 
 
 @dcls.dataclass(frozen=True)
-class StaticCallRewrite[**P, T](CallRewrite[P, T]):
+class OpaqueProcRewrite[**P, T](ProcRewrite[P, T]):
     """
     Static processor, which wraps a function with a static proxy function.
     """
 
-    transform: Callable[[Callable[P, T]], Callable[P, T]]
+    rewrite: Callable[[Proc[P, T]], Proc[P, T]]
+    """
+    The static proxy function to be called after the wrapped function.
+    """
 
     @typing.override
-    def __call__(self, func: Callable[P, T], /) -> Callable[P, T]:
+    def __call__(self, func: Proc[P, T], /) -> Proc[P, T]:
         """
         A static proxy function that takes in the callable.
         """
 
-        return self.transform(func)
+        return self.rewrite(func)
 
 
 @dcls.dataclass(frozen=True)
-class ChainCallRewrite[**P, T](CallRewrite[P, T]):
+class ChainProcRewrite[**P, T](ProcRewrite[P, T]):
     """
     Chain processor, which wraps a function with a chain of processors.
     """
 
-    rewriters: tuple[CallRewrite[P, T], ...]
+    rewriters: tuple[ProcRewrite[P, T], ...]
+    """
+    A chain of processors that takes in the callable.
+    """
 
     @typing.override
-    def __call__(self, func: Callable[P, T], /) -> Callable[P, T]:
+    def __call__(self, func: Proc[P, T], /) -> Proc[P, T]:
         """
         A chain of processors that takes in the processor.
         """

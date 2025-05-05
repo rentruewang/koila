@@ -11,19 +11,17 @@ from numpy.typing import NDArray
 from aioway.attrs import AttrSet
 from aioway.blocks import Block
 from aioway.errors import AiowayError
+from aioway.execs.execs import Exec
+from aioway.execs.nullary import FrameExec
 
-from .execs import Exec
-from .inputs import FrameExec
+from .binary import BinaryExec
 
-if typing.TYPE_CHECKING:
-    pass
-
-__all__ = ["NestedLoopExec", "ZipExec"]
+__all__ = ["NestedLoopExec"]
 
 
 @typing.final
-@dcls.dataclass(frozen=True)
-class NestedLoopExec(Exec, key="NESTED_LOOP"):
+@dcls.dataclass
+class NestedLoopExec(BinaryExec, key="NESTED_LOOP"):
     """
     The base class for ``Exec``s that are Cartesian products,
     with LHS being an unbound stream, and RHS being bounded.
@@ -31,14 +29,13 @@ class NestedLoopExec(Exec, key="NESTED_LOOP"):
     Only handles the cases where join keys are stored within the frames themselves.
     """
 
-    left: Exec
-    """
-    The LHS of the operator.
-    """
-
     right: FrameExec
     """
     The RHS of the operator.
+
+    Note:
+        Overriding the ``right`` attribute to be ``FrameExec`` instead of ``Exec``,
+        because we would need to reset this iterator for each LHS block iteration.
     """
 
     on: str
@@ -106,38 +103,4 @@ class NestedLoopExec(Exec, key="NESTED_LOOP"):
         return l, r
 
 
-@typing.final
-@dcls.dataclass(frozen=True)
-class ZipExec(Exec, key="ZIP"):
-    """
-    ``ZipExec`` merges 2 ``Exec``s that have identical length together.
-    """
-
-    left: Exec
-    right: Exec
-
-    def __post_init__(self) -> None:
-        # Check intersection with the logic in ``TableSchema.__and__``.
-        _ = self.left.attrs & self.right.attrs
-
-    @typing.override
-    def __next__(self) -> Block:
-        left = next(self.left)
-        right = next(self.right)
-        return left.zip(right)
-
-    @property
-    @typing.override
-    def attrs(self) -> AttrSet:
-        return self.left.attrs | self.right.attrs
-
-    @property
-    @typing.override
-    def children(self) -> tuple[Exec, Exec]:
-        return self.left, self.right
-
-
 class PartitionOperandTypeError(AiowayError, TypeError): ...
-
-
-class ConcatLengthMismatchError(AiowayError, TypeError): ...

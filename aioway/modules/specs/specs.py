@@ -14,9 +14,6 @@ __all__ = ["Spec", "IntervalSpec", "ChoiceSpec"]
 type Primitive = int | float | bool
 
 
-# TODO
-# Work out the type hints s.t. it does not need to be ``object``,
-# and so that users can take advantage of the type hints.
 class Spec(ABC):
     """
     Base class for all specs.
@@ -42,7 +39,6 @@ class Spec(ABC):
         ...
 
 
-# TODO This is very similar to ``sympy.Interval``, do I rewrite?
 @dcls.dataclass(frozen=True)
 class IntervalSpec[T: Primitive](Spec):
     """
