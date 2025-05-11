@@ -46,7 +46,7 @@ build = "^1.2.2.post1"
 cython = "^3.0.12"
 ninja = "^1.11.1.1"
 pip = "^24.3.1"
-setuptools = "^75.6.0"
+setuptools = ">=75.6,<79.0"
 wheel = "^0.45.1"
 
 [tool.poetry.group.faiss.dependencies]

@@ -8,21 +8,25 @@ from typing import Self
 from aioway.attrs.attrs import AttrSet, NamedAttr
 from aioway.errors import AiowayError
 
-from .attrs import EinsumAttrFunc, EinsumDevice, EinsumDType, EinsumMap, EinsumShape
+from .attrs import EinsumAttr, EinsumDevice, EinsumDType, EinsumName, EinsumShape
 from .parsers import EinsumParser
 
 LOGGER = logging.getLogger(__name__)
 
 
 @dcls.dataclass(frozen=True)
-class EinsumAttrSetFunc:
+class EinsumAttrSet:
     """
-    ``EinsumAttrSetFunction`` processes an ``AttrSet`` into another ``AttrSet``.
+    ``EinsumAttrSet`` processes an ``AttrSet`` into another ``AttrSet``.
 
-    This is useful in predicting what an operator would behave before invoking it.
+    This is useful in providing a contract of what an operator would behave before invoking it.
+
+    Example:
+        >>> EinsumAttrSet.parse()
+
     """
 
-    names: EinsumMap
+    names: EinsumName
     """
     The name mappings to follow.
     """
@@ -47,7 +51,7 @@ class EinsumAttrSetFunc:
         self.__check_input_or_output("output", lambda f: f.num_outputs)
 
     def __check_input_or_output(
-        self, name: str, callback: Callable[[EinsumAttrFunc], int]
+        self, name: str, callback: Callable[[EinsumAttr], int]
     ) -> None:
         LOGGER.debug("Checking %s stage with callback: %s", name, callback)
 
@@ -76,7 +80,7 @@ class EinsumAttrSetFunc:
         )
 
     @property
-    def attrs(self) -> list[EinsumAttrFunc]:
+    def attrs(self) -> list[EinsumAttr]:
         return [self.names, self.shapes, self.devices, self.dtypes]
 
     @classmethod
@@ -90,10 +94,10 @@ class EinsumAttrSetFunc:
         parser: EinsumParser = EinsumParser.init(),
     ) -> Self:
         return cls(
-            names=parser(names),
-            shapes=parser(shapes),
-            devices=parser(devices),
-            dtypes=parser(dtypes),
+            names=EinsumName(parser(names)),
+            shapes=EinsumShape(parser(shapes)),
+            devices=EinsumDevice(parser(devices)),
+            dtypes=EinsumDType(parser(dtypes)),
         )
 
 

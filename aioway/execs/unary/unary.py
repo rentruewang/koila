@@ -8,12 +8,13 @@ from abc import ABC
 from aioway.attrs import AttrSet
 from aioway.blocks import Block
 from aioway.execs.execs import Exec
+from aioway.nodes import UnaryNode
 
 __all__ = ["UnaryExec"]
 
 
 @dcls.dataclass
-class UnaryExec(Exec, ABC):
+class UnaryExec(Exec, UnaryNode, ABC):
     """
     ``UnaryExec`` is a base class for all unary operations.
     """
@@ -26,6 +27,11 @@ class UnaryExec(Exec, ABC):
     @typing.override
     @abc.abstractmethod
     def __next__(self) -> Block: ...
+
+    @property
+    @typing.override
+    def _child(self) -> Exec:
+        return self.exe
 
     @property
     @typing.override

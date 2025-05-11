@@ -10,12 +10,13 @@ from aioway.attrs import AttrSet
 from aioway.blocks import Block
 from aioway.errors import AiowayError
 from aioway.execs.execs import Exec
+from aioway.nodes import NullaryNode
 
 __all__ = ["NullaryExec", "IteratorExec"]
 
 
 @dcls.dataclass
-class NullaryExec(Exec, ABC):
+class NullaryExec(Exec, NullaryNode, ABC):
     """
     ``NullaryExec`` is a base class for all nullary operations.
     """

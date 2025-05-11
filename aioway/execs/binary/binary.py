@@ -8,12 +8,13 @@ from abc import ABC
 from aioway.attrs import AttrSet
 from aioway.blocks import Block
 from aioway.execs.execs import Exec
+from aioway.nodes import BinaryNode
 
 __all__ = ["BinaryExec"]
 
 
 @dcls.dataclass
-class BinaryExec(Exec, ABC):
+class BinaryExec(Exec, BinaryNode, ABC):
     left: Exec
     """
     The LHS of the operator.
@@ -27,6 +28,16 @@ class BinaryExec(Exec, ABC):
     @typing.override
     @abc.abstractmethod
     def __next__(self) -> Block: ...
+
+    @property
+    @typing.override
+    def _left(self) -> Exec:
+        return self.left
+
+    @property
+    @typing.override
+    def _right(self) -> Exec:
+        return self.right
 
     @property
     @typing.override

@@ -14,6 +14,7 @@ from aioway.attrs.devices import Device
 from aioway.attrs.dtypes import DType
 from aioway.attrs.shapes import Shape
 from aioway.errors import AiowayError
+from aioway.logs import GetItemAsDict
 
 from .attrs import Attr
 from .names import NamedAttr
@@ -228,7 +229,10 @@ class AttrSet(Mapping[str, Attr]):
                 for key, tensor in td.items()
             }
 
-        logs.lazy_log(LOGGER.debug)("Creating attribute set from dict. %s", log_dicts)
+        logs.lazy_log(LOGGER.debug)(
+            "Creating attribute set from dict. %s",
+            GetItemAsDict(td, ["dtype", "shape", "device"]),
+        )
 
         return cls(
             {key: Attr.parse_tensor(tensor) for key, tensor in td.items()},
