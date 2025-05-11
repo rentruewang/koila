@@ -17,13 +17,17 @@ from aioway.errors import AiowayError
 
 from .parsers import EinsumSignature
 
-__all__ = ["EinsumAttrFunc", "EinsumMap", "EinsumShape", "EinsumDType", "EinsumDevice"]
+__all__ = ["EinsumAttr", "EinsumName", "EinsumShape", "EinsumDType", "EinsumDevice"]
 
 LOGGER = logging.getLogger(__name__)
 
 
 @dcls.dataclass(eq=False, frozen=True, repr=False)
-class EinsumAttrFunc[T](ABC):
+class EinsumAttr[T](ABC):
+    """
+    This class exists to share some common functionality between the ``Einsum*`` classes.
+    """
+
     einsum: EinsumSignature
     """
     The einsum instance to use.
@@ -90,7 +94,7 @@ class EinsumAttrFunc[T](ABC):
 
 
 @dcls.dataclass(eq=False, frozen=True, repr=False)
-class EinsumMap(EinsumAttrFunc[str]):
+class EinsumName(EinsumAttr[str]):
     """
     ``EinsumSet`` represents the case where both inputs and outputs of ``Einsum`` are unique.
     """
@@ -119,7 +123,7 @@ class EinsumMap(EinsumAttrFunc[str]):
 
 
 @dcls.dataclass(eq=False, frozen=True, repr=False)
-class EinsumShape(EinsumAttrFunc[Shape]):
+class EinsumShape(EinsumAttr[Shape]):
     """
     Shape variant of ``Einsum``.
     """
@@ -128,16 +132,6 @@ class EinsumShape(EinsumAttrFunc[Shape]):
         LOGGER.debug("Checking an `EinsumShape`.")
 
         self.__check_all_dims_are_ascii()
-        self.__check_output_dims_inputs()
-
-    def __check_output_dims_inputs(self) -> None:
-        inputs = "".join(self.params)
-        outputs = "".join(self.results)
-
-        if extra := set(outputs) - set(inputs):
-            raise IllegalEinsumShapeError(
-                f"Extra dimensions in output but not in input for expression {self}: {extra}"
-            )
 
     def __check_all_dims_are_ascii(self) -> None:
         regex = ascii_regex()
@@ -180,7 +174,7 @@ def ascii_regex() -> Pattern[str]:
 
 
 @dcls.dataclass(eq=False, frozen=True, repr=False)
-class EinsumDType(EinsumAttrFunc[DType]):
+class EinsumDType(EinsumAttr[DType]):
     """
     DType variant of ``Einsum``.
 
@@ -202,7 +196,7 @@ class EinsumDType(EinsumAttrFunc[DType]):
 
 
 @dcls.dataclass(eq=False, frozen=True, repr=False)
-class EinsumDevice(EinsumAttrFunc[Device]):
+class EinsumDevice(EinsumAttr[Device]):
     """
     Device variant of ``Einsum``.
 
@@ -233,7 +227,7 @@ class _Parser(Protocol):
 
 
 def _check_in_out_parse(
-    einsum: EinsumAttrFunc, parser: _Parser, error_type: type[ValueError], kind: str
+    einsum: EinsumAttr, parser: _Parser, error_type: type[ValueError], kind: str
 ) -> None:
 
     for val in einsum.in_out():

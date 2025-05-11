@@ -3,17 +3,18 @@
 from sympy import Interval, S
 from torch.nn import Dropout, Embedding, Linear, Transformer
 
-from .factories import ModuleFactory
+from .previews import Preview
 from .specs import SpecSet
 
-__all__: list[str] = []
+FACTORY: dict[str, Preview] = {}
 
-LINEAR = ModuleFactory(
+
+FACTORY["LINEAR"] = Preview(
     module_class=Linear,
     limits=SpecSet.from_specs(in_features=S.Naturals, out_features=S.Naturals),
 )
 
-TRANSFORMER = ModuleFactory(
+FACTORY["TRANSFORMER"] = Preview(
     module_class=Transformer,
     limits=SpecSet.from_specs(
         d_model=S.Naturals,
@@ -24,12 +25,12 @@ TRANSFORMER = ModuleFactory(
     ),
 )
 
-DROPOUT = ModuleFactory(
+FACTORY["DROPOUT"] = Preview(
     module_class=Dropout,
     limits=SpecSet.from_specs(p=Interval(0, 1)),
 )
 
-EMBEDDING = ModuleFactory(
+FACTORY["EMBEDDING"] = Preview(
     module_class=Embedding,
     limits=SpecSet.from_specs(num_embeddings=S.Naturals, embedding_dim=S.Naturals),
 )

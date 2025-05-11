@@ -157,7 +157,7 @@ class EinsumParser:
     The parser of the class
     """
 
-    def __call__(self, expr: str):
+    def __call__(self, expr: str) -> EinsumSignature:
         """
         Parse the given expression.
 

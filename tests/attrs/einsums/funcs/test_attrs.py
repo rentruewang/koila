@@ -5,16 +5,10 @@ from pathlib import Path
 
 import pytest
 
-from aioway.attrs import (
-    EinsumAttrFunc,
-    EinsumDevice,
-    EinsumDType,
-    EinsumMap,
-    EinsumShape,
-)
+from aioway.attrs import EinsumAttr, EinsumDevice, EinsumDType, EinsumName, EinsumShape
 
 
-def _test_einsum_func_init(name: str, einsum_func: type[EinsumAttrFunc]):
+def _test_einsum_func_init(name: str, einsum_func: type[EinsumAttr]):
     with open(Path(__file__).parent / f"{name}.json") as f:
         data = json.load(f)
         passing_data = data["pass"]
@@ -37,16 +31,15 @@ def _test_einsum_func_init(name: str, einsum_func: type[EinsumAttrFunc]):
             assert func == passing
 
         def test_failing(self, failing, parser):
-            # Even the failing cases are supplied with parsable inputs.
-            einsum = parser(failing)
-
             with pytest.raises(ValueError):
+                # Even the failing cases are supplied with parsable inputs.
+                einsum = parser(failing)
                 einsum_func(einsum)
 
     return TestClass
 
 
-TestEinsumMap = _test_einsum_func_init("maps", EinsumMap)
+TestEinsumName = _test_einsum_func_init("names", EinsumName)
 TestEinsumShape = _test_einsum_func_init("shapes", EinsumShape)
 TestEinsumDevice = _test_einsum_func_init("devices", EinsumDevice)
 TestEinsumDType = _test_einsum_func_init("dtypes", EinsumDType)

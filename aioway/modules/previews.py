@@ -6,11 +6,11 @@ from torch.nn import Module
 
 from .specs import SpecSet
 
-__all__ = ["ModuleFactory"]
+__all__ = ["Preview"]
 
 
 @dcls.dataclass(frozen=True)
-class ModuleFactory:
+class Preview:
     module_class: type[Module]
     """
     The corresponding ``torch`` module.
@@ -23,3 +23,8 @@ class ModuleFactory:
     A preview object that gives you information
     about the signature of ``module_class``.
     """
+
+    # contract: EinsumAttr
+    # """
+    # The contract for which the module would satisfy.
+    # """
