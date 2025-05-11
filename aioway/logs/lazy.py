@@ -1,7 +1,5 @@
 # Copyright (c) RenChu Wang - All Rights Reserved
 
-__all__ = ["LazyStr", "lazy_log"]
-
 import dataclasses as dcls
 import typing
 from collections.abc import Callable
