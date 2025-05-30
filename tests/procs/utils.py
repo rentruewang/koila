@@ -1,4 +1,4 @@
-# Copyright (c) RenChu Wang - All Rights Reserved
+# Copyright (c) AIoWay Authors - All Rights Reserved
 
 from collections.abc import Callable, Iterator
 

@@ -11,19 +11,18 @@ jobs:
       - name: 🏗️ python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
-      - name: ⬇️ Python Poetry
-        uses: snok/install-poetry@v1
+      - name: ⬇️ Python PDM
+        uses: pdm-project/setup-pdm@v4
         with:
-          version: 2.1.2
-          installer-parallel: true
+          cache: true
 
       - name: ⬇️ Python Dependencies
-        run: poetry install --sync
+        run: pdm sync -G:all
 
       - name: 🚧 Jupyter build
-        run: poetry run jupyter book build docs
+        run: pdm run jupyter book build docs
 
       - name: 📰 Publish docs
         uses: JamesIves/github-pages-deploy-action@v4

@@ -1,5 +1,0 @@
-[virtualenvs]
-in-project = true
-
-[virtualenvs.options]
-always-copy = true
