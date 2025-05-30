@@ -1,60 +1,60 @@
-[tool.poetry]
+[project]
 name = "aioway"
-version = "0.0.3"
 description = "AI on the way"
-authors = ["RenChu Wang <patrick1031wang@gmail.com>"]
-license = "BSD-3"
+authors = [
+    {name = "RenChu Wang", email = "patrick1031wang@gmail.com"},
+]
+requires-python = ">=3.13,<4"
 readme = "README.md"
+license = {text = "BSD-3"}
+dynamic = ["version"]
+dependencies = ["lark>=1.2.2", "numpy>=2.2.6", "pandas>=2.2.3", "rich>=14.0.0", "structlog>=25.4.0", "tensordict>=0.8.3", "torch>=2.7.0"]
 
-[tool.poetry.dependencies]
-python = ">=3.12"
-lark = "^1.2.2"
-numpy = "^2.2.4"
-pandas = "^2.2.3"
-rich = "^14.0.0"
-tensordict = "^0.7.2"
-torch = "^2.6.0"
-
-[tool.poetry.group.dev.dependencies]
-autoflake = "^2.3.1"
-black = "^25.1.0"
-isort = "^6.0.1"
-mypy = "^1.15.0"
-pre-commit = "^4.2.0"
-
-[tool.poetry.group.ibis.dependencies]
-ibis = "^3.3.0"
-
-[tool.poetry.group.tests.dependencies]
-coverage = "^7.6.7"
-pytest = "^8.3.5"
-pytest-cov = "^6.0.0"
-pytest-sugar = "^1.0.0"
-pytest-testmon = "^2.1.3"
-pytest-xdist = "^3.6.1"
-
-[tool.poetry.group.interactive.dependencies]
-ipython = "^8.29.0"
-jupyter = "^1.1.1"
-jupyter-book = "^1.0.3"
-jupyterlab = "^4.4.1"
-httpcore = "^1.0.9"
-
-[tool.poetry.group.build.dependencies]
-ansible = "^11.0.0"
-build = "^1.2.2.post1"
-cython = "^3.0.12"
-ninja = "^1.11.1.1"
-pip = "^24.3.1"
-setuptools = ">=75.6,<79.0"
-wheel = "^0.45.1"
-
-[tool.poetry.group.faiss.dependencies]
-faiss-cpu = "^1.10.0"
+[project.optional-dependencies]
+ibis = [
+    "ibis>=3.3.0",
+]
+faiss = [
+    "faiss-cpu>=1.11.0",
+]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["setuptools", "wheel", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+
+
+[dependency-groups]
+pre-commit = [
+    "pre-commit>=4.2.0",
+    "pip>=25.1.1",
+    "autoflake>=2.3.1",
+    "black>=25.1.0",
+    "isort>=6.0.1",
+    "mypy>=1.16.0",
+]
+tests = [
+    "pytest>=8.3.5",
+    "pytest-cov>=6.1.1",
+    "pytest-xdist>=3.7.0",
+    "pytest-sugar>=1.0.0",
+]
+ipython = [
+    "ipython>=9.2.0",
+    "jupyter>=1.1.1",
+    "jupyterlab>=4.4.3",
+]
+build = [
+    "ansible>=11.6.0",
+    "build>=1.2.2.post1",
+    "cython>=3.1.1",
+    "ninja>=1.11.1.4",
+    "pip>=25.1.1",
+    "setuptools>=80.9.0",
+    "setuptools-scm>=8.3.1",
+    "wheel>=0.45.1",
+]
 
 [tool.autoflake]
 in-place = true
