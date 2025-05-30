@@ -11,25 +11,24 @@ jobs:
       - name: 🏗️ python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
-      - name: ⬇️ Python Poetry
-        uses: snok/install-poetry@v1
+      - name: ⬇️ Python PDM
+        uses: pdm-project/setup-pdm@v4
         with:
-          version: 2.1.2
-          installer-parallel: true
+          cache: true
 
       - name: ⬇️ Python Dependencies
-        run: poetry install --sync
+        run: pdm sync -G:all
 
       - name: 🏃 autoflake
-        run: poetry run pre-commit run --all-files autoflake
+        run: pdm run pre-commit run --all-files autoflake
 
       - name: 🏃 isort
-        run: poetry run pre-commit run --all-files isort
+        run: pdm run pre-commit run --all-files isort
 
       - name: 🏃 black
-        run: poetry run pre-commit run --all-files black
+        run: pdm run pre-commit run --all-files black
 
   type:
     name: 👨‍⚕️ Type Checking
@@ -41,19 +40,18 @@ jobs:
       - name: 🏗️ python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
-      - name: ⬇️ Python Poetry
-        uses: snok/install-poetry@v1
+      - name: ⬇️ Python PDM
+        uses: pdm-project/setup-pdm@v4
         with:
-          version: 2.1.2
-          installer-parallel: true
+          cache: true
 
       - name: ⬇️ Python Dependencies
-        run: poetry install --sync
+        run: pdm sync -G:all
 
       - name: 📦 Install type stubs
-        run: poetry run mypy . --install-types --non-interactive
+        run: pdm run mypy . --install-types --non-interactive
 
       - name: 🏃 mypy
-        run: poetry run pre-commit run --all-files black
+        run: pdm run pre-commit run --all-files mypy

@@ -15,11 +15,11 @@ git clone git@github.com:rentruewang/aioway
 cd aioway/
 ```
 
-I'm using [poetry](https://python-poetry.org/) in this project for dependency management.
-To install all dependencies (including development dependencies) with `poetry`, run
+I'm using [pdm](https://pdm-project.org/) in this project for dependency management.
+To install all dependencies (including development dependencies) with `pdm`, run
 
 ```bash
-poetry install
+pdm install -G:all
 ```
 
 Alternatively, use of `pip` is also allowed (although might be less robust due to lack of version solving)

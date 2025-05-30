@@ -1,4 +1,4 @@
-# Copyright (c) RenChu Wang - All Rights Reserved
+# Copyright (c) AIoWay Authors - All Rights Reserved
 
 
 def test_seed(seed):

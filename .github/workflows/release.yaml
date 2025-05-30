@@ -1,4 +1,5 @@
 name: Publish
+
 on:
   push:
     tags:
@@ -11,6 +12,7 @@ jobs:
     permissions:
       contents: read
       id-token: write # IMPORTANT: this permission is mandatory for trusted publishing
+
     steps:
       - name: 🔔 Check out
         uses: actions/checkout@v3
@@ -18,19 +20,15 @@ jobs:
       - name: 🏗️ python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
-      - name: ⬇️ Python Poetry
-        uses: snok/install-poetry@v1
+      - name: ⬇️ Python PDM
+        uses: pdm-project/setup-pdm@v4
         with:
-          version: 2.1.2
-          installer-parallel: true
+          cache: true
 
       - name: ⬇️ Python Dependencies
-        run: poetry install --sync
-
-      - name: 🪶 Build with poetry
-        run: poetry build
+        run: pdm sync -G:all
 
       - name: 📰 Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        run: pdm publish
