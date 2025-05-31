@@ -13,20 +13,17 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: ⬇️ Python Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: 1.8.4
-          installer-parallel: true
+      - name: ⬇️ Python PDM
+        uses: pdm-project/setup-pdm@v4
 
       - name: ⬇️ Python Dependencies
-        run: poetry install --sync
+        run: pdm install -G:all
+
+      - name: 🚂 Activate environment
+        run: echo "$(pdm venv --path in-project)/bin" >> $GITHUB_PATH
 
       - name: 🏃 autoflake, isort, black
-        run: poetry run autoflake --check .
-
-      - name: 🏃 isort
-        run: poetry run isort --check .
-
-      - name: 🏃 black
-        run: poetry run black --diff .
+        run: |
+          autoflake -cr $(find -iname "*.py" ! -path '*/.venv/*' ! -name __init__.py) --remove-all-unused-imports
+          isort --profile black --check .
+          black --check .
