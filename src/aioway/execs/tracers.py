@@ -8,7 +8,7 @@ from typing import NamedTuple, Self
 from aioway import factories
 from aioway.attrs import AttrSet
 from aioway.errors import AiowayError
-from aioway.nodes import TreeNode
+from aioway.nodes import Node
 
 from .binary import BinaryExec
 from .execs import Exec
@@ -20,7 +20,7 @@ __all__ = ["ExecTracer"]
 
 @typing.final
 @dcls.dataclass(frozen=True)
-class ExecTracer(TreeNode):
+class ExecTracer(Node):
     """
     ``ExecTracer`` is a wrapper around ``Exec`` to track the execution of the plan,
     it acts as a convenience wrapper around ``Exec`` to provide a more user-friendly interface.

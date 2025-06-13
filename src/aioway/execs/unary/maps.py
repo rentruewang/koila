@@ -33,7 +33,7 @@ class MapExecBase(UnaryExec, ABC):
 
     @typing.override
     def __next__(self) -> Block:
-        item = next(self.exe)
+        item = next(self.child)
         result = self.__call_compute(item)
         result.require_attrs(self.output)
         return result
@@ -159,7 +159,7 @@ class ModuleExec(MapExecBase, key="MODULE"):
             module=wrapper, in_keys=in_keys, out_keys=output.columns
         )
 
-        return ModuleExec(exe=exe, module=module, output=output)
+        return ModuleExec(child=exe, module=module, output=output)
 
 
 class MapTypeError(AiowayError, TypeError): ...

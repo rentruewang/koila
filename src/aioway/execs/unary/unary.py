@@ -19,7 +19,7 @@ class UnaryExec(Exec, UnaryNode, ABC):
     ``UnaryExec`` is a base class for all unary operations.
     """
 
-    exe: Exec
+    child: Exec
     """
     The input ``Exec`` of the current ``Exec``.
     """
@@ -30,15 +30,5 @@ class UnaryExec(Exec, UnaryNode, ABC):
 
     @property
     @typing.override
-    def _child(self) -> Exec:
-        return self.exe
-
-    @property
-    @typing.override
     @abc.abstractmethod
     def attrs(self) -> AttrSet: ...
-
-    @property
-    @typing.override
-    def children(self) -> tuple[Exec]:
-        return (self.exe,)

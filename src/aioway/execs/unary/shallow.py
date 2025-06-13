@@ -1,6 +1,7 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import dataclasses as dcls
+import functools
 import typing
 
 from aioway.attrs import AttrSet
@@ -10,7 +11,7 @@ from aioway.execs.execs import Exec
 
 from .unary import UnaryExec
 
-__all__ = ["ProjectExec", "RenameExec"]
+__all__ = ["ProjectExec", "RenameExec", "EchoExec"]
 
 
 @typing.final
@@ -36,13 +37,13 @@ class ProjectExec(UnaryExec, key="PROJECT"):
 
     @typing.override
     def __next__(self) -> Block:
-        item = next(self.exe)
+        item = next(self.child)
         return item if self.subset is None else item[self.subset]
 
     @property
     @typing.override
     def attrs(self) -> AttrSet:
-        schema = self.exe.attrs
+        schema = self.child.attrs
 
         if self.subset is None:
             return schema
@@ -68,18 +69,43 @@ class RenameExec(UnaryExec, key="RENAME"):
         #
         # Even though I'm using a Python version with positional only argument,
         # since ``Exec`` is common, using ``__exe`` to avoid name collision (in keys).
-        self.exe = __exe
+        self.child = __exe
         self.renames = renames
 
     @typing.override
     def __next__(self) -> Block:
-        item = next(self.exe)
+        item = next(self.child)
         return item.rename(**self.renames)
 
     @property
     @typing.override
     def attrs(self) -> AttrSet:
-        return self.exe.attrs.rename(**self.renames)
+        return self.child.attrs.rename(**self.renames)
+
+
+@typing.final
+@dcls.dataclass
+class EchoExec(UnaryExec, key="ECHO"):
+    """
+    ``EchoExec`` repeats what the input says for the specified number of times.
+    """
+
+    times: int
+
+    @typing.override
+    def __next__(self) -> Block:
+        return next(self._generator)
+
+    @functools.cached_property
+    def _generator(self):
+        for block in self.child:
+            for _ in range(self.times):
+                yield block
+
+    @property
+    @typing.override
+    def attrs(self) -> AttrSet:
+        return self.child.attrs
 
 
 class ProjectColumnTypeError(AiowayError, TypeError): ...

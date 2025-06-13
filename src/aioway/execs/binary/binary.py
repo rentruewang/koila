@@ -31,20 +31,5 @@ class BinaryExec(Exec, BinaryNode, ABC):
 
     @property
     @typing.override
-    def _left(self) -> Exec:
-        return self.left
-
-    @property
-    @typing.override
-    def _right(self) -> Exec:
-        return self.right
-
-    @property
-    @typing.override
     @abc.abstractmethod
     def attrs(self) -> AttrSet: ...
-
-    @property
-    @typing.override
-    def children(self) -> tuple[Exec, Exec]:
-        return self.left, self.right
