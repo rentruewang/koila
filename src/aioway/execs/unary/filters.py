@@ -27,7 +27,7 @@ class FilterPredExec(UnaryExec, key="FILTER_PRED"):
 
     @typing.override
     def __next__(self) -> Block:
-        item = next(self.exe)
+        item = next(self.child)
         pred = self.predicate(item)
 
         # Just to be extra fault tolerant.
@@ -53,7 +53,7 @@ class FilterPredExec(UnaryExec, key="FILTER_PRED"):
     @property
     @typing.override
     def attrs(self) -> AttrSet:
-        return self.exe.attrs
+        return self.child.attrs
 
 
 @typing.final
@@ -66,13 +66,13 @@ class FilterExprExec(UnaryExec, key="FILTER_EXPR"):
 
     @typing.override
     def __next__(self) -> Block:
-        item = next(self.exe)
+        item = next(self.child)
         return item.filter(self.expr)
 
     @property
     @typing.override
     def attrs(self) -> AttrSet:
-        return self.exe.attrs
+        return self.child.attrs
 
 
 class FilterBatchSizeError(AiowayError, ValueError): ...

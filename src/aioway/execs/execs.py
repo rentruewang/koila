@@ -14,7 +14,7 @@ from aioway import factories
 from aioway.attrs import AttrSet
 from aioway.blocks import Block
 from aioway.errors import AiowayError
-from aioway.nodes import TreeNode
+from aioway.nodes import Node
 from aioway.procs import OpaqueProc, ProcRewrite
 
 if typing.TYPE_CHECKING:
@@ -31,7 +31,7 @@ class ExecCtx(ProcRewrite):
 
 
 @dcls.dataclass
-class Exec(Iterator[Block], Iterable[Block], TreeNode["Exec"], ABC):
+class Exec(Iterator[Block], Iterable[Block], Node["Exec"], ABC):
     """
     ``Exec`` represents a stream of heterogenious data being generated,
     it is one of the main physical abstractions in ``aioway`` to represent eager computation.

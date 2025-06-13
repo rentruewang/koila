@@ -69,11 +69,6 @@ class NestedLoopExec(BinaryExec, key="NESTED_LOOP"):
     def attrs(self) -> AttrSet:
         return self.left.attrs | self.right.attrs
 
-    @property
-    @typing.override
-    def children(self) -> tuple[Exec, FrameExec]:
-        return self.left, self.right
-
     @functools.cached_property
     def _iterator(self) -> Iterator[tuple[Block, Block]]:
         """

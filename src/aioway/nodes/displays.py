@@ -7,7 +7,7 @@ from collections.abc import Callable
 from rich.tree import Tree
 
 if typing.TYPE_CHECKING:
-    from .trees import TreeNode
+    from .nodes import Node
 
 
 @dcls.dataclass(frozen=True)
@@ -17,7 +17,7 @@ class PlanDisplay[T]:
     It does so by recursively reducing the tree in a post-order traversal.
     """
 
-    render: Callable[["TreeNode"], T]
+    render: Callable[["Node"], T]
     """
     The renderer function to be applied to each node in the tree.
     """
@@ -27,7 +27,7 @@ class PlanDisplay[T]:
     Combination of the node and its children.
     """
 
-    def __call__(self, plan: "TreeNode", /) -> T:
+    def __call__(self, plan: "Node", /) -> T:
         self_node = self.render(plan)
 
         children_nodes: list[T] = []

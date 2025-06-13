@@ -30,17 +30,6 @@ class NullaryExec(Exec, NullaryNode, ABC):
     @abc.abstractmethod
     def attrs(self) -> AttrSet: ...
 
-    @property
-    @typing.final
-    @typing.override
-    def children(self) -> tuple[()]:
-        """
-        An ``InputExec`` do not have info about its input type,
-        therfore, we cannot keep expanding on the input.
-        """
-
-        return ()
-
 
 @typing.final
 @dcls.dataclass
