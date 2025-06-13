@@ -2,14 +2,17 @@
 
 import abc
 import typing
-from abc import ABC
+from typing import Protocol, Self
 
 from .displays import PlanDisplay
 
-__all__ = ["TreeNode", "NullaryNode", "UnaryNode", "BinaryNode"]
+if typing.TYPE_CHECKING:
+    from aioway.compilers import Compiler
+
+__all__ = ["Node", "NullaryNode", "UnaryNode", "BinaryNode"]
 
 
-class TreeNode[T: "TreeNode"](ABC):
+class Node[T: "Node"](Protocol):
     def __str__(self) -> str:
         display = PlanDisplay.str()
         return display(self)
@@ -18,12 +21,15 @@ class TreeNode[T: "TreeNode"](ABC):
         display = PlanDisplay.rich()
         return display(self)
 
+    def rewrite[O: Node](self, compiler: "Compiler[Self, O]") -> O:
+        return compiler(self)
+
     @property
     @abc.abstractmethod
     def children(self) -> tuple[T, ...]: ...
 
 
-class NullaryNode[T: "TreeNode"](TreeNode[T], ABC):
+class NullaryNode[T: "Node"](Node[T], Protocol):
     """
     A node that does not have any children.
     """
@@ -34,50 +40,38 @@ class NullaryNode[T: "TreeNode"](TreeNode[T], ABC):
         return ()
 
 
-class UnaryNode[T: "TreeNode"](TreeNode[T], ABC):
+class UnaryNode[T: "Node"](Node[T], Protocol):
     """
     A node that has one child.
     """
 
-    @property
-    @abc.abstractmethod
-    def _child(self) -> T:
-        """
-        The child of the node.
-        """
-
-        ...
+    child: T
+    """
+    The child of the node.
+    """
 
     @property
     @typing.override
     def children(self) -> tuple[T]:
-        return (self._child,)
+        return (self.child,)
 
 
-class BinaryNode[T: "TreeNode"](TreeNode[T], ABC):
+class BinaryNode[T: "Node"](Node[T], Protocol):
     """
     A node that has two children.
     """
 
-    @property
-    @abc.abstractmethod
-    def _left(self) -> T:
-        """
-        The left child of the node.
-        """
+    left: T
+    """
+    The left child of the node.
+    """
 
-        ...
-
-    @property
-    @abc.abstractmethod
-    def _right(self) -> T:
-        """
-        The right child of the node.
-        """
-
-        ...
+    right: T
+    """
+    The right child of the node.
+    """
 
     @property
     @typing.override
     def children(self) -> tuple[T, T]:
-        return self._left, self._right
+        return self.left, self.right

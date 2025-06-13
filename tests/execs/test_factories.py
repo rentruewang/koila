@@ -4,6 +4,7 @@ import pytest
 
 from aioway import factories
 from aioway.execs import (
+    EchoExec,
     Exec,
     FilterExprExec,
     FilterPredExec,
@@ -35,6 +36,7 @@ def _exec_key_cls_param():
     yield "MODULE", ModuleExec
     yield "PROJECT", ProjectExec
     yield "RENAME", RenameExec
+    yield "ECHO", EchoExec
 
 
 @pytest.fixture(scope="module", params=_exec_key_cls_param())

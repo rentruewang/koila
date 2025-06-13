@@ -221,7 +221,7 @@ class AttrSet(Mapping[str, Attr]):
 
         LOGGER.debug(
             "Creating attribute set from dict.",
-            dtype=td.dtypes,
+            dtype=td.dtype,
             shape=td.shape,
             device=td.device,
         )

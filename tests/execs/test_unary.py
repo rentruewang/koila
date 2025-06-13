@@ -5,7 +5,9 @@ from collections.abc import Callable
 
 import pytest
 
+from aioway.blocks import Block
 from aioway.execs import (
+    EchoExec,
     Exec,
     FilterExprExec,
     FilterPredExec,
@@ -130,7 +132,7 @@ def map_rename_op():
 @pytest.fixture
 def map_exec(block_frame, map_rename_op, size):
     return MapExec(
-        exe=FrameExec(block_frame, {"batch_size": size}),
+        child=FrameExec(block_frame, {"batch_size": size}),
         compute=lambda b: b.rename(**map_rename_op),
         output=block_frame.attrs.rename(**map_rename_op),
     )
@@ -157,3 +159,36 @@ def test_project_exec_attrs(project_exec, block_frame):
 def test_project_exec_next(project_exec, block_frame, size):
     for curr, other in zip(project_exec, FrameExec(block_frame, {"batch_size": size})):
         assert (curr.data == other[["f1d", "i2d"]].data).all()
+
+
+@pytest.fixture
+def echo_times():
+    return 3
+
+
+@pytest.fixture
+def echo_exec(block_frame, size, echo_times):
+    return EchoExec(FrameExec(block_frame, {"batch_size": size}), times=echo_times)
+
+
+def test_echo_exec_next(echo_exec, echo_times):
+    while True:
+        execs = []
+
+        for i in range(echo_times):
+            try:
+                execs.append(next(echo_exec))
+            except StopIteration:
+                assert i == 0, (
+                    f"`EchoExec` should yield exactly {echo_times} times of the same block, "
+                    f"but exited after {i+1} iteration"
+                )
+                return
+
+        assert len(execs) == echo_times
+        assert all(
+            isinstance(e, Block) for e in execs
+        ), "`EchoExec` must yield `Block`s."
+        assert (
+            len({id(e) for e in execs}) == 1
+        ), f"`EchoExec` should yield the same object {echo_times} times."
