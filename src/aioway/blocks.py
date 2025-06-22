@@ -25,7 +25,6 @@ __all__ = ["Block"]
 LOGGER = structlog.get_logger()
 
 
-@typing.final
 @dcls.dataclass(frozen=True)
 class Block(Mapping[str, Tensor]):
     """

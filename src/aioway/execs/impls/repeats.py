@@ -12,7 +12,7 @@ from .unary import UnaryExec
 
 
 @dcls.dataclass
-class RepeatExec(UnaryExec):
+class RepeatExec(UnaryExec, key="REPEAT"):
     times: int
 
     @typing.override

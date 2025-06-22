@@ -13,6 +13,9 @@ __all__ = ["Node", "NullaryNode", "UnaryNode", "BinaryNode"]
 
 
 class Node[T: "Node"](Protocol):
+    def __hash__(self) -> int:
+        return id(self)
+
     def __str__(self) -> str:
         display = PlanDisplay.str()
         return display(self)
