@@ -12,9 +12,9 @@ from aioway.attrs import AttrSet
 from aioway.blocks import Block
 from aioway.errors import AiowayError
 from aioway.execs.execs import Exec
-from aioway.execs.nullary import FrameExec
 
 from .binary import BinaryExec
+from .frames import FrameExec
 
 __all__ = ["NestedLoopExec"]
 
@@ -75,9 +75,9 @@ class NestedLoopExec(BinaryExec, key="NESTED_LOOP"):
         The actual iterator that will be used to iterate over the LHS.
         """
 
-        return self._nested_loop()
+        return self.nested_loop()
 
-    def _nested_loop(self):
+    def nested_loop(self):
         for left_block in self.left:
             self.right.reset()
             for right_block in self.right:
