@@ -18,7 +18,7 @@ from aioway.nodes import Node
 from aioway.procs import OpaqueProc, ProcRewrite
 
 if typing.TYPE_CHECKING:
-    from .dags import ExecDag
+    from aioway.nodes import Dag
 
 __all__ = ["Exec"]
 
@@ -27,7 +27,7 @@ LOGGER = structlog.get_logger()
 
 @dcls.dataclass(frozen=True)
 class ExecCtx(ProcRewrite):
-    dag: "ExecDag"
+    dag: "Dag"
 
 
 @dcls.dataclass

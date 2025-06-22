@@ -39,6 +39,7 @@ tests = [
     "pytest-cov>=6.1.1",
     "pytest-xdist>=3.7.0",
     "pytest-sugar>=1.0.0",
+    "better-exceptions>=0.3.3",
 ]
 ipython = [
     "ipython>=9.2.0",
@@ -86,5 +87,9 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 addopts = [
     "-v",
+    "-n=auto",
     "--import-mode=importlib",
+]
+filterwarnings = [
+    "ignore::UserWarning",
 ]

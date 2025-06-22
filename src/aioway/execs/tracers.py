@@ -10,10 +10,8 @@ from aioway.attrs import AttrSet
 from aioway.errors import AiowayError
 from aioway.nodes import Node
 
-from .binary import BinaryExec
 from .execs import Exec
-from .nullary import NullaryExec
-from .unary import UnaryExec
+from .impls import BinaryExec, NullaryExec, UnaryExec
 
 __all__ = ["ExecTracer"]
 
