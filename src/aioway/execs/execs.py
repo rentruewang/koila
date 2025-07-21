@@ -10,7 +10,7 @@ from typing import Self
 
 import structlog
 
-from aioway import factories
+from aioway import registries
 from aioway.attrs import AttrSet
 from aioway.blocks import Block
 from aioway.errors import AiowayError
@@ -146,7 +146,7 @@ class Exec(Iterator[Block], Iterable[Block], Node["Exec"], ABC):
         proc = OpaqueProc(next_method)
         return proc
 
-    __register_factory_with_key = factories.init_subclass(lambda: Exec)
+    __register_factory_with_key = registries.init_subclass(lambda: Exec)
     """
     Register subclasses with the given key into the factory.
     """

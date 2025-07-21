@@ -33,7 +33,7 @@ class MapExecBase(UnaryExec, ABC):
 
     @typing.override
     def __next__(self) -> Block:
-        item = next(self.child)
+        item = next(self._simple_iterator)
         result = self.__call_compute(item)
         result.require_attrs(self.output)
         return result
