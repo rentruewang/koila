@@ -2,8 +2,10 @@
 
 import abc
 import dataclasses as dcls
+import functools
 import typing
 from abc import ABC
+from collections.abc import Iterator
 
 from aioway.attrs import AttrSet
 from aioway.blocks import Block
@@ -32,3 +34,11 @@ class UnaryExec(Exec, UnaryNode, ABC):
     @typing.override
     @abc.abstractmethod
     def attrs(self) -> AttrSet: ...
+
+    @staticmethod
+    def pass_through(exe: Exec):
+        yield from exe
+
+    @functools.cached_property
+    def _simple_iterator(self) -> Iterator[Block]:
+        return UnaryExec.pass_through(self.child)

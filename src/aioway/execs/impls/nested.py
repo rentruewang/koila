@@ -71,17 +71,7 @@ class NestedLoopExec(BinaryExec, key="NESTED_LOOP"):
 
     @functools.cached_property
     def _iterator(self) -> Iterator[tuple[Block, Block]]:
-        """
-        The actual iterator that will be used to iterate over the LHS.
-        """
-
-        return self.nested_loop()
-
-    def nested_loop(self):
-        for left_block in self.left:
-            self.right.reset()
-            for right_block in self.right:
-                yield left_block, right_block
+        return nested_loop(self.left, self.right)
 
     def _join(self, left: Block, right: Block) -> tuple[NDArray, NDArray]:
         return self._compute_matching(left=left, right=right, on=self.on)
@@ -96,6 +86,13 @@ class NestedLoopExec(BinaryExec, key="NESTED_LOOP"):
         matrix = left_key[:, None] == right_key[None, :]
         l, r = torch.nonzero(matrix).cpu().numpy().T
         return l, r
+
+
+def nested_loop(left: Exec, right: FrameExec):
+    for left_block in left:
+        right.reset()
+        for right_block in right:
+            yield left_block, right_block
 
 
 class PartitionOperandTypeError(AiowayError, TypeError): ...

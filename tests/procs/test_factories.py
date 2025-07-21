@@ -2,7 +2,7 @@
 
 import pytest
 
-from aioway import factories
+from aioway import registries
 from aioway.procs import (
     CallbackProc,
     CtxProc,
@@ -16,7 +16,7 @@ from aioway.procs import (
 
 @pytest.fixture(scope="module")
 def proc_factory():
-    return factories.of(Proc)
+    return registries.of(Proc)
 
 
 def _proc_key_cls_param():
