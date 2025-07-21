@@ -2,7 +2,7 @@
 
 import pytest
 
-from aioway import factories
+from aioway import registries
 from aioway.execs import (
     EchoExec,
     Exec,
@@ -21,8 +21,7 @@ from aioway.execs import (
 
 @pytest.fixture(scope="module")
 def exec_factory():
-
-    return factories.of(Exec)
+    return registries.of(Exec)
 
 
 def _exec_key_cls_param():

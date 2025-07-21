@@ -10,7 +10,7 @@ from collections.abc import Callable
 from inspect import Signature
 from typing import Self
 
-from aioway import factories
+from aioway import registries
 
 __all__ = ["Proc", "OpaqueProc"]
 
@@ -23,7 +23,7 @@ class Proc[**P, T](ABC):
             raise NotImplementedError
 
     else:
-        __init_subclass__ = factories.init_subclass(lambda: Proc)
+        __init_subclass__ = registries.init_subclass(lambda: Proc)
 
     @abc.abstractmethod
     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> T:

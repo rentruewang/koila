@@ -37,7 +37,7 @@ class ProjectExec(UnaryExec, key="PROJECT"):
 
     @typing.override
     def __next__(self) -> Block:
-        item = next(self.child)
+        item = next(self._simple_iterator)
         return item if self.subset is None else item[self.subset]
 
     @property
@@ -74,7 +74,7 @@ class RenameExec(UnaryExec, key="RENAME"):
 
     @typing.override
     def __next__(self) -> Block:
-        item = next(self.child)
+        item = next(self._simple_iterator)
         return item.rename(**self.renames)
 
     @property

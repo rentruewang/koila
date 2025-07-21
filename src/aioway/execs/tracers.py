@@ -5,7 +5,7 @@ import inspect
 import typing
 from typing import NamedTuple, Self
 
-from aioway import factories
+from aioway import registries
 from aioway.attrs import AttrSet
 from aioway.errors import AiowayError
 from aioway.nodes import Node
@@ -32,7 +32,7 @@ class ExecTracer(Node):
     def map(self, op: str, *args, **kwargs) -> Self:
         init = InitExec(
             operator=op,
-            exec_class=factories.of(Exec)[op],
+            exec_class=registries.of(Exec)[op],
             super_class=UnaryExec,
             identifier="unary",
         )
@@ -42,7 +42,7 @@ class ExecTracer(Node):
     def join(self, other: Self, op: str, *args, **kwargs) -> Self:
         init = InitExec(
             operator=op,
-            exec_class=factories.of(Exec)[op],
+            exec_class=registries.of(Exec)[op],
             super_class=BinaryExec,
             identifier="binary",
         )
@@ -53,7 +53,7 @@ class ExecTracer(Node):
     def create(cls, op: str, *args, **kwargs) -> Self:
         init = InitExec(
             operator=op,
-            exec_class=factories.of(Exec)[op],
+            exec_class=registries.of(Exec)[op],
             super_class=NullaryExec,
             identifier="nullary",
         )

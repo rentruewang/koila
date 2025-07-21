@@ -27,7 +27,7 @@ class FilterPredExec(UnaryExec, key="FILTER_PRED"):
 
     @typing.override
     def __next__(self) -> Block:
-        item = next(self.child)
+        item = next(self._simple_iterator)
         pred = self.predicate(item)
 
         # Just to be extra fault tolerant.
@@ -66,7 +66,7 @@ class FilterExprExec(UnaryExec, key="FILTER_EXPR"):
 
     @typing.override
     def __next__(self) -> Block:
-        item = next(self.child)
+        item = next(self._simple_iterator)
         return item.filter(self.expr)
 
     @property
