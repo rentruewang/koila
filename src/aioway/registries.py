@@ -29,6 +29,9 @@ class RegistryInitSubclass[T: type[ABC]](Protocol):
 def init_subclass[T: type[ABC]](base: Callable[[], T]) -> RegistryInitSubclass[T]:
     """
     Initialize the subclass, with a given base class.
+    The subclass would need to specify a key (str), if not abstract,
+    s.t. the subclass can later be retrived from a registry.
+
 
     Args:
         base:

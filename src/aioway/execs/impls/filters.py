@@ -8,7 +8,6 @@ import numpy as np
 from numpy.typing import NDArray
 from sympy import Expr
 
-from aioway.attrs import AttrSet
 from aioway.blocks import Block
 from aioway.errors import AiowayError
 
@@ -50,11 +49,6 @@ class FilterPredExec(UnaryExec, key="FILTER_PRED"):
 
         return item[pred]
 
-    @property
-    @typing.override
-    def attrs(self) -> AttrSet:
-        return self.child.attrs
-
 
 @typing.final
 @dcls.dataclass
@@ -68,11 +62,6 @@ class FilterExprExec(UnaryExec, key="FILTER_EXPR"):
     def __next__(self) -> Block:
         item = next(self._simple_iterator)
         return item.filter(self.expr)
-
-    @property
-    @typing.override
-    def attrs(self) -> AttrSet:
-        return self.child.attrs
 
 
 class FilterBatchSizeError(AiowayError, ValueError): ...

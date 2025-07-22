@@ -5,7 +5,6 @@ import functools
 import itertools
 import typing
 
-from aioway.attrs import AttrSet
 from aioway.blocks import Block
 
 from .unary import UnaryExec
@@ -23,8 +22,3 @@ class RepeatExec(UnaryExec, key="REPEAT"):
     def _generator(self):
         for block, _ in itertools.product(self.child, range(self.times)):
             yield block
-
-    @property
-    @typing.override
-    def attrs(self) -> AttrSet:
-        return self.child.attrs

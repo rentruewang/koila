@@ -4,7 +4,6 @@ import dataclasses as dcls
 import functools
 import typing
 
-from aioway.attrs import AttrSet
 from aioway.blocks import Block
 from aioway.errors import AiowayError
 from aioway.execs.execs import Exec
@@ -40,16 +39,6 @@ class ProjectExec(UnaryExec, key="PROJECT"):
         item = next(self._simple_iterator)
         return item if self.subset is None else item[self.subset]
 
-    @property
-    @typing.override
-    def attrs(self) -> AttrSet:
-        schema = self.child.attrs
-
-        if self.subset is None:
-            return schema
-
-        return schema.project(*self.subset)
-
 
 @typing.final
 @dcls.dataclass(init=False)
@@ -77,11 +66,6 @@ class RenameExec(UnaryExec, key="RENAME"):
         item = next(self._simple_iterator)
         return item.rename(**self.renames)
 
-    @property
-    @typing.override
-    def attrs(self) -> AttrSet:
-        return self.child.attrs.rename(**self.renames)
-
 
 @typing.final
 @dcls.dataclass
@@ -101,11 +85,6 @@ class EchoExec(UnaryExec, key="ECHO"):
         for block in self.child:
             for _ in range(self.times):
                 yield block
-
-    @property
-    @typing.override
-    def attrs(self) -> AttrSet:
-        return self.child.attrs
 
 
 class ProjectColumnTypeError(AiowayError, TypeError): ...
