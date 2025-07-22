@@ -8,12 +8,13 @@ from collections.abc import Iterator
 
 from aioway.blocks import Block
 from aioway.errors import AiowayError
+from aioway.execs.utils import Nargs
 
-__all__ = ["Batch", "NullaryBatch", "UnaryBatch", "BinaryBatch", "AryBatch"]
+__all__ = ["Batch", "Batch0", "Batch1", "Batch2"]
 
 
 @dcls.dataclass(frozen=True)
-class Batch(ABC):
+class Batch(Nargs, ABC):
     """
     A batch is simply a collection of blocks.
     It is used to represent the variety of output data extracted from ``Poller``.
@@ -38,17 +39,19 @@ class BatchVisitor[T](ABC):
     """
 
     @abc.abstractmethod
-    def nullary(self, batch: "NullaryBatch", /) -> T: ...
+    def nullary(self, batch: "Batch0", /) -> T: ...
 
     @abc.abstractmethod
-    def unary(self, batch: "UnaryBatch", /) -> T: ...
+    def unary(self, batch: "Batch1", /) -> T: ...
 
     @abc.abstractmethod
-    def binary(self, batch: "BinaryBatch", /) -> T: ...
+    def binary(self, batch: "Batch2", /) -> T: ...
 
 
 @dcls.dataclass(frozen=True)
-class NullaryBatch(Batch):
+class Batch0(Batch):
+    N_ARY = 0
+
     @typing.override
     def __iter__(self):
         return
@@ -60,7 +63,9 @@ class NullaryBatch(Batch):
 
 
 @dcls.dataclass(frozen=True)
-class UnaryBatch(Batch):
+class Batch1(Batch):
+    N_ARY = 1
+
     block: Block
 
     @typing.override
@@ -73,7 +78,9 @@ class UnaryBatch(Batch):
 
 
 @dcls.dataclass(frozen=True)
-class BinaryBatch(Batch):
+class Batch2(Batch):
+    N_ARY = 2
+
     left: Block
     right: Block
 
@@ -85,9 +92,6 @@ class BinaryBatch(Batch):
     @typing.override
     def _accept[T](self, visitor: BatchVisitor[T]) -> T:
         return visitor.binary(self)
-
-
-type AryBatch = NullaryBatch | UnaryBatch | BinaryBatch
 
 
 class NotBatchVisitorError(AiowayError, TypeError): ...

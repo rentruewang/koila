@@ -1,13 +1,10 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-import abc
 import dataclasses as dcls
 import functools
-import typing
 from abc import ABC
 from collections.abc import Iterator
 
-from aioway.attrs import AttrSet
 from aioway.blocks import Block
 from aioway.execs.execs import Exec
 from aioway.nodes import UnaryNode
@@ -25,15 +22,6 @@ class UnaryExec(Exec, UnaryNode, ABC):
     """
     The input ``Exec`` of the current ``Exec``.
     """
-
-    @typing.override
-    @abc.abstractmethod
-    def __next__(self) -> Block: ...
-
-    @property
-    @typing.override
-    @abc.abstractmethod
-    def attrs(self) -> AttrSet: ...
 
     @staticmethod
     def pass_through(exe: Exec):

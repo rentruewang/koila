@@ -8,7 +8,6 @@ from collections.abc import Iterator
 import torch
 from numpy.typing import NDArray
 
-from aioway.attrs import AttrSet
 from aioway.blocks import Block
 from aioway.errors import AiowayError
 from aioway.execs.execs import Exec
@@ -63,11 +62,6 @@ class NestedLoopExec(BinaryExec, key="NESTED_LOOP"):
         right_chosen = right_block[right_select]
 
         return left_chosen.zip(right_chosen)
-
-    @property
-    @typing.override
-    def attrs(self) -> AttrSet:
-        return self.left.attrs | self.right.attrs
 
     @functools.cached_property
     def _iterator(self) -> Iterator[tuple[Block, Block]]:
