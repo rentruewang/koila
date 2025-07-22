@@ -10,7 +10,6 @@ import tensordict
 from tensordict import TensorDict
 from torch.utils.data import DataLoader
 
-from aioway.attrs import AttrSet
 from aioway.blocks import Block
 from aioway.errors import AiowayError
 
@@ -72,11 +71,6 @@ class FrameExec(NullaryExec, key="FRAME"):
 
     def _new_iterator(self):
         yield from DataLoaderCfg.parse(self.opt).iterator_of(self.dataset)
-
-    @property
-    @typing.override
-    def attrs(self) -> AttrSet:
-        return self.dataset.attrs
 
 
 type DataLoaderCfgLike = DataLoaderCfg | dict[str, Any]

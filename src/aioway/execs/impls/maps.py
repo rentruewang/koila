@@ -57,11 +57,6 @@ class MapExecBase(UnaryExec, ABC):
             raise ModuleExecError(f"Output of {self} should be `Block`.")
         return result
 
-    @property
-    @typing.override
-    def attrs(self) -> AttrSet:
-        return self.output
-
 
 @dcls.dataclass
 class MapExec(MapExecBase, key="MAP"):

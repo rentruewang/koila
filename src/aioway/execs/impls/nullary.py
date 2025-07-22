@@ -1,6 +1,5 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-import abc
 import dataclasses as dcls
 import typing
 from abc import ABC
@@ -20,15 +19,6 @@ class NullaryExec(Exec, NullaryNode, ABC):
     """
     ``NullaryExec`` is a base class for all nullary operations.
     """
-
-    @typing.override
-    @abc.abstractmethod
-    def __next__(self) -> Block: ...
-
-    @property
-    @typing.override
-    @abc.abstractmethod
-    def attrs(self) -> AttrSet: ...
 
 
 @typing.final

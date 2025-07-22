@@ -6,7 +6,6 @@ import typing
 from typing import NamedTuple, Self
 
 from aioway import registries
-from aioway.attrs import AttrSet
 from aioway.errors import AiowayError
 from aioway.nodes import Node
 
@@ -59,14 +58,6 @@ class ExecTracer(Node):
         )
         exe = init(*args, **kwargs)
         return cls(exe=exe)
-
-    @property
-    def attrs(self) -> AttrSet:
-        """
-        The attributes of the current ``ExecTracer``.
-        """
-
-        return self.exe.attrs
 
     @property
     @typing.override
