@@ -6,8 +6,6 @@ import typing
 from collections.abc import Mapping
 from typing import Any, Protocol, Self, TypedDict
 
-import structlog
-
 from aioway.attrs.devices import Device
 from aioway.attrs.dtypes import DType
 from aioway.attrs.shapes import Shape
@@ -16,7 +14,7 @@ from .attrs import Attr, AttrDict, AttrInitTypeError, AttrObj
 
 __all__ = ["NamedAttr"]
 
-LOGGER = structlog.get_logger()
+LOGGER = logging.getLogger(__name__)
 
 
 class NamedAttrDict(AttrDict, TypedDict):

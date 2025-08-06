@@ -8,7 +8,7 @@ requires-python = ">=3.13,<4"
 readme = "README.md"
 license = {text = "BSD-3"}
 dynamic = ["version"]
-dependencies = ["lark>=1.2.2", "numpy>=2.2.6", "pandas>=2.2.3", "rich>=14.0.0", "structlog>=25.4.0", "tensordict>=0.8.3", "torch>=2.7.0"]
+dependencies = ["lark>=1.2.2", "numpy>=2.2.6", "pandas>=2.2.3", "rich>=14.0.0", "tensordict>=0.8.3", "torch>=2.7.0"]
 
 [project.optional-dependencies]
 ibis = [

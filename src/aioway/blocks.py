@@ -2,13 +2,13 @@
 
 import dataclasses as dcls
 import functools
+import logging
 import operator
 import typing
 from collections.abc import Callable, Iterator, KeysView, Mapping
 from typing import Self
 
 import numpy as np
-import structlog
 import sympy as sym
 import torch
 from numpy.typing import ArrayLike, NDArray
@@ -22,7 +22,7 @@ from aioway.errors import AiowayError
 
 __all__ = ["Block"]
 
-LOGGER = structlog.get_logger()
+LOGGER = logging.getLogger(__name__)
 
 
 @dcls.dataclass(frozen=True)

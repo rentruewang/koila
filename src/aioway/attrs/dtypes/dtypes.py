@@ -2,18 +2,18 @@
 
 import abc
 import dataclasses as dcls
+import logging
 import typing
 from abc import ABC
 from typing import Any
 
 import numpy as np
-import structlog
 from numpy import dtype as NumpyDType
 from torch import dtype as TorchDType
 
 __all__ = ["DType"]
 
-LOGGER = structlog.get_logger()
+LOGGER = logging.getLogger(__name__)
 
 
 @dcls.dataclass(eq=False, frozen=True)

@@ -1,11 +1,11 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import dataclasses as dcls
+import logging
 import typing
 from collections.abc import Callable, Iterable, Iterator, Mapping
 from typing import Self
 
-import structlog
 from tensordict import TensorDict
 from torch import Tensor
 
@@ -19,7 +19,7 @@ from .names import NamedAttr
 
 __all__ = ["AttrSet"]
 
-LOGGER = structlog.get_logger()
+LOGGER = logging.getLogger(__name__)
 
 
 @dcls.dataclass(frozen=True)
