@@ -8,7 +8,7 @@ from aioway.blocks import Block
 from aioway.errors import AiowayError
 
 if typing.TYPE_CHECKING:
-    from .execs import Exec
+    from .execs import Execution
 
 
 @dcls.dataclass(frozen=True)
@@ -88,9 +88,9 @@ class ExecNextMethod:
             making it potentially more complicated.
     """
 
-    impl: Callable[["Exec"], Block]
+    impl: Callable[["Execution"], Block]
 
-    def __get__(self, instance: "Exec" | None, owner: type["Exec"]):
+    def __get__(self, instance: "Execution" | None, owner: type["Execution"]):
         """
         Returns a bounded method if the instance is not None,
         otherwise returns the unbound method.

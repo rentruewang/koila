@@ -74,18 +74,18 @@ I think for now, let's simplify the costs first and then later add them back.
 import abc
 import dataclasses as dcls
 import functools
+import logging
 from abc import ABC
 from collections.abc import Callable, Sequence
 from typing import LiteralString, Self
 
 import numpy as np
-import structlog
 
 from aioway.errors import AiowayError
 
 __all__ = ["Caster", "Castable"]
 
-LOGGER = structlog.get_logger()
+LOGGER = logging.getLogger(__name__)
 
 
 def _checked[**P, T, E: Exception](unchecked: Callable[P, T], *err_types: type[E]):

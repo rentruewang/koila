@@ -7,10 +7,10 @@ from abc import ABC
 from collections.abc import Iterable, Iterator
 
 from aioway import registries
-from aioway.execs.execs import Exec
-from aioway.execs.utils import Nargs
+from aioway.execs.execs import Execution
 
 from .batches import Batch, Batch0, Batch1, Batch2
+from .utils import Nargs
 
 __all__ = [
     "Poller",
@@ -37,7 +37,7 @@ class Poller(Nargs, Iterable[Batch], ABC):
 
     @property
     @abc.abstractmethod
-    def children(self) -> Iterator[Exec]: ...
+    def children(self) -> Iterator[Execution]: ...
 
 
 @dcls.dataclass(frozen=True)
@@ -57,10 +57,10 @@ class Poller0(Poller, key="SOURCE"):
 
 
 @dcls.dataclass(frozen=True)
-class Poller1(Poller):
+class Poller1(Poller, ABC):
     N_ARY = 1
 
-    child: Exec
+    child: Execution
 
     @typing.override
     @abc.abstractmethod
@@ -82,11 +82,11 @@ class NextPoller(Poller1, key="NEXT"):
 
 
 @dcls.dataclass(frozen=True)
-class Poller2(Poller):
+class Poller2(Poller, ABC):
     N_ARY = 2
 
-    left: Exec
-    right: Exec
+    left: Execution
+    right: Execution
 
     @typing.override
     @abc.abstractmethod

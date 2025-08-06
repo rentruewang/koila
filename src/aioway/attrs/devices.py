@@ -1,17 +1,17 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import dataclasses as dcls
+import logging
 import typing
 from typing import Any, Self
 
-import structlog
 from torch import device as TorchDevice
 
 from aioway.errors import AiowayError
 
 __all__ = ["Device"]
 
-LOGGER = structlog.get_logger()
+LOGGER = logging.getLogger(__name__)
 
 
 @typing.final

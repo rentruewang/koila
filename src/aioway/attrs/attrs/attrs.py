@@ -1,11 +1,11 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import dataclasses as dcls
+import logging
 import typing
 from collections.abc import Mapping
 from typing import Any, Protocol, Self, TypedDict
 
-import structlog
 from torch import Tensor
 
 from aioway.attrs.devices import Device
@@ -15,7 +15,7 @@ from aioway.errors import AiowayError
 
 __all__ = ["Attr"]
 
-LOGGER = structlog.get_logger()
+LOGGER = logging.getLogger(__name__)
 
 
 class AttrDict(TypedDict):

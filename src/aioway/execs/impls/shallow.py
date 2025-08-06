@@ -6,13 +6,14 @@ import typing
 
 from aioway.blocks import Block
 from aioway.errors import AiowayError
-from aioway.execs.execs import Exec
+from aioway.execs.execs import Execution
 
 from .unary import UnaryExec
 
 __all__ = ["ProjectExec", "RenameExec", "EchoExec"]
 
 
+# TODO
 @typing.final
 @dcls.dataclass
 class ProjectExec(UnaryExec, key="PROJECT"):
@@ -52,12 +53,12 @@ class RenameExec(UnaryExec, key="RENAME"):
     The mapping dictionary names.
     """
 
-    def __init__(self, __exe: Exec, /, **renames: str) -> None:
-        # This constructor is provideds.t. `RenameStream`'s renames can be specified as **kwargs,
+    def __init__(self, __exe: Execution, /, **renames: str) -> None:
+        # This constructor is provided s.t. ``RenameExec``'s renames can be specified as **kwargs,
         # which means they will be variable names, consistent with what `TensorDict` provides.
         #
         # Even though I'm using a Python version with positional only argument,
-        # since ``Exec`` is common, using ``__exe`` to avoid name collision (in keys).
+        # since ``exe`` is common, using ``__exe`` to avoid name collision (in keys).
         self.child = __exe
         self.renames = renames
 

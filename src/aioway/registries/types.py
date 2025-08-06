@@ -1,21 +1,18 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import dataclasses as dcls
-import difflib
 import inspect
+import logging
 import typing
 from abc import ABC
 from collections import defaultdict as DefaultDict
-from collections.abc import Callable, Mapping, MutableMapping
-from typing import Any, Protocol
+from collections.abc import Callable, Mapping
+from typing import Protocol
 
-import structlog
-
-from aioway.errors import AiowayError
+from .registries import Registry, RegistryKeyError
 
 __all__ = ["init_subclass", "of", "ClassRegistry", "GlobalRegistry"]
-
-LOGGER = structlog.get_logger()
+LOGGER = logging.getLogger(__name__)
 
 
 class RegistryInitSubclass[T: type[ABC]](Protocol):
@@ -69,7 +66,7 @@ def init_subclass[T: type[ABC]](base: Callable[[], T]) -> RegistryInitSubclass[T
             if inspect.isabstract(cls):
                 return
 
-            raise FactoryKeyError(
+            raise RegistryKeyError(
                 f"Class: {cls} isn't given a key argument. Only valid for abstract classes."
             )
 
@@ -79,76 +76,35 @@ def init_subclass[T: type[ABC]](base: Callable[[], T]) -> RegistryInitSubclass[T
 
 
 @dcls.dataclass(frozen=True)
-class ClassRegistry(MutableMapping[str, type]):
-    """
-    Class registry for a given class (stored as attribute ``klass``).
-
-    You will not be able to overwrite classes (2 classes with the same key),
-    an error would be raised in that case.
-    """
-
+class _ClassMixin:
     klass: type
     """
     The class of which all registered classes must be a subclass.
     """
 
-    registry: dict[str, type] = dcls.field(default_factory=dict)
+
+@dcls.dataclass(frozen=True)
+class ClassRegistry(Registry[type], _ClassMixin):
     """
-    The registry mapping from a key to a value.
+    Class registry for a given class (stored as attribute ``klass``).
     """
-
-    @typing.override
-    def __len__(self) -> int:
-        return len(self.registry)
-
-    @typing.override
-    def __contains__(self, obj: Any) -> bool:
-        return obj in self.registry
-
-    @typing.override
-    def __iter__(self):
-        yield from self.registry
 
     @typing.override
     def __getitem__(self, key: str) -> type:
-        if key not in self:
-            self._raise_when_not_found(key)
-
-        result = self.registry[key]
+        result = super().__getitem__(key)
         self._raise_if_not_subclass(result)
         return result
 
     @typing.override
-    def __setitem__(self, key: str, item: type) -> None:
-        if key in self:
-            raise FactoryKeyError(
-                f"Trying to insert key: {key} and class: {item} "
-                f"but key is already used by class: {self[key]}"
-            )
-
+    def __setitem__(self, key: str, item: type, /) -> None:
+        super().__setitem__(key, item)
         self._raise_if_not_subclass(item)
-        self.registry[key] = item
 
-    @typing.override
-    def __delitem__(self, key: str) -> None:
-        del self.registry[key]
-
-    def _raise_if_not_subclass(self, t: type) -> None:
+    def _raise_if_not_subclass(self, t: type, /) -> None:
         if issubclass(t, self.klass):
             return
 
-        raise FactoryKeyError(f"Type: {t} must be a subclass of class: {self.klass}.")
-
-    def _raise_when_not_found(self, key):
-        closest = difflib.get_close_matches(key, self)
-
-        msg = f"{key=} not found in registry for class {self.klass}."
-
-        if len(closest):
-            candidates = ", ".join(f"'{close}'" for close in closest)
-            msg = f"{msg}. Do you mean one of: [{candidates}]"
-
-        raise FactoryKeyError(msg)
+        raise RegistryKeyError(f"Type: {t} must be a subclass of class: {self.klass}.")
 
 
 @typing.no_type_check
@@ -187,6 +143,3 @@ Each registry is a ``ClassRegistry`` instance,
 that handles looking up classes,
 and suggesting a similar key registered in case of typo.
 """
-
-
-class FactoryKeyError(AiowayError, KeyError): ...

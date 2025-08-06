@@ -1,10 +1,9 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import dataclasses as dcls
+import logging
 from collections.abc import Callable
 from typing import Self
-
-import structlog
 
 from aioway.attrs.attrs import AttrSet, NamedAttr
 from aioway.errors import AiowayError
@@ -14,7 +13,7 @@ from .parsers import EinsumParser
 
 __all__ = ["EinsumAttrSet"]
 
-LOGGER = structlog.get_logger()
+LOGGER = logging.getLogger(__name__)
 
 
 @dcls.dataclass(frozen=True)

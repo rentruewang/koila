@@ -8,7 +8,7 @@ import pytest
 from aioway.blocks import Block
 from aioway.execs import (
     EchoExec,
-    Exec,
+    Execution,
     FilterExprExec,
     FilterPredExec,
     FrameExec,
@@ -49,7 +49,7 @@ def test_block_frame_getitem(block_frame):
 
 
 @pytest.fixture
-def block_frame_iter(block_frame, size) -> Exec:
+def block_frame_iter(block_frame, size) -> Execution:
     # Note:
     #   Do not use this iterator in tests for comparison,
     #   because the iterator is instantiated once for each tests.
@@ -65,7 +65,7 @@ def block_frame_iter(block_frame, size) -> Exec:
 
 
 def test_iterator_exec(block_frame_iter):
-    assert isinstance(block_frame_iter, Exec)
+    assert isinstance(block_frame_iter, Execution)
 
 
 def test_iterator_eq(block_frame, block_frame_iter, size):
@@ -75,16 +75,16 @@ def test_iterator_eq(block_frame, block_frame_iter, size):
         assert (fresh.data == iterator.data).all()
 
 
-def filter_expr_exec(stream: Exec):
+def filter_expr_exec(stream: Execution):
     return FilterExprExec(stream, "f1d > 0")
 
 
-def filter_pred_frame(stream: Exec):
+def filter_pred_frame(stream: Execution):
     return FilterPredExec(stream, predicate=lambda t: (t["f1d"] > 0).cpu().numpy())
 
 
 @pytest.fixture(params=[filter_expr_exec, filter_pred_frame])
-def filter_exec(request) -> Callable[[Exec], Exec]:
+def filter_exec(request) -> Callable[[Execution], Execution]:
     return request.param
 
 

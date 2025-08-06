@@ -6,25 +6,25 @@ from abc import ABC
 from collections.abc import Iterator
 
 from aioway.blocks import Block
-from aioway.execs.execs import Exec
+from aioway.execs.execs import Execution
 from aioway.nodes import UnaryNode
 
 __all__ = ["UnaryExec"]
 
 
 @dcls.dataclass
-class UnaryExec(Exec, UnaryNode, ABC):
+class UnaryExec(Execution, UnaryNode, ABC):
     """
     ``UnaryExec`` is a base class for all unary operations.
     """
 
-    child: Exec
+    child: Execution
     """
     The input ``Exec`` of the current ``Exec``.
     """
 
     @staticmethod
-    def pass_through(exe: Exec):
+    def pass_through(exe: Execution):
         yield from exe
 
     @functools.cached_property

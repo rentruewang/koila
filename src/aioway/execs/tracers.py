@@ -9,7 +9,7 @@ from aioway import registries
 from aioway.errors import AiowayError
 from aioway.nodes import Node
 
-from .execs import Exec
+from .execs import Execution
 from .impls import BinaryExec, NullaryExec, UnaryExec
 
 __all__ = ["ExecTracer"]
@@ -23,7 +23,7 @@ class ExecTracer(Node):
     it acts as a convenience wrapper around ``Exec`` to provide a more user-friendly interface.
     """
 
-    exe: Exec
+    exe: Execution
     """
     The input ``Exec`` of the current ``ExecTracer``.
     """
@@ -31,7 +31,7 @@ class ExecTracer(Node):
     def map(self, op: str, *args, **kwargs) -> Self:
         init = InitExec(
             operator=op,
-            exec_class=registries.of(Exec)[op],
+            exec_class=registries.of(Execution)[op],
             super_class=UnaryExec,
             identifier="unary",
         )
@@ -41,7 +41,7 @@ class ExecTracer(Node):
     def join(self, other: Self, op: str, *args, **kwargs) -> Self:
         init = InitExec(
             operator=op,
-            exec_class=registries.of(Exec)[op],
+            exec_class=registries.of(Execution)[op],
             super_class=BinaryExec,
             identifier="binary",
         )
@@ -52,7 +52,7 @@ class ExecTracer(Node):
     def create(cls, op: str, *args, **kwargs) -> Self:
         init = InitExec(
             operator=op,
-            exec_class=registries.of(Exec)[op],
+            exec_class=registries.of(Execution)[op],
             super_class=NullaryExec,
             identifier="nullary",
         )
@@ -61,7 +61,7 @@ class ExecTracer(Node):
 
     @property
     @typing.override
-    def children(self) -> tuple[Exec, ...]:
+    def children(self) -> tuple[Execution, ...]:
         return self.exe.children
 
 
@@ -76,7 +76,7 @@ class InitExec(NamedTuple):
     The operator of the current ``ExecTracer``.
     """
 
-    exec_class: type[Exec]
+    exec_class: type[Execution]
     """
     The class of the current ``ExecTracer``.
     """
@@ -91,7 +91,7 @@ class InitExec(NamedTuple):
     The identifier of the current ``ExecTracer``.
     """
 
-    def __call__(self, *args, **kwargs) -> Exec:
+    def __call__(self, *args, **kwargs) -> Execution:
         self.check_subclass()
         return self.instantiate(*args, **kwargs)
 
@@ -108,7 +108,7 @@ class InitExec(NamedTuple):
             f"ExecTracer only supports {self.identifier} operations, but {self.operator} is not a {self.identifier} operation."
         )
 
-    def instantiate(self, *args, **kwargs) -> Exec:
+    def instantiate(self, *args, **kwargs) -> Execution:
         """
         Instantiate the given class with the given arguments.
         """

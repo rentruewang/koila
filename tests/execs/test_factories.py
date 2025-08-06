@@ -5,7 +5,7 @@ import pytest
 from aioway import registries
 from aioway.execs import (
     EchoExec,
-    Exec,
+    Execution,
     FilterExprExec,
     FilterPredExec,
     FrameExec,
@@ -21,7 +21,7 @@ from aioway.execs import (
 
 @pytest.fixture(scope="module")
 def exec_factory():
-    return registries.of(Exec)
+    return registries.of(Execution)
 
 
 def _exec_key_cls_param():
