@@ -10,7 +10,7 @@ from numpy.typing import NDArray
 
 from aioway.blocks import Block
 from aioway.errors import AiowayError
-from aioway.execs.execs import Exec
+from aioway.execs.execs import Execution
 
 from .binary import BinaryExec
 from .frames import FrameExec
@@ -18,6 +18,7 @@ from .frames import FrameExec
 __all__ = ["NestedLoopExec"]
 
 
+# TODO
 @typing.final
 @dcls.dataclass
 class NestedLoopExec(BinaryExec, key="NESTED_LOOP"):
@@ -43,7 +44,7 @@ class NestedLoopExec(BinaryExec, key="NESTED_LOOP"):
     """
 
     def __post_init__(self) -> None:
-        if not isinstance(self.left, Exec):
+        if not isinstance(self.left, Execution):
             raise PartitionOperandTypeError(
                 f"LHS should be of type exec. Got {type(self.left)=}"
             )
@@ -82,7 +83,7 @@ class NestedLoopExec(BinaryExec, key="NESTED_LOOP"):
         return l, r
 
 
-def nested_loop(left: Exec, right: FrameExec):
+def nested_loop(left: Execution, right: FrameExec):
     for left_block in left:
         right.reset()
         for right_block in right:

@@ -3,13 +3,12 @@
 import abc
 import dataclasses as dcls
 import functools
+import logging
 import re
 import typing
 from abc import ABC
 from re import Pattern
 from typing import Protocol
-
-import structlog
 
 from aioway.attrs.devices import Device
 from aioway.attrs.dtypes import DType
@@ -20,7 +19,7 @@ from .parsers import EinsumSignature
 
 __all__ = ["EinsumAttr", "EinsumName", "EinsumShape", "EinsumDType", "EinsumDevice"]
 
-LOGGER = structlog.get_logger()
+LOGGER = logging.getLogger(__name__)
 
 
 @dcls.dataclass(eq=False, frozen=True, repr=False)

@@ -13,7 +13,7 @@ from torch.nn import Parameter
 from aioway.attrs import AttrSet
 from aioway.blocks import Block
 from aioway.errors import AiowayError
-from aioway.execs import Exec
+from aioway.execs import Execution
 
 from .unary import UnaryExec
 
@@ -58,6 +58,7 @@ class MapExecBase(UnaryExec, ABC):
         return result
 
 
+# TODO
 @dcls.dataclass
 class MapExec(MapExecBase, key="MAP"):
     """
@@ -86,6 +87,7 @@ class MapExec(MapExecBase, key="MAP"):
         return self.compute(item)
 
 
+# TODO
 @dcls.dataclass
 class ModuleExec(MapExecBase, key="MODULE"):
     """
@@ -134,7 +136,7 @@ class ModuleExec(MapExecBase, key="MODULE"):
 
     @classmethod
     def wrap(
-        cls, exe: Exec, function: Callable, in_keys: Sequence[str], output: AttrSet
+        cls, exe: Execution, function: Callable, in_keys: Sequence[str], output: AttrSet
     ):
         """
         Wrap a function into a ``ModuleExec``.

@@ -7,13 +7,14 @@ from collections.abc import Iterator
 
 from aioway.blocks import Block
 from aioway.errors import AiowayError
-from aioway.execs.execs import Exec
+from aioway.execs.execs import Execution
 
 from .binary import BinaryExec
 
 __all__ = ["ZipExec"]
 
 
+# TODO
 @typing.final
 @dcls.dataclass
 class ZipExec(BinaryExec, key="ZIP"):
@@ -31,7 +32,7 @@ class ZipExec(BinaryExec, key="ZIP"):
         return zip_over(self.left, self.right)
 
 
-def zip_over(left: Exec, right: Exec):
+def zip_over(left: Execution, right: Execution):
     for l, r in zip(left, right):
         yield l, r
 

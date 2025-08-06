@@ -8,24 +8,21 @@ from typing import Any, Self
 
 import tensordict
 from tensordict import TensorDict
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
 
 from aioway.blocks import Block
 from aioway.errors import AiowayError
+from aioway.frames import Frame
 
-from .nullary import NullaryExec
+from .ops import Op0
 
-if typing.TYPE_CHECKING:
-    from aioway.frames import Frame
-
-__all__ = ["FrameExec", "DataLoaderCfg", "DataLoaderCfgLike"]
+__all__ = ["FrameOp"]
 
 
-@typing.final
-@dcls.dataclass
-class FrameExec(NullaryExec, key="FRAME"):
+@dcls.dataclass(frozen=True)
+class FrameOp(Op0, key="SOURCE"):
     """
-    An ``Exec`` that wraps a ``Frame`` and a ``DataLoaderAdaptor``.
+    An ``Op`` that wraps a ``Frame`` and a ``DataLoader``.
     """
 
     dataset: "Frame" = dcls.field(repr=False)
@@ -33,7 +30,7 @@ class FrameExec(NullaryExec, key="FRAME"):
     The backing ``Frame``, stored in order to reset.
     """
 
-    opt: "DataLoaderCfg | dict[str, Any]" = dcls.field(default_factory=dict)
+    opt: "DataLoaderCfgLike" = dcls.field(default_factory=dict)
     """
     The option for the ``DataLoaderAdaptor``,
     which is responsible for iterating over the ``Frame``.
@@ -47,15 +44,6 @@ class FrameExec(NullaryExec, key="FRAME"):
         item = next(self._iterator)
         assert isinstance(item, Block), f"Item must be a `Block`, got {type(item)=}."
         return item
-
-    def __len__(self) -> int:
-        return len(self.dataset)
-
-    def __getitem__(self, index: int) -> Block:
-        return self.dataset[index]
-
-    def __getitems__(self, indices: list[int]) -> Block:
-        return self.dataset.__getitems__(indices)
 
     def reset(self) -> None:
         if hasattr(self, "_iterator"):
@@ -141,7 +129,7 @@ class DataLoaderCfg:
         due to `DataLoader` using `pickle` to serialize the function.
     """
 
-    def iterator_of(self, dataset: "Frame") -> Iterator[Block]:
+    def iterator_of(self, dataset: Dataset[Block]) -> Iterator[Block]:
         return _dl_iter(dataset, self)
 
     @classmethod
@@ -166,7 +154,7 @@ def _check_tensordict_batched(td: TensorDict, /, *, is_batched: bool) -> None:
     raise TabularBatchError
 
 
-def _dl_iter(dataset: "Frame", opt: DataLoaderCfg | dict[str, Any]) -> Iterator[Block]:
+def _dl_iter(dataset: Dataset[Block], opt: DataLoaderCfgLike):
     # Convert to ``DataLoaderOpt`` first to ensure that the default configs are set.
     opt = DataLoaderCfg.parse(opt)
 
@@ -182,9 +170,7 @@ def _dl_iter(dataset: "Frame", opt: DataLoaderCfg | dict[str, Any]) -> Iterator[
         if not batch.batch_size:
             raise TabularBatchError(f"TensorDict batch must have `batch_size`.")
 
-        block = Block(batch)
-        block.require_attrs(dataset.attrs)
-        yield block
+        yield Block(batch)
 
 
 def _maybe_stack_td_impl(items: TensorDict | list[TensorDict]) -> TensorDict:

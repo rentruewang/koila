@@ -2,16 +2,15 @@
 
 import dataclasses as dcls
 import functools
+import logging
 import operator
 import typing
 from collections.abc import Iterable, Sequence
 from typing import Any, Self
 
-import structlog
-
 __all__ = ["Shape"]
 
-LOGGER = structlog.get_logger()
+LOGGER = logging.getLogger(__name__)
 
 
 @dcls.dataclass(eq=False, frozen=True)

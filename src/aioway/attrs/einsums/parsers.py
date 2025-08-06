@@ -1,20 +1,19 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import dataclasses as dcls
+import logging
 import typing
 from collections.abc import Iterator, Sequence
 from types import EllipsisType
 from typing import Self
 
 import lark
-import structlog
 from lark import Lark, LarkError, Transformer
 
 from aioway.errors import AiowayError
 
 __all__ = ["EinsumSignature", "EinsumParser"]
-
-LOGGER = structlog.get_logger()
+LOGGER = logging.getLogger(__name__)
 
 
 EINSUM_GRAMMAR = r"""

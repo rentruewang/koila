@@ -3,20 +3,21 @@
 import dataclasses as dcls
 from abc import ABC
 
-from aioway.execs.execs import Exec
+from aioway.execs.execs import Execution
 from aioway.nodes import BinaryNode
 
 __all__ = ["BinaryExec"]
 
 
+# TODO
 @dcls.dataclass
-class BinaryExec(Exec, BinaryNode, ABC):
-    left: Exec
+class BinaryExec(Execution, BinaryNode, ABC):
+    left: Execution
     """
     The LHS of the operator.
     """
 
-    right: Exec
+    right: Execution
     """
     The RHS of the operator.
     """
