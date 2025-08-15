@@ -14,7 +14,7 @@ __all__ = ["Registry", "RegistryKeyError"]
 LOGGER = logging.getLogger(__name__)
 
 
-@dcls.dataclass(frozen=True)
+@dcls.dataclass(frozen=True, repr=False)
 class Registry[T](MutableMapping[str, T]):
     """
     ``Registry`` supports looking up a collection of items by their names.
@@ -42,7 +42,7 @@ class Registry[T](MutableMapping[str, T]):
 
     @typing.override
     def __getitem__(self, key: str, /) -> T:
-        LOGGER.debug()
+        LOGGER.debug("Getting item for key: %s", key)
         self._raise_error_not_found(key)
         return self.registry[key]
 
@@ -60,6 +60,9 @@ class Registry[T](MutableMapping[str, T]):
     def __delitem__(self, key: str) -> None:
         self._raise_error_not_found(key)
         del self.registry[key]
+
+    def __repr__(self) -> str:
+        return repr(self.registry)
 
     def _raise_error_not_found(self, key: str, /) -> None:
         """

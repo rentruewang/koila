@@ -3,15 +3,14 @@
 import dataclasses as dcls
 import typing
 from collections.abc import Iterator, Mapping
-from typing import Any, NamedTuple
+from typing import NamedTuple
 
 from numpy.typing import NDArray
 
 from aioway.errors import AiowayError
 from aioway.frames import Frame
 
-from . import factories
-from .indices import Index, IndexContext
+from .indices import Index
 from .ops import IndexOp
 
 type MultiCol = tuple[str, ...]
@@ -82,15 +81,6 @@ class IndexManager(Mapping[MultiCol, MultiOpIndex]):
         # prevents index collision.
         return MultiOpIndex(
             mgr=self, columns=key, indices={op: idx for _, op, idx in selected}
-        )
-
-    def create(self, key: MultiCol, op: type[IndexOp], **kwargs: Any) -> None:
-        index = self._create(key=key, op=op, **kwargs)
-        self.indices.append(_ColTypeIndex(cols=key, ops=op, idx=index))
-
-    def _create(self, key: MultiCol, op: type[IndexOp], **kwargs: Any) -> Index:
-        return factories.index_factory(
-            key=op, ctx=IndexContext(frame=self.frame, columns=key, **kwargs)
         )
 
 

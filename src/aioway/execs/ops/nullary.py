@@ -20,7 +20,7 @@ __all__ = ["FrameOp"]
 
 
 @dcls.dataclass(frozen=True)
-class FrameOp(Op0, key="SOURCE"):
+class FrameOp(Op0, key="FRAME_0"):
     """
     An ``Op`` that wraps a ``Frame`` and a ``DataLoader``.
     """
@@ -36,18 +36,11 @@ class FrameOp(Op0, key="SOURCE"):
     which is responsible for iterating over the ``Frame``.
     """
 
-    def __post_init__(self) -> None:
-        self.reset()
-
     @typing.override
     def __next__(self) -> Block:
         item = next(self._iterator)
         assert isinstance(item, Block), f"Item must be a `Block`, got {type(item)=}."
         return item
-
-    def reset(self) -> None:
-        if hasattr(self, "_iterator"):
-            del self._iterator
 
     @functools.cached_property
     def _iterator(self) -> Iterator[Block]:
