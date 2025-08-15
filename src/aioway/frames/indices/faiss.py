@@ -2,14 +2,12 @@
 
 import dataclasses as dcls
 import typing
-from typing import Self
 
 from numpy.typing import NDArray
 
 from aioway.errors import AiowayError
-from aioway.execs import DataLoaderCfg, DataLoaderCfgLike
 
-from .indices import Index, IndexContext
+from .indices import Index
 from .ops import IndexAnn, IndexOp
 
 if typing.TYPE_CHECKING:
@@ -44,24 +42,6 @@ class FaissIndex(Index):
     @typing.override
     def dims(self) -> tuple[int]:
         return (self.index.d,)
-
-    @classmethod
-    def create(
-        cls,
-        *,
-        ctx: IndexContext,
-        dl_opts: DataLoaderCfgLike = DataLoaderCfg(),
-        factory: str,
-    ) -> Self:
-        import faiss
-
-        arr = cls.load_frame(ctx=ctx, dl_opts=dl_opts)
-
-        # Create and train the index.
-        index = faiss.index_factory(arr.shape[1], factory)
-        index.train(arr)
-
-        return cls(ctx=ctx, index=index)
 
 
 class FaissIndexShapeError(AiowayError, IndexError): ...

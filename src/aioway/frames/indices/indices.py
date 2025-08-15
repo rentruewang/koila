@@ -9,7 +9,6 @@ import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
 from aioway.errors import AiowayError
-from aioway.execs import DataLoaderCfg, DataLoaderCfgLike, FrameExec
 from aioway.frames import Frame
 
 from .ops import IndexOp
@@ -83,40 +82,6 @@ class Index(ABC):
         """
 
         ...
-
-    @staticmethod
-    def load_frame(ctx: IndexContext, dl_opts: "DataLoaderCfgLike") -> NDArray:
-        """
-        Load the frame's contents into an numpy array.
-
-        Args:
-            ctx: The frame and columns to index.
-            dl_opts: _description_. Defaults to DataLoaderOpt().
-
-        Raises:
-            IndexDimsError:
-                This shouldn't happen because ``to_tensor`` should convert to the proper 2D ``Tensor``.
-
-        Returns:
-            A 2D numpy array.
-        """
-
-        dl_opts = DataLoaderCfg.parse(dl_opts)
-
-        # Dims should be the flattened shapes, due to `to_tensor`'s logic.
-        dims = sum(ctx.frame.attrs[col].shape.numel() for col in ctx.columns)
-        values = np.concatenate(
-            [
-                block[list(ctx.columns)].to_tensor().cpu().numpy()
-                for block in FrameExec(ctx.frame, dl_opts)
-            ],
-            axis=0,
-        )
-
-        if values.ndim != 2 or values.shape[1] != dims:
-            raise IndexDimsError(f"Data of tensors must have {dims} dimensions.")
-
-        return values
 
 
 class IndexDimsError(AiowayError, ValueError): ...
