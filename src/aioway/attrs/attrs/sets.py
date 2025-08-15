@@ -220,10 +220,10 @@ class AttrSet(Mapping[str, Attr]):
         td = TensorDict(td)
 
         LOGGER.debug(
-            "Creating attribute set from dict.",
-            dtype=td.dtype,
-            shape=td.shape,
-            device=td.device,
+            "Creating attribute set from dict, dtype=%s, shape=%s, device=%s",
+            td.dtype,
+            td.shape,
+            td.device,
         )
 
         return cls(

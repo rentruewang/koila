@@ -1,7 +1,6 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import dataclasses as dcls
-import inspect
 import logging
 import typing
 from abc import ABC
@@ -61,11 +60,6 @@ def init_subclass[T: type[ABC]](base: Callable[[], T]) -> RegistryInitSubclass[T
         factory = _GLOBAL_REGISTRY[base_class]
 
         if not key:
-            # Allow abstract classes, which would not be initialized,
-            # to not define keys, as factories are used to store leaf nodes.
-            if inspect.isabstract(cls):
-                return
-
             raise RegistryKeyError(
                 f"Class: {cls} isn't given a key argument. Only valid for abstract classes."
             )
@@ -83,24 +77,33 @@ class _ClassMixin:
     """
 
 
-@dcls.dataclass(frozen=True)
-class ClassRegistry(Registry[type], _ClassMixin):
+@dcls.dataclass(frozen=True, repr=False)
+class ClassRegistry[T: type](Registry[T], _ClassMixin):
     """
     Class registry for a given class (stored as attribute ``klass``).
     """
 
     @typing.override
-    def __getitem__(self, key: str) -> type:
+    def __getitem__(self, key: str) -> T:
         result = super().__getitem__(key)
         self._raise_if_not_subclass(result)
         return result
 
     @typing.override
-    def __setitem__(self, key: str, item: type, /) -> None:
+    def __setitem__(self, key: str, item: T, /) -> None:
         super().__setitem__(key, item)
         self._raise_if_not_subclass(item)
 
-    def _raise_if_not_subclass(self, t: type, /) -> None:
+    @typing.override
+    def _raise_error_not_found(self, key: str):
+        try:
+            return super()._raise_error_not_found(key)
+        except RegistryKeyError as rke:
+            raise RegistryKeyError(
+                f"Error occured during registry lookup for base class: {self.klass}"
+            ) from rke
+
+    def _raise_if_not_subclass(self, t: T, /) -> None:
         if issubclass(t, self.klass):
             return
 

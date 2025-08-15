@@ -20,6 +20,9 @@ class Batch(Nargs, ABC):
     It is used to represent the variety of output data extracted from ``Poller``.
     """
 
+    def __init_subclass__(cls, key: str):
+        cls._init_subclass(Batch, key=key)
+
     @abc.abstractmethod
     def __iter__(self) -> Iterator[Block]: ...
 
@@ -49,8 +52,8 @@ class BatchVisitor[T](ABC):
 
 
 @dcls.dataclass(frozen=True)
-class Batch0(Batch):
-    N_ARY = 0
+class Batch0(Batch, key="_0"):
+    ARGC = 0
 
     @typing.override
     def __iter__(self):
@@ -63,8 +66,8 @@ class Batch0(Batch):
 
 
 @dcls.dataclass(frozen=True)
-class Batch1(Batch):
-    N_ARY = 1
+class Batch1(Batch, key="_1"):
+    ARGC = 1
 
     block: Block
 
@@ -78,8 +81,8 @@ class Batch1(Batch):
 
 
 @dcls.dataclass(frozen=True)
-class Batch2(Batch):
-    N_ARY = 2
+class Batch2(Batch, key="_2"):
+    ARGC = 2
 
     left: Block
     right: Block
