@@ -1,8 +1,11 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
+import abc
 import dataclasses as dcls
 import typing
-from collections.abc import Callable
+from abc import ABC
+from collections.abc import Callable, Iterator
+from typing import ClassVar
 
 import numpy as np
 from numpy.typing import NDArray
@@ -12,21 +15,45 @@ from tensordict.nn import TensorDictModule
 from aioway.blocks import Block
 from aioway.errors import AiowayError
 
-from .ops import Op1
+from .execs import Exec
 
 __all__ = [
-    "PassOp",
-    "FuncFilterOp",
-    "ExprFilterOp",
-    "ProjectOp",
-    "MapOp",
-    "RenameOp",
-    "ModuleOp",
+    "Exec1",
+    "PassExec",
+    "FuncFilterExec",
+    "ExprFilterExec",
+    "ProjectExec",
+    "MapExec",
+    "RenameExec",
+    "ModuleExec",
 ]
 
 
 @dcls.dataclass(frozen=True)
-class PassOp(Op1, key="PASS_1"):
+class Exec1(Exec, ABC):
+    ARGC: ClassVar[int] = 1
+
+    child: Exec
+    """
+    The child executor.
+    """
+
+    @typing.override
+    def __iter__(self) -> Iterator[Block]:
+        for item in self.child:
+            yield self.map(item)
+
+    @abc.abstractmethod
+    def map(self, item: Block, /) -> Block: ...
+
+    @property
+    @typing.final
+    def children(self) -> tuple[Exec]:
+        return (self.child,)
+
+
+@dcls.dataclass(frozen=True)
+class PassExec(Exec1, key="PASS_1"):
     """
     The ``PASS`` operator does nothing to its inputs.
     """
@@ -37,7 +64,7 @@ class PassOp(Op1, key="PASS_1"):
 
 
 @dcls.dataclass(frozen=True)
-class FuncFilterOp(Op1, key="FUNC_FILTER_1"):
+class FuncFilterExec(Exec1, key="FUNC_FILTER_1"):
     predicate: Callable[[Block], NDArray]
     """
     The batched prediction of which rows to keep for the inputs.
@@ -69,7 +96,7 @@ class FuncFilterOp(Op1, key="FUNC_FILTER_1"):
 
 
 @dcls.dataclass(frozen=True)
-class ExprFilterOp(Op1, key="EXPR_FILTER_1"):
+class ExprFilterExec(Exec1, key="EXPR_FILTER_1"):
     expr: str | Expr
     """
     The expression of the frame.
@@ -81,7 +108,7 @@ class ExprFilterOp(Op1, key="EXPR_FILTER_1"):
 
 
 @dcls.dataclass(frozen=True)
-class ProjectOp(Op1, key="PROJECT_1"):
+class ProjectExec(Exec1, key="PROJECT_1"):
     """
     Select a subset of the columns.
     """
@@ -109,7 +136,7 @@ class ProjectOp(Op1, key="PROJECT_1"):
 
 
 @dcls.dataclass(frozen=True)
-class MapOp(Op1, key="MAP_1"):
+class MapExec(Exec1, key="MAP_1"):
     """
     ``MapOp`` is an ``Op`` that performs on the input ``Block``,
     and returns the result as a ``Block``.
@@ -128,7 +155,7 @@ class MapOp(Op1, key="MAP_1"):
 
 
 @dcls.dataclass(frozen=True)
-class RenameOp(Op1, key="RENAME_1"):
+class RenameExec(Exec1, key="RENAME_1"):
     """
     Rename a couple of columns.
     """
@@ -144,7 +171,7 @@ class RenameOp(Op1, key="RENAME_1"):
 
 
 @dcls.dataclass(frozen=True)
-class ModuleOp(Op1, key="MODULE_1"):
+class ModuleExec(Exec1, key="MODULE_1"):
     """
     ``ModuleOpExec`` is an ``Op`` that wraps a ``TensorDictModule``,
     and executes it on the input data.
