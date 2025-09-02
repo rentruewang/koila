@@ -1,30 +1,24 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
+import abc
 import dataclasses as dcls
+import inspect
 import logging
-import typing
-from collections.abc import Iterator
-from dataclasses import KW_ONLY as KwOnly
-from dataclasses import InitVar
-from typing import Any, Self
+from abc import ABC
+from collections.abc import Iterable, Iterator
+from typing import ClassVar
 
+from aioway import registries
 from aioway.blocks import Block
 from aioway.errors import AiowayError
-from aioway.nodes import Node
-
-if typing.TYPE_CHECKING:
-    from .batches import Batch
-    from .ops import Op
-    from .pollers import Poller
 
 __all__ = ["Exec"]
 
 LOGGER = logging.getLogger(__name__)
 
 
-@typing.final
-@dcls.dataclass(frozen=False)
-class Exec(Node["Exec"]):
+@dcls.dataclass(frozen=True)
+class Exec(Iterable[Block], ABC):
     """
     ``Exec`` is the graph / symbolic representation of an execution.
 
@@ -34,61 +28,59 @@ class Exec(Node["Exec"]):
     rather than iterators (``__next__`` function) with state management.
     """
 
-    poller: "Poller[Batch]" = dcls.field(init=False)
+    ARGC: ClassVar[int]
     """
-    The ``Poller`` that determines the iteration strategy,
-    as well as storing the children of the current ``Exec``.
-    """
-
-    op: "Op" = dcls.field(init=False)
-    """
-    The ``Op`` to apply on retrieved data from the poller.
-    It shall be a pure function.
+    Argument count of the current node.
     """
 
-    _: KwOnly
+    def __init_subclass__(cls, key: str = ""):
+        # Allow abstract classes, which would not be initialized,
+        # to not define keys, as factories are used to store leaf nodes.
+        if inspect.isabstract(cls):
+            return
 
-    poller_type: InitVar[type["Poller"]]
-    """
-    The type of ``Poller``.
-    """
+        # Impossible if `nargs_init_subclass` is only called in ``__init_subclass``.
+        if not issubclass(cls, Exec):
+            raise ExecSubclassError(
+                "`nargs_init_subclass` must be called in `__init_subclass__`."
+            )
 
-    execs: InitVar[tuple[Self, ...]]
-    """
-    The children for the current ``Exec``, passed to ``poller_type`` to construct a ``Poller``.
-    """
+        # Add to registry.
+        registries.init_subclass(lambda: Exec)(cls, key=key)
 
-    op_type: InitVar[type["Op"]]
-    """
-    The type of ``Op``.
-    """
+        # Ensure key name.
+        cls._validate_nary_name(key)
 
-    op_opts: InitVar[dict[str, Any]]
-    """
-    The options / kwargs for ``Op``.
-    """
-
-    def __post_init__(
-        self,
-        poller_type: type["Poller"],
-        execs: tuple[Self, ...],
-        op_type: type["Op"],
-        op_opts: dict[str, Any],
-    ) -> None:
-        if poller_type.ARGC != op_type.ARGC:
-            raise ExecInitError(f"{poller_type.ARGC=} != {op_type.ARGC=}.")
-
-        self.poller = poller_type.init(*execs)
-        self.op = op_type(**op_opts)
-
+    @abc.abstractmethod
     def __iter__(self) -> Iterator[Block]:
-        for batch in self.poller:
-            yield self.op(batch)
+        """
+        The ``__iter__`` method launches a new ``Iterator`` to loop over the inputs.
+        Every call is creates / rebuilds brand new computation.
 
-    @property
-    @typing.override
-    def children(self) -> tuple[Self, ...]:
-        return self.poller.execs
+        Returns:
+            A stream of ``Block``s.
+        """
+
+        ...
+
+    @classmethod
+    def _validate_nary_name(cls, key: str) -> None:
+        """
+        For `ARGC = k`, ``key`` must have `_k` suffix.
+        """
+
+        if key.endswith(f"_{cls.ARGC}"):
+            return
+
+        raise ExecNamingError(
+            f"`ARGC={cls.ARGC}`, but {key=} does not have `_{cls.ARGC}` suffix."
+        )
 
 
 class ExecInitError(AiowayError, TypeError): ...
+
+
+class ExecNamingError(AiowayError, NameError): ...
+
+
+class ExecSubclassError(AiowayError, RuntimeError): ...
