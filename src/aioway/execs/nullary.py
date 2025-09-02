@@ -1,10 +1,10 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import dataclasses as dcls
-import functools
 import typing
+from abc import ABC
 from collections.abc import Callable, Iterator
-from typing import Any, Self
+from typing import Any, ClassVar, Self
 
 import tensordict
 from tensordict import TensorDict
@@ -14,13 +14,23 @@ from aioway.blocks import Block
 from aioway.errors import AiowayError
 from aioway.frames import Frame
 
-from .ops import Op0
+from .execs import Exec
 
-__all__ = ["FrameOp"]
+__all__ = ["Exec0", "FrameExec"]
 
 
 @dcls.dataclass(frozen=True)
-class FrameOp(Op0, key="FRAME_0"):
+class Exec0(Exec, ABC):
+    ARGC: ClassVar[int] = 0
+
+    @property
+    @typing.final
+    def children(self) -> tuple[()]:
+        return ()
+
+
+@dcls.dataclass(frozen=True)
+class FrameExec(Exec0, key="FRAME_0"):
     """
     An ``Op`` that wraps a ``Frame`` and a ``DataLoader``.
     """
@@ -37,20 +47,7 @@ class FrameOp(Op0, key="FRAME_0"):
     """
 
     @typing.override
-    def __next__(self) -> Block:
-        item = next(self._iterator)
-        assert isinstance(item, Block), f"Item must be a `Block`, got {type(item)=}."
-        return item
-
-    @functools.cached_property
-    def _iterator(self) -> Iterator[Block]:
-        """
-        The actual iterator that will be used to iterate over the ``Frame``.
-        """
-
-        return self._new_iterator()
-
-    def _new_iterator(self):
+    def __iter__(self):
         yield from DataLoaderCfg.parse(self.opt).iterator_of(self.dataset)
 
 

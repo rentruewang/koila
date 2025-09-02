@@ -5,7 +5,15 @@ from collections.abc import Callable
 
 import pytest
 
-from aioway.execs import Exec
+from aioway.execs import (
+    Exec,
+    ExprFilterExec,
+    FrameExec,
+    FuncFilterExec,
+    MapExec,
+    ProjectExec,
+    RenameExec,
+)
 from aioway.frames import BlockFrame
 from tests import fake
 
@@ -39,7 +47,7 @@ def test_block_frame_getitem(block_frame):
 
 
 @pytest.fixture
-def block_frame_iter(exec_init_reg, block_frame, size):
+def block_frame_iter(block_frame, size):
     # Note:
     #   Do not use this iterator in tests for comparison,
     #   because the iterator is instantiated once for each tests.
@@ -51,29 +59,27 @@ def block_frame_iter(exec_init_reg, block_frame, size):
     #   >>>    assert a is not b
     #   Both sides of the equation uses the same iterator underneath,
     #   and it would create subtle bugs.
-    return exec_init_reg["FRAME"](dataset=block_frame, opt={"batch_size": size})
+    return FrameExec(dataset=block_frame, opt={"batch_size": size})
 
 
 def test_iterator_exec(block_frame_iter):
     assert isinstance(block_frame_iter, Exec)
 
 
-def test_iterator_eq(exec_init_reg, block_frame, size):
+def test_iterator_eq(block_frame, size):
     for fresh, iterator in zip(
-        exec_init_reg["FRAME"](dataset=block_frame, opt={"batch_size": size}),
-        exec_init_reg["FRAME"](dataset=block_frame, opt={"batch_size": size}),
+        FrameExec(dataset=block_frame, opt={"batch_size": size}),
+        FrameExec(dataset=block_frame, opt={"batch_size": size}),
     ):
         assert (fresh.data == iterator.data).all()
 
 
-def filter_expr_exec(exec_init_reg, stream: Exec):
-    return exec_init_reg["FILTER_EXPR"](stream, expr="f1d > 0")
+def filter_expr_exec(stream: Exec):
+    return ExprFilterExec(stream, expr="f1d > 0")
 
 
-def filter_pred_frame(exec_init_reg, stream: Exec):
-    return exec_init_reg["FILTER_FUNC"](
-        stream, predicate=lambda t: (t["f1d"] > 0).cpu().numpy()
-    )
+def filter_pred_frame(stream: Exec):
+    return FuncFilterExec(stream, predicate=lambda t: (t["f1d"] > 0).cpu().numpy())
 
 
 @pytest.fixture(params=[filter_expr_exec, filter_pred_frame])
@@ -81,13 +87,9 @@ def filter_exec(request) -> Callable[[Exec], Exec]:
     return request.param
 
 
-def test_filter_exec_next(exec_init_reg, filter_exec, block_frame, size):
-    frame_exec_left = exec_init_reg["FRAME"](
-        dataset=block_frame, opt={"batch_size": size}
-    )
-    frame_exec_right = exec_init_reg["FRAME"](
-        dataset=block_frame, opt={"batch_size": size}
-    )
+def test_filter_exec_next(filter_exec, block_frame, size):
+    frame_exec_left = FrameExec(dataset=block_frame, opt={"batch_size": size})
+    frame_exec_right = FrameExec(dataset=block_frame, opt={"batch_size": size})
     stream = filter_exec(frame_exec_left)
     for filtered, original in zip(stream, frame_exec_right):
         assert (filtered.data == original.filter("f1d > 0").data).all()
@@ -98,13 +100,11 @@ def rename_op():
     return {"f1d": "f1", "f2d": "f2", "i1d": "i1", "i2d": "i2"}
 
 
-def test_rename_exec_next(exec_init_reg, rename_exec, block_frame, size, rename_op):
-    exec_left = exec_init_reg["FRAME"](dataset=block_frame, opt={"batch_size": size})
-    exec_right = exec_init_reg["FRAME"](dataset=block_frame, opt={"batch_size": size})
+def test_rename_exec_next(block_frame, size, rename_op):
+    exec_left = FrameExec(dataset=block_frame, opt={"batch_size": size})
+    exec_right = FrameExec(dataset=block_frame, opt={"batch_size": size})
 
-    for renamed, original in zip(
-        exec_init_reg["RENAME"](exec_left, renames=rename_op), exec_right
-    ):
+    for renamed, original in zip(RenameExec(exec_left, renames=rename_op), exec_right):
         assert (
             renamed.data == original.rename(f1d="f1", f2d="f2", i1d="i1", i2d="i2").data
         ).all()
@@ -116,25 +116,24 @@ def map_rename_op():
 
 
 @pytest.fixture
-def map_exec(exec_init_reg, block_frame, map_rename_op, size):
-    frame_exec = exec_init_reg["FRAME"](dataset=block_frame, opt={"batch_size": size})
-    return exec_init_reg["MAP"](
+def map_exec(block_frame, map_rename_op, size):
+    frame_exec = FrameExec(dataset=block_frame, opt={"batch_size": size})
+    return MapExec(
         frame_exec,
         compute=lambda b: b.rename(**map_rename_op),
-        output=block_frame.attrs.rename(**map_rename_op),
     )
 
 
-def test_map_exec_next(exec_init_reg, map_exec, block_frame, map_rename_op, size):
+def test_map_exec_next(map_exec, block_frame, map_rename_op, size):
     for mapped, original in zip(
-        map_exec, exec_init_reg["FRAME"](dataset=block_frame, opt={"batch_size": size})
+        map_exec, FrameExec(dataset=block_frame, opt={"batch_size": size})
     ):
         assert (mapped.data == original.rename(**map_rename_op).data).all()
 
 
-def test_project_exec_next(exec_init_reg, block_frame, size):
-    exec_left = exec_init_reg["FRAME"](dataset=block_frame, opt={"batch_size": size})
-    exec_right = exec_init_reg["FRAME"](dataset=block_frame, opt={"batch_size": size})
-    project_exec = exec_init_reg["PROJECT"](exec_left, subset=["f1d", "i2d"])
+def test_project_exec_next(block_frame, size):
+    exec_left = FrameExec(dataset=block_frame, opt={"batch_size": size})
+    exec_right = FrameExec(dataset=block_frame, opt={"batch_size": size})
+    project_exec = ProjectExec(exec_left, subset=["f1d", "i2d"])
     for curr, other in zip(project_exec, exec_right):
         assert (curr.data == other[["f1d", "i2d"]].data).all()

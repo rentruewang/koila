@@ -7,7 +7,7 @@ import tensordict
 from tensordict import TensorDict
 
 from aioway.blocks import Block
-from aioway.execs import FrameExec, NestedLoopExec, ZipExec
+from aioway.execs import FrameExec, MatchExec, ZipExec
 from aioway.frames import BlockFrame
 from tests import fake
 
@@ -69,10 +69,11 @@ def join_batch_size():
 
 
 def test_nested_loop_exec_next(block_frame, joinable_frame, join_batch_size):
-    stream = NestedLoopExec(
+    stream = MatchExec(
         FrameExec(block_frame, {"batch_size": join_batch_size}),
         FrameExec(joinable_frame),
-        on="i1d",
+        on_left="i1d",
+        on_right="i1d",
     )
 
     results: list[TensorDict] = []

@@ -2,10 +2,8 @@
 
 from typing import Protocol
 
-from aioway.nodes import Node
 
-
-class Compiler[I: Node, O: Node](Protocol):
+class Compiler[I, O](Protocol):
     """
     Compiler transforms a ``Node`` representation into another.
     """
