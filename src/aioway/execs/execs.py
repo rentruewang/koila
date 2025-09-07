@@ -1,23 +1,22 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-import abc
 import dataclasses as dcls
-import inspect
 import logging
+import typing
 from abc import ABC
-from collections.abc import Iterable, Iterator
-from typing import ClassVar
+from collections.abc import Iterable
 
-from aioway import registries
 from aioway.blocks import Block
 from aioway.errors import AiowayError
+from aioway.ops import BlockGen, BlockIter, Op
 
 __all__ = ["Exec"]
 
 LOGGER = logging.getLogger(__name__)
 
 
-@dcls.dataclass(frozen=True)
+@typing.final
+@dcls.dataclass(init=False)
 class Exec(Iterable[Block], ABC):
     """
     ``Exec`` is the graph / symbolic representation of an execution.
@@ -28,59 +27,46 @@ class Exec(Iterable[Block], ABC):
     rather than iterators (``__next__`` function) with state management.
     """
 
-    ARGC: ClassVar[int]
+    op: Op
     """
-    Argument count of the current node.
+    The operator for which to execute.
     """
 
-    def __init_subclass__(cls, key: str = ""):
-        # Allow abstract classes, which would not be initialized,
-        # to not define keys, as factories are used to store leaf nodes.
-        if inspect.isabstract(cls):
-            return
+    inputs: tuple[BlockIter, ...]
+    """
+    The recursive dependency on previous executors.
+    """
 
-        # Impossible if `nargs_init_subclass` is only called in ``__init_subclass``.
-        if not issubclass(cls, Exec):
-            raise ExecSubclassError(
-                "`nargs_init_subclass` must be called in `__init_subclass__`."
+    def __init__(self, op: Op, *inputs: BlockIter) -> None:
+        self.op = op
+        self.inputs = inputs
+
+    def __post_init__(self) -> None:
+        if self.argc != self.op.ARGC:
+            raise ExecArgcError(
+                f"Operator {self.op} only takes {self.op.ARGC} inputs. Got {self.argc} inputs: {self.inputs}."
             )
 
-        # Add to registry.
-        registries.init_subclass(lambda: Exec)(cls, key=key)
-
-        # Ensure key name.
-        cls._validate_nary_name(key)
-
-    @abc.abstractmethod
-    def __iter__(self) -> Iterator[Block]:
+    def __iter__(self) -> BlockGen:
         """
         The ``__iter__`` method launches a new ``Iterator`` to loop over the inputs.
         Every call is creates / rebuilds brand new computation.
 
         Returns:
             A stream of ``Block``s.
+
+        Note:
+            Currently ``Exec`` always creates a new ``Generator`` upon being called.
+            Perhaps implement STG (#77).
         """
 
-        ...
+        yield from self.op.apply(*self.inputs)
 
-    @classmethod
-    def _validate_nary_name(cls, key: str) -> None:
-        """
-        For `ARGC = k`, ``key`` must have `_k` suffix.
-        """
+    @property
+    def argc(self) -> int:
+        "Argument count for ``Exec``."
 
-        if key.endswith(f"_{cls.ARGC}"):
-            return
-
-        raise ExecNamingError(
-            f"`ARGC={cls.ARGC}`, but {key=} does not have `_{cls.ARGC}` suffix."
-        )
+        return len(self.inputs)
 
 
-class ExecInitError(AiowayError, TypeError): ...
-
-
-class ExecNamingError(AiowayError, NameError): ...
-
-
-class ExecSubclassError(AiowayError, RuntimeError): ...
+class ExecArgcError(AiowayError, TypeError): ...
