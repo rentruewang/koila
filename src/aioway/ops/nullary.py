@@ -2,9 +2,8 @@
 
 import dataclasses as dcls
 import typing
-from abc import ABC
 from collections.abc import Callable, Iterator
-from typing import Any, ClassVar, Self
+from typing import Any, Self
 
 import tensordict
 from tensordict import TensorDict
@@ -14,23 +13,13 @@ from aioway.blocks import Block
 from aioway.errors import AiowayError
 from aioway.frames import Frame
 
-from .execs import Exec
+from .ops import Op0
 
-__all__ = ["Exec0", "FrameExec"]
-
-
-@dcls.dataclass(frozen=True)
-class Exec0(Exec, ABC):
-    ARGC: ClassVar[int] = 0
-
-    @property
-    @typing.final
-    def children(self) -> tuple[()]:
-        return ()
+__all__ = ["FrameOp"]
 
 
 @dcls.dataclass(frozen=True)
-class FrameExec(Exec0, key="FRAME_0"):
+class FrameOp(Op0, key="FRAME"):
     """
     An ``Op`` that wraps a ``Frame`` and a ``DataLoader``.
     """
@@ -40,58 +29,38 @@ class FrameExec(Exec0, key="FRAME_0"):
     The backing ``Frame``, stored in order to reset.
     """
 
-    opt: "DataLoaderCfgLike" = dcls.field(default_factory=dict)
+    opt: "FrameDataLoaderCfgLike" = dcls.field(default_factory=dict)
     """
     The option for the ``DataLoaderAdaptor``,
     which is responsible for iterating over the ``Frame``.
     """
 
     @typing.override
-    def __iter__(self):
-        yield from DataLoaderCfg.parse(self.opt).iterator_of(self.dataset)
+    def stream(self):
+        yield from FrameDataLoaderCfg.parse(self.opt).iterator_of(self.dataset)
 
 
-type DataLoaderCfgLike = DataLoaderCfg | dict[str, Any]
-
-
-def _maybe_stack_td(items: TensorDict | list[TensorDict]) -> TensorDict:
-    """
-    Just your normal ``tensordict.stack``, but skips if the input is a ``TensorDict``.
-
-    The input would be of type ``TensorDict`` when ``__getitems__`` is implemented.
-
-    Args:
-        items: A ``TensorDict`` (batched) or a list of ``TensorDict``s (no batch).
-
-    Raises:
-        TabularBatchError:
-            If the input is of ``TensorDict`` type, but is not batched.
-            Or if the input is of ``list[TensorDict]`` type, but is batched.
-
-    Returns:
-        A collated ``TensorDict``.
-    """
-
-    return _maybe_stack_td_impl(items)
+type FrameDataLoaderCfgLike = FrameDataLoaderCfg | dict[str, Any]
+"The parsable dataloader configuration."
 
 
 @typing.final
 @dcls.dataclass(frozen=True)
-class DataLoaderCfg:
+class FrameDataLoaderCfg:
     """
     Configuration for the ``DataLoader``.
+
+    Note:
+        The flag ``num_workers`` is removed despite being a ``DataLoader`` flag.
+        Per #88, this is really slow when ``num_workers != 0``.
+        After some profiling, seems like most of the time is stuck communicating,
+        which makes sense as the dataset is already in-memory,
+        and setting up additional multiprocessing queues is unecessary.
     """
 
     batch_size: int = 64
     """
     Batch size for the dataloader.
-    """
-
-    num_workers: int = 1
-    """
-    Number of worker processes for data loading.
-    This config is directly passed to ``torch.utils.data.DataLoader``,
-    and the default value 1 means to use a separate process for loading data.
     """
 
     pin_memory: bool = False
@@ -109,21 +78,23 @@ class DataLoaderCfg:
     Whether to keep the order of the dataset when sampling.
     """
 
-    collate_fn: Callable = _maybe_stack_td
+    collate_fn: Callable = dcls.field(default_factory=lambda: _maybe_stack_td)
     """
     Collate function for the dataloader.
 
     Note:
-        Function `_maybe_stack_td` cannot be defined later,
-        because it cannot be a `lambda` if we want to serialize it,
-        due to `DataLoader` using `pickle` to serialize the function.
+        Using a ``lambda`` + ``default_factory``
+        because I do not want to define ``_maybe_stack_td`` first.
+
+        This means that we would need special handling if we want to serialize it,
+        due to ``DataLoader`` using ``pickle`` to serialize the function.
     """
 
     def iterator_of(self, dataset: Dataset[Block]) -> Iterator[Block]:
         return _dl_iter(dataset, self)
 
     @classmethod
-    def parse(cls, opt: "DataLoaderCfgLike") -> Self:
+    def parse(cls, opt: "FrameDataLoaderCfgLike") -> Self:
         """
         Parse the input option to a ``DataLoaderCfg``.
         """
@@ -144,9 +115,9 @@ def _check_tensordict_batched(td: TensorDict, /, *, is_batched: bool) -> None:
     raise TabularBatchError
 
 
-def _dl_iter(dataset: Dataset[Block], opt: DataLoaderCfgLike):
+def _dl_iter(dataset: Dataset[Block], opt: FrameDataLoaderCfgLike):
     # Convert to ``DataLoaderOpt`` first to ensure that the default configs are set.
-    opt = DataLoaderCfg.parse(opt)
+    opt = FrameDataLoaderCfg.parse(opt)
 
     loader = DataLoader(dataset, **dcls.asdict(opt))
 
@@ -163,7 +134,23 @@ def _dl_iter(dataset: Dataset[Block], opt: DataLoaderCfgLike):
         yield Block(batch)
 
 
-def _maybe_stack_td_impl(items: TensorDict | list[TensorDict]) -> TensorDict:
+def _maybe_stack_td(items: TensorDict | list[TensorDict]) -> TensorDict:
+    """
+    Just your normal ``tensordict.stack``, but skips if the input is a ``TensorDict``.
+
+    The input would be of type ``TensorDict`` when ``__getitems__`` is implemented.
+
+    Args:
+        items: A ``TensorDict`` (batched) or a list of ``TensorDict``s (no batch).
+
+    Raises:
+        TabularBatchError:
+            If the input is of ``TensorDict`` type, but is not batched.
+            Or if the input is of ``list[TensorDict]`` type, but is batched.
+
+    Returns:
+        A collated ``TensorDict``.
+    """
 
     if isinstance(items, TensorDict):
         _check_tensordict_batched(items, is_batched=True)
