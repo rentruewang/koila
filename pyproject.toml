@@ -40,11 +40,13 @@ tests = [
     "pytest-xdist>=3.7.0",
     "pytest-sugar>=1.0.0",
     "better-exceptions>=0.3.3",
+    "pyinstrument>=5.1.1",
 ]
 ipython = [
     "ipython>=9.2.0",
     "jupyter>=1.1.1",
     "jupyterlab>=4.4.3",
+    "tqdm>=4.67.1",
 ]
 build = [
     "ansible>=11.6.0",
@@ -88,7 +90,10 @@ ignore_missing_imports = true
 addopts = [
     "-v",
     "-n=auto",
+    "--ff",
+    "--nf",
     "--import-mode=importlib",
+    "--dist=loadfile",
 ]
 filterwarnings = [
     "ignore::DeprecationWarning",

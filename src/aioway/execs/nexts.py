@@ -92,7 +92,7 @@ class ExecNextMethod:
 
     impl: Callable[["Exec"], Block]
 
-    def __get__(self, instance: "Exec" | None, owner: type["Exec"]):
+    def __get__(self, instance: "Exec | None", owner: type["Exec"]):
         """
         Returns a bounded method if the instance is not None,
         otherwise returns the unbound method.

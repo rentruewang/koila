@@ -1,11 +1,8 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-import abc
 import dataclasses as dcls
 import typing
-from abc import ABC
-from collections.abc import Callable, Iterator
-from typing import ClassVar
+from collections.abc import Callable
 
 import numpy as np
 from numpy.typing import NDArray
@@ -15,56 +12,31 @@ from tensordict.nn import TensorDictModule
 from aioway.blocks import Block
 from aioway.errors import AiowayError
 
-from .execs import Exec
+from .ops import Op1
 
 __all__ = [
-    "Exec1",
-    "PassExec",
-    "FuncFilterExec",
-    "ExprFilterExec",
-    "ProjectExec",
-    "MapExec",
-    "RenameExec",
-    "ModuleExec",
+    "PassOp",
+    "FuncFilterOp",
+    "ExprFilterOp",
+    "ProjectOp",
+    "MapOp",
+    "RenameOp",
+    "ModuleOp",
 ]
 
 
 @dcls.dataclass(frozen=True)
-class Exec1(Exec, ABC):
-    ARGC: ClassVar[int] = 1
-
-    child: Exec
-    """
-    The child executor.
-    """
-
-    @typing.override
-    def __iter__(self) -> Iterator[Block]:
-        for item in self.child:
-            yield self.map(item)
-
-    @abc.abstractmethod
-    def map(self, item: Block, /) -> Block: ...
-
-    @property
-    @typing.final
-    def children(self) -> tuple[Exec]:
-        return (self.child,)
-
-
-@dcls.dataclass(frozen=True)
-class PassExec(Exec1, key="PASS_1"):
+class PassOp(Op1, key="PASS"):
     """
     The ``PASS`` operator does nothing to its inputs.
     """
 
-    @typing.override
-    def map(self, item: Block) -> Block:
-        return item
+    map = lambda self, item: item
+    "Identity function."
 
 
 @dcls.dataclass(frozen=True)
-class FuncFilterExec(Exec1, key="FUNC_FILTER_1"):
+class FuncFilterOp(Op1, key="FUNC_FILTER"):
     predicate: Callable[[Block], NDArray]
     """
     The batched prediction of which rows to keep for the inputs.
@@ -72,6 +44,8 @@ class FuncFilterExec(Exec1, key="FUNC_FILTER_1"):
 
     @typing.override
     def map(self, item: Block) -> Block:
+        "Using the function predicate to filter. Works well with ``numpy``."
+
         pred = self.predicate(item)
 
         # Just to be extra fault tolerant.
@@ -96,19 +70,21 @@ class FuncFilterExec(Exec1, key="FUNC_FILTER_1"):
 
 
 @dcls.dataclass(frozen=True)
-class ExprFilterExec(Exec1, key="EXPR_FILTER_1"):
+class ExprFilterOp(Op1, key="EXPR_FILTER"):
     expr: str | Expr
     """
     The expression of the frame.
     """
 
     @typing.override
-    def map(self, item: Block) -> Block:
+    def map(self, item):
+        "Filter with ``expr`` based on ``sympy``."
+
         return item.filter(self.expr)
 
 
 @dcls.dataclass(frozen=True)
-class ProjectExec(Exec1, key="PROJECT_1"):
+class ProjectOp(Op1, key="PROJECT"):
     """
     Select a subset of the columns.
     """
@@ -129,6 +105,7 @@ class ProjectExec(Exec1, key="PROJECT_1"):
 
     @typing.override
     def map(self, item: Block) -> Block:
+        "Perform project. If ``subset`` is ``None``, this is a no-op."
         if self.subset is None:
             return item
 
@@ -136,7 +113,7 @@ class ProjectExec(Exec1, key="PROJECT_1"):
 
 
 @dcls.dataclass(frozen=True)
-class MapExec(Exec1, key="MAP_1"):
+class MapOp(Op1, key="MAP"):
     """
     ``MapOp`` is an ``Op`` that performs on the input ``Block``,
     and returns the result as a ``Block``.
@@ -145,17 +122,20 @@ class MapExec(Exec1, key="MAP_1"):
         Since ``MapOp`` is simply more powerful,
         as ``torch`` ``Module``s are simply functions,
         with the only constraint being that they need to be ``Module``s.
-        Do I remove this completely?
+        Do I remove them completely?
     """
 
     compute: Callable[[Block], Block]
 
-    def map(self, item: Block) -> Block:
+    @typing.override
+    def map(self, item):
+        "Calls ``compute`` directly."
+
         return self.compute(item)
 
 
 @dcls.dataclass(frozen=True)
-class RenameExec(Exec1, key="RENAME_1"):
+class RenameOp(Op1, key="RENAME"):
     """
     Rename a couple of columns.
     """
@@ -166,12 +146,14 @@ class RenameExec(Exec1, key="RENAME_1"):
     """
 
     @typing.override
-    def map(self, item: Block) -> Block:
+    def map(self, item):
+        "Renames the item column with the dictionary."
+
         return item.rename(**self.renames)
 
 
 @dcls.dataclass(frozen=True)
-class ModuleExec(Exec1, key="MODULE_1"):
+class ModuleOp(Op1, key="MODULE"):
     """
     ``ModuleOpExec`` is an ``Op`` that wraps a ``TensorDictModule``,
     and executes it on the input data.
@@ -182,9 +164,11 @@ class ModuleExec(Exec1, key="MODULE_1"):
 
     module: TensorDictModule
 
-    def map(self, item: Block) -> Block:
-        self.module(item)
-        return item
+    @typing.override
+    def map(self, item):
+        "Calls ``TensorDictModule``."
+
+        return self.module(item)
 
 
 class FilterBatchSizeError(AiowayError, ValueError): ...
