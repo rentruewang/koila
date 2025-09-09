@@ -1,23 +1,21 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
+import abc
 import dataclasses as dcls
 import logging
-import typing
 from abc import ABC
-from collections.abc import Iterable
 
-from aioway.blocks import Block
-from aioway.errors import AiowayError
-from aioway.ops import BlockGen, BlockIter, Op
+from aioway import registries
+from aioway.ops import BlockGen, Thunk
+from aioway.registries import types
 
-__all__ = ["Exec"]
+__all__ = ["Exec", "execute"]
 
 LOGGER = logging.getLogger(__name__)
 
 
-@typing.final
-@dcls.dataclass(init=False)
-class Exec(Iterable[Block], ABC):
+@dcls.dataclass(frozen=True)
+class Exec(ABC):
     """
     ``Exec`` is the graph / symbolic representation of an execution.
 
@@ -25,28 +23,21 @@ class Exec(Iterable[Block], ABC):
     but rather launches an iterator / cursor to iterate over the data.
     This design allows users to write genertors (``__iter__`` funciton),
     rather than iterators (``__next__`` function) with state management.
+
+    Todo:
+        Currently ``Exec`` uses the lazy evaluation approach.
+        To make it flexible and useful, make multiple implementations of ``Exec``.
     """
 
-    op: Op
+    thunk: Thunk
     """
-    The operator for which to execute.
-    """
-
-    inputs: tuple[BlockIter, ...]
-    """
-    The recursive dependency on previous executors.
+    The thunk for which ``Exec`` is responsible for executing.
     """
 
-    def __init__(self, op: Op, *inputs: BlockIter) -> None:
-        self.op = op
-        self.inputs = inputs
+    def __init_subclass__(cls, key: str):
+        registries.init_subclass(lambda: Exec)(cls, key=key)
 
-    def __post_init__(self) -> None:
-        if self.argc != self.op.ARGC:
-            raise ExecArgcError(
-                f"Operator {self.op} only takes {self.op.ARGC} inputs. Got {self.argc} inputs: {self.inputs}."
-            )
-
+    @abc.abstractmethod
     def __iter__(self) -> BlockGen:
         """
         The ``__iter__`` method launches a new ``Iterator`` to loop over the inputs.
@@ -56,17 +47,16 @@ class Exec(Iterable[Block], ABC):
             A stream of ``Block``s.
 
         Note:
-            Currently ``Exec`` always creates a new ``Generator`` upon being called.
             Perhaps implement STG (#77).
         """
 
-        yield from self.op.apply(*self.inputs)
+        ...
 
-    @property
-    def argc(self) -> int:
-        "Argument count for ``Exec``."
-
-        return len(self.inputs)
+    @classmethod
+    def from_thunk(cls, thunk: Thunk, /):
+        return cls(thunk=thunk)
 
 
-class ExecArgcError(AiowayError, TypeError): ...
+def execute(thunk: Thunk, strategy: str) -> Exec:
+    registry = types.of(Exec)
+    return registry[strategy](thunk)

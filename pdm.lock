@@ -5,7 +5,7 @@
 groups = ["default", "build", "faiss", "ibis", "ipython", "pre-commit", "tests"]
 strategy = []
 lock_version = "4.5.0"
-content_hash = "sha256:19150540b7164dd9379e29bc2e8b305fb0061ce931f04f748b89e20b5ed1a286"
+content_hash = "sha256:33503f326043d99dce1ce70b1c47ab3ee722c9e7ffbe8328f2c32a24297bba9b"
 
 [[metadata.targets]]
 requires_python = "~=3.13"
@@ -2163,18 +2163,6 @@ files = [
     {file = "tornado-6.5.1-cp39-abi3-win_amd64.whl", hash = "sha256:908e7d64567cecd4c2b458075589a775063453aeb1d2a1853eedb806922f568b"},
     {file = "tornado-6.5.1-cp39-abi3-win_arm64.whl", hash = "sha256:02420a0eb7bf617257b9935e2b754d1b63897525d8a289c9d65690d580b4dcf7"},
     {file = "tornado-6.5.1.tar.gz", hash = "sha256:84ceece391e8eb9b2b95578db65e920d2a61070260594819589609ba9bc6308c"},
-]
-
-[[package]]
-name = "tqdm"
-version = "4.67.1"
-summary = ""
-dependencies = [
-    "colorama; sys_platform == \"win32\"",
-]
-files = [
-    {file = "tqdm-4.67.1-py3-none-any.whl", hash = "sha256:26445eca388f82e72884e0d580d5464cd801a3ea01e63e5601bdff9ba6a48de2"},
-    {file = "tqdm-4.67.1.tar.gz", hash = "sha256:f8aef9c52c08c13a65f30ea34f4e5aac3fd1a34959879d7e59e63027286627f2"},
 ]
 
 [[package]]
