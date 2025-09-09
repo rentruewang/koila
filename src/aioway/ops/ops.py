@@ -13,6 +13,8 @@ from aioway import registries
 from aioway.blocks import Block
 from aioway.errors import AiowayError
 
+from .thunks import Thunk
+
 __all__ = ["Op", "Op0", "Op1", "Op2", "BlockIter", "BlockGen"]
 
 LOGGER = logging.getLogger(__name__)
@@ -34,9 +36,9 @@ class Op(ABC):
     """
     ``Op`` is the operation, be it operator or operand, that works on data.
 
-    An operation is essentially an iterable over data (``Block``),
+    An operation is essentially an generator function over data (``Block``),
     but itself doesn't store which previous node it would be operating on.
-    This design allows users to write ``Op`` as generators,
+    This design allows users to write ``Op`` imperatively as generators,
     rather than iterators (``__next__`` function) with state management.
 
     There are 3 kinds of operators, ``Op0``, ``Op1``, ``Op2``,
@@ -99,20 +101,52 @@ class Op(ABC):
 
         Returns:
             A stream of ``Block``s.
+
+        Note:
+            Why is it that this is an ``__iter__`` method,
+            rather than a ``__next__`` method like a lot of other RDBMS implementations?
+
+            The reasons are as follows:
+
+            0. This is not RDBMS, just takes inspiration.
+                Let's have some style, right?
+
+            1. Imperative is better looking.
+                Easier to read rather than having to resort to state management.
+
+            2. Combined iteration and evaluation strategy.
+                This can be useful in not writing the functions twice,
+                and made the common abstraction so much easier.
+
+            3. Different generators representing different launches.
+                This helps keep the state management clean.
+
+            4. This means that the ``Generator`` returned can be customized / contexualized.
+                Since ``__next__`` is top level, they cannot be customized in a local manner,
+                because decorators would take parameters from the global scope,
+
+            5. This means that we would not have to use double recursion to provide local context,
+                because ``__iter__`` can do it and the configs doesn't pollute the global.
+                Contexts of these are essential for memoization and remote execution.
+
+            The main downside, I would say, as I have run into this,
+            is that since ``Generator``s are lazy, writing eager computation with those is quite difficult.
+            For example, ``Generator`` for DAG execution is difficult, as DAG is highly imperative.
+
+            After all, they are pretty much the same,
+            so I prefer the ``__iter__`` / ``Generator`` based method as it's cleaner.
         """
 
         ...
 
-    def thunk(self, *ops: BlockIter):
+    def thunk(self, *ops: Thunk) -> Thunk:
         """
         Convert the current ``Op`` into an ``Iterable``, wrapping the operands.
 
         This is a shortcut function to create an ``Exec``.
         """
 
-        from aioway.execs import Exec
-
-        return Exec(self, *ops)
+        return Thunk(op=self, inputs=ops)
 
     @abc.abstractmethod
     def accept[V](self, visitor: Visitor[V]) -> V:
@@ -124,6 +158,8 @@ class Op(ABC):
 
 
 class Op0(Op, ABC):
+    ARGC = 0
+
     @typing.final
     @typing.override
     def apply(self) -> BlockGen:
@@ -143,19 +179,10 @@ class Op0(Op, ABC):
 
 
 class Op1(Op, ABC):
-    @typing.final
-    @typing.override
-    def apply(self, stream_iter: BlockIter, /) -> BlockGen:
-        for block in stream_iter:
-            yield self.map(block)
+    ARGC = 1
 
     @abc.abstractmethod
-    def map(self, item: Block, /) -> Block:
-        """
-        Map individual ``Block`` into something else.
-        """
-
-        ...
+    def apply(self, stream_iter: BlockIter, /) -> BlockGen: ...
 
     @typing.override
     def accept[T](self, visitor: Op.Visitor[T]) -> T:
@@ -163,6 +190,8 @@ class Op1(Op, ABC):
 
 
 class Op2(Op, ABC):
+    ARGC = 2
+
     @typing.final
     @typing.override
     def apply(self, left_iter: BlockIter, right_iter: BlockIter, /) -> BlockGen:
