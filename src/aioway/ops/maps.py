@@ -1,7 +1,9 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
+import abc
 import dataclasses as dcls
 import typing
+from abc import ABC
 from collections.abc import Callable
 
 import numpy as np
@@ -12,21 +14,41 @@ from tensordict.nn import TensorDictModule
 from aioway.blocks import Block
 from aioway.errors import AiowayError
 
-from .ops import Op1
+from .ops import BlockGen, BlockIter, Op1
 
 __all__ = [
+    "MapOpBase",
     "PassOp",
     "FuncFilterOp",
     "ExprFilterOp",
     "ProjectOp",
-    "MapOp",
+    "FuncOp",
     "RenameOp",
     "ModuleOp",
 ]
 
 
 @dcls.dataclass(frozen=True)
-class PassOp(Op1, key="PASS"):
+class MapOpBase(Op1, ABC):
+    ARGC = 1
+
+    @typing.final
+    @typing.override
+    def apply(self, stream_iter: BlockIter, /) -> BlockGen:
+        for block in stream_iter:
+            yield self.map(block)
+
+    @abc.abstractmethod
+    def map(self, item: Block, /) -> Block:
+        """
+        Map individual ``Block`` into something else.
+        """
+
+        ...
+
+
+@dcls.dataclass(frozen=True)
+class PassOp(MapOpBase, key="PASS"):
     """
     The ``PASS`` operator does nothing to its inputs.
     """
@@ -36,7 +58,7 @@ class PassOp(Op1, key="PASS"):
 
 
 @dcls.dataclass(frozen=True)
-class FuncFilterOp(Op1, key="FUNC_FILTER"):
+class FuncFilterOp(MapOpBase, key="FUNC_FILTER"):
     predicate: Callable[[Block], NDArray]
     """
     The batched prediction of which rows to keep for the inputs.
@@ -70,7 +92,7 @@ class FuncFilterOp(Op1, key="FUNC_FILTER"):
 
 
 @dcls.dataclass(frozen=True)
-class ExprFilterOp(Op1, key="EXPR_FILTER"):
+class ExprFilterOp(MapOpBase, key="EXPR_FILTER"):
     expr: str | Expr
     """
     The expression of the frame.
@@ -84,7 +106,7 @@ class ExprFilterOp(Op1, key="EXPR_FILTER"):
 
 
 @dcls.dataclass(frozen=True)
-class ProjectOp(Op1, key="PROJECT"):
+class ProjectOp(MapOpBase, key="PROJECT"):
     """
     Select a subset of the columns.
     """
@@ -113,31 +135,28 @@ class ProjectOp(Op1, key="PROJECT"):
 
 
 @dcls.dataclass(frozen=True)
-class MapOp(Op1, key="MAP"):
+class FuncOp(MapOpBase, key="FUNC"):
     """
-    ``MapOp`` is an ``Op`` that performs on the input ``Block``,
+    ``FuncOp`` is an ``Op`` that performs on the input ``Block``,
     and returns the result as a ``Block``.
-
-    Note:
-        Since ``MapOp`` is simply more powerful,
-        as ``torch`` ``Module``s are simply functions,
-        with the only constraint being that they need to be ``Module``s.
-        Do I remove them completely?
     """
 
-    compute: Callable[[Block], Block]
+    func: Callable[[Block], Block]
+    """
+    The function to apply to.
+    """
 
     @typing.override
     def map(self, item):
-        "Calls ``compute`` directly."
+        "Calls ``func`` directly."
 
-        return self.compute(item)
+        return self.func(item)
 
 
 @dcls.dataclass(frozen=True)
-class RenameOp(Op1, key="RENAME"):
+class RenameOp(MapOpBase, key="RENAME"):
     """
-    Rename a couple of columns.
+    ``RenameOp`` renames a couple of columns, based on the ``renames`` field dict.
     """
 
     renames: dict[str, str] = dcls.field(default_factory=dict)
@@ -153,9 +172,9 @@ class RenameOp(Op1, key="RENAME"):
 
 
 @dcls.dataclass(frozen=True)
-class ModuleOp(Op1, key="MODULE"):
+class ModuleOp(FuncOp, key="MODULE"):
     """
-    ``ModuleOpExec`` is an ``Op`` that wraps a ``TensorDictModule``,
+    ``ModuleOpOp`` is an ``Op`` that wraps a ``TensorDictModule``,
     and executes it on the input data.
 
     It is used to execute the module on the input data,

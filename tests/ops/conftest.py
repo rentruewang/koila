@@ -3,8 +3,10 @@
 
 import pytest
 
+from aioway import execs
+from aioway.execs import Exec
 from aioway.frames import BlockFrame
-from aioway.ops import FrameOp
+from aioway.ops import FrameOp, Thunk
 from tests import fake
 
 
@@ -62,3 +64,20 @@ def joinable_frame_op(joinable_frame, frame_op_loader_cfg):
 @pytest.fixture
 def another_block_frame_op(block_frame, frame_op_loader_cfg):
     return FrameOp(block_frame, frame_op_loader_cfg)
+
+
+def _exec_strat():
+    yield "LAZY"
+
+
+@pytest.fixture(params=_exec_strat())
+def exec_strat(request):
+    return request.param
+
+
+@pytest.fixture
+def make_executor(exec_strat):
+    def executor(thunk: Thunk) -> Exec:
+        return execs.execute(thunk=thunk, strategy=exec_strat)
+
+    return executor
