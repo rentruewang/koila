@@ -30,8 +30,6 @@ __all__ = [
 
 @dcls.dataclass(frozen=True)
 class MapOpBase(Op1, ABC):
-    ARGC = 1
-
     @typing.final
     @typing.override
     def apply(self, stream_iter: BlockIter, /) -> BlockGen:
@@ -125,6 +123,9 @@ class ProjectOp(MapOpBase, key="PROJECT"):
         if not isinstance(subs, list) and all(isinstance(c, str) for c in subs):
             raise ProjectColumnTypeError("Column must be a list of strings.")
 
+    def __hash__(self):
+        return super().__hash__()
+
     @typing.override
     def map(self, item: Block) -> Block:
         "Perform project. If ``subset`` is ``None``, this is a no-op."
@@ -163,6 +164,9 @@ class RenameOp(MapOpBase, key="RENAME"):
     """
     The mapping dictionary names.
     """
+
+    def __hash__(self):
+        return super().__hash__()
 
     @typing.override
     def map(self, item):

@@ -58,12 +58,10 @@ def test_match_is_reduction(match_op, block_frame_op, joinable_frame_op, make_ex
     assert answer_count == truth_count
 
 
-def test_match_functionally_correct(
-    match_op, block_frame_op, joinable_frame_op, make_executor
-):
-    stream = match_op.thunk(block_frame_op.thunk(), joinable_frame_op.thunk())
-    block_frame_block = block_frame_op.dataset.block
-    joinable_frame_block = joinable_frame_op.dataset.block
+def _left_match_right(match_op, left_frame_op, right_frame_op, make_executor):
+    stream = match_op.thunk(left_frame_op.thunk(), right_frame_op.thunk())
+    block_frame_block = left_frame_op.dataset.block
+    joinable_frame_block = right_frame_op.dataset.block
 
     # Performing the join here.
     results: list[Block] = list(make_executor(stream))
@@ -81,3 +79,15 @@ def test_match_functionally_correct(
 
     for key in answer_count.keys():
         assert answer_count[key] == left_count[key] * right_count[key]
+
+
+def test_match_functionally_correct(
+    match_op, block_frame_op, joinable_frame_op, make_executor
+):
+    _left_match_right(match_op, block_frame_op, joinable_frame_op, make_executor)
+
+
+def test_duplicate_computation(match_op, block_frame_op, make_executor, exec_strat):
+    if exec_strat == "DAG":
+        pytest.xfail("This duplicates computation, and is currently bugged.")
+    _left_match_right(match_op, block_frame_op, block_frame_op, make_executor)

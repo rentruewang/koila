@@ -3,6 +3,7 @@
 import abc
 import dataclasses as dcls
 import inspect
+import json
 import logging
 import typing
 from abc import ABC
@@ -80,6 +81,13 @@ class Op(ABC):
 
         # Add to registry.
         registries.init_subclass(lambda: Op)(cls, key=key)
+
+    def __hash__(self) -> int:
+        """
+        This is s.t. we can use ``Op`` in dictionary lookup.
+        """
+
+        return hash(json.dumps(dcls.asdict(self)))
 
     @typing.no_type_check
     @abc.abstractmethod
