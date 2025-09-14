@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Wang"
+  given-names: "RenChu"
+title: "Koila"
+version: 0.1.1
+date-released: 2021-11-23
+url: "https://github.com/rentruewang/koila"
