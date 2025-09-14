@@ -68,6 +68,7 @@ def another_block_frame_op(block_frame, frame_op_loader_cfg):
 
 def _exec_strat():
     yield "LAZY"
+    yield "DAG"
 
 
 @pytest.fixture(params=_exec_strat())

@@ -35,6 +35,17 @@ class FrameOp(Op0, key="FRAME"):
     which is responsible for iterating over the ``Frame``.
     """
 
+    def __hash__(self) -> int:
+        """
+        The hash function for ``Frame`` op.
+
+        Note:
+            As of now, using ``id`` s.t. it will work for cases,
+            where only if the ``Frame`` is the same instance, for safety.
+        """
+
+        return id(self)
+
     @typing.override
     def stream(self):
         yield from FrameDataLoaderCfg.parse(self.opt).iterator_of(self.dataset)

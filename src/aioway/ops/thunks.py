@@ -46,12 +46,45 @@ class Thunk:
     def __rich__(self) -> Tree:
         tree = Tree(label=str(self.op))
         for arg in self.inputs:
-            tree.add(arg)
+            tree.add(arg.__rich__())
         return tree
+
+    def deps(self) -> set[Self]:
+        """
+        Recursively find all thunk dependencies.
+        """
+
+        visited: set[Self] = set()
+        self._find_deps_rec(visited)
+        return visited
+
+    def _find_deps_rec(self, visited: set[Self]) -> None:
+        if self in visited:
+            return
+
+        visited.add(self)
+        for ipt in self.inputs:
+            ipt._find_deps_rec(visited)
 
     @property
     def argc(self) -> int:
         return len(self.inputs)
+
+
+def find_all_thunk_deps(thunk: Thunk) -> set[Thunk]:
+
+    visited: set[Thunk] = set()
+    _find_all_thunk_deps_rec(thunk, visited)
+    return visited
+
+
+def _find_all_thunk_deps_rec(thunk: Thunk, visited: set[Thunk]) -> None:
+    if thunk in visited:
+        return
+
+    visited.add(thunk)
+    for ipt in thunk.inputs:
+        _find_all_thunk_deps_rec(ipt, visited=visited)
 
 
 class ThunkArgError(AiowayError, TypeError): ...
