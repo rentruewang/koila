@@ -1,15 +1,17 @@
-> <h2 id="archive"> 🫙 Archive </h1>
+<h2 id="archive"> 🫙 Archive </h1>
 
-> Project `koila` has 2 main components:
+Project `koila` has 2 main components:
 
->   1. Metadata tracking for `torch.Tensor`s.
->   2. Decouple some symbolic info (batch size) to run a reduced graph, with gradient accumulation to prevent OOM.
+1. Metadata tracking for `torch.Tensor`s.
+2. Decouple some symbolic info (batch size) to run a reduced graph, with gradient accumulation to prevent OOM.
 
-> For 1.: Now `PyTorch` officially has <a href="https://docs.pytorch.org/docs/stable/torch.compiler_fake_tensor.html"> FakeTensor</a> (koila predates it). It has great compatibility and support of torch operators, something `koila` never was able to do.
+For 1.: Now `PyTorch` officially has `FakeTensor` [link]("https://docs.pytorch.org/docs/stable/torch.compiler_fake_tensor.html") (koila predates it). It has great compatibility and support of torch operators, something `koila` never was able to do.
 
-> For 2.: `Koila` only tracks symbolic info partially, on the batch dimension. I have now something a lot better, a compiler for deep learning `aioway` <a href="https://github.com/rentruewang/aioway">link</a> that handles all these info, which by the time of writing (2025/09/14) is not yet open source, but will be soon.
+For 2.: `Koila` only tracks symbolic info partially, on the batch dimension. I have now something a lot better, a compiler / interpreter for deep learning `aioway` [link][aioway] that handles all these info, which by the time of writing (2025/09/14) is not yet open source, but will be soon.
 
-> As `FakeTensor` is now available, and `aioway` in development, I think to keep `koila` as it is, a POC that I did for fun.
+With `FakeTensor` available, and `aioway` [link][aioway] in development, I think to keep `koila` as it is, a POC that I did for fun.
+
+[aioway]: https://github.com/rentruewang/aioway
 
 # 🐨 Koila
 
