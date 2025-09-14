@@ -14,8 +14,6 @@ __all__ = ["FlatMapOpBase", "RepeatOp"]
 
 @dcls.dataclass(frozen=True)
 class FlatMapOpBase(Op1, ABC):
-    ARGC = 1
-
     @typing.final
     @typing.override
     def apply(self, stream_iter: BlockIter, /) -> BlockGen:
@@ -23,7 +21,7 @@ class FlatMapOpBase(Op1, ABC):
             yield from self.flat_map(block)
 
     @abc.abstractmethod
-    def flat_map(self, item: Block, /) -> BlockIter:
+    def flat_map(self, item: Block, /) -> BlockGen:
         """
         Map individual ``Block`` into something else.
         """
