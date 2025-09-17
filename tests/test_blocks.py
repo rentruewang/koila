@@ -15,7 +15,7 @@ def device(request) -> str:
     return request.param
 
 
-@pytest.fixture(params=fake.tensordict_sizes(), scope="module")
+@pytest.fixture(params=fake.batch_sizes(), scope="module")
 def batch(request) -> int:
     return request.param
 

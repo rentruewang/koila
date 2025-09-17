@@ -5,8 +5,8 @@ import pytest
 
 from aioway import execs
 from aioway.execs import Exec
-from aioway.frames import BatchFrame
-from aioway.ops import FrameOp, Thunk
+from aioway.io import BatchFrame
+from aioway.ops import Thunk
 from tests import fake
 
 
@@ -15,55 +15,32 @@ def device(request) -> str:
     return request.param
 
 
-@pytest.fixture(params=fake.tensordict_sizes(), scope="module")
-def size(request) -> int:
+@pytest.fixture(scope="module")
+def data_size():
+    return max(fake.batch_sizes())
+
+
+@pytest.fixture(scope="module", params=fake.batch_sizes())
+def batch_size(request) -> int:
     return request.param
 
 
 @pytest.fixture(scope="module")
-def block_frame(device) -> BatchFrame:
-    block = fake.tensordict_ok(size=max(fake.tensordict_sizes()), device=device)
-    return BatchFrame(block)
+def block_frame(device, batch_size, data_size) -> BatchFrame:
+    block = fake.tensordict_ok(size=data_size, device=device)
+    return BatchFrame(block, batch=batch_size)
 
 
 @pytest.fixture(scope="module")
-def concat_frame(device) -> BatchFrame:
-    block = fake.concat_ok(size=max(fake.tensordict_sizes()), device=device)
-    return BatchFrame(block)
+def concat_frame(device, batch_size, data_size) -> BatchFrame:
+    block = fake.concat_ok(size=data_size, device=device)
+    return BatchFrame(block, batch_size)
 
 
 @pytest.fixture(scope="module")
-def joinable_frame(device):
-    block = fake.unionable_ok(size=max(fake.tensordict_sizes()), device=device)
-    return BatchFrame(block)
-
-
-@pytest.fixture
-def frame_op_loader_cfg(size):
-    from aioway.ops.nullary import FrameDataLoaderCfg
-
-    return FrameDataLoaderCfg(batch_size=size, pin_memory=True)
-
-
-@pytest.fixture
-def concat_frame_op(concat_frame, frame_op_loader_cfg):
-
-    return FrameOp(concat_frame, frame_op_loader_cfg)
-
-
-@pytest.fixture
-def block_frame_op(block_frame, frame_op_loader_cfg):
-    return FrameOp(block_frame, frame_op_loader_cfg)
-
-
-@pytest.fixture
-def joinable_frame_op(joinable_frame, frame_op_loader_cfg):
-    return FrameOp(joinable_frame, frame_op_loader_cfg)
-
-
-@pytest.fixture
-def another_block_frame_op(block_frame, frame_op_loader_cfg):
-    return FrameOp(block_frame, frame_op_loader_cfg)
+def joinable_frame(device, batch_size, data_size):
+    block = fake.unionable_ok(size=data_size, device=device)
+    return BatchFrame(block, batch_size)
 
 
 def _exec_strat():

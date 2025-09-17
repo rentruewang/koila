@@ -8,10 +8,10 @@ from aioway.ops import BatchIter, RepeatOp
 
 
 @pytest.mark.parametrize("times", [1, 2, 4])
-def test_repeat_op(block_frame_op, make_executor, times):
+def test_repeat_op(block_frame, make_executor, times):
     repeat_op = RepeatOp(times=times)
 
-    def consume_batch[T](iterable: BatchIter, times: int):
+    def consume_batch(iterable: BatchIter, times: int):
         it = iter(iterable)
         while True:
             # Call ``next`` ``times`` times.
@@ -21,10 +21,10 @@ def test_repeat_op(block_frame_op, make_executor, times):
 
     for repeated, original in itertools.zip_longest(
         consume_batch(
-            make_executor(repeat_op.thunk(block_frame_op.thunk())),
+            make_executor(repeat_op.thunk(block_frame.op.thunk())),
             times=times,
         ),
-        make_executor(block_frame_op.thunk()),
+        make_executor(block_frame.op.thunk()),
     ):
         for r in repeated:
             assert (r.data == original.data).all()
