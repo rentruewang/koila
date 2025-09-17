@@ -8,7 +8,7 @@ from typing import NamedTuple
 from numpy.typing import NDArray
 
 from aioway.errors import AiowayError
-from aioway.frames import Frame
+from aioway.io import Frame
 
 from .indices import Index
 from .ops import IndexOp

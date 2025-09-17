@@ -23,7 +23,7 @@ def cpu_and_maybe_cuda():
     return devs
 
 
-def tensordict_sizes():
+def batch_sizes():
     yield 16
     yield 64
     yield 1024

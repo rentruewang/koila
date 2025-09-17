@@ -1,12 +1,15 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 from collections import Counter
+from collections.abc import Callable
 
 import pytest
 import tensordict
 from tensordict import TensorDict
 
-from aioway.ops import MatchOp, ZipOp
+from aioway.execs import Exec
+from aioway.io import Frame
+from aioway.ops import MatchOp, Thunk, ZipOp
 
 
 @pytest.fixture
@@ -18,13 +21,13 @@ def test_zip_input_len(block_frame, concat_frame):
     assert len(block_frame) == len(concat_frame)
 
 
-def test_zip(block_frame_op, concat_frame_op, make_executor):
-    stream = ZipOp().thunk(block_frame_op.thunk(), concat_frame_op.thunk())
+def test_zip(block_frame, concat_frame, make_executor):
+    stream = ZipOp().thunk(block_frame.op.thunk(), concat_frame.op.thunk())
 
     for result, lhs, rhs in zip(
         make_executor(stream),
-        make_executor(block_frame_op.thunk()),
-        make_executor(concat_frame_op.thunk()),
+        make_executor(block_frame.op.thunk()),
+        make_executor(concat_frame.op.thunk()),
     ):
         concat = TensorDict({**lhs.data, **rhs.data}, device=result.data.device)
         assert (result.data == concat).all()
@@ -34,10 +37,10 @@ def test_join_input_len(block_frame, joinable_frame):
     assert len(block_frame) * len(joinable_frame)
 
 
-def test_match_is_reduction(match_op, block_frame_op, joinable_frame_op, make_executor):
-    stream = match_op.thunk(block_frame_op.thunk(), joinable_frame_op.thunk())
-    block_frame_block = block_frame_op.dataset.__getitems__(slice(None))
-    joinable_frame_block = joinable_frame_op.dataset.__getitems__(slice(None))
+def test_match_is_reduction(match_op, block_frame, joinable_frame, make_executor):
+    stream = match_op.thunk(block_frame.op.thunk(), joinable_frame.op.thunk())
+    block_frame_block = tensordict.cat(list(block_frame))
+    joinable_frame_block = tensordict.cat(list(joinable_frame))
 
     # Performing the join here.
     results: list[TensorDict] = list(make_executor(stream))
@@ -52,10 +55,15 @@ def test_match_is_reduction(match_op, block_frame_op, joinable_frame_op, make_ex
     assert answer_count == truth_count
 
 
-def _left_match_right(match_op, left_frame_op, right_frame_op, make_executor):
-    stream = match_op.thunk(left_frame_op.thunk(), right_frame_op.thunk())
-    block_frame_block = left_frame_op.dataset.__getitems__(slice(None))
-    joinable_frame_block = right_frame_op.dataset.__getitems__(slice(None))
+def _left_match_right(
+    match_op: MatchOp,
+    left_frame: Frame,
+    right_frame: Frame,
+    make_executor: Callable[[Thunk], Exec],
+):
+    stream = match_op.thunk(left_frame.op.thunk(), right_frame.op.thunk())
+    block_frame_block = tensordict.cat(list(left_frame))
+    joinable_frame_block = tensordict.cat(list(right_frame))
 
     # Performing the join here.
     results: list[TensorDict] = list(make_executor(stream))
@@ -76,12 +84,12 @@ def _left_match_right(match_op, left_frame_op, right_frame_op, make_executor):
 
 
 def test_match_functionally_correct(
-    match_op, block_frame_op, joinable_frame_op, make_executor
+    match_op, block_frame, joinable_frame, make_executor
 ):
-    _left_match_right(match_op, block_frame_op, joinable_frame_op, make_executor)
+    _left_match_right(match_op, block_frame, joinable_frame, make_executor)
 
 
-def test_duplicate_computation(match_op, block_frame_op, make_executor, exec_strat):
+def test_duplicate_computation(match_op, block_frame, make_executor, exec_strat):
     if exec_strat == "DAG":
         pytest.xfail("This duplicates computation, and is currently bugged.")
-    _left_match_right(match_op, block_frame_op, block_frame_op, make_executor)
+    _left_match_right(match_op, block_frame, block_frame, make_executor)
