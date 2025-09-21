@@ -5,9 +5,9 @@ import dataclasses as dcls
 import typing
 from abc import ABC
 
-from aioway.blocks import Block
+from tensordict import TensorDict
 
-from .ops import BlockGen, BlockIter, Op1
+from .ops import BatchGen, BatchIter, Op1
 
 __all__ = ["FlatMapOpBase", "RepeatOp"]
 
@@ -16,12 +16,12 @@ __all__ = ["FlatMapOpBase", "RepeatOp"]
 class FlatMapOpBase(Op1, ABC):
     @typing.final
     @typing.override
-    def apply(self, stream_iter: BlockIter, /) -> BlockGen:
+    def apply(self, stream_iter: BatchIter, /) -> BatchGen:
         for block in stream_iter:
             yield from self.flat_map(block)
 
     @abc.abstractmethod
-    def flat_map(self, item: Block, /) -> BlockGen:
+    def flat_map(self, item: TensorDict, /) -> BatchGen:
         """
         Map individual ``Block`` into something else.
         """
@@ -41,6 +41,6 @@ class RepeatOp(FlatMapOpBase, key="REPEAT"):
     """
 
     @typing.override
-    def flat_map(self, item: Block):
+    def flat_map(self, item: TensorDict):
         for _ in range(self.times):
             yield item

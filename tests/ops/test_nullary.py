@@ -6,14 +6,14 @@ from tests import fake
 
 
 def test_block_frame_len(block_frame):
-    assert len(block_frame) == max(fake.block_sizes())
+    assert len(block_frame) == max(fake.tensordict_sizes())
 
 
 def test_block_frame_getitem(block_frame):
     idx = random.randrange(len(block_frame))
     assert isinstance(idx, int)
 
-    assert (block_frame[idx].data == block_frame.block.data[idx]).all()
+    assert (block_frame[idx] == block_frame.td[idx]).all()
     assert not block_frame[idx].batch_dims
 
 

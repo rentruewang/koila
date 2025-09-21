@@ -6,8 +6,7 @@ import logging
 from abc import ABC
 
 from aioway import registries
-from aioway.ops import BlockGen, Thunk
-from aioway.registries import types
+from aioway.ops import BatchGen, Thunk
 
 __all__ = ["Exec", "execute"]
 
@@ -38,7 +37,7 @@ class Exec(ABC):
         registries.init_subclass(lambda: Exec)(cls, key=key)
 
     @abc.abstractmethod
-    def __iter__(self) -> BlockGen:
+    def __iter__(self) -> BatchGen:
         """
         The ``__iter__`` method launches a new ``Iterator`` to loop over the inputs.
         Every call is creates / rebuilds brand new computation.
@@ -58,5 +57,5 @@ class Exec(ABC):
 
 
 def execute(thunk: Thunk, strategy: str) -> Exec:
-    registry = types.of(Exec)
+    registry = registries.of(Exec)
     return registry[strategy](thunk)

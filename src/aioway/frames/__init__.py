@@ -1,5 +1,4 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-from .blocks import *
+from .batches import *
 from .frames import *
-from .pandas import *
