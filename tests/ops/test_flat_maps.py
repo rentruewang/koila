@@ -4,14 +4,14 @@ import itertools
 
 import pytest
 
-from aioway.ops import BlockIter, RepeatOp
+from aioway.ops import BatchIter, RepeatOp
 
 
 @pytest.mark.parametrize("times", [1, 2, 4])
 def test_repeat_op(block_frame_op, make_executor, times):
     repeat_op = RepeatOp(times=times)
 
-    def consume_batch[T](iterable: BlockIter, times: int):
+    def consume_batch[T](iterable: BatchIter, times: int):
         it = iter(iterable)
         while True:
             # Call ``next`` ``times`` times.

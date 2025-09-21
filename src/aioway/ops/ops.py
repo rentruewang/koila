@@ -10,25 +10,26 @@ from abc import ABC
 from collections.abc import Generator, Iterable, Iterator
 from typing import ClassVar, Protocol
 
+from tensordict import TensorDict
+
 from aioway import registries
-from aioway.blocks import Block
 from aioway.errors import AiowayError
 
 from .thunks import Thunk
 
-__all__ = ["Op", "Op0", "Op1", "Op2", "BlockIter", "BlockGen"]
+__all__ = ["Op", "Op0", "Op1", "Op2", "BatchIter", "BatchGen"]
 
 LOGGER = logging.getLogger(__name__)
 
-type BlockIter = Iterable[Block]
+type BatchIter = Iterable[TensorDict]
 """
-The function ``__iter__`` of ``Block``.
+The function ``__iter__`` of ``TensorDict``.
 Would create a new ``Generator`` everytime ``iter`` is called.
 """
 
-type BlockGen = Generator[Block]
+type BatchGen = Generator[TensorDict]
 """
-``Generator`` of ``Block``.
+``Generator`` of ``TensorDict``.
 """
 
 
@@ -91,7 +92,7 @@ class Op(ABC):
 
     @typing.no_type_check
     @abc.abstractmethod
-    def apply(self, *ops: BlockIter) -> BlockGen:
+    def apply(self, *ops: BatchIter) -> BatchGen:
         """
         The ``apply`` method launches a new ``Generator`` to loop over the inputs.
         Every call is creates / rebuilds brand new computation.
@@ -170,11 +171,11 @@ class Op0(Op, ABC):
 
     @typing.final
     @typing.override
-    def apply(self) -> BlockGen:
+    def apply(self) -> BatchGen:
         yield from self.stream()
 
     @abc.abstractmethod
-    def stream(self) -> BlockGen:
+    def stream(self) -> BatchGen:
         """
         Yield the stream of ``Block``s.
         """
@@ -190,7 +191,7 @@ class Op1(Op, ABC):
     ARGC = 1
 
     @abc.abstractmethod
-    def apply(self, stream_iter: BlockIter, /) -> BlockGen: ...
+    def apply(self, stream_iter: BatchIter, /) -> BatchGen: ...
 
     @typing.override
     def accept[T](self, visitor: Op.Visitor[T]) -> T:
@@ -202,14 +203,14 @@ class Op2(Op, ABC):
 
     @typing.final
     @typing.override
-    def apply(self, left_iter: BlockIter, right_iter: BlockIter, /) -> BlockGen:
+    def apply(self, left_iter: BatchIter, right_iter: BatchIter, /) -> BatchGen:
         for left, right in self.zip(left_iter, right_iter):
             yield self.join(left, right)
 
     @abc.abstractmethod
     def zip(
-        self, left: BlockIter, right: BlockIter, /
-    ) -> Iterator[tuple[Block, Block]]:
+        self, left: BatchIter, right: BatchIter, /
+    ) -> Iterator[tuple[TensorDict, TensorDict]]:
         """
         Zip over left and right. Defines different iteration strategy here.
         """
@@ -217,7 +218,7 @@ class Op2(Op, ABC):
         ...
 
     @abc.abstractmethod
-    def join(self, left: Block, right: Block, /) -> Block:
+    def join(self, left: TensorDict, right: TensorDict, /) -> TensorDict:
         """
         Join the blocks that are zipped.
         """

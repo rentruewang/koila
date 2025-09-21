@@ -6,7 +6,7 @@ import torch
 from tensordict import TensorDict
 from torch import cuda
 
-from aioway.blocks import Block
+from aioway import batches
 
 
 def cpu_and_maybe_cuda():
@@ -23,7 +23,7 @@ def cpu_and_maybe_cuda():
     return devs
 
 
-def block_sizes():
+def tensordict_sizes():
     yield 16
     yield 64
     yield 1024
@@ -49,19 +49,13 @@ def tensordict_no_batch(*, size: int, device: str):
     )
 
 
-def block_ok(*, size: int, device: str):
-    tensordict = tensordict_ok(device=device, size=size)
-    return Block(tensordict)
+def unionable_ok(*, size: int, device: str):
+    return tensordict_ok(size=size + 1, device=device)
 
 
-def unionable_block_ok(*, size: int, device: str):
-    return block_ok(size=size + 1, device=device)
-
-
-def concat_block_ok(*, size: int, device: str):
-    return block_ok(size=size, device=device).rename(
-        f1d="f1", f2d="f2", i1d="i1", i2d="i2"
-    )
+def concat_ok(*, size: int, device: str):
+    td = tensordict_ok(size=size, device=device)
+    return batches.tensordict_rename(td, f1d="f1", f2d="f2", i1d="i1", i2d="i2")
 
 
 def random_things():

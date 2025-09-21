@@ -6,24 +6,24 @@ import typing
 from collections.abc import Generator
 from typing import Self
 
-from aioway.ops import BlockGen
+from aioway.ops import BatchGen
 
 from .execs import Exec
 
-__all__ = ["LazyExec"]
+__all__ = ["TreeExec"]
 
 LOGGER = logging.getLogger(__name__)
 
 
 @dcls.dataclass(frozen=True)
-class LazyExec(Exec, key="LAZY"):
+class TreeExec(Exec, key="TREE"):
     """
     ``LazyExec`` is the simplest implementation of ``Exec``,
     iterates over the graph with lazy evaluation.
     """
 
     @typing.override
-    def __iter__(self) -> BlockGen:
+    def __iter__(self) -> BatchGen:
         """
         Yields a generator, locally, from ``Op``'s definition.
 

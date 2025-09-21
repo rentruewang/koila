@@ -9,7 +9,6 @@ import tensordict
 from tensordict import TensorDict
 from torch.utils.data import DataLoader, Dataset
 
-from aioway.blocks import Block
 from aioway.errors import AiowayError
 from aioway.frames import Frame
 
@@ -101,7 +100,7 @@ class FrameDataLoaderCfg:
         due to ``DataLoader`` using ``pickle`` to serialize the function.
     """
 
-    def iterator_of(self, dataset: Dataset[Block]) -> Iterator[Block]:
+    def iterator_of(self, dataset: Dataset[TensorDict]) -> Iterator[TensorDict]:
         return _dl_iter(dataset, self)
 
     @classmethod
@@ -126,7 +125,7 @@ def _check_tensordict_batched(td: TensorDict, /, *, is_batched: bool) -> None:
     raise TabularBatchError
 
 
-def _dl_iter(dataset: Dataset[Block], opt: FrameDataLoaderCfgLike):
+def _dl_iter(dataset: Dataset[TensorDict], opt: FrameDataLoaderCfgLike):
     # Convert to ``DataLoaderOpt`` first to ensure that the default configs are set.
     opt = FrameDataLoaderCfg.parse(opt)
 
@@ -142,7 +141,7 @@ def _dl_iter(dataset: Dataset[Block], opt: FrameDataLoaderCfgLike):
         if not batch.batch_size:
             raise TabularBatchError(f"TensorDict batch must have `batch_size`.")
 
-        yield Block(batch)
+        yield batch
 
 
 def _maybe_stack_td(items: TensorDict | list[TensorDict]) -> TensorDict:
