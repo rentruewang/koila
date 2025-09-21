@@ -2,6 +2,7 @@
 
 import abc
 import dataclasses as dcls
+import inspect
 import typing
 from abc import ABC
 from collections.abc import Generator
@@ -28,7 +29,10 @@ class Frame(ABC):
     Each ``TensorDict`` retrieved from ``Frame`` is a minibatch of data.
     """
 
-    def __init_subclass__(cls, key: str):
+    def __init_subclass__(cls, key: str = ""):
+        if inspect.isabstract(cls):
+            return
+
         init_sublcass = registries.init_subclass(lambda: Frame)
         init_sublcass(cls, key=key)
 

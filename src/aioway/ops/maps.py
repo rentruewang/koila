@@ -12,9 +12,9 @@ from tensordict import TensorDict
 from tensordict.nn import TensorDictModule
 from torch import Tensor
 
-from aioway import batches
 from aioway.errors import AiowayError
 
+from . import _funcs
 from .ops import BatchGen, BatchIter, Op1
 
 __all__ = [
@@ -101,7 +101,7 @@ class ExprFilterOp(MapOpBase, key="EXPR_FILTER"):
     def map(self, item):
         "Filter with ``expr`` based on ``sympy``."
 
-        return batches.tensordict_filter(item, self.expr)
+        return _funcs.filter(item, self.expr)
 
 
 @dcls.dataclass(frozen=True)
@@ -170,10 +170,10 @@ class RenameOp(MapOpBase, key="RENAME"):
         return super().__hash__()
 
     @typing.override
-    def map(self, item):
+    def map(self, item: TensorDict):
         "Renames the item column with the dictionary."
 
-        return batches.tensordict_rename(item, **self.renames)
+        return _funcs.rename(item, **self.renames)
 
 
 @dcls.dataclass(frozen=True)
