@@ -2,7 +2,6 @@
 
 import pytest
 
-from aioway import batches
 from aioway.ops import (
     ExprFilterOp,
     FuncFilterOp,
@@ -10,6 +9,7 @@ from aioway.ops import (
     Op,
     ProjectOp,
     RenameOp,
+    _funcs,
 )
 
 
@@ -31,7 +31,7 @@ def test_filter(filter_op, block_frame, make_executor):
         make_executor(filter_op.thunk(block_frame.op.thunk())),
         make_executor(block_frame.op.thunk()),
     ):
-        original_filtered = batches.tensordict_filter(original, "f1d > 0")
+        original_filtered = _funcs.filter(original, "f1d > 0")
         assert (filtered == original_filtered).all()
 
 
@@ -46,7 +46,7 @@ def test_rename(block_frame, renames, make_executor):
         make_executor(rename_op.thunk(block_frame.op.thunk())),
         make_executor(block_frame.op.thunk()),
     ):
-        original_renamed = batches.tensordict_rename(
+        original_renamed = _funcs.rename(
             original, f1d="f1", f2d="f2", i1d="i1", i2d="i2"
         )
         assert (renamed == original_renamed).all()
@@ -58,7 +58,7 @@ def map_rename():
 
 
 def test_func_op(block_frame, map_rename, make_executor):
-    f = lambda b: batches.tensordict_rename(b, **map_rename)
+    f = lambda b: _funcs.rename(b, **map_rename)
     func_op = FuncOp(func=f)
     for mapped, original in zip(
         make_executor(func_op.thunk(block_frame.op.thunk())),

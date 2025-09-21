@@ -1,7 +1,6 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import dataclasses as dcls
-import math
 import typing
 from typing import TypeIs
 
@@ -9,64 +8,36 @@ from tensordict import TensorDict
 
 from aioway.errors import AiowayError
 
+from ._batches import BatchFrame
 from .frames import Frame
 
-__all__ = ["BatchFrame", "BatchListFrame"]
+__all__ = ["TorchFrame", "TorchListFrame"]
 
 
 @dcls.dataclass(frozen=True)
-class BatchFrame(Frame, key="BATCH"):
+class TorchFrame(BatchFrame, key="TORCH"):
     """
     A ``Frame`` backed by a ``TensorDict`` (aka a batch in ``aioway``).
     This means that it is non-distributed, and volatile.
     """
 
-    data: TensorDict
-    """
-    The underlying data of the ``Frame``.
-    """
+    KLASS = TensorDict
 
-    batch: int
-    """
-    The batch size to use.
-    """
-
-    drop_last: bool = False
-    """
-    Whether to truncate the last batch that doesn't have length ``batch_size``.
-    """
-
-    def __post_init__(self) -> None:
-        if not isinstance(self.data, TensorDict):
-            raise BatchTensorFrameTypeError(
-                f"Expected {type(self)=} to be `TensorDict`."
-            )
-
+    @classmethod
     @typing.override
-    def __len__(self) -> int:
-        truncate = math.ceil if self.drop_last else math.floor
-        return truncate(len(self.data) / self.batch)
-
-    @typing.override
-    def __getitem__(self, idx: int) -> TensorDict:
-        start = idx * self.batch
-        end = min(start + self.batch, len(self.data))
-        return self.data[start:end]
-
-    @property
-    def device(self):
-        return self.data.device
+    def convert_tensordict(cls, data: TensorDict) -> TensorDict:
+        return data
 
 
 @typing.final
 @dcls.dataclass(frozen=True)
-class BatchListFrame(Frame, key="LIST"):
+class TorchListFrame(Frame, key="LIST"):
     """
     A ``Frame`` backed by a ``list[TensorDict]`` (aka a batch in ``aioway``).
     This means that it is non-distributed, and volatile.
     """
 
-    data: list[TensorDict]
+    data: list[TensorDict] = dcls.field(default_factory=list)
     """
     The ``list`` of ``TensorDict``s.
     The data must all have the same keys and data types (#100),
@@ -101,7 +72,7 @@ def is_list_of_tensordict(data) -> TypeIs[list[TensorDict]]:
     return isinstance(data, list) and all(isinstance(t, TensorDict) for t in data)
 
 
-class BatchTensorFrameTypeError(AiowayError, TypeError): ...
+class TensorFrameTypeError(AiowayError, TypeError): ...
 
 
 class BatchListTensorFrameTypeError(AiowayError, TypeError): ...

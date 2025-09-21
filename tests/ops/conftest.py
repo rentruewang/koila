@@ -5,7 +5,7 @@ import pytest
 
 from aioway import execs
 from aioway.execs import Exec
-from aioway.io import BatchFrame
+from aioway.io import TorchFrame
 from aioway.ops import Thunk
 from tests import fake
 
@@ -26,21 +26,21 @@ def batch_size(request) -> int:
 
 
 @pytest.fixture(scope="module")
-def block_frame(device, batch_size, data_size) -> BatchFrame:
+def block_frame(device, batch_size, data_size) -> TorchFrame:
     block = fake.tensordict_ok(size=data_size, device=device)
-    return BatchFrame(block, batch=batch_size)
+    return TorchFrame(block, batch=batch_size)
 
 
 @pytest.fixture(scope="module")
-def concat_frame(device, batch_size, data_size) -> BatchFrame:
+def concat_frame(device, batch_size, data_size) -> TorchFrame:
     block = fake.concat_ok(size=data_size, device=device)
-    return BatchFrame(block, batch_size)
+    return TorchFrame(block, batch_size)
 
 
 @pytest.fixture(scope="module")
 def joinable_frame(device, batch_size, data_size):
     block = fake.unionable_ok(size=data_size, device=device)
-    return BatchFrame(block, batch_size)
+    return TorchFrame(block, batch_size)
 
 
 def _exec_strat():
