@@ -8,15 +8,12 @@ from sympy import Basic, Expr
 from tensordict import TensorDict
 from torch import Tensor
 
-from aioway.attrs import AttrSet
 from aioway.errors import AiowayError
-
-__all__ = ["Block"]
 
 LOGGER = logging.getLogger(__name__)
 
 
-def tensordict_col_expr(td: TensorDict, str_or_expr: str | Basic, /) -> Tensor:
+def col_expr(td: TensorDict, str_or_expr: str | Basic, /) -> Tensor:
     """
     Perform evaluate on columns, given a sympy expression.
 
@@ -25,7 +22,7 @@ def tensordict_col_expr(td: TensorDict, str_or_expr: str | Basic, /) -> Tensor:
     using symbols as keys, and lambda function would then be called.
 
     Args:
-        td: The ``TensorDict`` to manipulate.
+        td: The ``DictOfTensor`` to manipulate.
         str_or_expr:
             The ``sympy`` expression.
             If a string is given, ``sympify`` is called.
@@ -45,7 +42,7 @@ def tensordict_col_expr(td: TensorDict, str_or_expr: str | Basic, /) -> Tensor:
     # Convert symbols to their string representations.
     keys = [str(s) for s in expr.free_symbols]
 
-    if any(var not in td.keys() for var in keys):
+    if any(var not in td for var in keys):
         raise DictKeyError(
             f"Expression {expr} contains {keys}, not a subset of {td.keys()}"
         )
@@ -61,13 +58,13 @@ def tensordict_col_expr(td: TensorDict, str_or_expr: str | Basic, /) -> Tensor:
         raise SympyEvalError from te
 
 
-def tensordict_filter(td: TensorDict, expr: str | Expr) -> TensorDict:
+def filter(td: TensorDict, expr: str | Expr) -> TensorDict:
     """
     Filter the current ``Block`` with a given expression.
     """
 
     LOGGER.debug("Filter called with expr=%s", expr)
-    idx = tensordict_col_expr(td, expr).bool()
+    idx = col_expr(td, expr).bool()
 
     if len(idx) != len(td):
         raise BlockIndexError(
@@ -79,75 +76,20 @@ def tensordict_filter(td: TensorDict, expr: str | Expr) -> TensorDict:
     return td[idx]
 
 
-def tensordict_rename(td: TensorDict, **names: str) -> TensorDict:
+def rename(td: TensorDict, **names: str) -> TensorDict:
     """
     Rename the columns of the current ``Block``.
     """
 
     LOGGER.debug("Renamed called with names=%s", names)
     return TensorDict(
-        {names.get(key, key): val for key, val in td.data.items()},
-        batch_size=td.data.batch_size,
-        device=td.data.device,
+        {names.get(key, key): val for key, val in td.items()},
+        batch_size=td.batch_size,
+        device=td.device,
     )
 
 
-def tensordict_chain(left: TensorDict, right: TensorDict) -> TensorDict:
-    """
-    Concatenate the current ``TensorDict`` with another ``TensorDict``, vertically.
-
-    Args:
-        left: The LHS of the concatenation.
-        right: The RHS of the concatenation.
-
-    Raises:
-        BlockChainError: If the length of the other is different.
-
-    Returns:
-        A new ``Block`` on the same device.
-    """
-
-    LOGGER.debug("Chain called with self=%s, other=%s", left, right)
-
-    if left.keys() != right.keys():
-        raise BatchChainError(
-            "Batch keys must match to chain. " f"Got {left.keys()=} and {right.keys()=}"
-        )
-
-    return torch.cat([left.data, right.data], dim=0)
-
-
-def tensordict_require_attrs(self: TensorDict, attrs: AttrSet, /) -> None:
-    """
-    Promises that the current ``Block`` has a given ``TableSchema`` type.
-    """
-
-    LOGGER.debug(
-        "Requiring attrs of self: %s, other: %s to be equal", self.attrs, attrs
-    )
-
-    if attrs.keys() != self.keys():
-        raise DictKeyError(
-            "Key mismatch. "
-            f"Required: {list(attrs.keys())}. Actual: {list(self.keys())}"
-        )
-
-    if attrs.device and self.device and attrs.device != self.device:
-        raise BlockDeviceError(
-            "Device mismatch with schema. "
-            f"Required: {attrs.device}. Got: {self.device}."
-        )
-
-    for key in self.keys():
-        if attrs[key].dtype == self[key].dtype:
-            continue
-
-        raise BlockDTypeError(
-            f"For {key=}, {attrs[key].dtype=} incompatible with {self[key].dtype=}."
-        )
-
-
-def tensordict_to_tensor(td: TensorDict) -> Tensor:
+def to_tensor(td: TensorDict) -> Tensor:
     columns: list[Tensor] = []
 
     for value in td.values():
@@ -166,9 +108,6 @@ class SympyEvalError(AiowayError, RuntimeError): ...
 
 
 class BlockIndexError(AiowayError, IndexError): ...
-
-
-class BatchChainError(AiowayError, ValueError): ...
 
 
 class BlockZipError(AiowayError, ValueError): ...

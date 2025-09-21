@@ -5,7 +5,7 @@ import pytest
 import torch
 from numpy import random as np_rand
 
-from aioway import batches
+from aioway.ops import _funcs
 
 from . import fake
 
@@ -59,33 +59,6 @@ def test_tensordict_keys(device, batch):
     assert block.keys() == {"f1d", "f2d", "i1d", "i2d"}
 
 
-def test_tensordict_rename(device, batch):
-    block = fake.tensordict_ok(device=device, size=batch)
-
-    assert batches.tensordict_rename(block, f1d="f1", f2d="f2").keys() == {
-        "f1",
-        "f2",
-        "i1d",
-        "i2d",
-    }
-
-
-def test_tensordict_chain(device, batch):
-    block = fake.tensordict_ok(device=device, size=batch)
-    another = fake.unionable_ok(device=device, size=batch)
-
-    chained = batches.tensordict_chain(block, another)
-    assert len(chained) == len(block) + len(another)
-
-    assert chained.keys() == block.keys() == another.keys()
-
-    for key in chained.keys():
-        ck = chained[key]
-        bk = block[key]
-        ak = another[key]
-        assert (ck == torch.cat([bk, ak])).all()
-
-
 def test_tensordict_filter(device, batch):
     block = fake.tensordict_ok(device=device, size=batch)
 
@@ -96,6 +69,6 @@ def test_tensordict_filter(device, batch):
     golden_index = np.arange(len(block))[positive]
     golden = block[golden_index]
 
-    filtered = batches.tensordict_filter(block, "f1d > 0")
+    filtered = _funcs.filter(block, "f1d > 0")
 
     assert (golden.data == filtered.data).all()
