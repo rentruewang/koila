@@ -5,7 +5,7 @@ import pytest
 
 from aioway import execs
 from aioway.execs import Exec
-from aioway.frames import BlockFrame
+from aioway.frames import BatchFrame
 from aioway.ops import FrameOp, Thunk
 from tests import fake
 
@@ -15,27 +15,27 @@ def device(request) -> str:
     return request.param
 
 
-@pytest.fixture(params=fake.block_sizes(), scope="module")
+@pytest.fixture(params=fake.tensordict_sizes(), scope="module")
 def size(request) -> int:
     return request.param
 
 
 @pytest.fixture(scope="module")
-def block_frame(device) -> BlockFrame:
-    block = fake.block_ok(size=max(fake.block_sizes()), device=device)
-    return BlockFrame(block)
+def block_frame(device) -> BatchFrame:
+    block = fake.tensordict_ok(size=max(fake.tensordict_sizes()), device=device)
+    return BatchFrame(block)
 
 
 @pytest.fixture(scope="module")
-def concat_frame(device) -> BlockFrame:
-    block = fake.concat_block_ok(size=max(fake.block_sizes()), device=device)
-    return BlockFrame(block)
+def concat_frame(device) -> BatchFrame:
+    block = fake.concat_ok(size=max(fake.tensordict_sizes()), device=device)
+    return BatchFrame(block)
 
 
 @pytest.fixture(scope="module")
 def joinable_frame(device):
-    block = fake.unionable_block_ok(size=max(fake.block_sizes()), device=device)
-    return BlockFrame(block)
+    block = fake.unionable_ok(size=max(fake.tensordict_sizes()), device=device)
+    return BatchFrame(block)
 
 
 @pytest.fixture
@@ -67,7 +67,7 @@ def another_block_frame_op(block_frame, frame_op_loader_cfg):
 
 
 def _exec_strat():
-    yield "LAZY"
+    yield "TREE"
     yield "DAG"
 
 

@@ -5,10 +5,9 @@ import typing
 
 import torch
 from numpy.typing import NDArray
+from tensordict import TensorDict
 
-from aioway.blocks import Block
-
-from .ops import BlockIter, Op2
+from .ops import BatchIter, Op2
 
 __all__ = ["ZipOp", "MatchOp"]
 
@@ -22,7 +21,7 @@ class ZipOp(Op2, key="ZIP"):
     zip = zip
     "Same as built in ``zip``."
 
-    join = lambda self, left, right: left.zip(right)
+    join = lambda self, left, right: TensorDict({**left, **right})
     "Joins the left and right that are the same length."
 
 
@@ -38,7 +37,7 @@ class MatchOp(Op2, key="MATCH"):
     """
 
     @typing.override
-    def zip(self, left_iter: BlockIter, right_iter: BlockIter):
+    def zip(self, left_iter: BatchIter, right_iter: BatchIter):
         "Same as ``iteratools.product``, but repeatedly invoke ``iter(right)``."
 
         for left in left_iter:
@@ -46,17 +45,19 @@ class MatchOp(Op2, key="MATCH"):
                 yield left, right
 
     @typing.override
-    def join(self, left: Block, right: Block) -> Block:
-        "Inner join a block of data in memory."
+    def join(self, left: TensorDict, right: TensorDict) -> TensorDict:
+        "Inner join another batch of data in memory."
 
         left_select, right_select = self._compute_select(left=left, right=right)
 
         left_chosen = left[left_select]
         right_chosen = right[right_select]
 
-        return left_chosen.zip(right_chosen)
+        return TensorDict({**left_chosen, **right_chosen}, batch_size=len(left_chosen))
 
-    def _compute_select(self, left: Block, right: Block) -> tuple[NDArray, NDArray]:
+    def _compute_select(
+        self, left: TensorDict, right: TensorDict
+    ) -> tuple[NDArray, NDArray]:
         left_key = left[self.key]
         right_key = right[self.key]
 

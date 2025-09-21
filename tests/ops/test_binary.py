@@ -6,18 +6,12 @@ import pytest
 import tensordict
 from tensordict import TensorDict
 
-from aioway.blocks import Block
 from aioway.ops import MatchOp, ZipOp
 
 
 @pytest.fixture
 def match_op():
     return MatchOp(key="i1d")
-
-
-def combine_results(results: list[Block], /) -> TensorDict:
-    data = [result.data for result in results]
-    return tensordict.cat(data)
 
 
 def test_zip_input_len(block_frame, concat_frame):
@@ -42,12 +36,12 @@ def test_join_input_len(block_frame, joinable_frame):
 
 def test_match_is_reduction(match_op, block_frame_op, joinable_frame_op, make_executor):
     stream = match_op.thunk(block_frame_op.thunk(), joinable_frame_op.thunk())
-    block_frame_block = block_frame_op.dataset.block
-    joinable_frame_block = joinable_frame_op.dataset.block
+    block_frame_block = block_frame_op.dataset.__getitems__(slice(None))
+    joinable_frame_block = joinable_frame_op.dataset.__getitems__(slice(None))
 
     # Performing the join here.
-    results: list[Block] = list(make_executor(stream))
-    answer_items = combine_results(results)["i1d"]
+    results: list[TensorDict] = list(make_executor(stream))
+    answer_items = tensordict.cat(results)["i1d"]
 
     # Do it at once.
     ground_truth = match_op.join(block_frame_block, joinable_frame_block)
@@ -60,12 +54,12 @@ def test_match_is_reduction(match_op, block_frame_op, joinable_frame_op, make_ex
 
 def _left_match_right(match_op, left_frame_op, right_frame_op, make_executor):
     stream = match_op.thunk(left_frame_op.thunk(), right_frame_op.thunk())
-    block_frame_block = left_frame_op.dataset.block
-    joinable_frame_block = right_frame_op.dataset.block
+    block_frame_block = left_frame_op.dataset.__getitems__(slice(None))
+    joinable_frame_block = right_frame_op.dataset.__getitems__(slice(None))
 
     # Performing the join here.
-    results: list[Block] = list(make_executor(stream))
-    answer_items = combine_results(results)["i1d"]
+    results: list[TensorDict] = list(make_executor(stream))
+    answer_items = tensordict.cat(results)["i1d"]
 
     answer_count = Counter(answer_items.tolist())
 

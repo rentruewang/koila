@@ -7,14 +7,15 @@ from abc import ABC
 from collections.abc import Callable
 
 import numpy as np
-from numpy.typing import NDArray
 from sympy import Expr
+from tensordict import TensorDict
 from tensordict.nn import TensorDictModule
+from torch import Tensor
 
-from aioway.blocks import Block
+from aioway import batches
 from aioway.errors import AiowayError
 
-from .ops import BlockGen, BlockIter, Op1
+from .ops import BatchGen, BatchIter, Op1
 
 __all__ = [
     "MapOpBase",
@@ -32,12 +33,12 @@ __all__ = [
 class MapOpBase(Op1, ABC):
     @typing.final
     @typing.override
-    def apply(self, stream_iter: BlockIter, /) -> BlockGen:
+    def apply(self, stream_iter: BatchIter, /) -> BatchGen:
         for block in stream_iter:
             yield self.map(block)
 
     @abc.abstractmethod
-    def map(self, item: Block, /) -> Block:
+    def map(self, item: TensorDict, /) -> TensorDict:
         """
         Map individual ``Block`` into something else.
         """
@@ -57,19 +58,19 @@ class PassOp(MapOpBase, key="PASS"):
 
 @dcls.dataclass(frozen=True)
 class FuncFilterOp(MapOpBase, key="FUNC_FILTER"):
-    predicate: Callable[[Block], NDArray]
+    predicate: Callable[[TensorDict], Tensor]
     """
     The batched prediction of which rows to keep for the inputs.
     """
 
     @typing.override
-    def map(self, item: Block) -> Block:
+    def map(self, item: TensorDict) -> TensorDict:
         "Using the function predicate to filter. Works well with ``numpy``."
 
-        pred = self.predicate(item)
+        pt = self.predicate(item)
 
         # Just to be extra fault tolerant.
-        pred = np.array(pred)
+        pred = pt.numpy()
 
         # Convert to int indices.
         if np.isdtype(pred.dtype, "bool"):
@@ -100,7 +101,7 @@ class ExprFilterOp(MapOpBase, key="EXPR_FILTER"):
     def map(self, item):
         "Filter with ``expr`` based on ``sympy``."
 
-        return item.filter(self.expr)
+        return batches.tensordict_filter(item, self.expr)
 
 
 @dcls.dataclass(frozen=True)
@@ -127,22 +128,22 @@ class ProjectOp(MapOpBase, key="PROJECT"):
         return super().__hash__()
 
     @typing.override
-    def map(self, item: Block) -> Block:
+    def map(self, item: TensorDict) -> TensorDict:
         "Perform project. If ``subset`` is ``None``, this is a no-op."
         if self.subset is None:
             return item
 
-        return item[self.subset]
+        return item.select(*self.subset)
 
 
 @dcls.dataclass(frozen=True)
 class FuncOp(MapOpBase, key="FUNC"):
     """
-    ``FuncOp`` is an ``Op`` that performs on the input ``Block``,
-    and returns the result as a ``Block``.
+    ``FuncOp`` is an ``Op`` that performs on the input ``TensorDict``,
+    and returns the result as a ``TensorDict``.
     """
 
-    func: Callable[[Block], Block]
+    func: Callable[[TensorDict], TensorDict]
     """
     The function to apply to.
     """
@@ -172,7 +173,7 @@ class RenameOp(MapOpBase, key="RENAME"):
     def map(self, item):
         "Renames the item column with the dictionary."
 
-        return item.rename(**self.renames)
+        return batches.tensordict_rename(item, **self.renames)
 
 
 @dcls.dataclass(frozen=True)
@@ -182,13 +183,13 @@ class ModuleOp(FuncOp, key="MODULE"):
     and executes it on the input data.
 
     It is used to execute the module on the input data,
-    and return the result as a ``Block``.
+    and return the result as a ``TensorDict``.
     """
 
     module: TensorDictModule
 
     @typing.override
-    def map(self, item):
+    def map(self, item: TensorDict) -> TensorDict:
         "Calls ``TensorDictModule``."
 
         return self.module(item)

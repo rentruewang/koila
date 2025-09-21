@@ -6,10 +6,10 @@ import typing
 from graphlib import TopologicalSorter
 from typing import Protocol
 
-from aioway.ops import BlockGen, RepeatOp, Thunk
+from aioway.ops import BatchGen, RepeatOp, Thunk
 
 from .execs import Exec
-from .lazy import LazyExec
+from .trees import TreeExec
 
 __all__ = ["DagExec"]
 
@@ -59,7 +59,7 @@ class DagExec(Exec, key="DAG"):
     """
 
     @typing.override
-    def __iter__(self) -> BlockGen:
+    def __iter__(self) -> BatchGen:
         """
         Yields a generator, locally, from ``Op``'s definition.
 
@@ -80,7 +80,7 @@ class DagExec(Exec, key="DAG"):
         last = insert_memoize_repeat_op(dag_node_list)
 
         # Use ``LazyExec``'s recursive transformation.
-        return LazyExec(last)
+        return TreeExec(last)
 
 
 @dcls.dataclass
