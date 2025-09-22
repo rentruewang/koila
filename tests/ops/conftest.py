@@ -6,7 +6,15 @@ import pytest
 from aioway import _registries
 from aioway.execs import Exec
 from aioway.io import TorchFrame
-from aioway.ops import Thunk
+from aioway.ops import (
+    ExprFilterOp,
+    FuncFilterOp,
+    MatchOp,
+    Op1,
+    RepeatOp,
+    Thunk,
+    ZipOp,
+)
 from tests import fake
 
 
@@ -60,3 +68,31 @@ def make_executor(exec_strat):
         return reg[exec_strat](thunk)
 
     return executor
+
+
+@pytest.fixture
+def match_op():
+    return MatchOp(key="i1d")
+
+
+@pytest.fixture
+def zip_op():
+    return ZipOp()
+
+
+@pytest.fixture
+def repeat_op(times):
+    return RepeatOp(times=times)
+
+
+def _filter_expr_exec():
+    return ExprFilterOp("f1d > 0")
+
+
+def _filter_pred_frame():
+    return FuncFilterOp(predicate=lambda t: (t["f1d"] > 0).cpu())
+
+
+@pytest.fixture(params=[_filter_expr_exec, _filter_pred_frame])
+def filter_op(request) -> Op1:
+    return request.param()

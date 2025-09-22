@@ -12,7 +12,7 @@ from tensordict import TensorDict
 from aioway.io import TorchListFrame
 from aioway.ops import Thunk
 
-from .execs import Exec
+from .execs import Exec, ExecCtx
 
 __all__ = ["CacheExec"]
 
@@ -25,7 +25,8 @@ class CacheExec(Exec, key="CACHE"):
     iterates over the graph with lazy evaluation.
     """
 
-    def __init__(self, executor: Exec, /) -> None:
+    def __init__(self, executor: Exec, /, *ctxs: ExecCtx) -> None:
+        super().__init__(*ctxs)
         self._exec = executor
 
     @typing.override
@@ -37,6 +38,10 @@ class CacheExec(Exec, key="CACHE"):
         generator = _CachedThunkGen(self)
 
         return generator
+
+    @typing.override
+    def inputs(self):
+        yield self._exec
 
     @property
     @typing.override

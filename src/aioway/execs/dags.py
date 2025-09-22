@@ -1,15 +1,17 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import dataclasses as dcls
+import functools
 import logging
 import typing
 from graphlib import TopologicalSorter
 from typing import Protocol
 
+from aioway._errors import AiowayError
 from aioway.ops import BatchGen, Thunk
 
 from .caches import CacheExec
-from .execs import Exec
+from .execs import Exec, ExecCtx
 from .ops import OpExec
 
 __all__ = ["DagExec"]
@@ -58,7 +60,8 @@ class DagExec(Exec, key="DAG"):
         which ensures that before the next ``next(D)`` call, all the dependencies are finished.
     """
 
-    def __init__(self, thunk: Thunk, /) -> None:
+    def __init__(self, thunk: Thunk, /, *ctxs: ExecCtx) -> None:
+        super().__init__(*ctxs)
         self._thunk = thunk
 
     @typing.override
@@ -75,12 +78,26 @@ class DagExec(Exec, key="DAG"):
 
         yield from self.memoized_exec()
 
+    @typing.override
+    def inputs(self):
+        # ``DagExec.inputs()`` does not directly correspond to its own dependency,
+        # but rather a memoized ``Exec``'s dependency.
+        yield from self.memoized_exec().inputs()
+
+    @functools.cache
     def memoized_exec(self):
         thunk_deps = self._thunk.deps()
         dag_node_list = build_thunk_deps_dag(thunk_deps)
 
         # Transform the graph, to cache nodes that are ``iter``-ed more than once.
-        return build_execs_with_cache(dag_node_list)
+        memoized = build_execs_with_cache(dag_node_list)
+
+        if memoized.thunk != self.thunk:
+            raise DagExecCorruptStateError(
+                "Executor doesn't match the input thunk. Impossible."
+            )
+
+        return memoized
 
     @property
     @typing.override
@@ -96,7 +113,7 @@ class ThunkDagNode:
 
     @property
     def in_nodes(self):
-        return self.thunk.inputs
+        return self.thunk.inputs()
 
     @property
     def in_degs(self):
@@ -237,7 +254,10 @@ def apply_for_node_input(node_list: list[ThunkDagNode], func: _NodeInputPairFunc
     thunk_id_idx = {thunk: idx for idx, thunk in enumerate(thunk_list)}
 
     for thunk in thunk_list:
-        for ipt in thunk.inputs:
+        for ipt in thunk.inputs():
             node_idx = thunk_id_idx[thunk]
             ipt_idx = thunk_id_idx[ipt]
             func(node_idx, ipt_idx)
+
+
+class DagExecCorruptStateError(AiowayError, AssertionError): ...
