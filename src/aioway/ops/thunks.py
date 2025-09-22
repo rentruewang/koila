@@ -1,17 +1,15 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import dataclasses as dcls
-import typing
 from typing import Self
 
 from rich.tree import Tree
 
-from aioway.errors import AiowayError
+from aioway._errors import AiowayError
 
-if typing.TYPE_CHECKING:
-    from .ops import Op
+from .ops import Op
 
-__all__ = ["Thunk"]
+__all__ = ["Thunk", "thunk"]
 
 
 @dcls.dataclass(frozen=True)
@@ -20,7 +18,12 @@ class Thunk:
     The function pointer (``Op`` itself) and their arguments (other ``Thunk``s).
     """
 
-    op: "Op"
+    # __match_args__: ClassVar[tuple[str, ...]]
+    # """
+    # This is to allow ``Thunk`` to be used in match destructuring.
+    # """
+
+    op: Op
     """
     The function to be applied to.
     """
@@ -40,7 +43,7 @@ class Thunk:
             if type(arg) != type(self):
                 raise ThunkArgError(
                     "Thunk only accepts `Thunk` objects as arguments, or none at all. "
-                    f"Got {[type(arg) for arg in self.inputs]=}"
+                    f"Got {[type(arg) for arg in self.inputs]}"
                 )
 
     def __rich__(self) -> Tree:
@@ -69,6 +72,10 @@ class Thunk:
     @property
     def argc(self) -> int:
         return len(self.inputs)
+
+
+def thunk(op: Op, /, *inputs: Thunk) -> Thunk:
+    return Thunk(op=op, inputs=inputs)
 
 
 def find_all_thunk_deps(thunk: Thunk) -> set[Thunk]:

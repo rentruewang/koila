@@ -8,7 +8,7 @@ from sympy import Basic, Expr
 from tensordict import TensorDict
 from torch import Tensor
 
-from aioway.errors import AiowayError
+from aioway._errors import AiowayError
 
 LOGGER = logging.getLogger(__name__)
 

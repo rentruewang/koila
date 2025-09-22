@@ -12,7 +12,7 @@ from tensordict import TensorDict
 from tensordict.nn import TensorDictModule
 from torch import Tensor
 
-from aioway.errors import AiowayError
+from aioway._errors import AiowayError
 
 from . import _funcs
 from .ops import BatchGen, BatchIter, Op1

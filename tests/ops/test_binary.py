@@ -90,6 +90,4 @@ def test_match_functionally_correct(
 
 
 def test_duplicate_computation(match_op, block_frame, make_executor, exec_strat):
-    if exec_strat == "DAG":
-        pytest.xfail("This duplicates computation, and is currently bugged.")
     _left_match_right(match_op, block_frame, block_frame, make_executor)

@@ -4,7 +4,7 @@ import dataclasses as dcls
 from collections.abc import Iterator, Mapping
 from typing import NamedTuple, Self
 
-from aioway.errors import AiowayError
+from aioway._errors import AiowayError
 
 from .specs import Spec
 

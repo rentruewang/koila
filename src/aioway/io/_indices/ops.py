@@ -5,7 +5,7 @@ import dataclasses as dcls
 import typing
 from abc import ABC
 
-from aioway.errors import AiowayError
+from aioway._errors import AiowayError
 
 __all__ = [
     "IndexOp",

@@ -4,7 +4,7 @@ import dataclasses as dcls
 import typing
 from typing import Literal
 
-from aioway.errors import AiowayError
+from aioway._errors import AiowayError
 
 from .dtypes import DType
 
@@ -12,7 +12,7 @@ __all__ = ["IntDType", "FloatDType", "BoolDType"]
 
 
 @dcls.dataclass(eq=False, frozen=True)
-class PrecisionMixin:
+class _PrecisionMixin:
     precision: int
     """
     The precision of the dtype in terms of bits,
@@ -30,7 +30,7 @@ class PrecisionMixin:
 
 
 @dcls.dataclass(eq=False, frozen=True)
-class IntDType(PrecisionMixin, DType):
+class IntDType(_PrecisionMixin, DType):
     """
     The integer dtype in ``aioway``.
     """
@@ -47,7 +47,7 @@ class IntDType(PrecisionMixin, DType):
 
 
 @dcls.dataclass(eq=False, frozen=True)
-class FloatDType(PrecisionMixin, DType):
+class FloatDType(_PrecisionMixin, DType):
     """
     The floating point dtype in ``aioway``.
     """

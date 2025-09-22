@@ -7,7 +7,7 @@ from typing import Any, Self
 
 from torch import device as TorchDevice
 
-from aioway.errors import AiowayError
+from aioway._errors import AiowayError
 
 __all__ = ["Device"]
 

@@ -4,9 +4,11 @@ import dataclasses as dcls
 
 from numpy.typing import NDArray
 
-from aioway.errors import AiowayError
+from aioway._errors import AiowayError
 
 from .indices import Index
+
+__all__ = ["LexsortIndex"]
 
 
 @dcls.dataclass(frozen=True)

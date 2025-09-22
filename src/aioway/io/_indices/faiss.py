@@ -5,7 +5,7 @@ import typing
 
 from numpy.typing import NDArray
 
-from aioway.errors import AiowayError
+from aioway._errors import AiowayError
 
 from .indices import Index
 from .ops import IndexAnn, IndexOp

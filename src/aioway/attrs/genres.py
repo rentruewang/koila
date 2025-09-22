@@ -5,7 +5,7 @@ __all__ = ["AttrGenre"]
 import abc
 from abc import ABC
 
-from aioway.errors import AiowayError
+from aioway._errors import AiowayError
 
 from .attrs import AttrSet
 
