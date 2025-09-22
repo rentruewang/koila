@@ -4,7 +4,7 @@ import typing
 
 from aioway.ops import BatchGen, Thunk
 
-from .execs import Exec
+from .execs import Exec, ExecCtx
 
 __all__ = ["TreeExec"]
 
@@ -15,7 +15,8 @@ class TreeExec(Exec, key="TREE"):
     iterates over the graph with lazy evaluation.
     """
 
-    def __init__(self, thunk: Thunk, /) -> None:
+    def __init__(self, thunk: Thunk, /, *ctxs: ExecCtx) -> None:
+        super().__init__(*ctxs)
         self._thunk = thunk
 
     @typing.override
@@ -30,11 +31,12 @@ class TreeExec(Exec, key="TREE"):
             Always creates a new ``Generator`` upon being called, not cached.
         """
 
-        def input_execs():
-            for ipt in self._thunk.inputs:
-                yield type(self)(ipt)
+        yield from self._thunk.op(*self.inputs())
 
-        yield from self._thunk.op(*input_execs())
+    @typing.override
+    def inputs(self):
+        for ipt in self._thunk.inputs():
+            yield type(self)(ipt)
 
     @property
     @typing.override

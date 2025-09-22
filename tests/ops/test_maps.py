@@ -2,28 +2,7 @@
 
 import pytest
 
-from aioway.ops import (
-    ExprFilterOp,
-    FuncFilterOp,
-    FuncOp,
-    Op,
-    ProjectOp,
-    RenameOp,
-    _funcs,
-)
-
-
-def filter_expr_exec():
-    return ExprFilterOp("f1d > 0")
-
-
-def filter_pred_frame():
-    return FuncFilterOp(predicate=lambda t: (t["f1d"] > 0).cpu())
-
-
-@pytest.fixture(params=[filter_expr_exec, filter_pred_frame])
-def filter_op(request) -> Op:
-    return request.param()
+from aioway.ops import FuncOp, ProjectOp, RenameOp, _funcs
 
 
 def test_filter(filter_op, block_frame, make_executor):

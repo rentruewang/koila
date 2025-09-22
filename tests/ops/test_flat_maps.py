@@ -4,12 +4,11 @@ import itertools
 
 import pytest
 
-from aioway.ops import BatchIter, RepeatOp
+from aioway.ops import BatchIter
 
 
 @pytest.mark.parametrize("times", [1, 2, 4])
-def test_repeat_op(block_frame, make_executor, times):
-    repeat_op = RepeatOp(times=times)
+def test_repeat_op(repeat_op, block_frame, make_executor, times):
 
     def consume_batch(iterable: BatchIter, times: int):
         it = iter(iterable)

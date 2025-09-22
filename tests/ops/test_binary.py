@@ -3,26 +3,20 @@
 from collections import Counter
 from collections.abc import Callable
 
-import pytest
 import tensordict
 from tensordict import TensorDict
 
 from aioway.execs import Exec
 from aioway.io import Frame
-from aioway.ops import MatchOp, Thunk, ZipOp
-
-
-@pytest.fixture
-def match_op():
-    return MatchOp(key="i1d")
+from aioway.ops import MatchOp, Thunk
 
 
 def test_zip_input_len(block_frame, concat_frame):
     assert len(block_frame) == len(concat_frame)
 
 
-def test_zip(block_frame, concat_frame, make_executor):
-    stream = ZipOp().thunk(block_frame.op.thunk(), concat_frame.op.thunk())
+def test_zip(zip_op, block_frame, concat_frame, make_executor):
+    stream = zip_op.thunk(block_frame.op.thunk(), concat_frame.op.thunk())
 
     for result, lhs, rhs in zip(
         make_executor(stream),
