@@ -59,13 +59,13 @@ class Op(ABC):
         """
 
         @abc.abstractmethod
-        def op_0(self, op: "Op0") -> T: ...
+        def op_0(self, op: "Op0", /) -> T: ...
 
         @abc.abstractmethod
-        def op_1(self, op: "Op1") -> T: ...
+        def op_1(self, op: "Op1", /) -> T: ...
 
         @abc.abstractmethod
-        def op_2(self, op: "Op2") -> T: ...
+        def op_2(self, op: "Op2", /) -> T: ...
 
     def __init_subclass__(cls, key: str = "") -> None:
         # Allow abstract classes, which would not be initialized,
@@ -160,9 +160,9 @@ class Op(ABC):
 
     def thunk(self, *ops: "Thunk") -> "Thunk":
         """
-        Convert the current ``Op`` into an ``Iterable``, wrapping the operands.
+        Convert the current ``Op`` into a ``Thunk``, wrapping the operands.
 
-        This is a shortcut function to create an ``Exec``.
+        ``Thunk``s preserve the evaluation tree, and can be manipulated during compilation.
         """
 
         from . import thunks
