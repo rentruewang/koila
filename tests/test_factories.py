@@ -2,13 +2,13 @@
 
 import typing
 
-from aioway import registries
+from aioway import _registries
 
 
 @typing.no_type_check
 def test_factory_init_subclass():
     class Base:
-        __init_subclass__ = registries.init_subclass(lambda: Base)
+        __init_subclass__ = _registries.init_subclass(lambda: Base)
 
     class A(Base, key="a"): ...
 
@@ -16,7 +16,7 @@ def test_factory_init_subclass():
 
     class C(Base, key="c"): ...
 
-    fac = registries.of(Base)
+    fac = _registries.of(Base)
     assert len(fac) == 3
     assert fac.keys() == set("abc")
     assert fac["a"] is A

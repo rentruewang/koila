@@ -7,7 +7,7 @@ from collections.abc import Iterator, Sequence
 
 from sympy import Interval
 
-from aioway.errors import AiowayError
+from aioway._errors import AiowayError
 
 __all__ = ["Spec", "IntervalSpec", "ChoiceSpec"]
 

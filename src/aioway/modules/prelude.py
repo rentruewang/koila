@@ -6,6 +6,8 @@ from torch.nn import Dropout, Embedding, Linear, Transformer
 from .previews import Preview
 from .specs import SpecSet
 
+__all__ = ["FACTORY"]
+
 FACTORY: dict[str, Preview] = {}
 
 

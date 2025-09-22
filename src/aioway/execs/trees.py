@@ -1,29 +1,25 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-import dataclasses as dcls
-import logging
 import typing
-from collections.abc import Generator
-from typing import Self
 
-from aioway.ops import BatchGen
+from aioway.ops import BatchGen, Thunk
 
 from .execs import Exec
 
 __all__ = ["TreeExec"]
 
-LOGGER = logging.getLogger(__name__)
 
-
-@dcls.dataclass(frozen=True)
 class TreeExec(Exec, key="TREE"):
     """
-    ``LazyExec`` is the simplest implementation of ``Exec``,
+    ``TreeExec`` is the simplest implementation of ``Exec``,
     iterates over the graph with lazy evaluation.
     """
 
+    def __init__(self, thunk: Thunk, /) -> None:
+        self._thunk = thunk
+
     @typing.override
-    def __iter__(self) -> BatchGen:
+    def iterate(self) -> BatchGen:
         """
         Yields a generator, locally, from ``Op``'s definition.
 
@@ -34,7 +30,13 @@ class TreeExec(Exec, key="TREE"):
             Always creates a new ``Generator`` upon being called, not cached.
         """
 
-        yield from self.thunk.op.apply(*self._input_execs())
+        def input_execs():
+            for ipt in self._thunk.inputs:
+                yield type(self)(ipt)
 
-    def _input_execs(self) -> Generator[Self]:
-        yield from (self.from_thunk(ipt) for ipt in self.thunk.inputs)
+        yield from self._thunk.op(*input_execs())
+
+    @property
+    @typing.override
+    def thunk(self):
+        return self._thunk

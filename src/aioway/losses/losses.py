@@ -5,7 +5,7 @@ from abc import ABC
 
 from torch import Tensor
 
-from aioway.errors import AiowayError
+from aioway._errors import AiowayError
 
 __all__ = ["DistLoss"]
 

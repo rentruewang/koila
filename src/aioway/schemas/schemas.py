@@ -3,7 +3,7 @@
 import dataclasses as dcls
 from typing import Self
 
-from aioway.errors import AiowayError
+from aioway._errors import AiowayError
 
 __all__ = ["SchemaType"]
 
