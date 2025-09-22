@@ -4,7 +4,7 @@ import dataclasses as dcls
 
 from sympy import Set
 
-from aioway.errors import AiowayError
+from aioway._errors import AiowayError
 
 from .specs import Spec
 

@@ -6,7 +6,7 @@ from typing import TypeIs
 
 from tensordict import TensorDict
 
-from aioway.errors import AiowayError
+from aioway._errors import AiowayError
 
 from ._batches import BatchFrame
 from .frames import Frame

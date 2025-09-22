@@ -2,6 +2,8 @@
 
 from typing import Protocol
 
+__all__ = ["Compiler"]
+
 
 class Compiler[I, O](Protocol):
     """

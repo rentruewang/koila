@@ -12,10 +12,11 @@ from typing import ClassVar, Protocol
 
 from tensordict import TensorDict
 
-from aioway import registries
-from aioway.errors import AiowayError
+from aioway import _registries
+from aioway._errors import AiowayError
 
-from .thunks import Thunk
+if typing.TYPE_CHECKING:
+    from .thunks import Thunk
 
 __all__ = ["Op", "Op0", "Op1", "Op2", "BatchIter", "BatchGen"]
 
@@ -36,7 +37,7 @@ type BatchGen = Generator[TensorDict]
 @dcls.dataclass(frozen=True)
 class Op(ABC):
     """
-    ``Op`` is the operation, be it operator or operand, that works on data.
+    ``Op`` is the **pure** operation, be it operator or operand, that works on data.
 
     An operation is essentially an generator function over data (``Block``),
     but itself doesn't store which previous node it would be operating on.
@@ -81,7 +82,7 @@ class Op(ABC):
             )
 
         # Add to registry.
-        registries.init_subclass(lambda: Op)(cls, key=key)
+        _registries.init_subclass(lambda: Op)(cls, key=key)
 
     def __hash__(self) -> int:
         """
@@ -89,6 +90,17 @@ class Op(ABC):
         """
 
         return hash(json.dumps(dcls.asdict(self)))
+
+    def __call__(self, *ops: BatchIter) -> BatchGen:
+
+        if not all(isinstance(op, Iterable) for op in ops):
+            non_iterable = [op for op in ops if not isinstance(op, Iterable)]
+            raise OpInputError(
+                f"Op's input must be iterable. Got {ops}, "
+                f"where the subset {non_iterable} is not iterable"
+            )
+
+        return self.apply(*ops)
 
     @typing.no_type_check
     @abc.abstractmethod
@@ -101,7 +113,7 @@ class Op(ABC):
 
         We want the subclasses signatures to be::
 
-            #. For ``op0: Op0``, ``op0.apply()``.
+            #. For ``op0: Op0``, ``op0()``.
             #. For ``op1: Op1``, ``op1(child)``.
             #. For ``op2: Op2``, ``op2(left, right)``.
 
@@ -146,16 +158,16 @@ class Op(ABC):
             so I prefer the ``__iter__`` / ``Generator`` based method as it's cleaner.
         """
 
-        ...
-
-    def thunk(self, *ops: Thunk) -> Thunk:
+    def thunk(self, *ops: "Thunk") -> "Thunk":
         """
         Convert the current ``Op`` into an ``Iterable``, wrapping the operands.
 
         This is a shortcut function to create an ``Exec``.
         """
 
-        return Thunk(op=self, inputs=ops)
+        from . import thunks
+
+        return thunks.thunk(self, *ops)
 
     @abc.abstractmethod
     def accept[V](self, visitor: Visitor[V]) -> V:
@@ -234,3 +246,6 @@ class OpInitError(AiowayError, TypeError): ...
 
 
 class OpSubclassError(AiowayError, RuntimeError): ...
+
+
+class OpInputError(AiowayError, ValueError): ...

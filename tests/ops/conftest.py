@@ -3,7 +3,7 @@
 
 import pytest
 
-from aioway import execs
+from aioway import _registries
 from aioway.execs import Exec
 from aioway.io import TorchFrame
 from aioway.ops import Thunk
@@ -49,13 +49,14 @@ def _exec_strat():
 
 
 @pytest.fixture(params=_exec_strat())
-def exec_strat(request):
+def exec_strat(request) -> str:
     return request.param
 
 
 @pytest.fixture
 def make_executor(exec_strat):
     def executor(thunk: Thunk) -> Exec:
-        return execs.execute(thunk=thunk, strategy=exec_strat)
+        reg = _registries.of(Exec)
+        return reg[exec_strat](thunk)
 
     return executor

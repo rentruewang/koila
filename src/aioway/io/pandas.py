@@ -6,7 +6,7 @@ import typing
 from pandas import DataFrame
 from tensordict._td import TensorDict
 
-from aioway.errors import AiowayError
+from aioway._errors import AiowayError
 
 from ._batches import BatchFrame
 

@@ -7,11 +7,13 @@ from typing import NamedTuple
 
 from numpy.typing import NDArray
 
-from aioway.errors import AiowayError
+from aioway._errors import AiowayError
 from aioway.io import Frame
 
 from .indices import Index
 from .ops import IndexOp
+
+__all__ = ["MultiOpIndex"]
 
 type MultiCol = tuple[str, ...]
 

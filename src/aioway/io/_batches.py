@@ -10,7 +10,7 @@ from typing import ClassVar
 
 from tensordict import TensorDict
 
-from aioway.errors import AiowayError
+from aioway._errors import AiowayError
 
 from .frames import Frame
 

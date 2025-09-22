@@ -4,7 +4,7 @@ import numpy as np
 from numpy.typing import DTypeLike
 from torch import dtype as TorchDType
 
-from aioway.errors import AiowayError
+from aioway._errors import AiowayError
 
 from .dtypes import DType
 from .primitives import BoolDType, FloatDType, IntDType

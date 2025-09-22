@@ -10,7 +10,7 @@ from typing import Self
 import lark
 from lark import Lark, LarkError, Transformer
 
-from aioway.errors import AiowayError
+from aioway._errors import AiowayError
 
 __all__ = ["EinsumSignature", "EinsumParser"]
 LOGGER = logging.getLogger(__name__)

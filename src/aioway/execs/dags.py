@@ -6,17 +6,17 @@ import typing
 from graphlib import TopologicalSorter
 from typing import Protocol
 
-from aioway.ops import BatchGen, RepeatOp, Thunk
+from aioway.ops import BatchGen, Thunk
 
+from .caches import CacheExec
 from .execs import Exec
-from .trees import TreeExec
+from .ops import OpExec
 
 __all__ = ["DagExec"]
 
 LOGGER = logging.getLogger(__name__)
 
 
-@dcls.dataclass(frozen=True)
 class DagExec(Exec, key="DAG"):
     r"""
     ``DagExec`` allows for overlapping dependency (DAG) in the dependency graph.
@@ -58,8 +58,11 @@ class DagExec(Exec, key="DAG"):
         which ensures that before the next ``next(D)`` call, all the dependencies are finished.
     """
 
+    def __init__(self, thunk: Thunk, /) -> None:
+        self._thunk = thunk
+
     @typing.override
-    def __iter__(self) -> BatchGen:
+    def iterate(self) -> BatchGen:
         """
         Yields a generator, locally, from ``Op``'s definition.
 
@@ -73,14 +76,16 @@ class DagExec(Exec, key="DAG"):
         yield from self.memoized_exec()
 
     def memoized_exec(self):
-        thunk_deps = self.thunk.deps()
+        thunk_deps = self._thunk.deps()
         dag_node_list = build_thunk_deps_dag(thunk_deps)
 
-        # Transform the graph, to ensure that some nodes are not ``iter``-ed twice.
-        last = insert_memoize_repeat_op(dag_node_list)
+        # Transform the graph, to cache nodes that are ``iter``-ed more than once.
+        return build_execs_with_cache(dag_node_list)
 
-        # Use ``LazyExec``'s recursive transformation.
-        return TreeExec(last)
+    @property
+    @typing.override
+    def thunk(self) -> Thunk:
+        return self._thunk
 
 
 @dcls.dataclass
@@ -102,27 +107,32 @@ class ThunkDagNode:
         return len(self.out_nodes)
 
 
-def insert_memoize_repeat_op(node_list: list[ThunkDagNode]):
+def build_execs_with_cache(node_list: list[ThunkDagNode]) -> Exec:
     """
-    If degree > 1, each ``next`` calls wuold be shared by multiple out nodes.
-    Repeat would essentially cache it in memory,
-    assuming the graph is always executed in order.
+    Build executors from topological order.
+
+    If degree > 1, an ``CacheExec`` would be used instead,
+    whose ``__iter__`` would build a ``TorchListFrame``,
+    for the generator to iterate on.
+    This means that they would cache the results in memory.
     """
 
     deps = build_dependency_graph(node_list)
     check_deps_is_topo_sorted(deps)
-    rebuilt: list[Thunk] = []
+    rebuilt: list[Exec] = []
 
     # Rebuilding the entire tree, because ``Thunk``s are immutable.
     for idx in range(len(node_list)):
         node = node_list[idx]
-        thunk = Thunk(node.thunk.op, tuple(rebuilt[n] for n in deps[idx]))
 
-        # Only insert ``RepeatOp`` when ``times > 1``, for efficiency.
-        if (times := node.out_degs) > 1:
-            thunk = RepeatOp(times=times).thunk(thunk)
+        # Use ``LazyExec``'s recursive transformation.
+        exe: Exec = OpExec(node.thunk.op, (rebuilt[n] for n in deps[idx]))
 
-        rebuilt.append(thunk)
+        # Only insert ``CacheExec`` when ``times > 1``, for efficiency.
+        if node.out_degs > 1:
+            exe = CacheExec(exe)
+
+        rebuilt.append(exe)
 
     # [-1] is safe, because ``node_list`` cannot be empty,
     # as ``DagExec.thunk`` is specified.
@@ -164,7 +174,8 @@ def build_dependency_graph(node_list: list[ThunkDagNode]):
     Build dependency graph from a node list.
 
     Returns:
-        A list of list, where the index of each list is the current node.
+        A list of list, each list contains a list of indices
+        to the dependencies of the current node, in the current list.
     """
 
     deps: list[list[int]] = [[] for _ in range(len(node_list))]

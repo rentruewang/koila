@@ -7,7 +7,7 @@ import typing
 from collections.abc import MutableMapping
 from typing import Any
 
-from aioway.errors import AiowayError
+from aioway._errors import AiowayError
 
 __all__ = ["Registry", "RegistryKeyError"]
 
