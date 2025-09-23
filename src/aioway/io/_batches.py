@@ -50,11 +50,6 @@ class BatchFrame[S](Frame, ABC):
                 f"Expected {type(self.source)=} to be {self.KLASS}."
             )
 
-        if not isinstance(self.data, TensorDict):
-            raise TensorFrameTypeError(
-                f"Expected {type(self.data)=} to be `TensorDict`."
-            )
-
     @typing.override
     def __len__(self) -> int:
         truncate = math.ceil if self.drop_last else math.floor

@@ -2,14 +2,11 @@
 
 import abc
 import dataclasses as dcls
-import inspect
 import typing
 from abc import ABC
 from collections.abc import Generator
 
 from tensordict import TensorDict
-
-from aioway import _registries
 
 if typing.TYPE_CHECKING:
     from aioway.ops import FrameOp
@@ -28,13 +25,6 @@ class Frame(ABC):
 
     Each ``TensorDict`` retrieved from ``Frame`` is a minibatch of data.
     """
-
-    def __init_subclass__(cls, key: str = ""):
-        if inspect.isabstract(cls):
-            return
-
-        init_sublcass = _registries.init_subclass(lambda: Frame)
-        init_sublcass(cls, key=key)
 
     @abc.abstractmethod
     def __len__(self) -> int:

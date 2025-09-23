@@ -30,7 +30,7 @@ class FlatMapOpBase(Op1, ABC):
 
 
 @dcls.dataclass(frozen=True)
-class RepeatOp(FlatMapOpBase, key="REPEAT"):
+class RepeatOp(FlatMapOpBase):
     """
     ```RepeatOp`` repeats every input ``times`` times.
     """

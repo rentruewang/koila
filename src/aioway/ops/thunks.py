@@ -47,13 +47,10 @@ class Thunk(ABC):
         The ``Visitor`` pattern / strategy for ``Op``.
         """
 
-        @abc.abstractmethod
         def thunk_0(self, thunk: "Thunk0", /) -> T: ...
 
-        @abc.abstractmethod
         def thunk_1(self, thunk: "Thunk1", /) -> T: ...
 
-        @abc.abstractmethod
         def thunk_2(self, thunk: "Thunk2", /) -> T: ...
 
     def __post_init__(self) -> None:

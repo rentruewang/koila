@@ -47,6 +47,8 @@ debugging = [
     "jupyter>=1.1.1",
     "jupyterlab>=4.4.3",
     "pyinstrument>=5.1.1",
+    "jupytext>=1.17.3",
+    "icecream>=2.1.8",
 ]
 build = [
     "ansible>=11.6.0",
