@@ -24,8 +24,6 @@ jobs:
 
       - name: ⬇️ Python PDM
         uses: pdm-project/setup-pdm@v4
-        with:
-          cache: true
 
       - name: ⬇️ Python Dependencies
         run: pdm sync -G:all

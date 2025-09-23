@@ -11,15 +11,15 @@ from aioway._errors import AiowayError
 from aioway.ops import BatchGen, Thunk
 
 from .caches import CacheExec
-from .execs import Exec, ExecCtx
-from .ops import OpExec
+from .execs import Exec
+from .lazy import OpExec
 
 __all__ = ["DagExec"]
 
 LOGGER = logging.getLogger(__name__)
 
 
-class DagExec(Exec, key="DAG"):
+class DagExec(Exec):
     r"""
     ``DagExec`` allows for overlapping dependency (DAG) in the dependency graph.
 
@@ -51,21 +51,23 @@ class DagExec(Exec, key="DAG"):
            This duplicates computation but is safe. This would happen if we apply ``LazyExec``.
 
         #. Make A return the same thing twice.
-           This is what ``DagExec`` uses. It inserts ``RepeatOp`` s.t. we have the following graph.
-
-    Note:
-        This only works if ``next(B)`` ``next(C)`` are called in succession,
-        i.e. we don't call ``next(B)`` twice before calling ``next(C)``, and vice versa.
-        Here we delegate the task to ``LazyExec`` s.t. it is guarenteed to only call on ``next(D)``,
-        which ensures that before the next ``next(D)`` call, all the dependencies are finished.
+           This is what ``DagExec`` uses. It inserts ``CacheExec``, whose iterator uses
+           a temporary ``Frame`` to hold previously computed results.
     """
 
-    def __init__(self, thunk: Thunk, /, *ctxs: ExecCtx) -> None:
-        super().__init__(*ctxs)
+    _thunk: Thunk
+
+    def __init__(self, thunk: Thunk, /) -> None:
+        super().__init__()
         self._thunk = thunk
 
     @typing.override
-    def iterate(self) -> BatchGen:
+    def __repr__(self) -> str:
+        args = ", ".join(map(str, self.thunk.inputs()))
+        return f"DagExec({args})"
+
+    @typing.override
+    def iter(self) -> BatchGen:
         """
         Yields a generator, locally, from ``Op``'s definition.
 
@@ -76,21 +78,21 @@ class DagExec(Exec, key="DAG"):
             Always creates a new ``Generator`` upon being called, not cached.
         """
 
-        yield from self.memoized_exec()
+        yield from self.memoized_exec
 
     @typing.override
     def inputs(self):
         # ``DagExec.inputs()`` does not directly correspond to its own dependency,
         # but rather a memoized ``Exec``'s dependency.
-        yield from self.memoized_exec().inputs()
+        yield self.memoized_exec
 
-    @functools.cache
+    @functools.cached_property
     def memoized_exec(self):
         thunk_deps = self._thunk.deps()
         dag_node_list = build_thunk_deps_dag(thunk_deps)
 
         # Transform the graph, to cache nodes that are ``iter``-ed more than once.
-        memoized = build_execs_with_cache(dag_node_list)
+        memoized = linearly_build_cached_exec(dag_node_list)
 
         if memoized.thunk != self.thunk:
             raise DagExecCorruptStateError(
@@ -107,6 +109,10 @@ class DagExec(Exec, key="DAG"):
 
 @dcls.dataclass
 class ThunkDagNode:
+    """
+    The DAG node capturing dependencies of ``Thunk``s.
+    """
+
     thunk: Thunk
 
     out_nodes: list[Thunk] = dcls.field(default_factory=list)
@@ -124,7 +130,7 @@ class ThunkDagNode:
         return len(self.out_nodes)
 
 
-def build_execs_with_cache(node_list: list[ThunkDagNode]) -> Exec:
+def linearly_build_cached_exec(node_list: list[ThunkDagNode]) -> Exec:
     """
     Build executors from topological order.
 
@@ -143,7 +149,7 @@ def build_execs_with_cache(node_list: list[ThunkDagNode]) -> Exec:
         node = node_list[idx]
 
         # Use ``LazyExec``'s recursive transformation.
-        exe: Exec = OpExec(node.thunk.op, (rebuilt[n] for n in deps[idx]))
+        exe: Exec = OpExec(node.thunk.op, tuple(rebuilt[n] for n in deps[idx]))
 
         # Only insert ``CacheExec`` when ``times > 1``, for efficiency.
         if node.out_degs > 1:

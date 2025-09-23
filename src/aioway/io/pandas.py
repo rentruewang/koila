@@ -14,7 +14,7 @@ __all__ = ["PandasFrame"]
 
 
 @dcls.dataclass(frozen=True)
-class PandasFrame(BatchFrame, key="PANDAS"):
+class PandasFrame(BatchFrame[DataFrame]):
     """
     A ``pandas``-based ``Frame``,
     dynamically converting ``DataFrame`` to ``TensorDict``.

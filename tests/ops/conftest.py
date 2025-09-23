@@ -3,8 +3,7 @@
 
 import pytest
 
-from aioway import _registries
-from aioway.execs import Exec
+from aioway.execs import DagExec, Exec, TreeExec
 from aioway.io import TorchFrame
 from aioway.ops import (
     ExprFilterOp,
@@ -52,8 +51,8 @@ def joinable_frame(device, batch_size, data_size):
 
 
 def _exec_strat():
-    yield "TREE"
-    yield "DAG"
+    yield TreeExec
+    yield DagExec
 
 
 @pytest.fixture(params=_exec_strat())
@@ -62,10 +61,11 @@ def exec_strat(request) -> str:
 
 
 @pytest.fixture
-def make_executor(exec_strat):
+def make_executor(exec_strat: type[TreeExec | DagExec]):
+
     def executor(thunk: Thunk) -> Exec:
-        reg = _registries.of(Exec)
-        return reg[exec_strat](thunk)
+        exe = exec_strat(thunk)
+        return exe
 
     return executor
 

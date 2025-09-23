@@ -15,7 +15,7 @@ __all__ = ["TorchFrame", "TorchListFrame"]
 
 
 @dcls.dataclass(frozen=True)
-class TorchFrame(BatchFrame, key="TORCH"):
+class TorchFrame(BatchFrame[TensorDict]):
     """
     A ``Frame`` backed by a ``TensorDict`` (aka a batch in ``aioway``).
     This means that it is non-distributed, and volatile.
@@ -31,7 +31,7 @@ class TorchFrame(BatchFrame, key="TORCH"):
 
 @typing.final
 @dcls.dataclass(frozen=True)
-class TorchListFrame(Frame, key="LIST"):
+class TorchListFrame(Frame):
     """
     A ``Frame`` backed by a ``list[TensorDict]`` (aka a batch in ``aioway``).
     This means that it is non-distributed, and volatile.

@@ -5,7 +5,7 @@
 groups = ["default", "build", "debugging", "faiss", "ibis", "pre-commit", "tests"]
 strategy = []
 lock_version = "4.5.0"
-content_hash = "sha256:d31538fec8e562661fba6c54a1a713cf9d72db4d936d3a383a1f4f495264695d"
+content_hash = "sha256:c6c0af392b14e27da5e5b9252567756d674aa4b285923019c7ff2eddf36da183"
 
 [[metadata.targets]]
 requires_python = "~=3.13"
@@ -764,6 +764,21 @@ files = [
 ]
 
 [[package]]
+name = "icecream"
+version = "2.1.8"
+summary = ""
+dependencies = [
+    "asttokens",
+    "colorama",
+    "executing",
+    "pygments",
+]
+files = [
+    {file = "icecream-2.1.8-py3-none-any.whl", hash = "sha256:10b1c39dcb54cb28eb487bac56c35dbf9c2b2f406d24340e1a615c3f17274852"},
+    {file = "icecream-2.1.8.tar.gz", hash = "sha256:37269bbc62b02f0d85bfaf3a0eb4df272c967fad059f7ddcdaee5303ea2b2a62"},
+]
+
+[[package]]
 name = "identify"
 version = "2.6.14"
 summary = ""
@@ -1187,6 +1202,22 @@ files = [
 ]
 
 [[package]]
+name = "jupytext"
+version = "1.17.3"
+summary = ""
+dependencies = [
+    "markdown-it-py",
+    "mdit-py-plugins",
+    "nbformat",
+    "packaging",
+    "pyyaml",
+]
+files = [
+    {file = "jupytext-1.17.3-py3-none-any.whl", hash = "sha256:09b0a94cd904416e823a5ba9f41bd181031215b6fc682d2b5c18e68354feb17c"},
+    {file = "jupytext-1.17.3.tar.gz", hash = "sha256:8b6dae76d63c95cad47b493c38f0d9c74491fb621dcd0980abfcac4c8f168679"},
+]
+
+[[package]]
 name = "lark"
 version = "1.2.2"
 summary = ""
@@ -1245,6 +1276,18 @@ dependencies = [
 files = [
     {file = "matplotlib_inline-0.1.7-py3-none-any.whl", hash = "sha256:df192d39a4ff8f21b1895d72e6a13f5fcc5099f00fa84384e0ea28c2cc0653ca"},
     {file = "matplotlib_inline-0.1.7.tar.gz", hash = "sha256:8423b23ec666be3d16e16b60bdd8ac4e86e840ebd1dd11a30b9f117f2fa0ab90"},
+]
+
+[[package]]
+name = "mdit-py-plugins"
+version = "0.5.0"
+summary = ""
+dependencies = [
+    "markdown-it-py",
+]
+files = [
+    {file = "mdit_py_plugins-0.5.0-py3-none-any.whl", hash = "sha256:07a08422fc1936a5d26d146759e9155ea466e842f5ab2f7d2266dd084c8dab1f"},
+    {file = "mdit_py_plugins-0.5.0.tar.gz", hash = "sha256:f4918cb50119f50446560513a8e311d574ff6aaed72606ddae6d35716fe809c6"},
 ]
 
 [[package]]
