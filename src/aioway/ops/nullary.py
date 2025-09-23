@@ -11,7 +11,7 @@ __all__ = ["FrameOp"]
 
 
 @dcls.dataclass(frozen=True)
-class FrameOp(Op0, key="FRAME"):
+class FrameOp(Op0):
     """
     An ``Op`` that wraps a ``Frame`` and a ``DataLoader``.
     """

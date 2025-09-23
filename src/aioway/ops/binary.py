@@ -13,7 +13,7 @@ __all__ = ["ZipOp", "MatchOp"]
 
 
 @dcls.dataclass(frozen=True)
-class ZipOp(Op2, key="ZIP"):
+class ZipOp(Op2):
     """
     The ``ZIP`` operation, similar to how you use the builtin ``zip``.
     """
@@ -26,7 +26,7 @@ class ZipOp(Op2, key="ZIP"):
 
 
 @dcls.dataclass(frozen=True)
-class MatchOp(Op2, key="MATCH"):
+class MatchOp(Op2):
     """
     The ``MATCH`` operation yields the block with matching id.
     """
@@ -62,5 +62,5 @@ class MatchOp(Op2, key="MATCH"):
         right_key = right[self.key]
 
         matrix = left_key[:, None] == right_key[None, :]
-        l, r = torch.nonzero(matrix).cpu().numpy().T
+        l, r, *_ = torch.nonzero(matrix).cpu().numpy().T
         return l, r

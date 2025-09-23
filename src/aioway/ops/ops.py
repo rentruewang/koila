@@ -2,7 +2,6 @@
 
 import abc
 import dataclasses as dcls
-import inspect
 import json
 import logging
 import typing
@@ -12,7 +11,6 @@ from typing import ClassVar, Protocol
 
 from tensordict import TensorDict
 
-from aioway import _registries
 from aioway._errors import AiowayError
 
 if typing.TYPE_CHECKING:
@@ -58,31 +56,11 @@ class Op(ABC):
         The ``Visitor`` pattern / strategy for ``Op``.
         """
 
-        @abc.abstractmethod
         def op_0(self, op: "Op0", /) -> T: ...
 
-        @abc.abstractmethod
         def op_1(self, op: "Op1", /) -> T: ...
 
-        @abc.abstractmethod
         def op_2(self, op: "Op2", /) -> T: ...
-
-    def __init_subclass__(cls, key: str = "") -> None:
-        # Allow abstract classes, which would not be initialized,
-        # to not define keys, as factories are used to store leaf nodes.
-        if inspect.isabstract(cls):
-            return
-
-        LOGGER.debug("Initializing %s, whose key=%s", cls, key)
-
-        # Impossible if `nargs_init_subclass` is only called in ``__init_subclass``.
-        if not issubclass(cls, Op):
-            raise OpSubclassError(
-                "`nargs_init_subclass` must be called in `__init_subclass__`."
-            )
-
-        # Add to registry.
-        _registries.init_subclass(lambda: Op)(cls, key=key)
 
     def __hash__(self) -> int:
         """
@@ -90,17 +68,6 @@ class Op(ABC):
         """
 
         return hash(json.dumps(dcls.asdict(self)))
-
-    def __call__(self, *ops: BatchIter) -> BatchGen:
-
-        if not all(isinstance(op, Iterable) for op in ops):
-            non_iterable = [op for op in ops if not isinstance(op, Iterable)]
-            raise OpInputError(
-                f"Op's input must be iterable. Got {ops}, "
-                f"where the subset {non_iterable} is not iterable"
-            )
-
-        return self.apply(*ops)
 
     @typing.no_type_check
     @abc.abstractmethod
@@ -246,6 +213,3 @@ class OpInitError(AiowayError, TypeError): ...
 
 
 class OpSubclassError(AiowayError, RuntimeError): ...
-
-
-class OpInputError(AiowayError, ValueError): ...

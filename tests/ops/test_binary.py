@@ -1,12 +1,11 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 from collections import Counter
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 
 import tensordict
 from tensordict import TensorDict
 
-from aioway.execs import Exec
 from aioway.io import Frame
 from aioway.ops import MatchOp, Thunk
 
@@ -53,7 +52,7 @@ def _left_match_right(
     match_op: MatchOp,
     left_frame: Frame,
     right_frame: Frame,
-    make_executor: Callable[[Thunk], Exec],
+    make_executor: Callable[[Thunk], Iterable[TensorDict]],
 ):
     stream = match_op.thunk(left_frame.op.thunk(), right_frame.op.thunk())
     block_frame_block = tensordict.cat(list(left_frame))

@@ -47,7 +47,7 @@ class MapOpBase(Op1, ABC):
 
 
 @dcls.dataclass(frozen=True)
-class PassOp(MapOpBase, key="PASS"):
+class PassOp(MapOpBase):
     """
     The ``PASS`` operator does nothing to its inputs.
     """
@@ -57,7 +57,7 @@ class PassOp(MapOpBase, key="PASS"):
 
 
 @dcls.dataclass(frozen=True)
-class FuncFilterOp(MapOpBase, key="FUNC_FILTER"):
+class FuncFilterOp(MapOpBase):
     predicate: Callable[[TensorDict], Tensor]
     """
     The batched prediction of which rows to keep for the inputs.
@@ -91,7 +91,7 @@ class FuncFilterOp(MapOpBase, key="FUNC_FILTER"):
 
 
 @dcls.dataclass(frozen=True)
-class ExprFilterOp(MapOpBase, key="EXPR_FILTER"):
+class ExprFilterOp(MapOpBase):
     expr: str | Expr
     """
     The expression of the frame.
@@ -105,7 +105,7 @@ class ExprFilterOp(MapOpBase, key="EXPR_FILTER"):
 
 
 @dcls.dataclass(frozen=True)
-class ProjectOp(MapOpBase, key="PROJECT"):
+class ProjectOp(MapOpBase):
     """
     Select a subset of the columns.
     """
@@ -137,7 +137,7 @@ class ProjectOp(MapOpBase, key="PROJECT"):
 
 
 @dcls.dataclass(frozen=True)
-class FuncOp(MapOpBase, key="FUNC"):
+class FuncOp(MapOpBase):
     """
     ``FuncOp`` is an ``Op`` that performs on the input ``TensorDict``,
     and returns the result as a ``TensorDict``.
@@ -156,7 +156,7 @@ class FuncOp(MapOpBase, key="FUNC"):
 
 
 @dcls.dataclass(frozen=True)
-class RenameOp(MapOpBase, key="RENAME"):
+class RenameOp(MapOpBase):
     """
     ``RenameOp`` renames a couple of columns, based on the ``renames`` field dict.
     """
@@ -177,7 +177,7 @@ class RenameOp(MapOpBase, key="RENAME"):
 
 
 @dcls.dataclass(frozen=True)
-class ModuleOp(FuncOp, key="MODULE"):
+class ModuleOp(FuncOp):
     """
     ``ModuleOpOp`` is an ``Op`` that wraps a ``TensorDictModule``,
     and executes it on the input data.
