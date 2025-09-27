@@ -1,15 +1,26 @@
-<h2 id="archive"> 🫙 Archive </h1>
+<h1 id="archive"> 🫙 Archive (successor: <a href="https://github.com/rentruewang/aioway">aioway</a>)</h1>
 
-Project `koila` has 2 main components:
+**Koila is now built into a sub component of [aioway][aioway], check it out!**
+
+Project `koila` has 3 main components:
 
 1. Metadata tracking for `torch.Tensor`s.
-2. Decouple some symbolic info (batch size) to run a reduced graph, with gradient accumulation to prevent OOM.
+2. Decouple some symbolic info (batch size) to run a reduced graph
+3. Run with gradient accumulation to prevent OOM.
 
-For 1.: Now `PyTorch` officially has `FakeTensor` [link]("https://docs.pytorch.org/docs/stable/torch.compiler_fake_tensor.html") (koila predates it). It has great compatibility and support of torch operators, something `koila` never was able to do.
+For 1.: Now `PyTorch` officially has [`FakeTensor`]("https://docs.pytorch.org/docs/stable/torch.compiler_fake_tensor.html") (koila predates it). It has great compatibility and support of torch operators, something `koila` never was able to do.
 
-For 2.: `Koila` only tracks symbolic info partially, on the batch dimension. I have now something a lot better, a compiler / interpreter for deep learning `aioway` [link][aioway] that handles all these info, which by the time of writing (2025/09/14) is not yet open source, but will be soon.
+For 2.: `Koila` only tracks symbolic info partially, on the batch dimension. I have now something a lot better, a compiler / interpreter for deep learning [`aioway`][aioway] that handles all these info, without the burden of `torch` compatibility. As I have plans to rewrite this tracking part in C++, I don't want to cross the repository boundary as `koila` is not going to have a native API, so this part would be rewritten in [`aioway`](aioway).
 
-With `FakeTensor` available, and `aioway` [link][aioway] in development, I think to keep `koila` as it is, a POC that I did for fun.
+For 3.: `Koila` requests batches iteratively, adhering to the `torch` API and work around some layers that conflicts with gradient accumulation.
+
+Now:
+
+1. `FakeTensor` is available.
+2. [`Aioway`][aioway] in development (soon open source)
+3. Torch has too many operators, and this can (kind of?) be achieved with other measures.
+
+I think to keep `koila` as it is, a POC that I did for fun.
 
 [aioway]: https://github.com/rentruewang/aioway
 
@@ -33,6 +44,8 @@ With `FakeTensor` available, and `aioway` [link][aioway] in development, I think
 ## 🚀 Features
 
 - 🙅 Prevents `CUDA error: out of memory error` with one single line of code.
+
+- 🧮 Without touching the main logic.
 
 - ⚗️ Automatically accumulates gradients when batch sizes are too large.
 
