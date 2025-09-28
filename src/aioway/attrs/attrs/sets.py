@@ -10,10 +10,10 @@ from tensordict import TensorDict
 from torch import Tensor
 
 from aioway._errors import AiowayError
-from aioway.attrs.devices import Device
-from aioway.attrs.dtypes import DType
-from aioway.attrs.shapes import Shape
 
+from ..devices import Device
+from ..dtypes import DType
+from ..shapes import Shape
 from .attrs import Attr
 from .names import NamedAttr
 

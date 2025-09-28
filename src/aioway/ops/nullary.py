@@ -3,7 +3,7 @@
 import dataclasses as dcls
 import typing
 
-from aioway.io import Frame
+from aioway.intakes import Frame
 
 from .ops import Op0
 
