@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from aioway.attrs import EinsumSignature
+from aioway._meta.attrs import EinsumSignature
 
 
 @functools.cache

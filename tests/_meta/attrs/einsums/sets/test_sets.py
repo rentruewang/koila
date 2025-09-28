@@ -6,7 +6,7 @@ from typing import TypedDict
 
 import pytest
 
-from aioway.attrs import EinsumAttrSet
+from aioway._meta.attrs import EinsumAttrSet
 
 
 class AttrSetDict(TypedDict):

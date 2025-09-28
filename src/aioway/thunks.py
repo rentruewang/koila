@@ -12,7 +12,8 @@ from rich.tree import Tree
 
 from aioway._errors import AiowayError
 
-from .ops import Op, Op0, Op1, Op2
+if typing.TYPE_CHECKING:
+    from aioway.ops import Op, Op0, Op1, Op2
 
 __all__ = ["thunk", "Thunk", "Thunk0", "Thunk1", "Thunk2"]
 
@@ -37,7 +38,7 @@ class Thunk(ABC):
     This is to allow ``Thunk`` to be used in match destructuring.
     """
 
-    op: Op
+    op: "Op"
     """
     The function to be applied to.
     """
@@ -114,7 +115,7 @@ class Thunk0(Thunk):
     ARGC = 0
     __match_args__ = ("op",)
 
-    op: Op0
+    op: "Op0"
     """
     The function to be applied to.
     """
@@ -131,7 +132,7 @@ class Thunk1(Thunk):
     ARGC = 1
     __match_args__ = "op", "input"
 
-    op: Op1
+    op: "Op1"
     """
     The function to be applied to.
     """
@@ -150,7 +151,7 @@ class Thunk2(Thunk):
     ARGC = 2
     __match_args__ = "op", "left", "right"
 
-    op: Op2
+    op: "Op2"
     """
     The function to be applied to.
     """
@@ -167,7 +168,7 @@ class Thunk2(Thunk):
         yield self.right
 
 
-def thunk(op: Op, /, *inputs: Thunk) -> Thunk:
+def thunk(op: "Op", /, *inputs: Thunk) -> Thunk:
     """
     Function to build ``Thunk`` instead of directly invoking the classes.
     """
@@ -177,6 +178,8 @@ def thunk(op: Op, /, *inputs: Thunk) -> Thunk:
 
 @functools.cache
 def _thunk_factory():
+    from aioway.ops import Op
+
     class ThunkFactory(Op.Visitor[Callable[..., Thunk]]):
         """
         The factory visitor wrapping the current op,
@@ -185,15 +188,15 @@ def _thunk_factory():
         """
 
         @typing.override
-        def op_0(self, op: Op0):
+        def op_0(self, op: "Op0"):
             return lambda: Thunk0(op)
 
         @typing.override
-        def op_1(self, op: Op1):
+        def op_1(self, op: "Op1"):
             return lambda input: Thunk1(op=op, input=input)
 
         @typing.override
-        def op_2(self, op: Op2):
+        def op_2(self, op: "Op2"):
             return lambda left, right: Thunk2(op=op, left=left, right=right)
 
     return ThunkFactory()

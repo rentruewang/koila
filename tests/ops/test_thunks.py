@@ -1,6 +1,7 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-from aioway.ops import Op0, Op1, Op2, Thunk, Thunk0, Thunk1, Thunk2
+from aioway.ops import Op0, Op1, Op2
+from aioway.thunks import Thunk, Thunk0, Thunk1, Thunk2
 
 
 def test_block_frame_op(block_frame):

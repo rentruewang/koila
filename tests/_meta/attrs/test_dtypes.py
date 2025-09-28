@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from aioway.attrs import DType, DTypeFactory
+from aioway._meta.attrs import DType, DTypeFactory
 
 
 @functools.cache

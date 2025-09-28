@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 import torch
 
-from aioway.attrs import Device
+from aioway._meta.attrs import Device
 
 
 def example_devices() -> list[str]:
