@@ -6,8 +6,8 @@ from collections.abc import Callable
 from typing import Self
 
 from aioway._errors import AiowayError
-from aioway.attrs.attrs import AttrSet, NamedAttr
 
+from ..attrs import AttrSet, NamedAttr
 from .attrs import EinsumAttr, EinsumDevice, EinsumDType, EinsumName, EinsumShape
 from .parsers import EinsumParser
 

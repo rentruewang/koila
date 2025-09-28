@@ -9,7 +9,7 @@ import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
 from aioway._errors import AiowayError
-from aioway.io import Frame
+from aioway.intakes import Frame
 
 from .ops import IndexOp
 

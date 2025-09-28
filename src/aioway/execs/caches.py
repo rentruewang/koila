@@ -9,7 +9,7 @@ from typing import NamedTuple, Self
 
 from tensordict import TensorDict
 
-from aioway.io import TorchListFrame
+from aioway.intakes import TorchListFrame
 from aioway.ops import Thunk
 
 from .execs import Exec
