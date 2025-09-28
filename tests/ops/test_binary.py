@@ -6,7 +6,7 @@ from collections.abc import Callable, Iterable
 import tensordict
 from tensordict import TensorDict
 
-from aioway.io import Frame
+from aioway.intakes import Frame
 from aioway.ops import MatchOp, Thunk
 
 

@@ -4,7 +4,7 @@
 import pytest
 
 from aioway.execs import DagExec, Exec, TreeExec
-from aioway.io import TorchFrame
+from aioway.intakes import TorchFrame
 from aioway.ops import (
     ExprFilterOp,
     FuncFilterOp,

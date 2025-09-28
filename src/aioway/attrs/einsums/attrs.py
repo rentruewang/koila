@@ -11,10 +11,10 @@ from re import Pattern
 from typing import Protocol
 
 from aioway._errors import AiowayError
-from aioway.attrs.devices import Device
-from aioway.attrs.dtypes import DType
-from aioway.attrs.shapes import Shape
 
+from ..devices import Device
+from ..dtypes import DType
+from ..shapes import Shape
 from .parsers import EinsumSignature
 
 __all__ = ["EinsumAttr", "EinsumName", "EinsumShape", "EinsumDType", "EinsumDevice"]

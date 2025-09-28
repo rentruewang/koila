@@ -6,10 +6,9 @@ import typing
 from collections.abc import Mapping
 from typing import Any, Protocol, Self, TypedDict
 
-from aioway.attrs.devices import Device
-from aioway.attrs.dtypes import DType
-from aioway.attrs.shapes import Shape
-
+from ..devices import Device
+from ..dtypes import DType
+from ..shapes import Shape
 from .attrs import Attr, AttrDict, AttrInitTypeError, AttrObj
 
 __all__ = ["NamedAttr"]
