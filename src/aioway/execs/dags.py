@@ -8,7 +8,8 @@ from graphlib import TopologicalSorter
 from typing import Protocol
 
 from aioway._errors import AiowayError
-from aioway.ops import BatchGen, Thunk
+from aioway.ops import BatchGen
+from aioway.thunks import Thunk
 
 from .caches import CacheExec
 from .execs import Exec
@@ -54,8 +55,6 @@ class DagExec(Exec):
            This is what ``DagExec`` uses. It inserts ``CacheExec``, whose iterator uses
            a temporary ``Frame`` to hold previously computed results.
     """
-
-    _thunk: Thunk
 
     def __init__(self, thunk: Thunk, /) -> None:
         super().__init__()

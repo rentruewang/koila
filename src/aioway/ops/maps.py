@@ -25,7 +25,7 @@ __all__ = [
     "ProjectOp",
     "FuncOp",
     "RenameOp",
-    "ModuleOp",
+    "LayerOp",
 ]
 
 
@@ -177,16 +177,29 @@ class RenameOp(MapOpBase):
 
 
 @dcls.dataclass(frozen=True)
-class ModuleOp(FuncOp):
+class LayerOp(FuncOp):
     """
-    ``ModuleOpOp`` is an ``Op`` that wraps a ``TensorDictModule``,
+    ``LayerOp`` is an ``Op`` that wraps a single layer (``TensorDictModule``),
     and executes it on the input data.
 
     It is used to execute the module on the input data,
     and return the result as a ``TensorDict``.
+
+    This means that it doesn't take into consideration of parallelism,
+    which simplifies implementation and gives more information for scheduling,
+    as intermediate representation of parallelism is explicitly modelled::
+
+        model parallelism = multiple `Op`s + syncrhonization,
+        data parallelism = split - compute - merge.
     """
 
     module: TensorDictModule
+
+    device: str
+    """
+    As ``Op``s are atomic, here a ``LayerOp`` will be scheduled on 1 device.
+    Any cross device communication happens elsewhere.
+    """
 
     @typing.override
     def map(self, item: TensorDict) -> TensorDict:

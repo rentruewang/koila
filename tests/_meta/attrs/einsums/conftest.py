@@ -2,7 +2,7 @@
 
 import pytest
 
-from aioway.attrs import EinsumParser
+from aioway._meta.attrs import EinsumParser
 
 
 @pytest.fixture(scope="module")

@@ -7,7 +7,8 @@ import tensordict
 from tensordict import TensorDict
 
 from aioway.intakes import Frame
-from aioway.ops import MatchOp, Thunk
+from aioway.ops import MatchOp
+from aioway.thunks import Thunk
 
 
 def test_zip_input_len(block_frame, concat_frame):

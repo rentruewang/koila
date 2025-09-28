@@ -11,9 +11,9 @@ from aioway.ops import (
     MatchOp,
     Op1,
     RepeatOp,
-    Thunk,
     ZipOp,
 )
+from aioway.thunks import Thunk
 from tests import fake
 
 
