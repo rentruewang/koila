@@ -11,10 +11,9 @@ from typing import ClassVar, Protocol
 
 from tensordict import TensorDict
 
+from aioway import thunks
 from aioway._errors import AiowayError
-
-if typing.TYPE_CHECKING:
-    from .thunks import Thunk
+from aioway.thunks import Thunk
 
 __all__ = ["Op", "Op0", "Op1", "Op2", "BatchIter", "BatchGen"]
 
@@ -35,7 +34,15 @@ type BatchGen = Generator[TensorDict]
 @dcls.dataclass(frozen=True)
 class Op(ABC):
     """
-    ``Op`` is the **pure** operation, be it operator or operand, that works on data.
+    ``Op`` is the **pure**, **atomic** operation, be it operator or operand, that works on data.
+
+    This means it has the following semantics::
+
+        1. It doesn't store state.
+        The same ``Op`` can be applied multiple times, and used in comparison.
+        2. Running on 1 device, and does not cross device boundary.
+        3. Isolated in the computation graph, and can be rearranged.
+
 
     An operation is essentially an generator function over data (``Block``),
     but itself doesn't store which previous node it would be operating on.
@@ -125,14 +132,12 @@ class Op(ABC):
             so I prefer the ``__iter__`` / ``Generator`` based method as it's cleaner.
         """
 
-    def thunk(self, *ops: "Thunk") -> "Thunk":
+    def thunk(self, *ops: Thunk) -> Thunk:
         """
         Convert the current ``Op`` into a ``Thunk``, wrapping the operands.
 
         ``Thunk``s preserve the evaluation tree, and can be manipulated during compilation.
         """
-
-        from . import thunks
 
         return thunks.thunk(self, *ops)
 

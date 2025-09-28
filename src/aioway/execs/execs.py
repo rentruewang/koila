@@ -7,7 +7,8 @@ from abc import ABC
 from collections.abc import Iterator
 
 from aioway._errors import AiowayError
-from aioway.ops import BatchGen, Thunk
+from aioway.ops import BatchGen
+from aioway.thunks import Thunk
 
 if typing.TYPE_CHECKING:
     from .contexts import ExecCtx

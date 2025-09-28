@@ -2,9 +2,10 @@
 
 import typing
 
-from aioway import ops
+from aioway import thunks
 from aioway._errors import AiowayError
-from aioway.ops import BatchGen, Op, Thunk
+from aioway.ops import BatchGen, Op
+from aioway.thunks import Thunk
 
 from .execs import Exec
 
@@ -43,7 +44,7 @@ class OpExec(Exec):
     @property
     @typing.override
     def thunk(self) -> Thunk:
-        return ops.thunk(self.op, *(e.thunk for e in self.execs))
+        return thunks.thunk(self.op, *(e.thunk for e in self.execs))
 
     @property
     def op(self) -> Op:

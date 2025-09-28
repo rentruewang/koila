@@ -5,7 +5,13 @@ from pathlib import Path
 
 import pytest
 
-from aioway.attrs import EinsumAttr, EinsumDevice, EinsumDType, EinsumName, EinsumShape
+from aioway._meta.attrs import (
+    EinsumAttr,
+    EinsumDevice,
+    EinsumDType,
+    EinsumName,
+    EinsumShape,
+)
 
 
 def _test_einsum_func_init(name: str, einsum_func: type[EinsumAttr]):

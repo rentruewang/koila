@@ -5,4 +5,3 @@ from .flat_maps import *
 from .maps import *
 from .nullary import *
 from .ops import *
-from .thunks import *
