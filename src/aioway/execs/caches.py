@@ -82,11 +82,11 @@ class _CachedThunkGen(Iterator[TensorDict]):
 
     @typing.override
     def __next__(self) -> TensorDict:
-        batch = self.compute()
+        batch = self._compute_next()
         self.idx += 1
         return batch
 
-    def compute(self) -> TensorDict:
+    def _compute_next(self) -> TensorDict:
         assert self.idx >= 0
         assert self.idx <= len(self.frame)
 
