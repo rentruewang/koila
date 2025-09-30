@@ -7,8 +7,6 @@ from collections.abc import Iterator, Sequence
 
 from sympy import Interval
 
-from aioway._errors import AiowayError
-
 __all__ = ["Spec", "IntervalSpec", "ChoiceSpec"]
 
 type Primitive = int | float | bool
@@ -115,10 +113,10 @@ class ChoiceSpec[T: Primitive](Spec):
 
     def __post_init__(self) -> None:
         if not isinstance(self.options, Sequence):
-            raise ChoiceTypeError("options must be a sequence")
+            raise ValueError("options must be a sequence")
 
         if not all(isinstance(o, self.dtype) for o in self.options):
-            raise ChoiceTypeError(
+            raise ValueError(
                 f"All elements in options must be of type {self.dtype.__name__}"
             )
 
@@ -133,6 +131,3 @@ class ChoiceSpec[T: Primitive](Spec):
 
     def __str__(self) -> str:
         return str(list(self.options))
-
-
-class ChoiceTypeError(AiowayError, TypeError): ...

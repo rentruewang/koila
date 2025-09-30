@@ -4,8 +4,6 @@ import dataclasses as dcls
 from collections.abc import Iterator, Mapping
 from typing import NamedTuple, Self
 
-from aioway._errors import AiowayError
-
 from .specs import Spec
 
 __all__ = ["SpecSet"]
@@ -37,7 +35,7 @@ class SpecSet:
     def __post_init__(self) -> None:
         for val in self.specs.values():
             if not isinstance(val, Spec):
-                raise SpecSetTypeError(f"Constraint given: {val} is not a `Spec`.")
+                raise ValueError(f"Constraint given: {val} is not a `Spec`.")
 
     def __len__(self) -> int:
         return len(self.specs)
@@ -71,6 +69,3 @@ class SpecSet:
     @classmethod
     def from_specs(cls, **constraints: Spec) -> Self:
         return cls(specs=constraints)
-
-
-class SpecSetTypeError(AiowayError, TypeError): ...

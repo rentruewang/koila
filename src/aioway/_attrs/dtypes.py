@@ -12,7 +12,7 @@ import torch
 from numpy import dtype as _NumpyDType
 from torch import dtype as _TorchDType
 
-from aioway._errors import AiowayError
+from aioway._errors import GitHubTicketFiled
 
 __all__ = [
     "DType",
@@ -25,6 +25,7 @@ __all__ = [
 
 LOGGER = logging.getLogger(__name__)
 
+_SUPPORT_DTYPE_ERROR = GitHubTicketFiled(110)
 type _SupportedDtypes = Literal["info", "string", "torch", "numpy"]
 
 
@@ -131,10 +132,12 @@ class InfoDType(DType):
 
     def __post_init__(self) -> None:
         if self.family not in ["int", "uint", "float", "complex"]:
-            raise NotImplementedError
+            raise _SUPPORT_DTYPE_ERROR
 
         if self.bits < 0:
-            raise NotImplementedError
+            raise ValueError(
+                f"{self.bits=} must be positive. Negative number of bits makes no sense."
+            )
 
     def __str__(self):
         return f"{self.family}{self.bits}"
@@ -179,7 +182,7 @@ class StringDType(DType):
                 break
         else:
             # Only enter this if ``break`` is not triggered.
-            raise UnsupportedDTypeError(f"'{self.dtype}' is invalid.")
+            raise _SUPPORT_DTYPE_ERROR
 
         bits = int(self.dtype[len(family) :])
         return InfoDType(family=family, bits=bits)
@@ -252,7 +255,7 @@ class NumpyDtype(DType):
         elif self.isdtype("complex floating"):
             return "complex"
         else:
-            raise NotImplementedError
+            raise _SUPPORT_DTYPE_ERROR
 
     @classmethod
     @typing.override
@@ -276,6 +279,3 @@ def itemsize_to_bits(itemsize: int) -> int:
 
     # For example, ``torch.int1`` has the same size as ``torch.int8``
     return 2 ** (itemsize - 2)
-
-
-class UnsupportedDTypeError(AiowayError, ValueError, NotImplementedError): ...

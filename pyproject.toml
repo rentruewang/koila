@@ -8,7 +8,7 @@ requires-python = ">=3.13,<4"
 readme = "README.md"
 license = {text = "Apache-2.0"}
 dynamic = ["version"]
-dependencies = ["lark>=1.2.2", "numpy>=2.2.6", "pandas>=2.2.3", "rich>=14.0.0", "tensordict>=0.8.3", "torch>=2.7.0", "gevent>=25.9.1"]
+dependencies = ["lark>=1.2.2", "numpy>=2.2.6", "pandas>=2.2.3", "rich>=14.0.0", "tensordict>=0.8.3", "torch>=2.7.0"]
 
 [project.optional-dependencies]
 ibis = [
@@ -38,9 +38,7 @@ tests = [
     "pytest>=8.3.5",
     "pytest-cov>=6.1.1",
     "pytest-xdist>=3.7.0",
-    "pytest-sugar>=1.0.0",
     "better-exceptions>=0.3.3",
-    "pyinstrument>=5.1.1",
 ]
 debugging = [
     "ipython>=9.2.0",
@@ -53,7 +51,6 @@ debugging = [
 build = [
     "ansible>=11.6.0",
     "build>=1.2.2.post1",
-    "cython>=3.1.1",
     "ninja>=1.11.1.4",
     "pip>=25.1.1",
     "setuptools>=80.9.0",
