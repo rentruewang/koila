@@ -5,8 +5,6 @@ from abc import ABC
 
 from torch import Tensor
 
-from aioway._errors import AiowayError
-
 __all__ = ["DistLoss"]
 
 
@@ -20,7 +18,7 @@ class LossFunc(ABC):
         result = self._compute(input, target)
 
         if result.size() != ():
-            raise DistScalarError(f"The result must be a scalar. Got: {result.size()}")
+            raise AssertionError(f"The result must be a scalar. Got: {result.size()}")
 
         return result
 
@@ -34,6 +32,3 @@ class LossFunc(ABC):
         """
 
         ...
-
-
-class DistScalarError(AiowayError, ValueError): ...

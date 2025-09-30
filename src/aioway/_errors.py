@@ -1,64 +1,99 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-import hashlib
-from typing import Any
+"""
+This module defines the custom errors that are user facing (high level),
+and where users can take actions to resolve (no internal errors).
 
-__all__ = ["AiowayError"]
+All user facing errors would be subclasses of ``AiowayError``.
+"""
+
+import contextlib as ctxl
+from types import ModuleType
+from typing import ClassVar
+
+__all__ = [
+    "AiowayError",
+    "FrameworkUnexpected",
+    "GitHubTicketFiled",
+]
 
 
 class AiowayError(Exception):
     """
     ``AiowayError`` is the error thrown by the ``aioway`` library.
+    This captures all the user facing errors that might be raised by ``aioway``.
     """
 
-    def __init__(self, *args: Any) -> None:
-        super().__init__(*args)
-
-    def __str__(self):
-        super_str = super().__str__()
-        hash_code = self.__hash_code()
-
-        message = f"[{hash_code}]"
-
-        if super_str:
-            message = f"{message} {super_str}"
-
-        return message
-
+    @ctxl.contextmanager
     @classmethod
-    def __hash_code(cls) -> str:
-        if result := _MD5_CACHE.get(cls, None):
-            return result
-
-        unique = cls._unique_string()
-        md5 = _hash_code(unique)
-        _MD5_CACHE[cls] = md5
-        return md5
-
-    @classmethod
-    def _unique_string(cls) -> str:
+    def relay(cls):
         """
-        Create a unique string (yet reproducible accross sessions and platforms)
-        for an ``AiowayError`` type. This is useful in identifying which error is where.
+        Pass the exception captured on to the next block,
+        but re export the exception s.t. it would be a new exception,
+        but keeping the original traceback for debugging purposes.
 
-        Returns:
-            The string that wuold be hashed with ``md5`` algorithm.
+        This method exists because there is a no low level policy in exceptions,
+        all user facing exceptions must be subclasses of ``AiowayError``.
+
+        This can provide a simple error handling to prevent crashes.
         """
 
-        if not issubclass(cls, AiowayError):
-            raise TypeError(
-                "Class must be a subclass of `AiowayError` to use this utility."
-            )
-
-        bases = cls.__bases__
-        string = "\n".join([cls.__name__, *(base.__name__ for base in bases)])
-        return string
+        try:
+            yield
+        except Exception as e:
+            raise cls from e
 
 
-_MD5_CACHE: dict[type[AiowayError], str] = {}
+class FrameworkUnexpected(AiowayError):
+    """
+    Used when an external framework does not behave as expected.
+
+    Todo:
+        Maybe track the usage of what functions automatically,
+        by perhaps monkey patching?
+
+        E.g. we can do something like ``with trace(module): ...``,
+        where ``trace`` modifies the modules to do tracking.
+    """
+
+    def __init__(self, module: ModuleType, *reasons: str) -> None:
+        self._module = module
+        self._reasons = reasons
+
+    def __str__(self) -> str:
+        msg = []
+
+        msg.append(f"Problematic module: {str(self._module)}")
+
+        if self._reasons:
+            msg.extend(self._reasons)
+
+        return "\n".join(msg)
 
 
-def _hash_code(string: str) -> str:
-    hashed = hashlib.md5(string.encode("utf-8"))
-    hash_code = hashed.hexdigest()
-    return f"{hash_code[0:4]}-{hash_code[4:8]}"
+class PlannedNotYetImplemented(AiowayError, NotImplementedError): ...
+
+
+class GitHubTicketFiled(PlannedNotYetImplemented):
+    """
+    The ticket is filed on GitHub, when encountered, show the URL.
+    """
+
+    REPO_URL: ClassVar[str] = "https://github.com/rentruewang/aioway"
+
+    def __init__(self, ticket: int = 0, *messages: str) -> None:
+        super().__init__()
+
+        self._ticket = ticket
+        self._msgs = messages
+
+    def __str__(self) -> str:
+        msg = []
+
+        if self._ticket:
+            msg.append(f"Ticket link: {self.REPO_URL}/issues/{self._ticket}")
+
+        if self._msgs:
+            msg.extend(self._msgs)
+
+        return "\n".join(msg)
