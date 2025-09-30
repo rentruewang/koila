@@ -5,7 +5,7 @@ import pytest
 import torch
 from numpy import random as np_rand
 
-from aioway.ops import _funcs
+from aioway.rels.ops import _funcs
 
 from . import fake
 

@@ -9,7 +9,6 @@ from collections.abc import Callable, Iterable
 from typing import ClassVar, TypeGuard
 
 from aioway._attrs import Shape
-from aioway._errors import AiowayError
 
 from . import _funcs, _tensors
 from .arrays import Array
@@ -30,13 +29,11 @@ class Kernel(ABC):
 
     def __post_init__(self):
         if len(tuple(self.inputs())) != len(self.INPUT_TYPES):
-            raise KernelInitError(
-                f"The input number mis-matches with {self.INPUT_TYPES}"
-            )
+            raise TypeError(f"The input number mis-matches with {self.INPUT_TYPES}")
 
         for dat, typ in zip(self.inputs(), self.INPUT_TYPES):
             if not isinstance(dat, typ):
-                raise KernelInitError(f"{dat} not instance of {typ}")
+                raise ValueError(f"{dat} not instance of {typ}")
 
     def __call__(self) -> Array:
         input_costs = sum(i.cost for i in self.inputs())
@@ -144,14 +141,8 @@ class Matmul2dKernel(Kernel):
 
 def _signature_check(kernel: Callable) -> TypeGuard[Kernel]:
     if not callable(kernel):
-        raise InvalidKernelError(f"{kernel} not callable.")
+        raise ValueError(f"{kernel} not callable.")
 
     inspect.signature(kernel)
 
     raise NotImplementedError
-
-
-class KernelInitError(AiowayError, TypeError): ...
-
-
-class InvalidKernelError(AiowayError, ValueError): ...

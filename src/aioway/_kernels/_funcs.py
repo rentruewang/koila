@@ -4,7 +4,6 @@ import itertools
 import logging
 
 from aioway._attrs import Shape
-from aioway._errors import AiowayError
 
 __all__ = ["bcast_same_dim", "can_bcast_dim", "matmul_2d"]
 
@@ -17,10 +16,10 @@ def permute(shape: Shape, dims: list[int]) -> Shape:
     """
 
     if not shape.valid_dims(dims):
-        raise DimensionError(f"Invalid dimensions: {dims}")
+        raise ValueError(f"Invalid dimensions: {dims}")
 
     if sorted(dims) != list(range(len(shape))):
-        raise DimensionError(
+        raise ValueError(
             f"Dimensions must be the permutation of {list(range(len(shape)))=}."
         )
 
@@ -35,7 +34,7 @@ def agg(shape: Shape, dims: list[int]) -> Shape:
     """
 
     if not shape.valid_dims(dims):
-        raise DimensionError(f"Invalid dimensions: {dims}")
+        raise ValueError(f"Invalid dimensions: {dims}")
 
     wrapped_dims = shape.wrap_dims(dims)
 
@@ -57,12 +56,12 @@ def bcast_same_dim(left: Shape, right: Shape) -> Shape:
     """
 
     if len(left) != len(right):
-        raise BroadCastError(f"{len(left)=} != {len(right)=}")
+        raise ValueError(f"{len(left)=} != {len(right)=}")
 
     result: list[int] = [NotImplemented] * len(left)
     for i, l, r in zip(itertools.count(), left, right):
         if not can_bcast_dim(l, r):
-            raise BroadCastError(f"{left[i]=} incompatible with {right[i]=} for {i=}")
+            raise ValueError(f"{left[i]=} incompatible with {right[i]=} for {i=}")
 
         # Since both are natural numbers, the larger one is the one we want.
         result[i] = max(l, r)
@@ -75,21 +74,12 @@ def matmul_2d(left: Shape, right: Shape) -> Shape:
     """
 
     if len(left) != 2 or len(right) != 2:
-        raise MatMul2DError(f"{len(left)=}, {len(right)=}, both must be 2.")
+        raise ValueError(f"{len(left)=}, {len(right)=}, both must be 2.")
 
     l0, l1 = left
     r0, r1 = right
 
     if not can_bcast_dim(l1, r0):
-        raise MatMul2DError(f"{left[1]=} incompatbile {right[0]}")
+        raise ValueError(f"{left[1]=} incompatbile {right[0]}")
 
     return Shape(l0, r1)
-
-
-class DimensionError(AiowayError, ValueError): ...
-
-
-class BroadCastError(AiowayError, ValueError): ...
-
-
-class MatMul2DError(AiowayError, ValueError): ...

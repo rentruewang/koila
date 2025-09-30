@@ -4,8 +4,6 @@ import dataclasses as dcls
 
 from sympy import Set
 
-from aioway._errors import AiowayError
-
 from .specs import Spec
 
 __all__ = ["SympySetSpec"]
@@ -24,13 +22,10 @@ class SympySetSpec(Spec):
 
     def __post_init__(self) -> None:
         if not isinstance(self.sym_set, Set):
-            raise SympyTypeError(f"SympySetSpec given: {self.sym_set} is not a `Set`.")
+            raise TypeError(f"SympySetSpec given: {self.sym_set} is not a `Set`.")
 
     def __contains__(self, obj: object) -> bool:
         return obj in self.sym_set
 
     def __str__(self) -> str:
         return str(self.sym_set)
-
-
-class SympyTypeError(AiowayError, TypeError): ...
