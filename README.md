@@ -16,9 +16,9 @@ For 3.: `Koila` requests batches iteratively, adhering to the `torch` API and wo
 
 Now:
 
-1. `FakeTensor` is available.
-2. [`Aioway`][aioway] in development (soon open source)
-3. Torch has too many operators, and this can (kind of?) be achieved with other measures.
+1. `FakeTensor` is available (it wasn't before), which support all of `torch`.
+2. [`Aioway`][aioway] in development (soon open source), and there are stuff that [`Aioway`][aioway] does but `koila` cannot (how do you go 1 level up, and work on layers, when you API is simply `Tensor` input?)
+3. Torch has too many operators, and this can (kind of?) be achieved with other measures, such as `try` `except` with binary search, which is super simple, low maintainence, and not that slow.
 
 I think to keep `koila` as it is, a POC that I did for fun.
 
