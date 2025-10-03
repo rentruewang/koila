@@ -4,15 +4,15 @@ import dataclasses as dcls
 import typing
 
 from ..tables import Frame
-from .ops import Op0
+from .ops import Plan0
 
-__all__ = ["FrameOp"]
+__all__ = ["FramePlan"]
 
 
 @dcls.dataclass(frozen=True)
-class FrameOp(Op0):
+class FramePlan(Plan0):
     """
-    An ``Op`` that wraps a ``Frame`` and a ``DataLoader``.
+    An ``Plan`` that wraps a ``Frame`` and a ``DataLoader``.
     """
 
     dataset: "Frame" = dcls.field(repr=False)

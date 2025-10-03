@@ -6,7 +6,7 @@ from collections.abc import Callable, Iterable
 import tensordict
 from tensordict import TensorDict
 
-from aioway.rels import Frame, MatchOp, Thunk
+from aioway.rels import Frame, MatchPlan, Thunk
 
 
 def test_zip_input_len(block_frame, concat_frame):
@@ -48,7 +48,7 @@ def test_match_is_reduction(match_op, block_frame, joinable_frame, make_executor
 
 
 def _left_match_right(
-    match_op: MatchOp,
+    match_op: MatchPlan,
     left_frame: Frame,
     right_frame: Frame,
     make_executor: Callable[[Thunk], Iterable[TensorDict]],

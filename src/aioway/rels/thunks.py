@@ -11,7 +11,7 @@ from typing import ClassVar, Protocol
 from rich.tree import Tree
 
 if typing.TYPE_CHECKING:
-    from .ops import Op, Op0, Op1, Op2
+    from .plans import Plan, Plan0, Plan1, Plan2
 
 __all__ = ["thunk", "Thunk", "Thunk0", "Thunk1", "Thunk2"]
 
@@ -19,16 +19,16 @@ __all__ = ["thunk", "Thunk", "Thunk0", "Thunk1", "Thunk2"]
 @dcls.dataclass(frozen=True)
 class Thunk(ABC):
     """
-    The function pointer (``Op`` itself) and their arguments (other ``Thunk``s).
+    The function pointer (``Plan`` itself) and their arguments (other ``Thunk``s).
 
     ``Thunk``s have 3 classes, ``Thunk0``, ``Thunk1``, ``Thunk2``.
-    This is to allow for easy destructuring of ``inputs`` and ``Op`` in the compiler.
+    This is to allow for easy destructuring of ``inputs`` and ``Plan`` in the compiler.
     """
 
     ARGC: ClassVar[int]
     """
     The argument count of the current class.
-    Must be the same as ``Op.ARGC``, and equal to ``len(list(inputs()))``.
+    Must be the same as ``Plan.ARGC``, and equal to ``len(list(inputs()))``.
     """
 
     __match_args__: ClassVar[tuple[str, ...]] = "op", "args"
@@ -36,14 +36,14 @@ class Thunk(ABC):
     This is to allow ``Thunk`` to be used in match destructuring.
     """
 
-    op: "Op"
+    plan: "Plan"
     """
     The function to be applied to.
     """
 
     class Visitor[T](Protocol):
         """
-        The ``Visitor`` pattern / strategy for ``Op``.
+        The ``Visitor`` pattern / strategy for ``Plan``.
         """
 
         def thunk_0(self, thunk: "Thunk0", /) -> T: ...
@@ -53,9 +53,9 @@ class Thunk(ABC):
         def thunk_2(self, thunk: "Thunk2", /) -> T: ...
 
     def __post_init__(self) -> None:
-        if self.op.ARGC != self.ARGC:
+        if self.plan.ARGC != self.ARGC:
             raise TypeError(
-                f"Got {self.ARGC} input arguments, but expect {self.op.ARGC} ones."
+                f"Got {self.ARGC} input arguments, but expect {self.plan.ARGC} ones."
             )
 
         inputs = list(self.inputs())
@@ -74,7 +74,7 @@ class Thunk(ABC):
             )
 
     def __rich__(self) -> Tree:
-        tree = Tree(label=str(self.op))
+        tree = Tree(label=str(self.plan))
         for arg in self.inputs():
             tree.add(arg.__rich__())
         return tree
@@ -113,7 +113,7 @@ class Thunk0(Thunk):
     ARGC = 0
     __match_args__ = ("op",)
 
-    op: "Op0"
+    plan: "Plan0"
     """
     The function to be applied to.
     """
@@ -130,7 +130,7 @@ class Thunk1(Thunk):
     ARGC = 1
     __match_args__ = "op", "input"
 
-    op: "Op1"
+    plan: "Plan1"
     """
     The function to be applied to.
     """
@@ -149,7 +149,7 @@ class Thunk2(Thunk):
     ARGC = 2
     __match_args__ = "op", "left", "right"
 
-    op: "Op2"
+    plan: "Plan2"
     """
     The function to be applied to.
     """
@@ -166,7 +166,7 @@ class Thunk2(Thunk):
         yield self.right
 
 
-def thunk(op: "Op", /, *inputs: Thunk) -> Thunk:
+def thunk(op: "Plan", /, *inputs: Thunk) -> Thunk:
     """
     Function to build ``Thunk`` instead of directly invoking the classes.
     """
@@ -176,9 +176,9 @@ def thunk(op: "Op", /, *inputs: Thunk) -> Thunk:
 
 @functools.cache
 def _thunk_factory():
-    from .ops import Op
+    from .plans import Plan
 
-    class ThunkFactory(Op.Visitor[Callable[..., Thunk]]):
+    class ThunkFactory(Plan.Visitor[Callable[..., Thunk]]):
         """
         The factory visitor wrapping the current op,
         and returns a function to create the thunks,
@@ -186,15 +186,15 @@ def _thunk_factory():
         """
 
         @typing.override
-        def op_0(self, op: "Op0"):
-            return lambda: Thunk0(op)
+        def plan_0(self, plan: "Plan0"):
+            return lambda: Thunk0(plan)
 
         @typing.override
-        def op_1(self, op: "Op1"):
-            return lambda input: Thunk1(op=op, input=input)
+        def plan_1(self, plan: "Plan1"):
+            return lambda input: Thunk1(plan=plan, input=input)
 
         @typing.override
-        def op_2(self, op: "Op2"):
-            return lambda left, right: Thunk2(op=op, left=left, right=right)
+        def plan_2(self, plan: "Plan2"):
+            return lambda left, right: Thunk2(plan=plan, left=left, right=right)
 
     return ThunkFactory()

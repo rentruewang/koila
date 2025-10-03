@@ -9,7 +9,7 @@ from collections.abc import Generator
 from tensordict import TensorDict
 
 if typing.TYPE_CHECKING:
-    from ..ops import FrameOp
+    from ..plans import FramePlan
 
 __all__ = ["Frame"]
 
@@ -48,12 +48,12 @@ class Frame(ABC):
             yield self[i]
 
     @property
-    def op(self) -> "FrameOp":
+    def op(self) -> "FramePlan":
         """
-        Construct an ``Op`` that wraps around the current ``Frame``.
-        The ``Op`` calls ``iter(frame)``, producing a stream of ``TensorDict``s.
+        Construct an ``Plan`` that wraps around the current ``Frame``.
+        The ``Plan`` calls ``iter(frame)``, producing a stream of ``TensorDict``s.
         """
 
-        from ..ops import FrameOp
+        from ..plans import FramePlan
 
-        return FrameOp(self)
+        return FramePlan(self)

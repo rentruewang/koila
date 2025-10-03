@@ -6,7 +6,7 @@ import typing
 from numpy.typing import NDArray
 
 from .indices import Index
-from .ops import IndexAnn, IndexOp
+from .ops import IndexAnn, IndexPlan
 
 if typing.TYPE_CHECKING:
     from faiss import Index as FaissIdx
@@ -27,7 +27,7 @@ class FaissIndex(Index):
     """
 
     @typing.override
-    def search(self, operator: IndexOp, value: NDArray) -> NDArray:
+    def search(self, operator: IndexPlan, value: NDArray) -> NDArray:
         assert isinstance(operator, IndexAnn)
 
         if value.ndim != 2:

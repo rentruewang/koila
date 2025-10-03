@@ -9,7 +9,7 @@ import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
 from ..frames import Frame
-from .ops import IndexOp
+from .ops import IndexPlan
 
 __all__ = ["Index", "IndexContext"]
 
@@ -52,7 +52,7 @@ class Index(ABC):
     The context of the ``Index``.
     """
 
-    def __call__(self, op: IndexOp, value: ArrayLike) -> NDArray:
+    def __call__(self, op: IndexPlan, value: ArrayLike) -> NDArray:
         arr = np.array(value)
         _, *dims = arr.shape
 
@@ -64,7 +64,7 @@ class Index(ABC):
         return self.search(op, arr)
 
     @abc.abstractmethod
-    def search(self, op: IndexOp, value: NDArray, /) -> NDArray: ...
+    def search(self, op: IndexPlan, value: NDArray, /) -> NDArray: ...
 
     @property
     @abc.abstractmethod

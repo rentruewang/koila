@@ -9,15 +9,15 @@ from numpy.typing import NDArray
 
 from ..frames import Frame
 from .indices import Index
-from .ops import IndexOp
+from .ops import IndexPlan
 
-__all__ = ["MultiOpIndex"]
+__all__ = ["MultiPlanIndex"]
 
 type MultiCol = tuple[str, ...]
 
 
 @dcls.dataclass(frozen=True)
-class MultiOpIndex:
+class MultiPlanIndex:
     """
     The indices based on the type of operations they support,
     for a given set of columns.
@@ -25,9 +25,9 @@ class MultiOpIndex:
 
     mgr: "IndexManager"
     columns: MultiCol
-    indices: dict[type[IndexOp], Index]
+    indices: dict[type[IndexPlan], Index]
 
-    def __call__(self, op: IndexOp, value: NDArray) -> NDArray:
+    def __call__(self, op: IndexPlan, value: NDArray) -> NDArray:
         index = self.indices[type(op)]
         return index(op=op, value=value)
 
@@ -38,13 +38,13 @@ class _ColTypeIndex(NamedTuple):
     """
 
     cols: MultiCol
-    ops: type[IndexOp]
+    ops: type[IndexPlan]
     idx: Index
 
 
 @typing.final
 @dcls.dataclass(frozen=True)
-class IndexManager(Mapping[MultiCol, MultiOpIndex]):
+class IndexManager(Mapping[MultiCol, MultiPlanIndex]):
     """
     The ``IndexManager`` class is acts as a dictionary,
     providing some additional utility to make the API easy to use.
@@ -73,12 +73,12 @@ class IndexManager(Mapping[MultiCol, MultiOpIndex]):
     def __len__(self) -> int:
         return len(self.indices)
 
-    def __getitem__(self, key: MultiCol) -> MultiOpIndex:
+    def __getitem__(self, key: MultiCol) -> MultiPlanIndex:
         # Filter out the desired indices.
         selected = [idx_info for idx_info in self.indices if idx_info.cols == key]
 
         # We can directly do this without checking because `create`
         # prevents index collision.
-        return MultiOpIndex(
+        return MultiPlanIndex(
             mgr=self, columns=key, indices={op: idx for _, op, idx in selected}
         )

@@ -2,8 +2,8 @@
 
 import pytest
 
-from aioway.rels import FuncOp, ProjectOp, RenameOp
-from aioway.rels.ops import _funcs
+from aioway.rels import FuncPlan, ProjectPlan, RenamePlan
+from aioway.rels.plans import _funcs
 
 
 def test_filter(filter_op, block_frame, make_executor):
@@ -21,7 +21,7 @@ def renames():
 
 
 def test_rename(block_frame, renames, make_executor):
-    rename_op = RenameOp(renames)
+    rename_op = RenamePlan(renames)
     for renamed, original in zip(
         make_executor(rename_op.thunk(block_frame.op.thunk())),
         make_executor(block_frame.op.thunk()),
@@ -39,7 +39,7 @@ def map_rename():
 
 def test_func_op(block_frame, map_rename, make_executor):
     f = lambda b: _funcs.rename(b, **map_rename)
-    func_op = FuncOp(func=f)
+    func_op = FuncPlan(func=f)
     for mapped, original in zip(
         make_executor(func_op.thunk(block_frame.op.thunk())),
         make_executor(block_frame.op.thunk()),
@@ -48,7 +48,7 @@ def test_func_op(block_frame, map_rename, make_executor):
 
 
 def test_project(block_frame, make_executor):
-    project_op = ProjectOp(subset=["f1d", "i2d"])
+    project_op = ProjectPlan(subset=["f1d", "i2d"])
     for curr, other in zip(
         make_executor(project_op.thunk(block_frame.op.thunk())),
         make_executor(block_frame.op.thunk()),

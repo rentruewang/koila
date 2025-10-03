@@ -6,6 +6,7 @@ containing relational algebra constructs.
 """
 
 from .execs import *
-from .ops import *
+from .plans import *
+from .schedulers import *
 from .tables import *
 from .thunks import *

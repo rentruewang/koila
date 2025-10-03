@@ -14,7 +14,7 @@ from tensordict import TensorDict
 from .. import thunks
 from ..thunks import Thunk
 
-__all__ = ["Op", "Op0", "Op1", "Op2", "BatchIter", "BatchGen"]
+__all__ = ["Plan", "Plan0", "Plan1", "Plan2", "BatchIter", "BatchGen"]
 
 LOGGER = logging.getLogger(__name__)
 
@@ -31,24 +31,24 @@ type BatchGen = Generator[TensorDict]
 
 
 @dcls.dataclass(frozen=True)
-class Op(ABC):
+class Plan(ABC):
     """
-    ``Op`` is the **pure**, **atomic** operation, be it operator or operand, that works on data.
+    ``Plan`` is the **pure**, **atomic** operation, be it operator or operand, that works on data.
 
     This means it has the following semantics::
 
         1. It doesn't store state.
-        The same ``Op`` can be applied multiple times, and used in comparison.
+        The same ``Plan`` can be applied multiple times, and used in comparison.
         2. Running on 1 device, and does not cross device boundary.
         3. Isolated in the computation graph, and can be rearranged.
 
 
     An operation is essentially an generator function over data (``Block``),
     but itself doesn't store which previous node it would be operating on.
-    This design allows users to write ``Op`` imperatively as generators,
+    This design allows users to write ``Plan`` imperatively as generators,
     rather than iterators (``__next__`` function) with state management.
 
-    There are 3 kinds of operators, ``Op0``, ``Op1``, ``Op2``,
+    There are 3 kinds of operators, ``Plan0``, ``Plan1``, ``Plan2``,
     representing 0-ary, 1-ary, 2-ary operators respectively.
     """
 
@@ -59,18 +59,18 @@ class Op(ABC):
 
     class Visitor[T](Protocol):
         """
-        The ``Visitor`` pattern / strategy for ``Op``.
+        The ``Visitor`` pattern / strategy for ``Plan``.
         """
 
-        def op_0(self, op: "Op0", /) -> T: ...
+        def plan_0(self, plan: "Plan0", /) -> T: ...
 
-        def op_1(self, op: "Op1", /) -> T: ...
+        def plan_1(self, plan: "Plan1", /) -> T: ...
 
-        def op_2(self, op: "Op2", /) -> T: ...
+        def plan_2(self, plan: "Plan2", /) -> T: ...
 
     def __hash__(self) -> int:
         """
-        This is s.t. we can use ``Op`` in dictionary lookup.
+        This is s.t. we can use ``Plan`` in dictionary lookup.
         """
 
         return hash(json.dumps(dcls.asdict(self)))
@@ -86,9 +86,9 @@ class Op(ABC):
 
         We want the subclasses signatures to be::
 
-            #. For ``op0: Op0``, ``op0()``.
-            #. For ``op1: Op1``, ``op1(child)``.
-            #. For ``op2: Op2``, ``op2(left, right)``.
+            #. For ``op0: Plan0``, ``op0()``.
+            #. For ``op1: Plan1``, ``op1(child)``.
+            #. For ``op2: Plan2``, ``op2(left, right)``.
 
         Args:
             *ops: The operands to take (would be unpacked in subclass).
@@ -133,16 +133,12 @@ class Op(ABC):
 
     def thunk(self, *ops: Thunk) -> Thunk:
         """
-        Convert the current ``Op`` into a ``Thunk``, wrapping the operands.
+        Convert the current ``Plan`` into a ``Thunk``, wrapping the operands.
 
         ``Thunk``s preserve the evaluation tree, and can be manipulated during compilation.
         """
 
         return thunks.thunk(self, *ops)
-
-    @property
-    def apply_func(self):
-        return self.apply
 
     @abc.abstractmethod
     def accept[V](self, visitor: Visitor[V]) -> V:
@@ -153,7 +149,7 @@ class Op(ABC):
         ...
 
 
-class Op0(Op, ABC):
+class Plan0(Plan, ABC):
     ARGC = 0
 
     @typing.final
@@ -170,22 +166,22 @@ class Op0(Op, ABC):
         ...
 
     @typing.override
-    def accept[T](self, visitor: Op.Visitor[T]) -> T:
-        return visitor.op_0(self)
+    def accept[T](self, visitor: Plan.Visitor[T]) -> T:
+        return visitor.plan_0(self)
 
 
-class Op1(Op, ABC):
+class Plan1(Plan, ABC):
     ARGC = 1
 
     @abc.abstractmethod
     def apply(self, stream_iter: BatchIter, /) -> BatchGen: ...
 
     @typing.override
-    def accept[T](self, visitor: Op.Visitor[T]) -> T:
-        return visitor.op_1(self)
+    def accept[T](self, visitor: Plan.Visitor[T]) -> T:
+        return visitor.plan_1(self)
 
 
-class Op2(Op, ABC):
+class Plan2(Plan, ABC):
     ARGC = 2
 
     @typing.final
@@ -213,5 +209,5 @@ class Op2(Op, ABC):
         ...
 
     @typing.override
-    def accept[T](self, visitor: Op.Visitor[T]) -> T:
-        return visitor.op_2(self)
+    def accept[T](self, visitor: Plan.Visitor[T]) -> T:
+        return visitor.plan_2(self)

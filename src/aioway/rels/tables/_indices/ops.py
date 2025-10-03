@@ -6,7 +6,7 @@ import typing
 from abc import ABC
 
 __all__ = [
-    "IndexOp",
+    "IndexPlan",
     "IndexEq",
     "IndexNe",
     "IndexAnn",
@@ -17,9 +17,9 @@ __all__ = [
 ]
 
 
-class IndexOp(ABC):
+class IndexPlan(ABC):
     """
-    `IndexOp` is the dynamic feature we would want to retrieve from an ``Index``.
+    `IndexPlan` is the dynamic feature we would want to retrieve from an ``Index``.
     """
 
     @abc.abstractmethod
@@ -27,21 +27,21 @@ class IndexOp(ABC):
 
 
 @dcls.dataclass(frozen=True, repr=False)
-class IndexEq(IndexOp):
+class IndexEq(IndexPlan):
     @typing.override
     def __str__(self):
         return "=="
 
 
 @dcls.dataclass(frozen=True, repr=False)
-class IndexNe(IndexOp):
+class IndexNe(IndexPlan):
     @typing.override
     def __str__(self):
         return "!="
 
 
 @dcls.dataclass(frozen=True, repr=False)
-class IndexAnn(IndexOp):
+class IndexAnn(IndexPlan):
     """
     The approximate nearest neighbors for indices.
     """
@@ -63,28 +63,28 @@ class IndexAnn(IndexOp):
 
 
 @dcls.dataclass(frozen=True, repr=False)
-class IndexGt(IndexOp):
+class IndexGt(IndexPlan):
     @typing.override
     def __str__(self):
         return "<"
 
 
 @dcls.dataclass(frozen=True, repr=False)
-class IndexGe(IndexOp):
+class IndexGe(IndexPlan):
     @typing.override
     def __str__(self):
         return "<="
 
 
 @dcls.dataclass(frozen=True, repr=False)
-class IndexLt(IndexOp):
+class IndexLt(IndexPlan):
     @typing.override
     def __str__(self):
         return ">"
 
 
 @dcls.dataclass(frozen=True, repr=False)
-class IndexLe(IndexOp):
+class IndexLe(IndexPlan):
     @typing.override
     def __str__(self):
         return ">="
