@@ -1,26 +1,43 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import dataclasses as dcls
-import functools
 import logging
-import typing
 from graphlib import TopologicalSorter
 from typing import Protocol
 
-from ..ops import BatchGen
-from ..thunks import Thunk
-from .caches import CacheExec
-from .execs import Exec
-from .lazy import OpExec
+from .execs import Exec, SharedExec, UniqueExec
+from .thunks import Thunk
 
-__all__ = ["DagExec"]
+__all__ = ["Scheduler", "tree", "dag"]
 
 LOGGER = logging.getLogger(__name__)
 
 
-class DagExec(Exec):
+class Scheduler(Protocol):
+    """
+    It is responsible to execute a ``Thunk``,
+    and has a 1 to 1 relationship with ``Thunk``s,
+    where each ``Thunk`` would require an ``Exec`` to run.
+
+    A scheudler itself does not store state,
+    but rather launches an iterator / cursor to iterate over the data.
+    This design allows users to write genertors (``__iter__`` funciton),
+    rather than iterators (``__next__`` function) with state management.
+    """
+
+    def __call__(self, thunk: Thunk, /) -> Exec: ...
+
+
+def tree(thunk: Thunk) -> UniqueExec:
+    children_execs = (tree(ipt) for ipt in thunk.inputs())
+
+    # None of the children needs to be shared, so ``UniqueExec`` is fine.
+    return UniqueExec(thunk.plan.apply(*children_execs))
+
+
+def dag(thunk: Thunk) -> Exec:
     r"""
-    ``DagExec`` allows for overlapping dependency (DAG) in the dependency graph.
+    The ``Scheduler``, ``dag``, allows for overlapping dependency (DAG) in the dependency graph.
 
     Assuming we have the following dependency::
 
@@ -50,56 +67,15 @@ class DagExec(Exec):
            This duplicates computation but is safe. This would happen if we apply ``LazyExec``.
 
         #. Make A return the same thing twice.
-           This is what ``DagExec`` uses. It inserts ``CacheExec``, whose iterator uses
+           This is what ``DagScheduler`` uses. It inserts ``CacheExec``, whose iterator uses
            a temporary ``Frame`` to hold previously computed results.
     """
 
-    def __init__(self, thunk: Thunk, /) -> None:
-        super().__init__()
-        self._thunk = thunk
+    thunk_deps = thunk.deps()
 
-    @typing.override
-    def __repr__(self) -> str:
-        args = ", ".join(map(str, self.thunk.inputs()))
-        return f"DagExec({args})"
+    thunk_dag = build_thunk_deps_dag(thunk_deps)
 
-    @typing.override
-    def iter(self) -> BatchGen:
-        """
-        Yields a generator, locally, from ``Op``'s definition.
-
-        Returns:
-            A stream of ``Block``s.
-
-        Note:
-            Always creates a new ``Generator`` upon being called, not cached.
-        """
-
-        yield from self.memoized_exec
-
-    @typing.override
-    def inputs(self):
-        # ``DagExec.inputs()`` does not directly correspond to its own dependency,
-        # but rather a memoized ``Exec``'s dependency.
-        yield self.memoized_exec
-
-    @functools.cached_property
-    def memoized_exec(self):
-        thunk_deps = self._thunk.deps()
-        dag_node_list = build_thunk_deps_dag(thunk_deps)
-
-        # Transform the graph, to cache nodes that are ``iter``-ed more than once.
-        memoized = linearly_build_cached_exec(dag_node_list)
-
-        if memoized.thunk != self.thunk:
-            raise AssertionError("Executor doesn't match the input thunk. Impossible.")
-
-        return memoized
-
-    @property
-    @typing.override
-    def thunk(self) -> Thunk:
-        return self._thunk
+    return shared_exec_from_topo(thunk_dag)
 
 
 @dcls.dataclass
@@ -114,7 +90,7 @@ class ThunkDagNode:
 
     @property
     def in_nodes(self):
-        return self.thunk.inputs()
+        return list(self.thunk.inputs())
 
     @property
     def in_degs(self):
@@ -125,7 +101,7 @@ class ThunkDagNode:
         return len(self.out_nodes)
 
 
-def linearly_build_cached_exec(node_list: list[ThunkDagNode]) -> Exec:
+def shared_exec_from_topo(node_list: list[ThunkDagNode]) -> Exec:
     """
     Build executors from topological order.
 
@@ -144,12 +120,10 @@ def linearly_build_cached_exec(node_list: list[ThunkDagNode]) -> Exec:
         node = node_list[idx]
 
         # Use ``LazyExec``'s recursive transformation.
-        exe: Exec = OpExec(node.thunk.op, tuple(rebuilt[n] for n in deps[idx]))
+        inputs = (rebuilt[n] for n in deps[idx])
+        iterator = node.thunk.plan.apply(*inputs)
 
-        # Only insert ``CacheExec`` when ``times > 1``, for efficiency.
-        if node.out_degs > 1:
-            exe = CacheExec(exe)
-
+        exe: Exec = SharedExec(iterator)
         rebuilt.append(exe)
 
     # [-1] is safe, because ``node_list`` cannot be empty,

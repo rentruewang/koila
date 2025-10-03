@@ -3,18 +3,18 @@
 
 import pytest
 
+from aioway import rels
 from aioway.rels import (
-    DagExec,
     Exec,
-    ExprFilterOp,
-    FuncFilterOp,
-    MatchOp,
-    Op1,
-    RepeatOp,
+    ExprFilterPlan,
+    FuncFilterPlan,
+    MatchPlan,
+    Plan1,
+    RepeatPlan,
+    Scheduler,
     Thunk,
     TorchFrame,
-    TreeExec,
-    ZipOp,
+    ZipPlan,
 )
 from tests import fake
 
@@ -53,48 +53,47 @@ def joinable_frame(device, batch_size, data_size):
 
 
 def _exec_strat():
-    yield TreeExec
-    yield DagExec
+    yield rels.tree
+    yield rels.dag
 
 
 @pytest.fixture(params=_exec_strat())
-def exec_strat(request) -> str:
+def exec_strat(request) -> Scheduler:
     return request.param
 
 
 @pytest.fixture
-def make_executor(exec_strat: type[TreeExec | DagExec]):
+def make_executor(exec_strat: Scheduler):
 
     def executor(thunk: Thunk) -> Exec:
-        exe = exec_strat(thunk)
-        return exe
+        return exec_strat(thunk)
 
     return executor
 
 
 @pytest.fixture
 def match_op():
-    return MatchOp(key="i1d")
+    return MatchPlan(key="i1d")
 
 
 @pytest.fixture
 def zip_op():
-    return ZipOp()
+    return ZipPlan()
 
 
 @pytest.fixture
 def repeat_op(times):
-    return RepeatOp(times=times)
+    return RepeatPlan(times=times)
 
 
 def _filter_expr_exec():
-    return ExprFilterOp("f1d > 0")
+    return ExprFilterPlan("f1d > 0")
 
 
 def _filter_pred_frame():
-    return FuncFilterOp(predicate=lambda t: (t["f1d"] > 0).cpu())
+    return FuncFilterPlan(predicate=lambda t: (t["f1d"] > 0).cpu())
 
 
 @pytest.fixture(params=[_filter_expr_exec, _filter_pred_frame])
-def filter_op(request) -> Op1:
+def filter_op(request) -> Plan1:
     return request.param()
