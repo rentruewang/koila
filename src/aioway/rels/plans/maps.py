@@ -13,22 +13,22 @@ from tensordict.nn import TensorDictModule
 from torch import Tensor
 
 from . import _funcs
-from .ops import BatchGen, BatchIter, Op1
+from .ops import BatchGen, BatchIter, Plan1
 
 __all__ = [
-    "MapOpBase",
-    "PassOp",
-    "FuncFilterOp",
-    "ExprFilterOp",
-    "ProjectOp",
-    "FuncOp",
-    "RenameOp",
-    "LayerOp",
+    "MapPlanBase",
+    "PassPlan",
+    "FuncFilterPlan",
+    "ExprFilterPlan",
+    "ProjectPlan",
+    "FuncPlan",
+    "RenamePlan",
+    "LayerPlan",
 ]
 
 
 @dcls.dataclass(frozen=True)
-class MapOpBase(Op1, ABC):
+class MapPlanBase(Plan1, ABC):
     @typing.final
     @typing.override
     def apply(self, stream_iter: BatchIter, /) -> BatchGen:
@@ -45,7 +45,7 @@ class MapOpBase(Op1, ABC):
 
 
 @dcls.dataclass(frozen=True)
-class PassOp(MapOpBase):
+class PassPlan(MapPlanBase):
     """
     The ``PASS`` operator does nothing to its inputs.
     """
@@ -55,7 +55,7 @@ class PassOp(MapOpBase):
 
 
 @dcls.dataclass(frozen=True)
-class FuncFilterOp(MapOpBase):
+class FuncFilterPlan(MapPlanBase):
     predicate: Callable[[TensorDict], Tensor]
     """
     The batched prediction of which rows to keep for the inputs.
@@ -87,7 +87,7 @@ class FuncFilterOp(MapOpBase):
 
 
 @dcls.dataclass(frozen=True)
-class ExprFilterOp(MapOpBase):
+class ExprFilterPlan(MapPlanBase):
     expr: str | Expr
     """
     The expression of the frame.
@@ -101,7 +101,7 @@ class ExprFilterOp(MapOpBase):
 
 
 @dcls.dataclass(frozen=True)
-class ProjectOp(MapOpBase):
+class ProjectPlan(MapPlanBase):
     """
     Select a subset of the columns.
     """
@@ -133,9 +133,9 @@ class ProjectOp(MapOpBase):
 
 
 @dcls.dataclass(frozen=True)
-class FuncOp(MapOpBase):
+class FuncPlan(MapPlanBase):
     """
-    ``FuncOp`` is an ``Op`` that performs on the input ``TensorDict``,
+    ``FuncPlan`` is an ``Plan`` that performs on the input ``TensorDict``,
     and returns the result as a ``TensorDict``.
     """
 
@@ -152,9 +152,9 @@ class FuncOp(MapOpBase):
 
 
 @dcls.dataclass(frozen=True)
-class RenameOp(MapOpBase):
+class RenamePlan(MapPlanBase):
     """
-    ``RenameOp`` renames a couple of columns, based on the ``renames`` field dict.
+    ``RenamePlan`` renames a couple of columns, based on the ``renames`` field dict.
     """
 
     renames: dict[str, str] = dcls.field(default_factory=dict)
@@ -173,9 +173,9 @@ class RenameOp(MapOpBase):
 
 
 @dcls.dataclass(frozen=True)
-class LayerOp(FuncOp):
+class LayerPlan(FuncPlan):
     """
-    ``LayerOp`` is an ``Op`` that wraps a single layer (``TensorDictModule``),
+    ``LayerPlan`` is an ``Plan`` that wraps a single layer (``TensorDictModule``),
     and executes it on the input data.
 
     It is used to execute the module on the input data,
@@ -185,7 +185,7 @@ class LayerOp(FuncOp):
     which simplifies implementation and gives more information for scheduling,
     as intermediate representation of parallelism is explicitly modelled::
 
-        model parallelism = multiple `Op`s + syncrhonization,
+        model parallelism = multiple `Plan`s + syncrhonization,
         data parallelism = split - compute - merge.
     """
 
@@ -193,7 +193,7 @@ class LayerOp(FuncOp):
 
     device: str
     """
-    As ``Op``s are atomic, here a ``LayerOp`` will be scheduled on 1 device.
+    As ``Plan``s are atomic, here a ``LayerPlan`` will be scheduled on 1 device.
     Any cross device communication happens elsewhere.
     """
 

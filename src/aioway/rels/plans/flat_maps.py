@@ -7,13 +7,13 @@ from abc import ABC
 
 from tensordict import TensorDict
 
-from .ops import BatchGen, BatchIter, Op1
+from .ops import BatchGen, BatchIter, Plan1
 
-__all__ = ["FlatMapOpBase", "RepeatOp"]
+__all__ = ["FlatMapPlanBase", "RepeatPlan"]
 
 
 @dcls.dataclass(frozen=True)
-class FlatMapOpBase(Op1, ABC):
+class FlatMapPlanBase(Plan1, ABC):
     @typing.final
     @typing.override
     def apply(self, stream_iter: BatchIter, /) -> BatchGen:
@@ -30,9 +30,9 @@ class FlatMapOpBase(Op1, ABC):
 
 
 @dcls.dataclass(frozen=True)
-class RepeatOp(FlatMapOpBase):
+class RepeatPlan(FlatMapPlanBase):
     """
-    ```RepeatOp`` repeats every input ``times`` times.
+    ```RepeatPlan`` repeats every input ``times`` times.
     """
 
     times: int = 1

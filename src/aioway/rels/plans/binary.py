@@ -7,13 +7,13 @@ import torch
 from numpy.typing import NDArray
 from tensordict import TensorDict
 
-from .ops import BatchIter, Op2
+from .ops import BatchIter, Plan2
 
-__all__ = ["ZipOp", "MatchOp"]
+__all__ = ["ZipPlan", "MatchPlan"]
 
 
 @dcls.dataclass(frozen=True)
-class ZipOp(Op2):
+class ZipPlan(Plan2):
     """
     The ``ZIP`` operation, similar to how you use the builtin ``zip``.
     """
@@ -26,7 +26,7 @@ class ZipOp(Op2):
 
 
 @dcls.dataclass(frozen=True)
-class MatchOp(Op2):
+class MatchPlan(Plan2):
     """
     The ``MATCH`` operation yields the block with matching id.
     """
