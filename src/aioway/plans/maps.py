@@ -13,7 +13,7 @@ from tensordict.nn import TensorDictModule
 from torch import Tensor
 
 from . import _funcs
-from .ops import BatchGen, BatchIter, Plan1
+from .plans import BatchGen, BatchIter, Plan1
 
 __all__ = [
     "MapPlanBase",
@@ -65,10 +65,7 @@ class FuncFilterPlan(MapPlanBase):
     def map(self, item: TensorDict) -> TensorDict:
         "Using the function predicate to filter. Works well with ``numpy``."
 
-        pt = self.predicate(item)
-
-        # Just to be extra fault tolerant.
-        pred = pt.numpy()
+        pred = self.predicate(item).numpy()
 
         # Convert to int indices.
         if np.isdtype(pred.dtype, "bool"):

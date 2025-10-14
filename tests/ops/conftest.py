@@ -3,19 +3,17 @@
 
 import pytest
 
-from aioway import rels
-from aioway.rels import (
-    Exec,
+from aioway import schedulers
+from aioway.plans import (
     ExprFilterPlan,
     FuncFilterPlan,
     MatchPlan,
     Plan1,
     RepeatPlan,
-    Scheduler,
-    Thunk,
-    TorchFrame,
     ZipPlan,
 )
+from aioway.schedulers import Scheduler
+from aioway.tables import TorchTable
 from tests import fake
 
 
@@ -35,26 +33,26 @@ def batch_size(request) -> int:
 
 
 @pytest.fixture(scope="module")
-def block_frame(device, batch_size, data_size) -> TorchFrame:
+def block_frame(device, batch_size, data_size) -> TorchTable:
     block = fake.tensordict_ok(size=data_size, device=device)
-    return TorchFrame(block, batch=batch_size)
+    return TorchTable(block, batch=batch_size)
 
 
 @pytest.fixture(scope="module")
-def concat_frame(device, batch_size, data_size) -> TorchFrame:
+def concat_frame(device, batch_size, data_size) -> TorchTable:
     block = fake.concat_ok(size=data_size, device=device)
-    return TorchFrame(block, batch_size)
+    return TorchTable(block, batch_size)
 
 
 @pytest.fixture(scope="module")
 def joinable_frame(device, batch_size, data_size):
     block = fake.unionable_ok(size=data_size, device=device)
-    return TorchFrame(block, batch_size)
+    return TorchTable(block, batch_size)
 
 
 def _exec_strat():
-    yield rels.tree
-    yield rels.dag
+    yield schedulers.tree
+    yield schedulers.dag
 
 
 @pytest.fixture(params=_exec_strat())
@@ -63,26 +61,22 @@ def exec_strat(request) -> Scheduler:
 
 
 @pytest.fixture
-def make_executor(exec_strat: Scheduler):
-
-    def executor(thunk: Thunk) -> Exec:
-        return exec_strat(thunk)
-
-    return executor
+def scheduler(exec_strat: Scheduler) -> Scheduler:
+    return exec_strat
 
 
 @pytest.fixture
-def match_op():
+def matcher():
     return MatchPlan(key="i1d")
 
 
 @pytest.fixture
-def zip_op():
+def zipper():
     return ZipPlan()
 
 
 @pytest.fixture
-def repeat_op(times):
+def repeater(times):
     return RepeatPlan(times=times)
 
 
@@ -95,5 +89,5 @@ def _filter_pred_frame():
 
 
 @pytest.fixture(params=[_filter_expr_exec, _filter_pred_frame])
-def filter_op(request) -> Plan1:
+def filterer(request) -> Plan1:
     return request.param()

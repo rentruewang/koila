@@ -6,16 +6,16 @@ from typing import TypeIs
 
 from tensordict import TensorDict
 
-from ._batches import BatchFrame
-from .frames import Frame
+from ._batches import BatchTable
+from .tables import Table
 
-__all__ = ["TorchFrame", "TorchListFrame"]
+__all__ = ["TorchTable", "TorchListTable"]
 
 
 @dcls.dataclass(frozen=True)
-class TorchFrame(BatchFrame[TensorDict]):
+class TorchTable(BatchTable[TensorDict]):
     """
-    A ``Frame`` backed by a ``TensorDict`` (aka a batch in ``aioway``).
+    A ``Table`` backed by a ``TensorDict`` (aka a batch in ``aioway``).
     This means that it is non-distributed, and volatile.
     """
 
@@ -29,9 +29,9 @@ class TorchFrame(BatchFrame[TensorDict]):
 
 @typing.final
 @dcls.dataclass(frozen=True)
-class TorchListFrame(Frame):
+class TorchListTable(Table):
     """
-    A ``Frame`` backed by a ``list[TensorDict]`` (aka a batch in ``aioway``).
+    A ``Table`` backed by a ``list[TensorDict]`` (aka a batch in ``aioway``).
     This means that it is non-distributed, and volatile.
     """
 

@@ -7,7 +7,7 @@ from abc import ABC
 
 from tensordict import TensorDict
 
-from .ops import BatchGen, BatchIter, Plan1
+from .plans import BatchGen, BatchIter, Plan1
 
 __all__ = ["FlatMapPlanBase", "RepeatPlan"]
 
