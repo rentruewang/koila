@@ -3,8 +3,8 @@
 import dataclasses as dcls
 import typing
 
-from ..tables import Frame
-from .ops import Plan0
+from ..tables import Table
+from .plans import Plan0
 
 __all__ = ["FramePlan"]
 
@@ -15,7 +15,7 @@ class FramePlan(Plan0):
     An ``Plan`` that wraps a ``Frame`` and a ``DataLoader``.
     """
 
-    dataset: "Frame" = dcls.field(repr=False)
+    dataset: "Table" = dcls.field(repr=False)
     """
     The backing ``Frame``, stored in order to reset.
     """

@@ -6,13 +6,13 @@ import typing
 from pandas import DataFrame
 from tensordict._td import TensorDict
 
-from ._batches import BatchFrame
+from ._batches import BatchTable
 
 __all__ = ["PandasFrame"]
 
 
 @dcls.dataclass(frozen=True)
-class PandasFrame(BatchFrame[DataFrame]):
+class PandasFrame(BatchTable[DataFrame]):
     """
     A ``pandas``-based ``Frame``,
     dynamically converting ``DataFrame`` to ``TensorDict``.

@@ -6,7 +6,7 @@ import torch
 from tensordict import TensorDict
 from torch import cuda
 
-from aioway.rels.plans import _funcs
+from aioway.plans import _funcs
 
 
 def cpu_and_maybe_cuda():

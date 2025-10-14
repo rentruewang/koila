@@ -11,19 +11,19 @@ from tensordict import TensorDict
 if typing.TYPE_CHECKING:
     from ..plans import FramePlan
 
-__all__ = ["Frame"]
+__all__ = ["Table"]
 
 
 @dcls.dataclass(frozen=True)
-class Frame(ABC):
+class Table(ABC):
     """
-    ``Frame`` represents a chunk / batch of heterogenious data stored in memory,
+    ``Table`` represents a chunk / batch of heterogenious data stored in memory,
     it is one of the main physical abstractions in ``aioway`` to represent eager computation.
 
     Think of it as a normal ``Sequence`` of ``TensorDict``,
     where computation happens eagerly, imperatively, and the result is stored in memory.
 
-    Each ``TensorDict`` retrieved from ``Frame`` is a minibatch of data.
+    Each ``TensorDict`` retrieved from ``Table`` is a minibatch of data.
     """
 
     @abc.abstractmethod
@@ -48,12 +48,12 @@ class Frame(ABC):
             yield self[i]
 
     @property
-    def op(self) -> "FramePlan":
+    def plan(self) -> "FramePlan":
         """
         Construct an ``Plan`` that wraps around the current ``Frame``.
         The ``Plan`` calls ``iter(frame)``, producing a stream of ``TensorDict``s.
         """
 
-        from ..plans import FramePlan
+        from aioway.plans import FramePlan
 
         return FramePlan(self)

@@ -5,7 +5,7 @@ import pytest
 import torch
 from numpy import random as np_rand
 
-from aioway.rels.plans import _funcs
+from aioway.plans import _funcs
 
 from . import fake
 
@@ -71,4 +71,4 @@ def test_tensordict_filter(device, batch):
 
     filtered = _funcs.filter(block, "f1d > 0")
 
-    assert (golden.data == filtered.data).all()
+    assert (golden == filtered).all()
