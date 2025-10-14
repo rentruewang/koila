@@ -9,6 +9,7 @@ from abc import ABC
 from collections.abc import Generator, Iterable, Iterator
 from typing import ClassVar, Protocol
 
+import tensordict
 from tensordict import TensorDict
 
 from .. import thunks
@@ -68,6 +69,7 @@ class Plan(ABC):
 
         def plan_2(self, plan: "Plan2", /) -> T: ...
 
+    @typing.override
     def __hash__(self) -> int:
         """
         This is s.t. we can use ``Plan`` in dictionary lookup.
@@ -75,9 +77,42 @@ class Plan(ABC):
 
         return hash(json.dumps(dcls.asdict(self)))
 
+    def __call__(self, *inputs: Thunk) -> Thunk:
+        """
+        Convert the current ``Plan`` into a ``Thunk``, wrapping the operands.
+
+        ``Thunk``s preserve the evaluation tree, and can be manipulated during compilation.
+        """
+
+        if all(isinstance(i, Thunk) for i in inputs):
+            return self.thunk(*inputs)
+
+        # if all(isinstance(i, TensorDict) for i in inputs):
+        #     return self.compute(*inputs)
+
+        raise NotImplementedError(
+            "All items in inputs must be of the same type, "
+            "either `Thunk`s or `TensorDict`s."
+        )
+
+    def thunk(self, *iters: Thunk) -> Thunk:
+        """
+        Create a ``Thunk`` for the input ``Thunk``s.
+        """
+
+        return thunks.thunk(self, *iters)
+
+    def compute(self, *data: TensorDict) -> TensorDict:
+        """
+        Compute the input data, eagerly.
+        """
+
+        iterator = list(self.apply(*data))
+        return tensordict.cat(iterator, dim=0)
+
     @typing.no_type_check
     @abc.abstractmethod
-    def apply(self, *ops: BatchIter) -> BatchGen:
+    def apply(self, *iters: BatchIter) -> BatchGen:
         """
         The ``apply`` method launches a new ``Generator`` to loop over the inputs.
         Every call is creates / rebuilds brand new computation.
@@ -130,15 +165,6 @@ class Plan(ABC):
             After all, they are pretty much the same,
             so I prefer the ``__iter__`` / ``Generator`` based method as it's cleaner.
         """
-
-    def thunk(self, *ops: Thunk) -> Thunk:
-        """
-        Convert the current ``Plan`` into a ``Thunk``, wrapping the operands.
-
-        ``Thunk``s preserve the evaluation tree, and can be manipulated during compilation.
-        """
-
-        return thunks.thunk(self, *ops)
 
     @abc.abstractmethod
     def accept[V](self, visitor: Visitor[V]) -> V:

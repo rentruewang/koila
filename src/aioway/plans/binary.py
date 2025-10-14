@@ -7,7 +7,7 @@ import torch
 from numpy.typing import NDArray
 from tensordict import TensorDict
 
-from .ops import BatchIter, Plan2
+from .plans import BatchIter, Plan2
 
 __all__ = ["ZipPlan", "MatchPlan"]
 

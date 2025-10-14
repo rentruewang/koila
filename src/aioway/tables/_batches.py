@@ -10,15 +10,15 @@ from typing import ClassVar
 
 from tensordict import TensorDict
 
-from .frames import Frame
+from .tables import Table
 
-__all__ = ["BatchFrame"]
+__all__ = ["BatchTable"]
 
 
 @dcls.dataclass(frozen=True)
-class BatchFrame[S](Frame, ABC):
+class BatchTable[S](Table, ABC):
     """
-    A ``Frame`` backed by a ``TensorDict`` (aka a batch in ``aioway``).
+    A ``Table`` backed by a ``TensorDict`` (aka a batch in ``aioway``).
     This means that it is non-distributed, and volatile.
     """
 

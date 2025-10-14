@@ -10,7 +10,7 @@ from typing import NamedTuple, Self
 from tensordict import TensorDict
 from tensordict._td import TensorDict
 
-from ..tables import TorchListFrame
+from ..tables import TorchListTable
 from .execs import Exec
 
 __all__ = ["IterExec", "UniqueExec", "SharedExec"]
@@ -46,6 +46,9 @@ class UniqueExec(IterExec):
 
     @typing.override
     def __next__(self) -> TensorDict:
+        if not self.__started:
+            raise TypeError("`UniqueExec` instance is not ``iter``-ed yet.")
+
         return next(self._iter)
 
     @typing.override
@@ -66,11 +69,11 @@ class SharedExec(IterExec):
     """
 
     def __init__(
-        self, iterable: Iterable[TensorDict], frame: TorchListFrame | None = None
+        self, iterable: Iterable[TensorDict], frame: TorchListTable | None = None
     ) -> None:
         super().__init__(iterable)
 
-        self._frame = frame or TorchListFrame()
+        self._frame = frame or TorchListTable()
         """
         The caching frame storing the past batches.
         """

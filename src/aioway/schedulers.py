@@ -5,7 +5,7 @@ import logging
 from graphlib import TopologicalSorter
 from typing import Protocol
 
-from .execs import Exec, SharedExec, UniqueExec
+from .execs import Exec, SharedExec
 from .thunks import Thunk
 
 __all__ = ["Scheduler", "tree", "dag"]
@@ -19,7 +19,7 @@ class Scheduler(Protocol):
     and has a 1 to 1 relationship with ``Thunk``s,
     where each ``Thunk`` would require an ``Exec`` to run.
 
-    A scheudler itself does not store state,
+    A scheduler itself does not store state,
     but rather launches an iterator / cursor to iterate over the data.
     This design allows users to write genertors (``__iter__`` funciton),
     rather than iterators (``__next__`` function) with state management.
@@ -28,11 +28,11 @@ class Scheduler(Protocol):
     def __call__(self, thunk: Thunk, /) -> Exec: ...
 
 
-def tree(thunk: Thunk) -> UniqueExec:
+def tree(thunk: Thunk):
     children_execs = (tree(ipt) for ipt in thunk.inputs())
 
     # None of the children needs to be shared, so ``UniqueExec`` is fine.
-    return UniqueExec(thunk.plan.apply(*children_execs))
+    return SharedExec(thunk.plan.apply(*children_execs))
 
 
 def dag(thunk: Thunk) -> Exec:
@@ -113,6 +113,7 @@ def shared_exec_from_topo(node_list: list[ThunkDagNode]) -> Exec:
 
     deps = build_dependency_graph(node_list)
     check_deps_is_topo_sorted(deps)
+
     rebuilt: list[Exec] = []
 
     # Rebuilding the entire tree, because ``Thunk``s are immutable.
