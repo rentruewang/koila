@@ -4,21 +4,25 @@
 
 Project `koila` has 3 main components:
 
-1. Metadata tracking for `torch.Tensor`s.
-2. Decouple some symbolic info (batch size) to run a reduced graph
-3. Run with gradient accumulation to prevent OOM.
+#### 1. Metadata tracking for `torch.Tensor`s.
 
-For 1.: Now `PyTorch` officially has [`FakeTensor`]("https://docs.pytorch.org/docs/stable/torch.compiler_fake_tensor.html") (koila predates it). It has great compatibility and support of torch operators, something `koila` never was able to do.
+But now `PyTorch` officially has [`FakeTensor`]("https://docs.pytorch.org/docs/stable/torch.compiler_fake_tensor.html") (`koila` predates it). It has great compatibility and support all of torch operators, something `koila` never was able to do.
 
-For 2.: `Koila` only tracks symbolic info partially, on the batch dimension. I have now something a lot better, a compiler / interpreter for deep learning [`aioway`][aioway] that handles all these info, without the burden of `torch` compatibility. As I have plans to rewrite this tracking part in C++, I don't want to cross the repository boundary as `koila` is not going to have a native API, so this part would be rewritten in [`aioway`](aioway).
+#### 2. Decouple some symbolic info (batch size) to run a reduced graph
 
-For 3.: `Koila` requests batches iteratively, adhering to the `torch` API and work around some layers that conflicts with gradient accumulation.
+`Koila` only tracks symbolic info partially, on the batch dimension. I have now something a lot better, a compiler / interpreter for deep learning [`aioway`][aioway] that handles all these info, without the burden of `torch` compatibility.
 
-Now:
+[`Aioway`][aioway] also has something that `koila` does not have: tracking layers. (how do you go 1 level up, and work on layers, when you API is simply `Tensor` input?)
 
-1. `FakeTensor` is available (it wasn't before), which support all of `torch`.
-2. [`Aioway`][aioway] in development (soon open source), and there are stuff that [`Aioway`][aioway] does but `koila` cannot (how do you go 1 level up, and work on layers, when you API is simply `Tensor` input?)
-3. Torch has too many operators, and this can (kind of?) be achieved with other measures, such as `try` `except` with binary search, which is super simple, low maintainence, and not that slow.
+I have (at a day job) split a package into 2 (core / non core), and didn't have a good experience, especially for the release cycle and IDE support (autocomplete, go to location etc), so using 2 packages simultaneously is out of the question.
+
+As I have plans to rewrite this tracking part in C++, I don't want to cross the repository boundary as `koila` is not going to have a native API, so this part would be rewritten in [`aioway`](aioway).
+
+#### 3. Run with gradient accumulation to prevent OOM.
+
+`Koila` requests batches iteratively, adhering to the `torch` API and work around some layers that conflicts with gradient accumulation.
+
+However, `torch` has too many operators, and this can (kind of?) be achieved with other measures, such as `try` `except` with binary search, which is super simple, low maintainence, and not that slow.
 
 I think to keep `koila` as it is, a POC that I did for fun.
 
