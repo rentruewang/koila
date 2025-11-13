@@ -14,7 +14,7 @@ But now `PyTorch` officially has [`FakeTensor`]("https://docs.pytorch.org/docs/s
 
 [`Aioway`][aioway] also has something that `koila` does not have: tracking layers. (how do you go 1 level up, and work on layers, when you API is simply `Tensor` input?)
 
-I have (at a day job) split a package into 2 (core / non core), and didn't have a good experience (quite a pain actually), because of the release cycle and IDE support (autocomplete, go to location etc), so using 2 packages simultaneously is out of the question.
+I have (at a day job) split a package into 2 (core / non core), and didn't have a good experience (quite a pain actually), because of the release cycle and IDE support (autocomplete, go to location etc), so using 2 (tightly coupled) packages simultaneously is out of the question.
 
 As I have plans to rewrite this tracking part in C++, I don't want to cross the repository boundary as `koila` is not going to have a native API, so this part would be rewritten in [`aioway`](aioway).
 
