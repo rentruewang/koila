@@ -4,7 +4,7 @@ description = "AI on the way"
 authors = [
     {name = "RenChu Wang", email = "patrick1031wang@gmail.com"},
 ]
-requires-python = ">=3.13,<4"
+requires-python = ">=3.13,<3.14"
 readme = "README.md"
 license = {text = "Apache-2.0"}
 dynamic = ["version"]
@@ -50,7 +50,6 @@ debugging = [
     "icecream>=2.1.8",
 ]
 build = [
-    "ansible>=11.6.0",
     "build>=1.2.2.post1",
     "ninja>=1.11.1.4",
     "pip>=25.1.1",
@@ -88,9 +87,9 @@ ignore_missing_imports = true
 
 [tool.pylint."MESSAGE CONTROL"]
 disable = [
-    "missing-docstring",
     "unnecessary-ellipsis",
     "redefined-builtin",
+    "redefined-outer-name",
     "too-few-public-methods",
 ]
 
@@ -100,7 +99,6 @@ addopts = [
     "--ff",
     "--nf",
     "--import-mode=importlib",
-    "-n=auto",
     "--dist=loadgroup",
 ]
 filterwarnings = [

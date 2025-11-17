@@ -1,5 +1,7 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
+"Some additional functions on ``TensorDict``s."
+
 import logging
 
 import sympy as sym
@@ -90,6 +92,11 @@ def rename(td: TensorDict, **names: str) -> TensorDict:
 
 
 def to_tensor(td: TensorDict) -> Tensor:
+    """
+    Convert a ``TensorDict`` to a ``Tensor``, by treating the dict as a table.
+    Respects the ``.values()`` orders of ``TensorDict``s.
+    """
+
     columns: list[Tensor] = []
 
     for value in td.values():
