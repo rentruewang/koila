@@ -1,35 +1,23 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
+"``Table``s are stored in memory."
+
 import dataclasses as dcls
 import typing
-from typing import TypeIs
+from typing import Self, TypeIs
 
 from tensordict import TensorDict
 
-from ._batches import BatchTable
+from aioway.streams import Stream
+
 from .tables import Table
 
-__all__ = ["TorchTable", "TorchListTable"]
-
-
-@dcls.dataclass(frozen=True)
-class TorchTable(BatchTable[TensorDict]):
-    """
-    A ``Table`` backed by a ``TensorDict`` (aka a batch in ``aioway``).
-    This means that it is non-distributed, and volatile.
-    """
-
-    KLASS = TensorDict
-
-    @classmethod
-    @typing.override
-    def convert_tensordict(cls, data: TensorDict) -> TensorDict:
-        return data
+__all__ = ["TensorDictListTable"]
 
 
 @typing.final
 @dcls.dataclass(frozen=True)
-class TorchListTable(Table):
+class TensorDictListTable(Table):
     """
     A ``Table`` backed by a ``list[TensorDict]`` (aka a batch in ``aioway``).
     This means that it is non-distributed, and volatile.
@@ -51,7 +39,7 @@ class TorchListTable(Table):
         return len(self.data)
 
     @typing.override
-    def __getitem__(self, idx: int) -> TensorDict:
+    def _getitem(self, idx: int) -> TensorDict:
         return self.data[idx]
 
     def __setitem__(self, idx: int, value: TensorDict) -> None:
@@ -62,6 +50,21 @@ class TorchListTable(Table):
 
     def pop(self) -> TensorDict:
         return self.data.pop()
+
+    @classmethod
+    def consume(cls, stream: Stream) -> Self:
+        """
+        Consume a ``Stream`` and produce a ``Table``.
+
+        Args:
+            stream: The ``Stream``. Would be exhausted after calling.
+
+        Returns:
+            The ``Table`` produced.
+        """
+
+        dicts = list(stream)
+        return cls(dicts)
 
 
 def is_list_of_tensordict(data) -> TypeIs[list[TensorDict]]:
