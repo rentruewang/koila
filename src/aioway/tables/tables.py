@@ -1,5 +1,7 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
+"The ``Table`` interface."
+
 import abc
 import dataclasses as dcls
 import typing
@@ -8,8 +10,7 @@ from collections.abc import Generator
 
 from tensordict import TensorDict
 
-if typing.TYPE_CHECKING:
-    from ..plans import FramePlan
+from aioway.streams import TableStream
 
 __all__ = ["Table"]
 
@@ -32,7 +33,7 @@ class Table(ABC):
         Get the number of items (rows) in the current dataframe.
         """
 
-    @abc.abstractmethod
+    @typing.final
     def __getitem__(self, idx: int) -> TensorDict:
         """
         Get individual items from the current ``Frame``.
@@ -41,19 +42,48 @@ class Table(ABC):
             idx:
                 Index to the current ``Frame``.
                 Must be an integer (does not support slice input).
+                Should be in the range ``[-len, len)``.
+
+        Returns:
+            A ``TensorDict`` representing a batch of data.
         """
+
+        length = len(self)
+
+        if not -length <= idx < length:
+            raise IndexError(
+                f"Index must be in the range `[-{length}, {length})`, but got {idx=}"
+            )
+
+        return self._getitem(idx % length)
+
+    def __bool__(self) -> bool:
+        return bool(len(self))
+
+    @abc.abstractmethod
+    def _getitem(self, idx: int, /) -> TensorDict:
+        """
+        The implementation of ``__getitem__``.
+
+        Args:
+            idx: The index being passed in. Positive, in ``[0, len)``.
+
+        Returns:
+            A batch of data.
+        """
+
+        ...
 
     def __iter__(self) -> Generator[TensorDict]:
         for i in range(len(self)):
             yield self[i]
 
-    @property
-    def plan(self) -> "FramePlan":
+    def stream(self) -> TableStream:
         """
-        Construct an ``Plan`` that wraps around the current ``Frame``.
-        The ``Plan`` calls ``iter(frame)``, producing a stream of ``TensorDict``s.
+        Convert the current ``Table`` into a ``Stream`` for iteration.
+
+        Returns:
+            A ``Stream`` for iteration purposes.
         """
 
-        from aioway.plans import FramePlan
-
-        return FramePlan(self)
+        return TableStream(table=self)

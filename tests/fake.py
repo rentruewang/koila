@@ -6,8 +6,6 @@ import torch
 from tensordict import TensorDict
 from torch import cuda
 
-from aioway.plans import _funcs
-
 
 def cpu_and_maybe_cuda():
     """
@@ -54,8 +52,7 @@ def unionable_ok(*, size: int, device: str):
 
 
 def concat_ok(*, size: int, device: str):
-    td = tensordict_ok(size=size, device=device)
-    return _funcs.rename(td, f1d="f1", f2d="f2", i1d="i1", i2d="i2")
+    return tensordict_ok(size=size, device=device)
 
 
 def random_things():

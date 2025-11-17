@@ -4,19 +4,19 @@ import numpy as np
 import pytest
 import torch
 from numpy import random as np_rand
+from pytest import FixtureRequest
 
-from aioway.plans import _funcs
-
-from . import fake
+from aioway.streams import _funcs
+from tests import fake
 
 
 @pytest.fixture(params=fake.cpu_and_maybe_cuda(), scope="session")
-def device(request) -> str:
+def device(request: FixtureRequest) -> str:
     return request.param
 
 
 @pytest.fixture(params=fake.batch_sizes(), scope="module")
-def batch(request) -> int:
+def batch(request: FixtureRequest) -> int:
     return request.param
 
 
