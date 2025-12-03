@@ -17,16 +17,10 @@ jobs:
       - name: 🔔 Check out
         uses: actions/checkout@v3
 
-      - name: 🏗️ python
-        uses: actions/setup-python@v4
+      - name: ⬇️ Python PDM
+        uses: pdm-project/setup-pdm@v4
         with:
           python-version: "3.13"
 
-      - name: ⬇️ Python PDM
-        uses: pdm-project/setup-pdm@v4
-
-      - name: ⬇️ Python Dependencies
-        run: pdm sync -G:all
-
-      - name: 📰 Publish to PyPI
-        run: pdm publish
+      - name: ⚙️ Release
+        run: make -C ci publish
