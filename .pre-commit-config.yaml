@@ -1,26 +1,28 @@
-# See https://pre-commit.com for more information
-# See https://pre-commit.com/hooks.html for more hooks
 repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
+  - repo: 'https://github.com/pre-commit/pre-commit-hooks'
     rev: v3.2.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-added-large-files
-  - repo: https://github.com/PyCQA/autoflake
+  - repo: 'https://github.com/PyCQA/autoflake'
     rev: v2.3.1
     hooks:
       - id: autoflake
-  - repo: https://github.com/PyCQA/isort
+  - repo: 'https://github.com/PyCQA/isort'
     rev: 6.0.1
     hooks:
       - id: isort
-  - repo: https://github.com/psf/black-pre-commit-mirror
+  - repo: 'https://github.com/psf/black-pre-commit-mirror'
     rev: 25.9.0
     hooks:
       - id: black
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.18.2
+  - repo: 'https://github.com/pre-commit/mirrors-mypy'
+    rev: v1.19.0
     hooks:
-    -   id: mypy
+      - id: mypy
+  - repo: 'https://github.com/pylint-dev/pylint'
+    rev: v4.0.4
+    hooks:
+      - id: pylint
