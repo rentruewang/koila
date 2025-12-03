@@ -33,6 +33,7 @@ pre-commit = [
     "black>=25.1.0",
     "isort>=6.0.1",
     "mypy>=1.16.0",
+    "pylint>=4.0.4",
 ]
 tests = [
     "pytest>=8.3.5",
@@ -84,6 +85,14 @@ module = [
     "sympy.*",
 ]
 ignore_missing_imports = true
+
+[tool.pylint."MESSAGE CONTROL"]
+disable = [
+    "missing-docstring",
+    "unnecessary-ellipsis",
+    "redefined-builtin",
+    "too-few-public-methods",
+]
 
 [tool.pytest.ini_options]
 addopts = [

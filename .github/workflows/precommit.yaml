@@ -8,25 +8,13 @@ jobs:
       - name: 🔔 Check out
         uses: actions/checkout@v3
 
-      - name: 🏗️ python
-        uses: actions/setup-python@v4
+      - name: ⬇️ Python PDM
+        uses: pdm-project/setup-pdm@v4
         with:
           python-version: "3.13"
 
-      - name: ⬇️ Python PDM
-        uses: pdm-project/setup-pdm@v4
-
-      - name: ⬇️ Python Dependencies
-        run: pdm sync -G:all
-
-      - name: 🏃 autoflake
-        run: pdm run pre-commit run --all-files autoflake
-
-      - name: 🏃 isort
-        run: pdm run pre-commit run --all-files isort
-
-      - name: 🏃 black
-        run: pdm run pre-commit run --all-files black
+      - name: 🏃 Formatting
+        run: make -C ci format
 
   type:
     name: 👨‍⚕️ Type Checking
@@ -35,19 +23,10 @@ jobs:
       - name: 🔔 Check out
         uses: actions/checkout@v3
 
-      - name: 🏗️ python
-        uses: actions/setup-python@v4
+      - name: ⬇️ Python PDM
+        uses: pdm-project/setup-pdm@v4
         with:
           python-version: "3.13"
 
-      - name: ⬇️ Python PDM
-        uses: pdm-project/setup-pdm@v4
-
-      - name: ⬇️ Python Dependencies
-        run: pdm sync -G:all
-
-      - name: 📦 Install type stubs
-        run: pdm run mypy . --install-types --non-interactive
-
-      - name: 🏃 mypy
-        run: pdm run pre-commit run --all-files mypy
+      - name: 🏃 Type checking
+        run: make -C ci typing
