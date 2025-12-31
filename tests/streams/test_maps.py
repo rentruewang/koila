@@ -16,9 +16,9 @@ from aioway.streams import (
     ProjectStream,
     RenameStream,
     Stream,
-    TableStream,
     _funcs,
 )
+from aioway.tables import TableStream
 
 
 @dcls.dataclass

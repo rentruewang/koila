@@ -10,8 +10,6 @@ from collections.abc import Generator
 
 from tensordict import TensorDict
 
-from aioway.streams import TableStream
-
 __all__ = ["Table"]
 
 
@@ -78,12 +76,14 @@ class Table(ABC):
         for i in range(len(self)):
             yield self[i]
 
-    def stream(self) -> TableStream:
+    def stream(self):
         """
         Convert the current ``Table`` into a ``Stream`` for iteration.
 
         Returns:
             A ``Stream`` for iteration purposes.
         """
+
+        from aioway.tables import TableStream
 
         return TableStream(table=self)

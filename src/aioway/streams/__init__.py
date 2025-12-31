@@ -9,4 +9,3 @@ The package ``Stream``s live.
 from .joins import *
 from .maps import *
 from .streams import *
-from .tables import *

@@ -10,10 +10,9 @@ from typing import Self
 
 from tensordict import TensorDict
 
-from .streams import Stream
+from aioway.streams import Stream
 
-if typing.TYPE_CHECKING:
-    from aioway.tables import Table
+from .tables import Table
 
 __all__ = ["TableStream"]
 
