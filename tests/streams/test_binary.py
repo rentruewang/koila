@@ -11,10 +11,9 @@ from tensordict import TensorDict
 from aioway.streams import (
     NestedLoopJoinStream,
     Stream,
-    TableStream,
     ZipStream,
 )
-from aioway.tables import TensorDictListTable
+from aioway.tables import TableStream, TensorDictListTable
 
 
 @pytest.fixture

@@ -12,7 +12,9 @@ from tensordict import TensorDict
 from torch import Tensor
 
 from .streams import Stream
-from .tables import TableStream
+
+if typing.TYPE_CHECKING:
+    from aioway.tables import TableStream
 
 __all__ = ["ZipStream", "NestedLoopJoinStream"]
 
@@ -65,7 +67,7 @@ class NestedLoopJoinStream(Stream):
     LHS is a normal stream. Will only be iterated over once.
     """
 
-    right: TableStream
+    right: "TableStream"
     """
     RHS is a ``Stream`` supporting index access, thus requiring materialization.
     """
