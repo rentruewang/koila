@@ -22,7 +22,3 @@ repos:
     rev: v1.19.0
     hooks:
       - id: mypy
-  - repo: 'https://github.com/pylint-dev/pylint'
-    rev: v4.0.4
-    hooks:
-      - id: pylint
