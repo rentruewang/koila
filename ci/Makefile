@@ -20,9 +20,5 @@ format:
 typing:
 	python3 pre-commit.py typing
 
-# Linting is included, but not on by default.
-linting:
-	python3 pre-commit.py linting
-
 testing:
 	python3 testing.py

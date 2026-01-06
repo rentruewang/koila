@@ -24,8 +24,6 @@ def tools_for_command(command: str, /):
             yield "black"
         case "typing":
             yield "mypy"
-        case "linting":
-            yield "pylint"
         case _:
             raise NotImplementedError(
                 f"Support for '{command}' command is not yet implemented."
@@ -38,5 +36,14 @@ if __name__ == "__main__":
     gha.setup()
     pdm.sync()
 
+    failed_tools: list[str] = []
+
     for tool in tools_for_command(command):
-        pdm.run(f"pre-commit run --all-files {tool}")
+        try:
+            pdm.run(f"pre-commit run --all-files {tool}")
+        except Exception:
+            failed_tools.append(tool)
+
+    if failed_tools:
+        failed = ",".join(map(lambda tool: f"'{tool}'", failed_tools))
+        raise RuntimeError(f"Tools that failed execution: {failed}")
