@@ -8,4 +8,5 @@ The package ``Stream``s live.
 
 from .joins import *
 from .maps import *
+from .sources import *
 from .streams import *
