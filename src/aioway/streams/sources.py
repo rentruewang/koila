@@ -10,7 +10,7 @@ import math
 import typing
 from abc import ABC
 from collections.abc import Generator, Sequence
-from typing import override
+from typing import Self, override
 
 from tensordict import TensorDict
 from torch.utils.data import DataLoader, Sampler
@@ -26,6 +26,7 @@ __all__ = [
     "TableStream",
     "TableStreamLoader",
 ]
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -67,6 +68,10 @@ class CacheStream(BoundedStream):
     "The cache for the input ``Stream``."
 
     @typing.override
+    def __iter__(self) -> Self:
+        return dcls.replace(self, stream=self.stream, saved=self.saved)
+
+    @typing.override
     def __len__(self) -> int:
         return len(self.saved)
 
@@ -76,12 +81,18 @@ class CacheStream(BoundedStream):
 
     @typing.override
     def _read(self) -> TensorDict:
-        assert self.idx == self.stream.idx, {
-            "idx": self.idx,
-            "stream.idx": self.stream.idx,
-        }
+        LOGGER.debug(
+            "Executing `__iter__` for `CacheStream`. self.idx=%s, stream.idx=%s",
+            self.idx,
+            self.stream.idx,
+        )
 
-        # Try to get from ``self.cache`` first.
+        if self.idx > self.stream.idx or self.idx > len(self.saved):
+            raise AssertionError(
+                "Invalid idx. Not synced properly with stream or cache."
+            )
+
+        # Try to get from ``self.saved`` first.
         if self.idx < len(self):
             return self[self.idx]
 
@@ -89,6 +100,7 @@ class CacheStream(BoundedStream):
         assert self.idx == len(self), f"{self.idx=} for {len(self)=}"
 
         # This shall raise ``StopIteration`` after done.
+        # This may be fragile.
         item = next(self.stream)
         self.saved.append(item)
         return item
