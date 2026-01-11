@@ -10,6 +10,7 @@ from tensordict import TensorDict
 
 from aioway.streams import (
     ApplyStream,
+    CacheStream,
     ExprFilterStream,
     FuncFilterStream,
     MapStream,
@@ -18,7 +19,6 @@ from aioway.streams import (
     Stream,
     _funcs,
 )
-from aioway.tables import TableStream
 
 
 @dcls.dataclass
@@ -35,7 +35,7 @@ class SaveLastMapStream(MapStream):
 
 
 @pytest.fixture
-def save_last(table_stream: TableStream) -> SaveLastMapStream:
+def save_last(table_stream: CacheStream) -> SaveLastMapStream:
     "The stream that is wrapped, preserving the last item."
 
     return SaveLastMapStream(table_stream)
@@ -144,5 +144,13 @@ def test_map_stream_one_to_one(map_stream: MapStream, save_last: SaveLastMapStre
         assert idx == map_stream.idx
         assert idx == save_last.idx
 
-    assert map_stream.idx == len(save_last)
-    assert save_last.idx == len(save_last)
+    assert map_stream.idx == save_last.size
+    assert save_last.idx == save_last.size
+
+
+@pytest.mark.parametrize(
+    "map_stream", [_project_builder, _apply_builder], indirect=True
+)
+def test_caching(map_stream: Stream):
+    cached = CacheStream(map_stream)
+    assert cached.size == map_stream.size

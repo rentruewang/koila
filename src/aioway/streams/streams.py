@@ -51,16 +51,12 @@ class Stream(Iterator[TensorDict], ABC):
         self.__done_count += 1
         return result
 
+    @property
     @abc.abstractmethod
-    def __len__(self) -> int:
+    def size(self) -> int:
         """
-        ``__len__`` is the length of the current ``Stream``.
-
-        Note:
-
-            For ``Iterator``s, ``__length_hint__`` is better.
-            However, having to deal with the offsets makes it more difficult to reason,
-            so I'm using ``__len__`` for now.
+        The length of the current ``Stream``.
+        Does not change when the ``Stream`` is being iterated over.
         """
 
         ...
@@ -119,3 +115,11 @@ class Stream(Iterator[TensorDict], ABC):
         The number of ``__next__`` calls that have been made. Exposed via ``idx``.
         """
         return 0
+
+    @property
+    def started(self):
+        """
+        Shortcut function to check if ``self.idx == 0``.
+        """
+
+        return self.idx != 0
