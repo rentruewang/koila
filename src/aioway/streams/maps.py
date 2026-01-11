@@ -55,11 +55,12 @@ class MapStream(Stream, ABC):
                 f"{self.source=} should have been a `Stream`. Got {type(self.source)=}"
             )
 
+    @property
     @typing.override
-    def __len__(self) -> int:
+    def size(self) -> int:
         "This stream should have about the same length as the input."
 
-        return len(self.source)
+        return self.source.size
 
     @abc.abstractmethod
     def _apply(self, batch: TensorDict) -> TensorDict:

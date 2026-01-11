@@ -11,10 +11,9 @@ import torch
 from tensordict import TensorDict
 from torch import Tensor
 
-from .streams import Stream
+from aioway.streams.sources import CacheStream
 
-if typing.TYPE_CHECKING:
-    from aioway.tables import TableStream
+from .streams import Stream
 
 __all__ = ["ZipStream", "NestedLoopJoinStream"]
 
@@ -35,9 +34,10 @@ class ZipStream(Stream):
     The RHS stream.
     """
 
+    @property
     @typing.override
-    def __len__(self) -> int:
-        return min(len(self.left), len(self.right))
+    def size(self) -> int:
+        return min(self.left.size, self.right.size)
 
     @typing.override
     def _read(self) -> TensorDict:
@@ -67,7 +67,7 @@ class NestedLoopJoinStream(Stream):
     LHS is a normal stream. Will only be iterated over once.
     """
 
-    right: "TableStream"
+    right: CacheStream
     """
     RHS is a ``Stream`` supporting index access, thus requiring materialization.
     """
@@ -82,9 +82,10 @@ class NestedLoopJoinStream(Stream):
         # as it would be paired with multiple RHS batches.
         self.__lhs_batch: TensorDict | None = None
 
+    @property
     @typing.override
-    def __len__(self) -> int:
-        return len(self.left) * len(self.right)
+    def size(self) -> int:
+        return self.left.size * self.right.size
 
     @typing.override
     def _children(self) -> Generator["Stream"]:
@@ -93,27 +94,35 @@ class NestedLoopJoinStream(Stream):
 
     @typing.override
     def _read(self) -> TensorDict:
-        if self._rhs_done_or_not_started():
-            # Reset the iteration on the RHS.
-            self.right = self.right.reset()
-
-            # Clear cache and re-evalaute.
-            self.__lhs_batch = None
-
-        rhs_batch = self.right[self.idx % len(self.right)]
-        lhs_batch = self._get_lhs()
+        lhs_batch: TensorDict = self._get_lhs()
+        rhs_batch: TensorDict = self._get_rhs()
 
         lhs_select: Tensor = lhs_batch[self.key]
         rhs_select: Tensor = rhs_batch[self.key]
 
         matrix = lhs_select[:, None] == rhs_select[None, :]
         l, r = torch.nonzero(matrix).T
-        return tensordict.merge_tensordicts(lhs_batch[l], rhs_batch[r])
-
-    def _rhs_done_or_not_started(self) -> bool:
-        return self.idx % len(self.right) == 0
+        assert len(l) == len(r) == torch.sum(matrix)
+        out = tensordict.merge_tensordicts(lhs_batch[l], rhs_batch[r])
+        assert len(out) == torch.sum(matrix)
+        return out
 
     def _get_lhs(self) -> TensorDict:
-        if self.__lhs_batch is None:
+        # Clear cache and re-evalaute.
+        if self._right_idx == 0:
             self.__lhs_batch = next(self.left)
+        # print("lhs outside", self.left.idx, file=open("scripts/lhs.txt", "a"))
         return self.__lhs_batch
+
+    def _get_rhs(self) -> TensorDict:
+        if self.idx < self.right.size:
+            out = next(self.right)
+            assert out is self.right[self._right_idx]
+        else:
+            assert len(self.right) == self.right.size
+            assert self.left.idx > 1
+        return self.right[self._right_idx]
+
+    @property
+    def _right_idx(self):
+        return self.idx % self.right.size
