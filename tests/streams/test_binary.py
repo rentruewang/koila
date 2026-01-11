@@ -138,7 +138,6 @@ def test_simple_nested_loop_join(to_slice: Callable[[TensorDict], list[TensorDic
     ).all()
 
 
-@pytest.mark.xfail
 @pytest.mark.parametrize("binary_stream", [_join_builder], indirect=True)
 def test_join_equal_as_original(
     binary_stream: NestedLoopJoinStream,
@@ -170,7 +169,6 @@ def test_join_equal_as_original(
     assert answer_count == truth_count
 
 
-@pytest.mark.xfail
 @pytest.mark.parametrize("binary_stream", [_join_builder], indirect=True)
 def test_match_functionally(
     binary_stream: NestedLoopJoinStream,
