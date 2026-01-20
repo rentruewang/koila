@@ -1,8 +1,0 @@
-[
-    {
-        "devices": "cpu->cpu",
-        "dtypes": "int->float",
-        "shapes": "a->b",
-        "names": "input->output"
-    }
-]
