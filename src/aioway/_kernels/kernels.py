@@ -8,7 +8,7 @@ from abc import ABC
 from collections.abc import Callable, Iterable
 from typing import ClassVar, TypeGuard
 
-from aioway._attrs import Shape
+from aioway.attrs import Shape
 
 from . import _funcs, _tensors
 from .arrays import Array
@@ -101,13 +101,11 @@ class BroadCastSameKernel(Kernel):
     @typing.override
     def compute(self) -> Array:
         shape = _funcs.bcast_same_dim(self.left.shape, self.right.shape)
-        dtype = _tensors.promote_dtype(
-            self.left.dtype.string().dtype, self.right.dtype.string().dtype
-        )
+        dtype = _tensors.promote_dtype(str(self.left.dtype), str(self.right.dtype))
         buffer_size = Shape.wrap(
             [max(l, r) for l, r in zip(self.left.shape, self.right.shape)]
         ).size
-        cost = buffer_size * dtype.parse().bits
+        cost = buffer_size * dtype.bits
         return Array(shape=shape, dtype=dtype, cost=cost)
 
     @typing.override
@@ -127,10 +125,8 @@ class Matmul2dKernel(Kernel):
     @typing.override
     def compute(self) -> Array:
         shape = _funcs.matmul_2d(self.left.shape, self.right.shape)
-        dtype = _tensors.promote_dtype(
-            self.left.dtype.string().dtype, self.right.dtype.string().dtype
-        )
-        cost = shape.size * dtype.parse().bits
+        dtype = _tensors.promote_dtype(str(self.left.dtype), str(self.right.dtype))
+        cost = shape.size * dtype.bits
         return Array(shape=shape, dtype=dtype, cost=cost)
 
     @typing.override

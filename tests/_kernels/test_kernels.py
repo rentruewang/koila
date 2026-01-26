@@ -4,7 +4,7 @@ import dataclasses as dcls
 
 import pytest
 
-from aioway import _attrs
+from aioway import attrs
 from aioway._kernels import Array, BroadCastSameKernel
 
 
@@ -24,9 +24,9 @@ class BcastCase:
     "case",
     [
         BcastCase(
-            left=Array(shape=[1, 2, 4], dtype=_attrs.dtype("int64"), cost=0),
-            right=Array(shape=[1, 2, 4], dtype=_attrs.dtype("int64"), cost=0),
-            output=Array(shape=[1, 2, 4], dtype=_attrs.dtype("int64"), cost=8 * 64),
+            left=Array(shape=[1, 2, 4], dtype=attrs.dtype("int64"), cost=0),
+            right=Array(shape=[1, 2, 4], dtype=attrs.dtype("int64"), cost=0),
+            output=Array(shape=[1, 2, 4], dtype=attrs.dtype("int64"), cost=8 * 64),
         ),
     ],
 )
