@@ -1,8 +1,11 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import logging
+import typing
 from collections.abc import Iterable, Sequence
 from typing import Self, TypeGuard
+
+from torch import Size
 
 __all__ = ["ShapeLike", "Shape"]
 
@@ -36,21 +39,43 @@ class Shape(Sequence[int]):
         if not self.valid():
             raise ValueError
 
+    @typing.override
     def __eq__(self, other: object) -> bool:
         if isinstance(other, Shape):
             return self._dims == other._dims
+
+        if isinstance(other, Size):
+            return other == self._dims
 
         if isinstance(other, Sequence):
             return tuple(self._dims) == tuple(other)
 
         return NotImplemented
 
+    @typing.override
     def __len__(self):
         return len(self._dims)
 
-    def __getitem__(self, idx):
-        return self._dims[idx]
+    @typing.overload
+    def __getitem__(self, idx: int) -> int: ...
 
+    @typing.overload
+    def __getitem__(self, idx: slice) -> Self: ...
+
+    @typing.override
+    def __getitem__(self, idx):
+        match idx:
+            case int():
+                return self._dims[idx]
+            case slice():
+                return type(self)(*self._dims[idx])
+            case _:
+                raise TypeError(
+                    "`Shape`'s __getitem__ does not know "
+                    f"how to handle index of type: {type(idx)}"
+                )
+
+    @typing.override
     def __iter__(self):
         yield from self._dims
 

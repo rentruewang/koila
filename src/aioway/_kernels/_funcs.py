@@ -3,7 +3,7 @@
 import itertools
 import logging
 
-from aioway._attrs import Shape
+from aioway.attrs import Shape
 
 __all__ = ["bcast_same_dim", "can_bcast_dim", "matmul_2d"]
 

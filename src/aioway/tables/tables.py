@@ -6,7 +6,7 @@ import abc
 import dataclasses as dcls
 import typing
 from abc import ABC
-from typing import Any, TypeAlias, TypeIs
+from typing import Any, TypeIs
 
 import numpy as np
 from numpy import ndarray as NDArrayType
@@ -14,12 +14,12 @@ from numpy.typing import NDArray
 from tensordict import TensorDict
 from torch.utils.data import Dataset
 
-__all__ = ["Table", "IntArray", "TableDataset"]
+__all__ = ["Table", "TableDataset"]
 
-IntArray: TypeAlias = NDArray[np.int_]
+type IntArray = NDArray[np.int_]
 "Integer numpy array."
 
-TableIndex: TypeAlias = slice | list[int] | IntArray
+type TableIndex = slice | list[int] | IntArray
 "The types that can be used for index accessing on ``Table``s."
 
 
