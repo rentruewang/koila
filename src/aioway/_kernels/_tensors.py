@@ -3,7 +3,7 @@
 import torch
 from torch._subclasses import FakeTensorMode
 
-from aioway._attrs.dtypes import DType, StringDType, TorchDType
+from aioway.attrs.dtypes import DType, TorchDType
 
 
 def promote_dtype(*dtypes: str) -> DType:
@@ -14,9 +14,7 @@ def promote_dtype(*dtypes: str) -> DType:
 
     with FakeTensorMode():
         tensors = [
-            torch.zeros(
-                size=[1], dtype=TorchDType.create(StringDType(dt).parse()).dtype
-            )
+            torch.zeros(size=[1], dtype=getattr(torch, str(TorchDType.parse(dt))))
             for dt in dtypes
         ]
         result = torch.cat(tensors)

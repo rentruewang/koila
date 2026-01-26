@@ -1,9 +1,19 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
+import logging
+
 from torch import device as TorchDevice
+
+__all__ = ["Device"]
+
+LOGGER = logging.getLogger(__name__)
 
 
 class Device:
+    """
+    The device that the tensor data resides on (and will be used for compute).
+    """
+
     __match_args__ = ("device",)
 
     def __init__(self, device: str | TorchDevice) -> None:

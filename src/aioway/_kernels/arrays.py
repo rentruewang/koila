@@ -3,8 +3,8 @@
 
 import dataclasses as dcls
 
-from aioway._attrs import DType, Shape
-from aioway._attrs.shapes import ShapeLike
+from aioway.attrs import DType, Shape
+from aioway.attrs.shapes import ShapeLike
 
 __all__ = ["Array"]
 
@@ -46,4 +46,4 @@ class Array:
         for dim in self.shape:
             total *= dim
 
-        return total * self.dtype.parse().bits
+        return total * self.dtype.bits
