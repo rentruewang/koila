@@ -5,9 +5,7 @@
 
 import pytest
 
-from aioway.streams import TableStream
-from aioway.streams.sources import TableStreamLoader
-from aioway.tables import TensorDictTable
+from aioway.dsets import TableStream, TableStreamLoader, TensorDictTable
 from tests import fake
 
 

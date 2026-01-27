@@ -8,4 +8,4 @@ There are multiple supported types of metadata:
 2. DType: The data type of each element in the column.
 3. Device: The device that the tensor lives on.
 
-There are 2 types of schemas: `ColumnSchema` and `TableSchema`, where the latter is a collection of former.
+There are 2 types of schemas: `Attr` and `AttrSet` (representing schema in a table), where the latter is a collection of former.

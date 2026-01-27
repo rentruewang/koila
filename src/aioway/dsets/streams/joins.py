@@ -11,8 +11,7 @@ import torch
 from tensordict import TensorDict
 from torch import Tensor
 
-from aioway.streams.sources import CacheStream
-
+from .sources import CacheStream
 from .streams import Stream
 
 __all__ = ["ZipStream", "NestedLoopJoinStream"]
