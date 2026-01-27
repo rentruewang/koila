@@ -6,7 +6,7 @@ import torch
 from numpy import random as np_rand
 from pytest import FixtureRequest
 
-from aioway.streams import _funcs
+from aioway.dsets.streams import _funcs
 from tests import fake
 
 

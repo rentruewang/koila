@@ -9,7 +9,7 @@ import torch
 from pytest import FixtureRequest
 from tensordict import TensorDict
 
-from aioway.streams import (
+from aioway.dsets import (
     CacheStream,
     ListStream,
     NestedLoopJoinStream,
