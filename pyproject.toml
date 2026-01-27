@@ -4,7 +4,7 @@ description = "AI on the way"
 authors = [
     {name = "RenChu Wang", email = "patrick1031wang@gmail.com"},
 ]
-requires-python = ">=3.13,<3.14"
+requires-python = ">=3.13,<3.15"
 readme = "README.md"
 license = {text = "Apache-2.0"}
 dynamic = ["version"]
