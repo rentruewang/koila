@@ -15,8 +15,7 @@ from typing import Self, override
 from tensordict import TensorDict
 from torch.utils.data import DataLoader, Sampler
 
-from aioway.tables import Table
-
+from ..tables import Table
 from .streams import Stream
 
 __all__ = [

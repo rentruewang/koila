@@ -5,8 +5,13 @@ import pytest
 from numpy import random
 from tensordict import TensorDict
 
-from aioway.streams.sources import TableStream, TableStreamLoader
-from aioway.tables import Table, TensorDictListTable, TensorDictTable
+from aioway.dsets import (
+    Table,
+    TableStream,
+    TableStreamLoader,
+    TensorDictListTable,
+    TensorDictTable,
+)
 from tests import fake
 
 
