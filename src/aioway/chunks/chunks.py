@@ -4,16 +4,19 @@
 
 import logging
 import typing
-from collections.abc import Iterator, Mapping
+from collections.abc import Iterator, Mapping, Sequence
 from typing import Any, Self, TypeIs
 
+import tensordict
 from numpy import ndarray as NpArr
+from sympy import Expr
 from tensordict import TensorDict
-from torch import Tensor
+from torch import Size, Tensor
 
 from aioway.attrs import Attr, AttrSet
+from aioway.attrs import funcs as atf
 
-from . import _validation
+from . import _validation, funcs
 
 __all__ = ["Chunk"]
 
@@ -59,6 +62,18 @@ class Chunk(Mapping[str, Tensor]):
     def __repr__(self) -> str:
         return f"{self._schema!r}({len(self)})"
 
+    @typing.override
+    def __eq__(self, rhs: object) -> bool:
+        # Check if schema and data are both equal.
+        if isinstance(rhs, Chunk):
+            return self.schema == rhs.schema and (self._data == rhs._data).all()
+
+        # If tensordict, don't compare schema.
+        if isinstance(rhs, dict | TensorDict):
+            return (self._data == rhs).all()
+
+        return NotImplemented
+
     @typing.overload
     def __getitem__(self, idx: str) -> Tensor: ...
 
@@ -85,9 +100,27 @@ class Chunk(Mapping[str, Tensor]):
         if _is_list_of_int(idx):
             return self._getitem_direct(idx)
 
+        raise NotImplementedError(f"Unsupported {type(idx)=}")
+
     @typing.override
     def __iter__(self) -> Iterator[str]:
         return iter(self._schema)
+
+    def rename(self, **renames: str) -> Self:
+        if not renames:
+            return self
+
+        schema = atf.renames(self.schema, **renames)
+        data = funcs.rename(self._data, **renames)
+        return type(self)(data=data, schema=schema)
+
+    def filter(self, expr: str | Expr) -> Self:
+        return type(self)(data=funcs.filter(self._data, expr), schema=self.schema)
+
+    def zip(self, rhs: Self) -> Self:
+        data = tensordict.merge_tensordicts(self._data, rhs._data)
+        schema = {**self.schema, **rhs.schema}
+        return type(self)(data=data, schema=schema)
 
     def _getitem_str(self, key: str) -> Tensor:
         return self._data[key]
@@ -100,11 +133,17 @@ class Chunk(Mapping[str, Tensor]):
     def _getitem_direct(
         self, idx: slice | list[int] | Tensor | tuple[Any, ...]
     ) -> Self:
-        return type(self)(data=self._data[idx], schema=self.schema)
+        return type(self)(data=self._data[idx], schema=atf.index(self.schema, idx))
 
     @property
     def schema(self) -> AttrSet:
+        "The schema of a ``Chunk``."
+
         return self._schema
+
+    @property
+    def shape(self) -> Size:
+        return self._data.shape
 
     @typing.no_type_check
     def _check_init(self) -> None:
@@ -117,6 +156,20 @@ class Chunk(Mapping[str, Tensor]):
             raise TypeError(
                 f"Expected an `AttrSet`, got type of schema: {type(self.schema)}"
             )
+
+    @classmethod
+    def cat(cls, chunks: Sequence[Self]) -> Self:
+        if not chunks:
+            raise ValueError("Given an empty sequence. Not sure what to do.")
+
+        if len({chunk.schema for chunk in chunks}) != 1:
+            raise ValueError("Chunks should have the same schema before joining.")
+
+        schema = chunks[0].schema
+
+        data = tensordict.cat([c._data for c in chunks])
+
+        return cls(schema=schema, data=data)
 
 
 def _as_tensordict(data: DataLike) -> TensorDict:
@@ -136,7 +189,7 @@ def _as_schema(schema: SchemaLike) -> AttrSet:
         return schema
 
     if _is_dict_of_attr(schema):
-        return AttrSet(schema)
+        return AttrSet.from_dict(schema)
 
     raise TypeError(
         f"Unknown: {type(schema)=}. Only accepts `AttrSet` or `dict[str, Attr]`."

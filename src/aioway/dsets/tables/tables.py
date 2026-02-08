@@ -11,8 +11,9 @@ from typing import Any, TypeIs
 import numpy as np
 from numpy import ndarray as NDArrayType
 from numpy.typing import NDArray
-from tensordict import TensorDict
 from torch.utils.data import Dataset
+
+from aioway.chunks import Chunk
 
 __all__ = ["Table", "TableDataset"]
 
@@ -29,10 +30,10 @@ class Table(ABC):
     ``Table`` represents a set of heterogenious data stored in memory,
     it is one of the main physical abstractions in ``aioway`` to represent eager computation.
 
-    Think of it as a normal ``Sequence`` of ``TensorDict``,
+    Think of it as a normal ``Sequence`` of ``Chunk``,
     where computation happens eagerly, imperatively, and the result is stored in memory.
 
-    Each ``TensorDict`` retrieved from ``Table`` is a minibatch of data.
+    Each ``Chunk`` retrieved from ``Table`` is a minibatch of data.
 
     Similar to ``Dataset``, but only allows retrieving a batch at a time.
     To get a single item, retrieve a batch of size 1.
@@ -48,7 +49,7 @@ class Table(ABC):
         Get the number of items (rows) in the current dataframe.
         """
 
-    def __getitem__(self, idx: slice | list[int] | IntArray, /) -> TensorDict:
+    def __getitem__(self, idx: slice | list[int] | IntArray, /) -> Chunk:
         """
         Get individual items from the current ``Table``.
 
@@ -82,7 +83,7 @@ class Table(ABC):
         return bool(len(self))
 
     @abc.abstractmethod
-    def _getitem(self, idx: IntArray, /) -> TensorDict:
+    def _getitem(self, idx: IntArray, /) -> Chunk:
         """
         The implementation of ``__getitem__``.
 
@@ -112,7 +113,7 @@ class Table(ABC):
 
 
 @dcls.dataclass(frozen=True)
-class TableDataset(Dataset[TensorDict]):
+class TableDataset(Dataset[Chunk]):
     "A ``Dataset`` adaptor that backs a ``Table``."
 
     table: Table
@@ -121,11 +122,11 @@ class TableDataset(Dataset[TensorDict]):
         return len(self.table)
 
     @typing.no_type_check
-    def __getitem__(self, idx: int) -> TensorDict:
+    def __getitem__(self, idx: int) -> Chunk:
         return self.table[[idx]][0]
 
     @typing.no_type_check
-    def __getitems__(self, indices: list[int]) -> list[TensorDict]:
+    def __getitems__(self, indices: list[int]) -> list[Chunk]:
         return list(self.table[indices])
 
 

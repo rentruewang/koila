@@ -6,10 +6,9 @@ import dataclasses as dcls
 import typing
 from collections.abc import Generator
 
-import tensordict
 import torch
-from tensordict import TensorDict
-from torch import Tensor
+
+from aioway.chunks import Chunk
 
 from .sources import CacheStream
 from .streams import Stream
@@ -39,12 +38,12 @@ class ZipStream(Stream):
         return min(self.left.size, self.right.size)
 
     @typing.override
-    def _read(self) -> TensorDict:
+    def _read(self) -> Chunk:
         # Either one of those may raise ``StopIteration``, at which point it is done.
         left_batch = next(self.left)
         right_batch = next(self.right)
 
-        return tensordict.merge_tensordicts(left_batch, right_batch)
+        return left_batch.zip(right_batch)
 
     @typing.override
     def _children(self) -> Generator[Stream]:
@@ -79,7 +78,7 @@ class NestedLoopJoinStream(Stream):
     def __post_init__(self) -> None:
         # It is necessary to save the last batch for the LHS,
         # as it would be paired with multiple RHS batches.
-        self.__lhs_batch: TensorDict | None = None
+        self.__lhs_batch: Chunk | None = None
 
     @property
     @typing.override
@@ -92,28 +91,28 @@ class NestedLoopJoinStream(Stream):
         yield self.right
 
     @typing.override
-    def _read(self) -> TensorDict:
-        lhs_batch: TensorDict = self._get_lhs()
-        rhs_batch: TensorDict = self._get_rhs()
+    def _read(self) -> Chunk:
+        lhs_batch = self._get_lhs()
+        rhs_batch = self._get_rhs()
 
-        lhs_select: Tensor = lhs_batch[self.key]
-        rhs_select: Tensor = rhs_batch[self.key]
+        lhs_select = lhs_batch[self.key]
+        rhs_select = rhs_batch[self.key]
 
         matrix = lhs_select[:, None] == rhs_select[None, :]
         l, r = torch.nonzero(matrix).T
         assert len(l) == len(r) == torch.sum(matrix)
-        out = tensordict.merge_tensordicts(lhs_batch[l], rhs_batch[r])
+        out = lhs_batch[l].zip(rhs_batch[r])
         assert len(out) == torch.sum(matrix)
         return out
 
-    def _get_lhs(self) -> TensorDict:
+    def _get_lhs(self) -> Chunk:
         # Clear cache and re-evalaute.
         if self._right_idx == 0:
             self.__lhs_batch = next(self.left)
-        # print("lhs outside", self.left.idx, file=open("scripts/lhs.txt", "a"))
+        assert self.__lhs_batch
         return self.__lhs_batch
 
-    def _get_rhs(self) -> TensorDict:
+    def _get_rhs(self) -> Chunk:
         if self.idx < self.right.size:
             out = next(self.right)
             assert out is self.right[self._right_idx]

@@ -10,13 +10,13 @@ from abc import ABC
 from collections.abc import Generator, Iterator
 from typing import ClassVar, Self
 
-from tensordict import TensorDict
+from aioway.chunks import Chunk
 
 __all__ = ["Stream"]
 
 
 @dcls.dataclass
-class Stream(Iterator[TensorDict], ABC):
+class Stream(Iterator[Chunk], ABC):
     """
     ``Stream`` produces a stream of batches of data, in the form of ``TensorDict``s,
     everytime ``__next__`` is called on it, a ``TensorDict`` is yielded.
@@ -42,7 +42,7 @@ class Stream(Iterator[TensorDict], ABC):
 
     @typing.final
     @typing.override
-    def __next__(self) -> TensorDict:
+    def __next__(self) -> Chunk:
         """
         ``__next__`` allows ``Stream``s to be used in ``for`` loops.
         """
@@ -62,13 +62,13 @@ class Stream(Iterator[TensorDict], ABC):
         ...
 
     @abc.abstractmethod
-    def _read(self) -> TensorDict:
+    def _read(self) -> Chunk:
         """
-        Compute the next batch.
+        Compute the next batch (a ``Chunk``).
 
         An exception raised here would be translated to ``StopIteration``.
 
-        .. note::
+        Note:
 
             The name ``read`` is inspired by the original release of clickhouse.
             I think this is a great name for a as a method on ``Stream`` to poll data,

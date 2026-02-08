@@ -32,6 +32,8 @@ class Shape(Sequence[int]):
     """
     ``Shape`` represents a regular (non-jagged) array's dimensions,
     must be a ``tuple`` like object, and ``tuple`` would be used on it.
+
+    Right now, it represents the shape of a ``Tensor`` **outside** the batch dimension.
     """
 
     def __init__(self, *dims: int) -> None:
@@ -41,6 +43,10 @@ class Shape(Sequence[int]):
             raise ValueError(f"Shape: {self} is not valid")
 
         LOGGER.debug("Shape created: %s", self)
+
+    @typing.override
+    def __hash__(self) -> int:
+        return hash(self._dims)
 
     @typing.override
     def __repr__(self) -> str:

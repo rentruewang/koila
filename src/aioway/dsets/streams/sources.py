@@ -12,8 +12,9 @@ from abc import ABC
 from collections.abc import Generator, Sequence
 from typing import Self, override
 
-from tensordict import TensorDict
 from torch.utils.data import DataLoader, Sampler
+
+from aioway.chunks import Chunk
 
 from ..tables import Table
 from .streams import Stream
@@ -42,7 +43,7 @@ class BoundedStream(Stream, ABC):
         ...
 
     @abc.abstractmethod
-    def __getitem__(self, idx: int) -> TensorDict:
+    def __getitem__(self, idx: int) -> Chunk:
         """
         Get individual items. Does not support slice input.
 
@@ -50,7 +51,7 @@ class BoundedStream(Stream, ABC):
             idx: An integer. Must be in the range `[-len(self), len(self))`.
 
         Returns:
-            The ``TensorDict`` batch.
+            The ``Chunk`` batch.
         """
 
 
@@ -63,7 +64,7 @@ class CacheStream(BoundedStream):
     stream: Stream
     "The input stream."
 
-    saved: list[TensorDict] = dcls.field(default_factory=list)
+    saved: list[Chunk] = dcls.field(default_factory=list)
     "The cache for the input ``Stream``."
 
     @typing.override
@@ -75,11 +76,11 @@ class CacheStream(BoundedStream):
         return len(self.saved)
 
     @typing.override
-    def __getitem__(self, idx: int) -> TensorDict:
+    def __getitem__(self, idx: int) -> Chunk:
         return self.saved[idx]
 
     @typing.override
-    def _read(self) -> TensorDict:
+    def _read(self) -> Chunk:
         LOGGER.debug(
             "Executing `__iter__` for `CacheStream`. self.idx=%s, stream.idx=%s",
             self.idx,
@@ -118,15 +119,15 @@ class CacheStream(BoundedStream):
 class ListStream(BoundedStream):
     "A ``Stream`` backed by a list of ``TensorDict``."
 
-    sequence: Sequence[TensorDict]
-    "List of tensordicts."
+    sequence: Sequence[Chunk]
+    "List of chunks."
 
     @typing.override
     def __len__(self) -> int:
         return self.size
 
     @typing.override
-    def __getitem__(self, idx: int) -> TensorDict:
+    def __getitem__(self, idx: int) -> Chunk:
         return self.sequence[idx]
 
     @property
@@ -135,7 +136,7 @@ class ListStream(BoundedStream):
         return len(self.sequence)
 
     @typing.override
-    def _read(self) -> TensorDict:
+    def _read(self) -> Chunk:
         if self.idx < self.size:
             return self[self.idx]
         else:
@@ -181,7 +182,7 @@ class TableStream(Stream):
     """
 
     @typing.override
-    def _read(self) -> TensorDict:
+    def _read(self) -> Chunk:
         try:
             return self._get_batch(self.idx)
         except IndexError as ie:
@@ -209,7 +210,7 @@ class TableStream(Stream):
         rounding = math.floor if drop_last else math.ceil
         return rounding(len(self.table) / batch_size)
 
-    def _get_batch(self, idx: int) -> TensorDict:
+    def _get_batch(self, idx: int) -> Chunk:
         batch_size = self.options.batch_size
 
         if not -self.size <= idx < self.size:

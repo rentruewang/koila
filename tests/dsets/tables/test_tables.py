@@ -3,27 +3,27 @@
 import numpy as np
 import pytest
 from numpy import random
-from tensordict import TensorDict
 
+from aioway.chunks import Chunk
 from aioway.dsets import (
+    ChunkListTable,
+    ChunkTable,
     Table,
     TableStream,
     TableStreamLoader,
-    TensorDictListTable,
-    TensorDictTable,
 )
 from tests import fake
 
 
-def block_table(device: str, batch_size: int, data_size: int) -> TensorDictTable:
-    block = fake.tensordict_ok(size=data_size, device=device)
-    return TensorDictTable(block)
+def block_table(device: str, batch_size: int, data_size: int) -> ChunkTable:
+    block = fake.chunk_ok(size=data_size, device=device)
+    return ChunkTable(block)
 
 
 def list_table(device: str, batch_size: int, data_size: int):
-    return TensorDictListTable(
+    return ChunkListTable(
         [
-            fake.tensordict_ok(size=batch_size, device=device)
+            fake.chunk_ok(size=batch_size, device=device)
             for _ in range(0, data_size, batch_size)
         ]
     )
@@ -60,14 +60,13 @@ def test_table_idx_arr(table: Table):
     assert idx.shape == (len(table),)
 
     out = table[idx]
-    assert isinstance(out, TensorDict)
+    assert isinstance(out, Chunk)
     assert len(out) == len(idx)
-    assert out.batch_size == idx.shape
 
 
 def test_table_idx_slice(table: Table):
     out = table[-len(table) : len(table)]
-    assert isinstance(out, TensorDict)
+    assert isinstance(out, Chunk)
     assert len(out) == len(table)
 
 

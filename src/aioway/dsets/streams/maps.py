@@ -10,10 +10,9 @@ from collections.abc import Callable
 
 import torch
 from sympy import Expr
-from tensordict import TensorDict
 from torch import Tensor
 
-from aioway.chunks import _funcs
+from aioway.chunks import Chunk
 
 from .streams import Stream
 
@@ -64,16 +63,16 @@ class MapStream(Stream, ABC):
         return self.source.size
 
     @abc.abstractmethod
-    def _apply(self, batch: TensorDict) -> TensorDict:
+    def _apply(self, batch: Chunk) -> Chunk:
         """
         The protected method that subclass should overwrite.
         This method will define how each batch is processed.
 
         Args:
-            batch: The batch to handle. Will be a ``TensorDict``.
+            batch: The batch to handle. Will be a ``Chunk``.
 
         Returns:
-            Another ``TensorDict``. Does not need to have the same ``__len__`` to the input.
+            Another ``Chunk``. Does not need to have the same ``__len__`` to the input.
             See class docstring for more details.
         """
 
@@ -81,7 +80,7 @@ class MapStream(Stream, ABC):
 
     @typing.override
     @typing.final
-    def _read(self) -> TensorDict:
+    def _read(self) -> Chunk:
         # A ``map`` kind of ``Stream`` always calls ``next`` once on its source.
         # May raise ``StopIteration`` here.
         next_batch = next(self.source)
@@ -106,13 +105,13 @@ class ApplyStream(MapStream):
             yield self.apply(batch)
     """
 
-    apply: Callable[[TensorDict], TensorDict]
+    apply: Callable[[Chunk], Chunk]
     """
     Compute the output of ``__next__`` based on the input.
     """
 
     @typing.override
-    def _apply(self, batch: TensorDict) -> TensorDict:
+    def _apply(self, batch: Chunk) -> Chunk:
         return self.apply(batch)
 
 
@@ -130,13 +129,13 @@ class FuncFilterStream(MapStream):
             yield batch[self.predicate(batch)]
     """
 
-    predicate: Callable[[TensorDict], Tensor]
+    predicate: Callable[[Chunk], Tensor]
     """
-    A function of ``TensorDict -> Tensor``.
+    A function of ``Chunk -> Tensor``.
     """
 
     @typing.override
-    def _apply(self, batch: TensorDict) -> TensorDict:
+    def _apply(self, batch: Chunk) -> Chunk:
         pred = self.predicate(batch)
 
         if pred.dtype is not torch.bool:
@@ -162,8 +161,8 @@ class ExprFilterStream(MapStream):
     """
 
     @typing.override
-    def _apply(self, batch: TensorDict) -> TensorDict:
-        return _funcs.filter(batch, self.predicate)
+    def _apply(self, batch: Chunk) -> Chunk:
+        return batch.filter(self.predicate)
 
 
 @dcls.dataclass
@@ -178,11 +177,8 @@ class ProjectStream(MapStream):
     """
 
     @typing.override
-    def _apply(self, batch: TensorDict) -> TensorDict:
-        if not self.subset:
-            return batch
-
-        return batch.select(*self.subset)
+    def _apply(self, batch: Chunk) -> Chunk:
+        return batch[self.subset]
 
 
 @dcls.dataclass
@@ -197,8 +193,5 @@ class RenameStream(MapStream):
     """
 
     @typing.override
-    def _apply(self, batch: TensorDict) -> TensorDict:
-        if not self.renames:
-            return batch
-
-        return _funcs.rename(batch, **self.renames)
+    def _apply(self, batch: Chunk) -> Chunk:
+        return batch.rename(**self.renames)

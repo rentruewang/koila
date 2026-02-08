@@ -1,6 +1,7 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import logging
+import typing
 
 from torch import device as TorchDevice
 
@@ -27,6 +28,11 @@ class Device:
 
         LOGGER.debug("Device %s instance created", self)
 
+    @typing.override
+    def __hash__(self) -> int:
+        return hash(self.device)
+
+    @typing.override
     def __eq__(self, other: object) -> bool:
         match other:
             case TorchDevice():
@@ -40,9 +46,11 @@ class Device:
             case _:
                 return NotImplemented
 
+    @typing.override
     def __repr__(self) -> str:
         return str(self)
 
+    @typing.override
     def __str__(self) -> str:
         return str(self._device)
 

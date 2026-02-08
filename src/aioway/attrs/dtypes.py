@@ -62,6 +62,10 @@ class DType(ABC):
 
         ...
 
+    @typing.override
+    def __hash__(self) -> int:
+        return hash(str(self))
+
     @typing.final
     @typing.override
     def __repr__(self) -> str:
