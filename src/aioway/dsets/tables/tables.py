@@ -13,7 +13,7 @@ from numpy import ndarray as NDArrayType
 from numpy.typing import NDArray
 from torch.utils.data import Dataset
 
-from aioway.chunks import Chunk
+from aioway.batches import Chunk
 
 __all__ = ["Table", "TableDataset"]
 

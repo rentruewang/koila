@@ -2,14 +2,15 @@
 
 import pytest
 
+from aioway import attrs
 from aioway.attrs import Device
 
 
 @pytest.fixture
 def cpu():
-    return Device("cpu")
+    return attrs.device("cpu")
 
 
 def test_eq(cpu: Device):
     assert cpu == "cpu"
-    assert cpu == Device("cpu")
+    assert cpu == attrs.device("cpu")

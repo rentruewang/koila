@@ -5,7 +5,7 @@ import typing
 
 from torch import device as TorchDevice
 
-__all__ = ["Device"]
+__all__ = ["Device", "device", "DeviceLike"]
 
 LOGGER = logging.getLogger(__name__)
 
@@ -57,3 +57,17 @@ class Device:
     @property
     def device(self):
         return self._device
+
+
+type DeviceLike = str | TorchDevice | Device
+"Types convertible to a ``Device``."
+
+
+def device(device: DeviceLike, /) -> Device:
+    match device:
+        case Device():
+            return device
+        case str() | TorchDevice():
+            return Device(device)
+        case _:
+            raise TypeError(device)

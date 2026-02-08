@@ -15,6 +15,7 @@ from torch import dtype as _TorchDType
 
 __all__ = [
     "DType",
+    "dtype_with_kind",
     "dtype",
     "ComposedDType",
     "TorchDType",
@@ -117,7 +118,22 @@ class DType(ABC):
         """
 
 
-def dtype(dtype: str, /, kind: DTypeBackend = "composed") -> DType:
+type DTypeLike = str | DType
+"Types convertible to ``DType``."
+
+
+def dtype(dtype: DTypeLike, /):
+    match dtype:
+        case DType():
+            return dtype
+        case str():
+
+            return dtype_with_kind(dtype, kind="composed")
+
+    raise TypeError(type(dtype))
+
+
+def dtype_with_kind(dtype: str, /, kind: DTypeBackend) -> DType:
     """
     This is the factory method for ``DType``,
     responsible for getting the subclasses based on ``kind``,

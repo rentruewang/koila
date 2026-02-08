@@ -3,6 +3,7 @@
 import itertools
 import logging
 
+from aioway import attrs
 from aioway.attrs import Shape
 
 __all__ = ["bcast_same_dim", "can_bcast_dim", "matmul_2d"]
@@ -25,7 +26,7 @@ def permute(shape: Shape, dims: list[int]) -> Shape:
 
     wrapped_dims = shape.wrap_dims(dims)
 
-    return Shape.wrap(shape[d] for d in wrapped_dims)
+    return attrs.shape(shape[d] for d in wrapped_dims)
 
 
 def agg(shape: Shape, dims: list[int]) -> Shape:
@@ -39,7 +40,7 @@ def agg(shape: Shape, dims: list[int]) -> Shape:
     wrapped_dims = shape.wrap_dims(dims)
 
     # Since ``dims`` is most likely small, not using a ``set`` for ``in``.
-    return Shape.wrap(s for i, s in enumerate(shape) if i not in wrapped_dims)
+    return attrs.shape(s for i, s in enumerate(shape) if i not in wrapped_dims)
 
 
 def can_bcast_dim(left: int, right: int) -> bool:
@@ -65,7 +66,7 @@ def bcast_same_dim(left: Shape, right: Shape) -> Shape:
 
         # Since both are natural numbers, the larger one is the one we want.
         result[i] = max(l, r)
-    return Shape.wrap(result)
+    return attrs.shape(result)
 
 
 def matmul_2d(left: Shape, right: Shape) -> Shape:
@@ -82,4 +83,4 @@ def matmul_2d(left: Shape, right: Shape) -> Shape:
     if not can_bcast_dim(l1, r0):
         raise ValueError(f"{left[1]=} incompatbile {right[0]}")
 
-    return Shape(l0, r1)
+    return attrs.shape(l0, r1)

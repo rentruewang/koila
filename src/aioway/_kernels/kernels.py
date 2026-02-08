@@ -8,7 +8,7 @@ from abc import ABC
 from collections.abc import Callable, Iterable
 from typing import ClassVar, TypeGuard
 
-from aioway.attrs import Shape
+from aioway import attrs
 
 from . import _funcs, _tensors
 from .arrays import Array
@@ -102,7 +102,7 @@ class BroadCastSameKernel(Kernel):
     def compute(self) -> Array:
         shape = _funcs.bcast_same_dim(self.left.shape, self.right.shape)
         dtype = _tensors.promote_dtype(str(self.left.dtype), str(self.right.dtype))
-        buffer_size = Shape.wrap(
+        buffer_size = attrs.shape(
             [max(l, r) for l, r in zip(self.left.shape, self.right.shape)]
         ).size
         cost = buffer_size * dtype.bits

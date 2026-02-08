@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from numpy import random
 
-from aioway.chunks import Chunk
+from aioway.batches import Chunk
 from aioway.dsets import (
     ChunkListTable,
     ChunkTable,

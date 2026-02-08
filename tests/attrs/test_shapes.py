@@ -3,12 +3,13 @@
 import pytest
 from pytest import FixtureRequest
 
+from aioway import attrs
 from aioway.attrs import Shape
 
 
 def _shapes():
-    yield Shape(3, 5, 7)
-    yield Shape.wrap([3, 5, 7])
+    yield attrs.shape(3, 5, 7)
+    yield attrs.shape([3, 5, 7])
 
 
 @pytest.fixture(params=_shapes())

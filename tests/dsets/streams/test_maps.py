@@ -8,7 +8,7 @@ import pytest
 from pytest import FixtureRequest
 from tensordict import TensorDict
 
-from aioway.chunks import Chunk
+from aioway.batches import Chunk
 from aioway.dsets import (
     ApplyStream,
     CacheStream,
