@@ -2,13 +2,20 @@
 
 "Schema is a collection of metadata describing the 'type' of data."
 
+import copy
 import dataclasses as dcls
+import logging
 import typing
 from collections.abc import Iterator, Mapping
+from typing import Self
 
 from .devices import Device
 from .dtypes import DType
 from .shapes import Shape
+
+__all__ = ["Attr", "AttrSet"]
+
+LOGGER = logging.getLogger(__name__)
 
 
 @dcls.dataclass(frozen=True)
@@ -33,26 +40,36 @@ class Attr:
     """
 
 
+@dcls.dataclass(frozen=True)
 class AttrSet(Mapping[str, Attr]):
     """
     A set of attributes. Representing the schema in a ``Table``.
     """
 
-    def __init__(self, **attrs: Attr):
-        self._attrs: dict[str, Attr] = attrs
+    attrs: dict[str, Attr] = dcls.field(default_factory=dict)
+    """
+    The data backing the ``AttrSet``.
+    """
 
     @typing.override
     def __repr__(self) -> str:
-        return repr(self._attrs)
+        return repr(self.attrs)
 
     @typing.override
     def __len__(self) -> int:
-        return len(self._attrs)
+        return len(self.attrs)
 
     @typing.override
     def __getitem__(self, key: str) -> Attr:
-        return self._attrs[key]
+        return self.attrs[key]
 
     @typing.override
     def __iter__(self) -> Iterator[str]:
-        return iter(self._attrs)
+        return iter(self.attrs)
+
+    def to_dict(self) -> dict[str, Attr]:
+        return copy.deepcopy(self.attrs)
+
+    @classmethod
+    def init(cls, **attrs: Attr) -> Self:
+        return cls(attrs)

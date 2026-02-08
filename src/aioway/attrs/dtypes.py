@@ -77,6 +77,11 @@ class DType(ABC):
             case DType():
                 return str(self) == str(other)
 
+            # Convert ``self`` into a ``torch.dtype``,
+            # using ``str`` as a medium to convert into ``torch``.
+            case _TorchDType():
+                return TorchDType.parse(str(self)).dtype == other
+
             # Don't know how to handle others.
             case _:
                 return NotImplemented
@@ -115,7 +120,10 @@ def dtype(dtype: str, /, kind: DTypeBackend = "composed") -> DType:
     and instantiate by parsing the ``dtype`` parameter.
     """
 
-    return _get_dtype_class(kind).parse(dtype)
+    LOGGER.debug("Creating datatype: %s with '%s' backend", dtype, kind)
+    result = _get_dtype_class(kind).parse(dtype)
+    LOGGER.debug("Create datatype: %s", result)
+    return result
 
 
 def _get_dtype_class(kind: DTypeBackend) -> type[DType]:
@@ -240,6 +248,10 @@ class TorchDType(DType):
     @typing.override
     def bits(self) -> int:
         return self._dtype.itemsize * 8
+
+    @property
+    def dtype(self):
+        return self._dtype
 
     @classmethod
     @typing.override

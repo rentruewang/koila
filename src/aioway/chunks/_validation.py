@@ -1,0 +1,70 @@
+# Copyright (c) AIoWay Authors - All Rights Reserved
+
+"Validation of data (``TensorDict``) against schema (``AttrSet``)."
+
+import logging
+
+from tensordict import TensorDict
+from torch import Tensor
+
+from aioway.attrs import Attr, AttrSet, Device, DType, Shape
+
+__all__ = ["validate_schema", "validate_attr_matches"]
+
+LOGGER = logging.getLogger(__name__)
+
+
+def validate_schema(schema: AttrSet, data: TensorDict) -> None:
+    """
+    Validate ``data`` against ``attrs``.
+
+    Currently it loops over all the keys and attributes, which may be slow.
+
+    Args:
+        schema: The schema of the tensordict.
+        data: The data to validate.
+
+    Raises:
+        RuntimeError: If the schema doesn't match the given data.
+    """
+
+    LOGGER.debug("Validating data: %s against schema: %s", data, schema)
+
+    if schema.keys() != data.keys():
+        raise RuntimeError(f"Keys {set(schema.keys())=} != {set(data.keys())=}")
+
+    for key in schema.keys():
+        validate_attr_matches(attr=schema[key], tensor=data[key])
+
+
+def validate_attr_matches(attr: Attr, tensor: Tensor) -> None:
+    """
+    Validate ``tensor`` against ``attr``.
+
+    Only check if ``tensor`` has the exact same dtype, shape, device as ``attr``.
+    """
+
+    validate_shape_matches(shape=attr.shape, tensor=tensor)
+    validate_device_matches(device=attr.device, tensor=tensor)
+    validate_dtype_matches(dtype=attr.dtype, tensor=tensor)
+
+
+def validate_shape_matches(shape: Shape, tensor: Tensor) -> None:
+    if shape != tensor.shape[1:]:
+        raise RuntimeError(
+            f"Shape of tensor {tensor.shape=} should match attr's {shape=}"
+        )
+
+
+def validate_dtype_matches(dtype: DType, tensor: Tensor) -> None:
+    if dtype != tensor.dtype:
+        raise RuntimeError(
+            f"DType of tensor {tensor.dtype=} should match attr's {dtype=}"
+        )
+
+
+def validate_device_matches(device: Device, tensor: Tensor) -> None:
+    if device != tensor.device:
+        raise RuntimeError(
+            f"Device of tensor {tensor.device=} should match attr's {device=}"
+        )

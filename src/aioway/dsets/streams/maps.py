@@ -13,7 +13,8 @@ from sympy import Expr
 from tensordict import TensorDict
 from torch import Tensor
 
-from . import _funcs
+from aioway.chunks import _funcs
+
 from .streams import Stream
 
 __all__ = [
