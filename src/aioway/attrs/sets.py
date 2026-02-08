@@ -10,6 +10,7 @@ from typing import NamedTuple, Self
 
 import numpy as np
 
+from . import attrs
 from .attrs import Attr
 from .devices import Device
 from .dtypes import DType
@@ -125,12 +126,12 @@ class AttrSet(Mapping[str, Attr]):
                 f"Got {len(names)=}, {len(shapes)=}, {len(dtypes)=}, {len(devices)=}."
             )
 
-        attrs = {
-            name: Attr(device=device, dtype=dtype, shape=shape)
+        mapping = {
+            name: attrs.attr(device=device, dtype=dtype, shape=shape)
             for name, device, dtype, shape in zip(names, devices, dtypes, shapes)
         }
 
-        return cls.from_dict(attrs)
+        return cls.from_dict(mapping)
 
 
 @dcls.dataclass(frozen=True)

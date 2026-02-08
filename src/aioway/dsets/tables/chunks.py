@@ -8,7 +8,7 @@ from typing import TypeIs
 
 import numpy as np
 
-from aioway.chunks import Chunk
+from aioway.batches import Chunk
 
 from .tables import IntArray, Table
 

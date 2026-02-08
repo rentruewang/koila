@@ -6,22 +6,22 @@ from pytest import FixtureRequest
 from tensordict import TensorDict
 
 from aioway import attrs
-from aioway.attrs import Attr, AttrSet, Device, Shape
-from aioway.chunks import Chunk, _validation
+from aioway.attrs import AttrSet, _validation
+from aioway.batches import Chunk
 
 
 @pytest.fixture
 def schema():
     return AttrSet.from_values(
-        a=Attr(
-            device=Device("cpu"),
-            dtype=attrs.dtype("int32", kind="torch"),
-            shape=Shape(2, 3),
+        a=attrs.attr(
+            device="cpu",
+            dtype="int32",
+            shape=[2, 3],
         ),
-        b=Attr(
-            device=Device("cpu"),
-            dtype=attrs.dtype("float32"),
-            shape=Shape(6),
+        b=attrs.attr(
+            device="cpu",
+            dtype="float32",
+            shape=[6],
         ),
     )
 

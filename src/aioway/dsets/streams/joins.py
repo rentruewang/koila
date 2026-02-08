@@ -8,7 +8,7 @@ from collections.abc import Generator
 
 import torch
 
-from aioway.chunks import Chunk
+from aioway.batches import Chunk
 
 from .sources import CacheStream
 from .streams import Stream

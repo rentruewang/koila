@@ -7,9 +7,13 @@ import logging
 from tensordict import TensorDict
 from torch import Tensor
 
-from aioway.attrs import Attr, AttrSet, Device, DType, Shape
+from .attrs import Attr
+from .devices import Device
+from .dtypes import DType
+from .sets import AttrSet
+from .shapes import Shape
 
-__all__ = ["validate_schema", "validate_attr_matches"]
+__all__ = ["validate_schema", "validate_attr"]
 
 LOGGER = logging.getLogger(__name__)
 
@@ -34,10 +38,10 @@ def validate_schema(schema: AttrSet, data: TensorDict) -> None:
         raise RuntimeError(f"Keys {set(schema.keys())=} != {set(data.keys())=}")
 
     for key in schema.keys():
-        validate_attr_matches(attr=schema[key], tensor=data[key])
+        validate_attr(attr=schema[key], tensor=data[key])
 
 
-def validate_attr_matches(attr: Attr, tensor: Tensor) -> None:
+def validate_attr(attr: Attr, tensor: Tensor) -> None:
     """
     Validate ``tensor`` against ``attr``.
 

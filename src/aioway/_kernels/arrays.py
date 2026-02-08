@@ -3,8 +3,8 @@
 
 import dataclasses as dcls
 
-from aioway.attrs import DType, Shape
-from aioway.attrs.shapes import ShapeLike
+from aioway import attrs
+from aioway.attrs import DType, Shape, ShapeLike
 
 __all__ = ["Array"]
 
@@ -35,7 +35,7 @@ class Array:
     """
 
     def __init__(self, shape: ShapeLike, dtype: DType, cost: int):
-        self.shape = Shape.wrap(shape)
+        self.shape = attrs.shape(shape)
         self.dtype = dtype
         self.cost = cost
 

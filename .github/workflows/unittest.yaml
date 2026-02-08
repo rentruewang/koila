@@ -12,6 +12,7 @@ jobs:
         uses: pdm-project/setup-pdm@v4
         with:
           python-version: "3.13"
+          cache: true
 
       - name: 🏃 pytest
         run: make -C ci testing

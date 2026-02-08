@@ -12,6 +12,7 @@ jobs:
         uses: pdm-project/setup-pdm@v4
         with:
           python-version: "3.13"
+          cache: true
 
       - name: 🏃 Formatting
         run: make -C ci format
@@ -27,6 +28,7 @@ jobs:
         uses: pdm-project/setup-pdm@v4
         with:
           python-version: "3.13"
+          cache: true
 
       - name: 🏃 Type checking
         run: make -C ci typing
