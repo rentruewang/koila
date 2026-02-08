@@ -13,10 +13,10 @@ from sympy import Expr
 from tensordict import TensorDict
 from torch import Size, Tensor
 
-from aioway.attrs import Attr, AttrSet
+from aioway.attrs import Attr, AttrSet, _validation
 from aioway.attrs import funcs as atf
 
-from . import _validation, funcs
+from . import funcs
 
 __all__ = ["Chunk"]
 

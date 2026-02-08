@@ -25,7 +25,7 @@ def _golden():
     for kind, klass in _kinds():
         for dtype, family, bits in _dtypes():
             yield _CaseChecker(
-                attrs.dtype(dtype, kind=kind),
+                attrs.dtype_with_kind(dtype, kind=kind),
                 family=family,
                 bits=bits,
                 klass=klass,

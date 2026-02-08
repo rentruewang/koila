@@ -12,7 +12,7 @@ import torch
 from sympy import Expr
 from torch import Tensor
 
-from aioway.chunks import Chunk
+from aioway.batches import Chunk
 
 from .streams import Stream
 

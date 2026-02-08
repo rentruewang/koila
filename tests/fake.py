@@ -7,8 +7,8 @@ from tensordict import TensorDict
 from torch import cuda
 
 from aioway import attrs
-from aioway.attrs import Attr, AttrSet, Device, Shape
-from aioway.chunks import Chunk
+from aioway.attrs import AttrSet
+from aioway.batches import Chunk
 
 
 def cpu_and_maybe_cuda() -> list[str]:
@@ -43,25 +43,25 @@ def chunk_ok(*, size: int, device: str):
         device=device,
     )
     schema = AttrSet.from_values(
-        f1d=Attr(
-            device=Device("cpu"),
-            shape=Shape(),
-            dtype=attrs.dtype("float32"),
+        f1d=attrs.attr(
+            device="cpu",
+            shape=(),
+            dtype="float32",
         ),
-        f2d=Attr(
-            device=Device("cpu"),
-            shape=Shape(32),
-            dtype=attrs.dtype("float32"),
+        f2d=attrs.attr(
+            device="cpu",
+            shape=32,
+            dtype="float32",
         ),
-        i1d=Attr(
-            device=Device("cpu"),
-            shape=Shape(),
-            dtype=attrs.dtype("int64"),
+        i1d=attrs.attr(
+            device="cpu",
+            shape=(),
+            dtype="int64",
         ),
-        i2d=Attr(
-            device=Device("cpu"),
-            shape=Shape(32),
-            dtype=attrs.dtype("int64"),
+        i2d=attrs.attr(
+            device="cpu",
+            shape=32,
+            dtype="int64",
         ),
     )
     return Chunk(data=data, schema=schema)

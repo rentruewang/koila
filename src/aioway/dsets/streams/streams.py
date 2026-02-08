@@ -10,7 +10,7 @@ from abc import ABC
 from collections.abc import Generator, Iterator
 from typing import ClassVar, Self
 
-from aioway.chunks import Chunk
+from aioway.batches import Chunk
 
 __all__ = ["Stream"]
 

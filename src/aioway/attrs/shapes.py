@@ -1,17 +1,16 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
+import dataclasses as dcls
 import logging
 import typing
-from collections.abc import Iterable, Sequence
-from typing import Self, TypeGuard
+from collections.abc import Iterable, Iterator, Sequence
+from typing import Self, TypeGuard, TypeIs
 
 from torch import Size
 
-__all__ = ["ShapeLike", "Shape"]
+__all__ = ["ShapeLike", "Shape", "shape"]
 
 LOGGER = logging.getLogger(__name__)
-
-type ShapeLike = Sequence[int]
 
 
 def _is_seq_of_pos_ints(shape: object) -> TypeGuard[Sequence[int]]:
@@ -28,6 +27,7 @@ def _is_seq_of_pos_ints(shape: object) -> TypeGuard[Sequence[int]]:
     return True
 
 
+@dcls.dataclass(frozen=True)
 class Shape(Sequence[int]):
     """
     ``Shape`` represents a regular (non-jagged) array's dimensions,
@@ -36,9 +36,12 @@ class Shape(Sequence[int]):
     Right now, it represents the shape of a ``Tensor`` **outside** the batch dimension.
     """
 
-    def __init__(self, *dims: int) -> None:
-        self._dims = dims
+    dims: tuple[int, ...] = ()
+    """
+    The dimensions
+    """
 
+    def __post_init__(self):
         if not self.valid():
             raise ValueError(f"Shape: {self} is not valid")
 
@@ -46,7 +49,7 @@ class Shape(Sequence[int]):
 
     @typing.override
     def __hash__(self) -> int:
-        return hash(self._dims)
+        return hash(self.dims)
 
     @typing.override
     def __repr__(self) -> str:
@@ -54,25 +57,25 @@ class Shape(Sequence[int]):
 
     @typing.override
     def __str__(self) -> str:
-        dims_str = ", ".join(map(str, self._dims))
+        dims_str = ", ".join(map(str, self.dims))
         return f"Shape({dims_str})"
 
     @typing.override
     def __eq__(self, other: object) -> bool:
         if isinstance(other, Shape):
-            return self._dims == other._dims
+            return self.dims == other.dims
 
         if isinstance(other, Size):
-            return other == self._dims
+            return other == self.dims
 
         if isinstance(other, Sequence):
-            return tuple(self._dims) == tuple(other)
+            return tuple(self.dims) == tuple(other)
 
         return NotImplemented
 
     @typing.override
     def __len__(self):
-        return len(self._dims)
+        return len(self.dims)
 
     @typing.overload
     def __getitem__(self, idx: int) -> int: ...
@@ -84,9 +87,9 @@ class Shape(Sequence[int]):
     def __getitem__(self, idx):
         match idx:
             case int():
-                return self._dims[idx]
+                return self.dims[idx]
             case slice():
-                return type(self)(*self._dims[idx])
+                return type(self)(self.dims[idx])
             case _:
                 raise TypeError(
                     "`Shape`'s __getitem__ does not know "
@@ -94,8 +97,8 @@ class Shape(Sequence[int]):
                 )
 
     @typing.override
-    def __iter__(self):
-        yield from self._dims
+    def __iter__(self) -> Iterator[int]:
+        return iter(self.dims)
 
     def valid(self) -> bool:
         """
@@ -104,7 +107,7 @@ class Shape(Sequence[int]):
 
         LOGGER.debug("Checking if %s is a `Shape`", self)
 
-        return _is_seq_of_pos_ints(self._dims)
+        return _is_seq_of_pos_ints(self.dims)
 
     def valid_dims(self, dims: list[int]) -> bool:
         """
@@ -117,7 +120,7 @@ class Shape(Sequence[int]):
             and (max(dims) >= len(self) or min(dims) < -len(self))
         )
 
-    def wrap_dims(self, dims: list[int]) -> ShapeLike:
+    def wrap_dims(self, dims: list[int]) -> list[int]:
         # Make the dims positive.
         return [d % len(self) for d in dims]
 
@@ -141,6 +144,57 @@ class Shape(Sequence[int]):
 
         return total
 
-    @classmethod
-    def wrap(cls, shape: Iterable[int]) -> Self:
-        return cls(*shape)
+
+type ShapeLike = int | Iterable[int] | Shape
+"Types convertible to ``Shape``s. Note that ``int`` can be converted as well."
+
+
+@typing.overload
+def shape(*dims: int) -> Shape: ...
+
+
+@typing.overload
+def shape(dim: ShapeLike, /) -> Shape: ...
+
+
+def shape(*dims) -> Shape:
+    """
+    Convenience constructor for ``Shape``.
+
+    Takes either of the following signature:
+
+    1. ``shape(*dims)``. Here dims must be integers.
+    2. ``shape(iterable)``. Here dims must be iterable. No additional args.
+    3. ``shape(Shape)``. Returns it by reference.
+    """
+
+    try:
+        # ``shape(*int)``.
+        if _is_tuple_of_int(dims):
+            return _shape(dims)
+
+        # ``shape(iterable)``.
+        elif len(dims) == 1:
+            return _shape(dims[0])
+
+        raise ValueError
+    except ValueError:
+        raise ValueError(f"Don't know how to handle {dims=}")
+
+
+def _shape(dims) -> Shape:
+    "Try converting dims to ``Shape``, raise ``ValueError`` on failure."
+    if isinstance(dims, Shape):
+        return dims
+
+    if isinstance(dims, Iterable):
+        dims_tuple = tuple(dims)
+
+        if _is_tuple_of_int(dims_tuple):
+            return Shape(dims_tuple)
+
+    raise ValueError
+
+
+def _is_tuple_of_int(obj, /) -> TypeIs[tuple[int, ...]]:
+    return isinstance(obj, tuple) and all(isinstance(i, int) for i in obj)

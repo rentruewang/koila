@@ -9,8 +9,8 @@ from pytest import FixtureRequest
 from tensordict import TensorDict
 
 from aioway import attrs
-from aioway.attrs import Attr, AttrSet, Device, Shape
-from aioway.chunks import Chunk
+from aioway.attrs import AttrSet
+from aioway.batches import Chunk
 from aioway.dsets import (
     CacheStream,
     ListStream,
@@ -109,30 +109,30 @@ def test_simple_nested_loop_join(to_slice: Callable[[Chunk], list[Chunk]]):
     left = Chunk(
         data=TensorDict({"a": [1, 3, 2, 2], "b": [4, 10, 5, 6]}, batch_size=4),
         schema=AttrSet.from_values(
-            a=Attr(
-                device=Device("cpu"),
-                dtype=attrs.dtype("int64"),
-                shape=Shape(),
+            a=attrs.attr(
+                device="cpu",
+                dtype="int64",
+                shape=(),
             ),
-            b=Attr(
-                device=Device("cpu"),
-                dtype=attrs.dtype("int64"),
-                shape=Shape(),
+            b=attrs.attr(
+                device="cpu",
+                dtype="int64",
+                shape=(),
             ),
         ),
     )
     right = Chunk(
         data=TensorDict({"a": [1, 3, 2, 2], "c": [7, 11, 8, 9]}, batch_size=4),
         schema=AttrSet.from_values(
-            a=Attr(
-                device=Device("cpu"),
-                dtype=attrs.dtype("int64"),
-                shape=Shape(),
+            a=attrs.attr(
+                device="cpu",
+                dtype="int64",
+                shape=(),
             ),
-            c=Attr(
-                device=Device("cpu"),
-                dtype=attrs.dtype("int64"),
-                shape=Shape(),
+            c=attrs.attr(
+                device="cpu",
+                dtype="int64",
+                shape=(),
             ),
         ),
     )

@@ -14,7 +14,7 @@ from typing import Self, override
 
 from torch.utils.data import DataLoader, Sampler
 
-from aioway.chunks import Chunk
+from aioway.batches import Chunk
 
 from ..tables import Table
 from .streams import Stream
