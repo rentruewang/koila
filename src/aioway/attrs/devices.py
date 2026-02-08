@@ -25,6 +25,8 @@ class Device:
         except RuntimeError as e:
             raise ValueError("Not a valid `torch.device`.") from e
 
+        LOGGER.debug("Device %s instance created", self)
+
     def __eq__(self, other: object) -> bool:
         match other:
             case TorchDevice():

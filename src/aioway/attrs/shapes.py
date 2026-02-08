@@ -36,8 +36,20 @@ class Shape(Sequence[int]):
 
     def __init__(self, *dims: int) -> None:
         self._dims = dims
+
         if not self.valid():
-            raise ValueError
+            raise ValueError(f"Shape: {self} is not valid")
+
+        LOGGER.debug("Shape created: %s", self)
+
+    @typing.override
+    def __repr__(self) -> str:
+        return str(self)
+
+    @typing.override
+    def __str__(self) -> str:
+        dims_str = ", ".join(map(str, self._dims))
+        return f"Shape({dims_str})"
 
     @typing.override
     def __eq__(self, other: object) -> bool:
@@ -78,9 +90,6 @@ class Shape(Sequence[int]):
     @typing.override
     def __iter__(self):
         yield from self._dims
-
-    def __repr__(self):
-        return repr(self._dims)
 
     def valid(self) -> bool:
         """
