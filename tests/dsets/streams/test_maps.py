@@ -8,6 +8,7 @@ import pytest
 from pytest import FixtureRequest
 from tensordict import TensorDict
 
+from aioway.chunks import _funcs
 from aioway.dsets import (
     ApplyStream,
     CacheStream,
@@ -18,7 +19,6 @@ from aioway.dsets import (
     RenameStream,
     Stream,
 )
-from aioway.dsets.streams import _funcs
 
 
 @dcls.dataclass

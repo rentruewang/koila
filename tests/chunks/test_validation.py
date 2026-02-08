@@ -1,0 +1,79 @@
+# Copyright (c) AIoWay Authors - All Rights Reserved
+
+import pytest
+import torch
+from pytest import FixtureRequest
+from tensordict import TensorDict
+
+from aioway import attrs
+from aioway.attrs import Attr, AttrSet, Device, Shape
+from aioway.chunks import Chunk, _validation
+
+
+@pytest.fixture
+def schema():
+    return AttrSet.init(
+        a=Attr(
+            device=Device("cpu"),
+            dtype=attrs.dtype("int32", kind="torch"),
+            shape=Shape(2, 3),
+        ),
+        b=Attr(
+            device=Device("cpu"),
+            dtype=attrs.dtype("float32"),
+            shape=Shape(6),
+        ),
+    )
+
+
+@pytest.fixture
+def valid_data():
+    result = TensorDict(
+        {
+            "a": torch.randn(11, 2, 3).to(torch.int32),
+            "b": torch.randn(11, 6).to(torch.float32),
+        }
+    )
+    result.auto_batch_size_()
+    return result
+
+
+def _invalid_data():
+    # Invalid shape
+    yield TensorDict(
+        {
+            "a": torch.randn(11, 2, 3, 4).to(torch.int32),
+            "b": torch.randn(11, 6).to(torch.float32),
+        }
+    ).auto_batch_size_()
+
+    # Invalid dtype
+    yield TensorDict(
+        {
+            "a": torch.randn(11, 2, 3).to(torch.int64),
+            "b": torch.randn(11, 6).to(torch.float32),
+        }
+    ).auto_batch_size_()
+
+
+@pytest.fixture(params=_invalid_data())
+def invalid_data(request: FixtureRequest):
+    return request.param
+
+
+def test_validation_ok(schema: AttrSet, valid_data: TensorDict):
+    _validation.validate_schema(schema, valid_data)
+
+
+def test_validation_fail(schema: AttrSet, invalid_data: TensorDict):
+    with pytest.raises(RuntimeError):
+        _validation.validate_schema(schema, invalid_data)
+
+
+@pytest.fixture
+def block(schema, valid_data):
+    return Chunk(data=valid_data, schema=schema)
+
+
+def test_block_init(block):
+    _ = block
