@@ -4,11 +4,13 @@ from collections import Counter
 from collections.abc import Callable
 
 import pytest
-import tensordict
 import torch
 from pytest import FixtureRequest
 from tensordict import TensorDict
 
+from aioway import attrs
+from aioway.attrs import Attr, AttrSet, Device, Shape
+from aioway.chunks import Chunk
 from aioway.dsets import (
     CacheStream,
     ListStream,
@@ -76,10 +78,8 @@ def test_zip(
     assert binary_stream.right is rhs_stream
     for result in binary_stream:
         assert binary_stream.idx == lhs_stream.idx == rhs_stream.idx
-        concat = tensordict.merge_tensordicts(
-            lhs_stream[lhs_stream.idx - 1], rhs_stream[rhs_stream.idx - 1]
-        )
-        assert (result == concat).all()
+        concat = lhs_stream[lhs_stream.idx - 1].zip(rhs_stream[rhs_stream.idx - 1])
+        assert result == concat
 
 
 def _join_builder(
@@ -105,14 +105,42 @@ def test_join_input_len(
         lambda t: [t[[1, 3]], t[[0, 2]]],
     ],
 )
-def test_simple_nested_loop_join(to_slice: Callable[[TensorDict], list[TensorDict]]):
-    left = TensorDict({"a": [1, 3, 2, 2], "b": [4, 10, 5, 6]}, batch_size=4)
-    right = TensorDict({"a": [1, 3, 2, 2], "c": [7, 11, 8, 9]}, batch_size=4)
+def test_simple_nested_loop_join(to_slice: Callable[[Chunk], list[Chunk]]):
+    left = Chunk(
+        data=TensorDict({"a": [1, 3, 2, 2], "b": [4, 10, 5, 6]}, batch_size=4),
+        schema=AttrSet.from_values(
+            a=Attr(
+                device=Device("cpu"),
+                dtype=attrs.dtype("int64"),
+                shape=Shape(),
+            ),
+            b=Attr(
+                device=Device("cpu"),
+                dtype=attrs.dtype("int64"),
+                shape=Shape(),
+            ),
+        ),
+    )
+    right = Chunk(
+        data=TensorDict({"a": [1, 3, 2, 2], "c": [7, 11, 8, 9]}, batch_size=4),
+        schema=AttrSet.from_values(
+            a=Attr(
+                device=Device("cpu"),
+                dtype=attrs.dtype("int64"),
+                shape=Shape(),
+            ),
+            c=Attr(
+                device=Device("cpu"),
+                dtype=attrs.dtype("int64"),
+                shape=Shape(),
+            ),
+        ),
+    )
 
     left_stream = ListStream(to_slice(left))
     right_stream = ListStream(to_slice(right))
 
-    out = tensordict.cat(
+    out = Chunk.cat(
         list(
             NestedLoopJoinStream(
                 left_stream,
@@ -122,20 +150,17 @@ def test_simple_nested_loop_join(to_slice: Callable[[TensorDict], list[TensorDic
         )
     )
 
-    def sort_by_abc(td: TensorDict):
+    def sort_by_abc(td: Chunk):
         for key in "cba":
             indices = torch.argsort(td[key], stable=True)
             td = td[indices]
         return td
 
-    assert (
-        sort_by_abc(out)
-        == {
-            "a": [1, 2, 2, 2, 2, 3],
-            "b": [4, 5, 5, 6, 6, 10],
-            "c": [7, 8, 9, 8, 9, 11],
-        }
-    ).all()
+    assert sort_by_abc(out) == {
+        "a": [1, 2, 2, 2, 2, 3],
+        "b": [4, 5, 5, 6, 6, 10],
+        "c": [7, 8, 9, 8, 9, 11],
+    }
 
 
 @pytest.mark.parametrize("binary_stream", [_join_builder], indirect=True)
@@ -144,16 +169,16 @@ def test_join_equal_as_original(
     lhs_stream: Stream,
     rhs_stream: CacheStream,
 ):
-    block_frame_block = tensordict.cat(list(lhs_stream))
-    joinable_frame_block = tensordict.cat(list(rhs_stream))
+    block_frame_block = Chunk.cat(list(lhs_stream))
+    joinable_frame_block = Chunk.cat(list(rhs_stream))
 
     # Performing the join here.
     results: list[TensorDict] = list(binary_stream)
     assert len(results), "The binary stream is empty."
-    answer_items = tensordict.cat(results)["i1d"]
+    answer_items = Chunk.cat(results)["i1d"]
 
     # Do it at once, using ``ListStream`` as it yields everything in 1 batch.
-    ground_truth = tensordict.cat(
+    ground_truth = Chunk.cat(
         list(
             NestedLoopJoinStream(
                 left=ListStream([block_frame_block]),
@@ -175,12 +200,12 @@ def test_match_functionally(
     lhs_stream: CacheStream,
     rhs_stream: CacheStream,
 ):
-    block_frame_block = tensordict.cat(list(lhs_stream))
-    joinable_frame_block = tensordict.cat(list(rhs_stream))
+    block_frame_block = Chunk.cat(list(lhs_stream))
+    joinable_frame_block = Chunk.cat(list(rhs_stream))
 
     # Performing the join here.
-    results: list[TensorDict] = list(binary_stream)
-    answer_items = tensordict.cat(results)["i1d"]
+    results = list(binary_stream)
+    answer_items = Chunk.cat(results)["i1d"]
 
     answer_count = Counter(answer_items.tolist())
 
@@ -206,7 +231,7 @@ def test_binary_stream_in_list(binary_stream: NestedLoopJoinStream | ZipStream):
 
     assert binary_stream.idx == 0, "Pre iteration stream's index starts with 0."
 
-    batches: list[TensorDict] = []
+    batches: list[Chunk] = []
     for idx, batch in enumerate(binary_stream, start=1):
         # Ensure that the input is also exhausted.
         assert idx == binary_stream.idx

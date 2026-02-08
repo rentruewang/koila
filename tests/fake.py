@@ -6,8 +6,12 @@ import torch
 from tensordict import TensorDict
 from torch import cuda
 
+from aioway import attrs
+from aioway.attrs import Attr, AttrSet, Device, Shape
+from aioway.chunks import Chunk
 
-def cpu_and_maybe_cuda():
+
+def cpu_and_maybe_cuda() -> list[str]:
     """
     The devices used in the tests.
 
@@ -27,8 +31,8 @@ def batch_sizes():
     yield 1024
 
 
-def tensordict_ok(*, size: int, device: str):
-    return TensorDict(
+def chunk_ok(*, size: int, device: str):
+    data = TensorDict(
         {
             "f1d": torch.randn(size),
             "f2d": torch.randn(size, 32),
@@ -38,21 +42,37 @@ def tensordict_ok(*, size: int, device: str):
         batch_size=size,
         device=device,
     )
-
-
-def tensordict_no_batch(*, size: int, device: str):
-    return TensorDict(
-        {"f1d": torch.randn(size), "f2d": torch.randn(size, 32)},
-        device=device,
+    schema = AttrSet.from_values(
+        f1d=Attr(
+            device=Device("cpu"),
+            shape=Shape(),
+            dtype=attrs.dtype("float32"),
+        ),
+        f2d=Attr(
+            device=Device("cpu"),
+            shape=Shape(32),
+            dtype=attrs.dtype("float32"),
+        ),
+        i1d=Attr(
+            device=Device("cpu"),
+            shape=Shape(),
+            dtype=attrs.dtype("int64"),
+        ),
+        i2d=Attr(
+            device=Device("cpu"),
+            shape=Shape(32),
+            dtype=attrs.dtype("int64"),
+        ),
     )
+    return Chunk(data=data, schema=schema)
 
 
 def unionable_ok(*, size: int, device: str):
-    return tensordict_ok(size=size + 1, device=device)
+    return chunk_ok(size=size + 1, device=device)
 
 
 def concat_ok(*, size: int, device: str):
-    return tensordict_ok(size=size, device=device)
+    return chunk_ok(size=size, device=device)
 
 
 def random_things():
