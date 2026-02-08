@@ -12,7 +12,7 @@ from aioway.chunks import Chunk, _validation
 
 @pytest.fixture
 def schema():
-    return AttrSet.init(
+    return AttrSet.from_values(
         a=Attr(
             device=Device("cpu"),
             dtype=attrs.dtype("int32", kind="torch"),

@@ -8,7 +8,7 @@ import pytest
 from pytest import FixtureRequest
 from tensordict import TensorDict
 
-from aioway.chunks import _funcs
+from aioway.chunks import Chunk
 from aioway.dsets import (
     ApplyStream,
     CacheStream,
@@ -25,11 +25,11 @@ from aioway.dsets import (
 class SaveLastMapStream(MapStream):
     "``Stream`` that saves the last ``__next__`` call."
 
-    last: TensorDict = dcls.field(init=False, repr=False)
+    last: Chunk = dcls.field(init=False, repr=False)
     "The last batch."
 
     @typing.override
-    def _apply(self, batch: TensorDict) -> TensorDict:
+    def _apply(self, batch: Chunk) -> Chunk:
         self.last = batch
         return batch
 
@@ -76,12 +76,12 @@ def test_filter(
     "Testing the 2 filter streams and whether they are doing their jobs."
 
     for filtered in map_stream:
-        manual_filtered: TensorDict = _funcs.filter(save_last.last, "f1d > 0")
+        manual_filtered: TensorDict = save_last.last.filter("f1d > 0")
         assert filtered.shape == manual_filtered.shape, {
             "lhs.shape": filtered.shape,
             "rhs.shape": manual_filtered.shape,
         }
-        assert (filtered == manual_filtered).all()
+        assert filtered == manual_filtered
 
 
 def _rename_builder(save_last: SaveLastMapStream) -> RenameStream:
@@ -94,21 +94,19 @@ def test_rename(map_stream: RenameStream, save_last: SaveLastMapStream):
     "Testing the renaming functionality."
 
     for renamed in map_stream:
-        manual_renamed = _funcs.rename(
-            save_last.last, f1d="f1", f2d="f2", i1d="i1", i2d="i2"
-        )
-        assert (renamed == manual_renamed).all()
+        manual_renamed = save_last.last.rename(f1d="f1", f2d="f2", i1d="i1", i2d="i2")
+        assert renamed == manual_renamed
 
 
 def _apply_builder(save_last: SaveLastMapStream) -> ApplyStream:
-    func = lambda td: _funcs.rename(td, f1d="f", i1d="i")
+    func = lambda td: td.rename(f1d="f", i1d="i")
     return ApplyStream(source=save_last, apply=func)
 
 
 @pytest.mark.parametrize("map_stream", [_apply_builder], indirect=True)
 def test_apply(map_stream: ApplyStream, save_last: SaveLastMapStream):
     for mapped in map_stream:
-        assert (mapped == map_stream.apply(save_last.last)).all()
+        assert mapped == map_stream.apply(save_last.last)
 
 
 def _project_builder(save_last: SaveLastMapStream) -> ProjectStream:
@@ -118,7 +116,7 @@ def _project_builder(save_last: SaveLastMapStream) -> ProjectStream:
 @pytest.mark.parametrize("map_stream", [_project_builder], indirect=True)
 def test_project(map_stream: ProjectStream, save_last: SaveLastMapStream):
     for projected in map_stream:
-        assert (projected == save_last.last.select("f1d", "i2d")).all()
+        assert projected == save_last.last[["f1d", "i2d"]]
 
 
 @pytest.mark.parametrize(
