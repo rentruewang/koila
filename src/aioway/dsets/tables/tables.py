@@ -8,7 +8,7 @@ from abc import ABC
 from typing import Any, TypeIs
 
 import numpy as np
-from numpy import ndarray as NDArrayType
+from numpy import ndarray as NpArr
 from numpy.typing import NDArray
 
 from aioway.attrs import AttrSet
@@ -142,7 +142,7 @@ def _is_table_index(idx: Any) -> TypeIs[TableIndex]:
         return True
 
     # Check if it's a ``NDArray[int]``.
-    if isinstance(idx, NDArrayType) and np.isdtype(idx.dtype, "integral"):
+    if isinstance(idx, NpArr) and np.isdtype(idx.dtype, "integral"):
         return True
 
     return False
