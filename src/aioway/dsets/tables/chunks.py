@@ -3,11 +3,13 @@
 "``Table``s that produce data by slicing contiguous input records."
 
 import dataclasses as dcls
+import functools
 import typing
 from typing import TypeIs
 
 import numpy as np
 
+from aioway.attrs import AttrSet
 from aioway.batches import Chunk
 
 from .tables import IntArray, Table
@@ -34,6 +36,11 @@ class ChunkTable(Table):
     @typing.override
     def _getitem(self, idx: IntArray) -> Chunk:
         return self.data[idx]
+
+    @property
+    @typing.override
+    def attrs(self) -> AttrSet:
+        return self.data.attrs
 
 
 @typing.final
@@ -95,6 +102,21 @@ class ChunkListTable(Table):
     @property
     def _cumsum_len(self) -> IntArray:
         return np.cumsum([len(d) for d in self.chunks])
+
+    @property
+    @typing.override
+    def attrs(self) -> AttrSet:
+        return self._attrs
+
+    @functools.cached_property
+    def _attrs(self):
+        attrs = {chunk.attrs for chunk in self.chunks}
+
+        if len(attrs) == 1:
+            [attr] = attrs
+            return attr
+
+        raise ValueError("Chunks should have the same attrs.")
 
 
 def is_list_of_chunks(data) -> TypeIs[list[Chunk]]:

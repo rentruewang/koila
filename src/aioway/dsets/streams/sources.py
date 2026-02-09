@@ -10,10 +10,11 @@ import math
 import typing
 from abc import ABC
 from collections.abc import Generator, Sequence
-from typing import Self, override
+from typing import Self
 
 from torch.utils.data import DataLoader, Sampler
 
+from aioway.attrs import AttrSet
 from aioway.batches import Chunk
 
 from ..tables import Table
@@ -111,8 +112,13 @@ class CacheStream(BoundedStream):
 
     @property
     @typing.override
-    def size(self):
+    def size(self) -> int:
         return self.stream.size
+
+    @property
+    @typing.override
+    def attrs(self) -> AttrSet:
+        return self.stream.attrs
 
 
 @dcls.dataclass
@@ -131,9 +137,24 @@ class ListStream(BoundedStream):
         return self.sequence[idx]
 
     @property
-    @override
+    @typing.override
     def size(self) -> int:
         return len(self.sequence)
+
+    @property
+    @typing.override
+    def attrs(self) -> AttrSet:
+        return self._schema
+
+    @functools.cached_property
+    def _schema(self) -> AttrSet:
+        schemas = {chunk.attrs for chunk in self.sequence}
+
+        if len(schemas) == 1:
+            [schema] = schemas
+            return schema
+
+        raise ValueError("Chunks should have the same schema.")
 
     @typing.override
     def _read(self) -> Chunk:
@@ -202,6 +223,11 @@ class TableStream(Stream):
     @typing.override
     def size(self) -> int:
         return self._size
+
+    @property
+    @typing.override
+    def attrs(self) -> AttrSet:
+        return self.table.attrs
 
     @functools.cached_property
     def _size(self) -> int:

@@ -8,6 +8,7 @@ from collections.abc import Generator
 
 import torch
 
+from aioway.attrs import AttrSet
 from aioway.batches import Chunk
 
 from .sources import CacheStream
@@ -36,6 +37,11 @@ class ZipStream(Stream):
     @typing.override
     def size(self) -> int:
         return min(self.left.size, self.right.size)
+
+    @property
+    @typing.override
+    def attrs(self) -> AttrSet:
+        return self.left.attrs | self.right.attrs
 
     @typing.override
     def _read(self) -> Chunk:
@@ -84,6 +90,11 @@ class NestedLoopJoinStream(Stream):
     @typing.override
     def size(self) -> int:
         return self.left.size * self.right.size
+
+    @property
+    @typing.override
+    def attrs(self) -> AttrSet:
+        return self.left.attrs | self.right.attrs
 
     @typing.override
     def _children(self) -> Generator["Stream"]:

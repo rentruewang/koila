@@ -12,6 +12,8 @@ import torch
 from sympy import Expr
 from torch import Tensor
 
+from aioway.attrs import AttrSet
+from aioway.attrs import funcs as atf
 from aioway.batches import Chunk
 
 from .streams import Stream
@@ -110,9 +112,16 @@ class ApplyStream(MapStream):
     Compute the output of ``__next__`` based on the input.
     """
 
+    schema: Callable[[AttrSet], AttrSet]
+
     @typing.override
     def _apply(self, batch: Chunk) -> Chunk:
         return self.apply(batch)
+
+    @property
+    @typing.override
+    def attrs(self) -> AttrSet:
+        return self.schema(self.source.attrs)
 
 
 @dcls.dataclass
@@ -143,6 +152,11 @@ class FuncFilterStream(MapStream):
 
         return batch[pred]
 
+    @property
+    @typing.override
+    def attrs(self) -> AttrSet:
+        return self.source.attrs
+
 
 @dcls.dataclass
 class ExprFilterStream(MapStream):
@@ -164,6 +178,11 @@ class ExprFilterStream(MapStream):
     def _apply(self, batch: Chunk) -> Chunk:
         return batch.filter(self.predicate)
 
+    @property
+    @typing.override
+    def attrs(self) -> AttrSet:
+        return self.source.attrs
+
 
 @dcls.dataclass
 class ProjectStream(MapStream):
@@ -180,6 +199,12 @@ class ProjectStream(MapStream):
     def _apply(self, batch: Chunk) -> Chunk:
         return batch[self.subset]
 
+    @property
+    @typing.override
+    def attrs(self) -> AttrSet:
+        source_attrs = self.source.attrs
+        return AttrSet.from_dict({key: source_attrs[key] for key in self.subset})
+
 
 @dcls.dataclass
 class RenameStream(MapStream):
@@ -195,3 +220,8 @@ class RenameStream(MapStream):
     @typing.override
     def _apply(self, batch: Chunk) -> Chunk:
         return batch.rename(**self.renames)
+
+    @property
+    @typing.override
+    def attrs(self) -> AttrSet:
+        return atf.renames(self.source.attrs, **self.renames)
