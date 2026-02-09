@@ -45,7 +45,6 @@ class Attr:
 
 
 def attr(device: DeviceLike, dtype: DTypeLike, shape: ShapeLike) -> Attr:
-
     return Attr(
         device=devices.device(device),
         dtype=dtypes.dtype(dtype),

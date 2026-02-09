@@ -64,7 +64,7 @@ def chunk_ok(*, size: int, device: str):
             dtype="int64",
         ),
     )
-    return Chunk(data=data, schema=schema)
+    return Chunk.from_data_schema(data=data, schema=schema)
 
 
 def unionable_ok(*, size: int, device: str):

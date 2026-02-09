@@ -4,18 +4,18 @@
 
 import abc
 import dataclasses as dcls
-import typing
 from abc import ABC
 from typing import Any, TypeIs
 
 import numpy as np
 from numpy import ndarray as NDArrayType
 from numpy.typing import NDArray
-from torch.utils.data import Dataset
 
 from aioway.batches import Chunk
 
-__all__ = ["Table", "TableDataset"]
+from .columns import ColumnRef
+
+__all__ = ["Table"]
 
 type IntArray = NDArray[np.int_]
 "Integer numpy array."
@@ -49,7 +49,7 @@ class Table(ABC):
         Get the number of items (rows) in the current dataframe.
         """
 
-    def __getitem__(self, idx: slice | list[int] | IntArray, /) -> Chunk:
+    def __getitem__(self, idx: TableIndex, /) -> Chunk:
         """
         Get individual items from the current ``Table``.
 
@@ -82,6 +82,9 @@ class Table(ABC):
     def __bool__(self) -> bool:
         return bool(len(self))
 
+    def col(self, idx: str, /):
+        return ColumnRef(table=self, column=idx)
+
     @abc.abstractmethod
     def _getitem(self, idx: IntArray, /) -> Chunk:
         """
@@ -107,27 +110,6 @@ class Table(ABC):
             )
 
         return idx % length
-
-    def dataset(self) -> "TableDataset":
-        return TableDataset(self)
-
-
-@dcls.dataclass(frozen=True)
-class TableDataset(Dataset[Chunk]):
-    "A ``Dataset`` adaptor that backs a ``Table``."
-
-    table: Table
-
-    def __len__(self) -> int:
-        return len(self.table)
-
-    @typing.no_type_check
-    def __getitem__(self, idx: int) -> Chunk:
-        return self.table[[idx]][0]
-
-    @typing.no_type_check
-    def __getitems__(self, indices: list[int]) -> list[Chunk]:
-        return list(self.table[indices])
 
 
 def _is_table_index(idx: Any) -> TypeIs[TableIndex]:
