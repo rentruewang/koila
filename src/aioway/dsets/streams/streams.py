@@ -10,6 +10,7 @@ from abc import ABC
 from collections.abc import Generator, Iterator
 from typing import ClassVar, Self
 
+from aioway.attrs import AttrSet
 from aioway.batches import Chunk
 
 from .series import SeriesRef
@@ -52,7 +53,9 @@ class Stream(Iterator[Chunk], ABC):
         ``__next__`` allows ``Stream``s to be used in ``for`` loops.
         """
 
-        result = self._read()
+        if (result := self._read()).attrs != self.attrs:
+            raise TypeError(f"Schema mismatch: {result.attrs=}, {self.attrs=}.")
+
         self.__done_count += 1
         return result
 
@@ -62,6 +65,15 @@ class Stream(Iterator[Chunk], ABC):
         """
         The length of the current ``Stream``.
         Does not change when the ``Stream`` is being iterated over.
+        """
+
+        ...
+
+    @property
+    @abc.abstractmethod
+    def attrs(self) -> AttrSet:
+        """
+        The schema for the current ``Stream``.
         """
 
         ...

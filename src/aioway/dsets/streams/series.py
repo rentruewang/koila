@@ -6,6 +6,7 @@ import dataclasses as dcls
 import typing
 from typing import Self
 
+from aioway.attrs import Attr
 from aioway.batches import Vector
 
 if typing.TYPE_CHECKING:
@@ -33,3 +34,7 @@ class SeriesRef:
     def __next__(self) -> Vector:
         batch = next(self.stream)
         return batch[self.column]
+
+    @property
+    def attr(self) -> Attr:
+        return self.stream.attrs[self.column]

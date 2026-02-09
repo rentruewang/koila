@@ -5,8 +5,6 @@ import logging
 from numpy import ndarray as NpArr
 from torch import Tensor
 
-from aioway.attrs.sets import AttrSet
-
 from .sets import AttrSet
 
 LOGGER = logging.getLogger(__name__)
