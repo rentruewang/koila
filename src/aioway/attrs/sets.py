@@ -53,6 +53,9 @@ class AttrSet(Mapping[str, Attr]):
     def __repr__(self) -> str:
         return self._repr_string
 
+    def __or__(self, other: Mapping[str, Attr]) -> Self:
+        return type(self).from_dict({**self, **other})
+
     @typing.override
     def __len__(self) -> int:
         return len(self.attrs)

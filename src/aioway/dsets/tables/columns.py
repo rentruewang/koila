@@ -5,6 +5,7 @@
 import dataclasses as dcls
 import typing
 
+from aioway.attrs import Attr
 from aioway.batches import Vector
 
 if typing.TYPE_CHECKING:
@@ -32,3 +33,7 @@ class ColumnRef:
     def __getitem__(self, idx: "TableIndex", /) -> Vector:
         batch = self.table[idx]
         return batch[self.column]
+
+    @property
+    def attr(self) -> Attr:
+        return self.table.attrs[self.column]

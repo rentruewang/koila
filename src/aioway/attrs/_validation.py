@@ -18,7 +18,7 @@ __all__ = ["validate_schema", "validate_attr"]
 LOGGER = logging.getLogger(__name__)
 
 
-def validate_schema(schema: AttrSet, data: TensorDict) -> None:
+def validate_schema(attrs: AttrSet, data: TensorDict) -> None:
     """
     Validate ``data`` against ``attrs``.
 
@@ -32,13 +32,13 @@ def validate_schema(schema: AttrSet, data: TensorDict) -> None:
         RuntimeError: If the schema doesn't match the given data.
     """
 
-    LOGGER.debug("Validating data: %s against schema: %s", data, schema)
+    LOGGER.debug("Validating data: %s against schema: %s", data, attrs)
 
-    if schema.keys() != data.keys():
-        raise RuntimeError(f"Keys {set(schema.keys())=} != {set(data.keys())=}")
+    if attrs.keys() != data.keys():
+        raise RuntimeError(f"Keys {set(attrs.keys())=} != {set(data.keys())=}")
 
-    for key in schema.keys():
-        validate_attr(attr=schema[key], tensor=data[key])
+    for key in attrs.keys():
+        validate_attr(attr=attrs[key], tensor=data[key])
 
 
 def validate_attr(attr: Attr, tensor: Tensor) -> None:

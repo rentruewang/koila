@@ -8,6 +8,8 @@ import pytest
 from pytest import FixtureRequest
 from tensordict import TensorDict
 
+from aioway.attrs import AttrSet
+from aioway.attrs import funcs as atf
 from aioway.batches import Chunk
 from aioway.dsets import (
     ApplyStream,
@@ -32,6 +34,10 @@ class SaveLastMapStream(MapStream):
     def _apply(self, batch: Chunk) -> Chunk:
         self.last = batch
         return batch
+
+    @property
+    def attrs(self) -> AttrSet:
+        return self.source.attrs
 
 
 @pytest.fixture
@@ -100,7 +106,8 @@ def test_rename(map_stream: RenameStream, save_last: SaveLastMapStream):
 
 def _apply_builder(save_last: SaveLastMapStream) -> ApplyStream:
     func = lambda td: td.rename(f1d="f", i1d="i")
-    return ApplyStream(source=save_last, apply=func)
+    schema = lambda attrs: atf.renames(attrs, f1d="f", i1d="i")
+    return ApplyStream(source=save_last, apply=func, schema=schema)
 
 
 @pytest.mark.parametrize("map_stream", [_apply_builder], indirect=True)

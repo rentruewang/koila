@@ -24,8 +24,8 @@ __all__ = ["Chunk"]
 
 LOGGER = logging.getLogger(__name__)
 
-type DataLike = TensorDict | dict[str, Tensor]
-type SchemaLike = AttrSet | dict[str, Attr]
+type TensorDictLike = TensorDict | dict[str, Tensor]
+type AttrSetLike = AttrSet | dict[str, Attr]
 type ChunkLike = Chunk | dict[str, Vector]
 
 
@@ -42,11 +42,11 @@ class Chunk(Mapping[str, Vector]):
     data: TensorDict
     "The underlying data."
 
-    schema: AttrSet
+    attrs: AttrSet
     "The schema for the ``Chunk``."
 
     def __post_init__(self) -> None:
-        _validation.validate_schema(self.schema, self.data)
+        _validation.validate_schema(self.attrs, self.data)
 
     @typing.override
     def __len__(self) -> int:
@@ -56,13 +56,13 @@ class Chunk(Mapping[str, Vector]):
 
     @typing.override
     def __repr__(self) -> str:
-        return f"{self.schema!r}({len(self)})"
+        return f"{self.attrs!r}({len(self)})"
 
     @typing.override
     def __eq__(self, rhs: object) -> bool:
         # Check if schema and data are both equal.
         if isinstance(rhs, Chunk):
-            return self.schema == rhs.schema and (self.data == rhs.data).all()
+            return self.attrs == rhs.attrs and (self.data == rhs.data).all()
 
         # If tensordict, don't compare schema.
         if isinstance(rhs, dict | TensorDict):
@@ -98,41 +98,41 @@ class Chunk(Mapping[str, Vector]):
 
     @typing.override
     def __iter__(self) -> Iterator[str]:
-        return iter(self.schema)
+        return iter(self.attrs)
 
     def rename(self, **renames: str) -> Self:
         if not renames:
             return self
 
-        schema = atf.renames(self.schema, **renames)
+        schema = atf.renames(self.attrs, **renames)
         data = funcs.rename(self.data, **renames)
         return self.from_data_schema(data=data, schema=schema)
 
     def filter(self, expr: str | Expr) -> Self:
         return self.from_data_schema(
-            data=funcs.filter(self.data, expr), schema=self.schema
+            data=funcs.filter(self.data, expr), schema=self.attrs
         )
 
     def zip(self, rhs: Self) -> Self:
         data = tensordict.merge_tensordicts(self.data, rhs.data)
-        schema = {**self.schema, **rhs.schema}
+        schema = {**self.attrs, **rhs.attrs}
         return self.from_data_schema(data=data, schema=schema)
 
     def col(self, key: str) -> Vector:
         tensor = self.data[key]
-        attr = self.schema[key]
+        attr = self.attrs[key]
 
         # No need to validate as it's already verified in ``Chunk.__post_init__``.
         return Vector(data=tensor, attr=attr, validate=False)
 
     def select(self, *keys: str) -> Self:
         data = self.data.select(*keys)
-        schema = {key: self.schema[key] for key in keys}
+        schema = {key: self.attrs[key] for key in keys}
         return self.from_data_schema(data=data, schema=schema)
 
     def _getitem_direct(self, idx: int | slice | list[int] | NpArr | Tensor) -> Self:
         return self.from_data_schema(
-            data=self.data[idx], schema=atf.index(self.schema, idx)
+            data=self.data[idx], schema=atf.index(self.attrs, idx)
         )
 
     @property
@@ -147,22 +147,22 @@ class Chunk(Mapping[str, Vector]):
         if not chunks:
             raise ValueError("Given an empty sequence. Not sure what to do.")
 
-        if len({chunk.schema for chunk in chunks}) != 1:
+        if len({chunk.attrs for chunk in chunks}) != 1:
             raise ValueError("Chunks should have the same schema before joining.")
 
-        schema = chunks[0].schema
+        schema = chunks[0].attrs
 
         data = tensordict.cat([c.data for c in chunks])
 
-        return cls(schema=schema, data=data)
+        return cls.from_data_schema(schema=schema, data=data)
 
     @classmethod
-    def from_data_schema(cls, data: DataLike, schema: SchemaLike) -> Self:
+    def from_data_schema(cls, data: TensorDictLike, schema: AttrSetLike) -> Self:
         td = _as_tensordict(data)
         td.auto_batch_size_()
         td.auto_device_()
-        attrs = _as_schema(schema)
-        return cls(data=td, schema=attrs)
+        attrs = _as_attrset(schema)
+        return cls(data=td, attrs=attrs)
 
     @classmethod
     def from_mapping(cls, chunk: ChunkLike) -> Self:
@@ -177,11 +177,11 @@ class Chunk(Mapping[str, Vector]):
         raise TypeError
 
 
-def parse_chunk(*, data: DataLike, schema: SchemaLike) -> Chunk:
+def parse_chunk(*, data: TensorDictLike, schema: AttrSetLike) -> Chunk:
     return Chunk.from_data_schema(data=data, schema=schema)
 
 
-def _as_tensordict(data: DataLike, /) -> TensorDict:
+def _as_tensordict(data: TensorDictLike, /) -> TensorDict:
     if isinstance(data, TensorDict):
         return data
 
@@ -193,7 +193,7 @@ def _as_tensordict(data: DataLike, /) -> TensorDict:
     )
 
 
-def _as_schema(schema: SchemaLike, /) -> AttrSet:
+def _as_attrset(schema: AttrSetLike, /) -> AttrSet:
     if isinstance(schema, AttrSet):
         return schema
 

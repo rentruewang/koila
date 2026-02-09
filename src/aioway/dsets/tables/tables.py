@@ -11,6 +11,7 @@ import numpy as np
 from numpy import ndarray as NDArrayType
 from numpy.typing import NDArray
 
+from aioway.attrs import AttrSet
 from aioway.batches import Chunk
 
 from .columns import ColumnRef
@@ -77,13 +78,24 @@ class Table(ABC):
 
         arr: IntArray = np.asarray(it)
         arr = self._check_idx(arr)
-        return self._getitem(arr)
+
+        if (item := self._getitem(arr)).attrs != self.attrs:
+            raise ValueError(f"Attr mismatch for {item.attrs=} and {self.attrs=}.")
+
+        return item
 
     def __bool__(self) -> bool:
         return bool(len(self))
 
     def col(self, idx: str, /):
         return ColumnRef(table=self, column=idx)
+
+    @property
+    @abc.abstractmethod
+    def attrs(self) -> AttrSet:
+        "The schema of the current table."
+
+        ...
 
     @abc.abstractmethod
     def _getitem(self, idx: IntArray, /) -> Chunk:
