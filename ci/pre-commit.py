@@ -4,6 +4,7 @@ from argparse import ArgumentParser
 
 import gha
 import pdm
+import sh
 
 
 def parse_args() -> str:
@@ -16,33 +17,42 @@ def parse_args() -> str:
     return flags["command"]
 
 
-def tools_for_command(command: str, /):
+def commands_to_run(command: str, /):
     match command:
+        case "all":
+            yield from commands_to_run("typing")
+            yield from commands_to_run("format")
+        case "autoflake" | "isort" | "black":
+            yield f"{command} ."
+        case "mypy" | "typing":
+            yield "mypy src/"
         case "format":
-            yield "autoflake"
-            yield "isort"
-            yield "black"
-        case "typing":
-            yield "mypy"
+            yield "autoflake ."
+            yield "isort ."
+            yield "black ."
         case _:
             raise NotImplementedError(
                 f"Support for '{command}' command is not yet implemented."
             )
 
 
-if __name__ == "__main__":
-    command = parse_args()
+def run_tools(command: str) -> list[str]:
+    failures: list[str] = []
+    for tool in commands_to_run(command):
+        try:
+            pdm.run(tool)
+        except Exception:
+            failures.append(tool)
+    return failures
 
+
+if __name__ == "__main__":
     gha.setup()
     pdm.sync()
+    command = parse_args()
 
-    failed_tools: list[str] = []
-
-    for tool in tools_for_command(command):
-        try:
-            pdm.run(f"pre-commit run --all-files {tool}")
-        except Exception:
-            failed_tools.append(tool)
+    with sh.run_in_project_root():
+        failed_tools = run_tools(command)
 
     if failed_tools:
         failed = ",".join(map(lambda tool: f"'{tool}'", failed_tools))

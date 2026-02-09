@@ -6,19 +6,31 @@ repos:
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-added-large-files
-  - repo: 'https://github.com/PyCQA/autoflake'
-    rev: v2.3.1
+  - repo: local
     hooks:
       - id: autoflake
-  - repo: 'https://github.com/PyCQA/isort'
-    rev: 6.0.1
+        name: autoflake
+        entry: make -C ci autoflake
+        language: system
+        pass_filenames: false
+  - repo: local
     hooks:
       - id: isort
-  - repo: 'https://github.com/psf/black-pre-commit-mirror'
-    rev: 25.9.0
+        name: isort
+        entry: make -C ci isort
+        language: system
+        pass_filenames: false
+  - repo: local
     hooks:
       - id: black
-  - repo: 'https://github.com/pre-commit/mirrors-mypy'
-    rev: v1.19.0
+        name: black
+        entry: make -C ci black
+        language: system
+        pass_filenames: false
+  - repo: local
     hooks:
       - id: mypy
+        name: mypy
+        entry: make -C ci mypy
+        language: system
+        pass_filenames: false
