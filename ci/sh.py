@@ -23,7 +23,7 @@ def root() -> Path:
 
 
 @contextlib.contextmanager
-def run_in_root():
+def run_in_project_root():
     "Run the following commands in the ``root()`` folder."
 
     current = Path.cwd()

@@ -39,7 +39,7 @@ def _check_binary(binary: str, /) -> None:
 def command(command: str, /) -> None:
     "Call a ``pdm`` command."
 
-    with sh.run_in_root():
+    with sh.run_in_project_root():
         sh.cmd(f"pdm {command}")
 
 
