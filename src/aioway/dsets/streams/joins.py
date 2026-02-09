@@ -98,7 +98,7 @@ class NestedLoopJoinStream(Stream):
         lhs_select = lhs_batch[self.key]
         rhs_select = rhs_batch[self.key]
 
-        matrix = lhs_select[:, None] == rhs_select[None, :]
+        matrix = lhs_select.torch()[:, None] == rhs_select.torch()[None, :]
         l, r = torch.nonzero(matrix).T
         assert len(l) == len(r) == torch.sum(matrix)
         out = lhs_batch[l].zip(rhs_batch[r])

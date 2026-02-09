@@ -72,7 +72,7 @@ def test_validation_fail(schema: AttrSet, invalid_data: TensorDict):
 
 @pytest.fixture
 def block(schema, valid_data):
-    return Chunk(data=valid_data, schema=schema)
+    return Chunk.from_data_schema(data=valid_data, schema=schema)
 
 
 def test_block_init(block):
