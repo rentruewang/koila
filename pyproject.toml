@@ -27,12 +27,12 @@ build-backend = "setuptools.build_meta"
 
 [dependency-groups]
 pre-commit = [
-    "pre-commit>=4.2.0",
     "pip>=25.1.1",
     "autoflake>=2.3.1",
     "black>=25.1.0",
     "isort>=6.0.1",
     "mypy>=1.16.0",
+    "pre-commit>=4.5.1",
 ]
 tests = [
     "pytest>=8.3.5",
