@@ -127,7 +127,6 @@ def dtype(dtype: DTypeLike, /):
         case DType():
             return dtype
         case str():
-
             return dtype_with_kind(dtype, kind="composed")
 
     raise TypeError(type(dtype))

@@ -61,7 +61,7 @@ def test_chunk_filter(device: str, batch: int):
 
     f1d = block["f1d"]
 
-    positive = (f1d > 0).cpu().numpy()
+    positive = (f1d > 0).numpy()
 
     golden_index = np.arange(len(block))[positive]
     golden = block[golden_index]

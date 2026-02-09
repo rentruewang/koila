@@ -6,10 +6,8 @@ from collections.abc import Callable
 import pytest
 import torch
 from pytest import FixtureRequest
-from tensordict import TensorDict
 
 from aioway import attrs
-from aioway.attrs import AttrSet
 from aioway.batches import Chunk
 from aioway.dsets import (
     CacheStream,
@@ -106,9 +104,9 @@ def test_join_input_len(
     ],
 )
 def test_simple_nested_loop_join(to_slice: Callable[[Chunk], list[Chunk]]):
-    left = Chunk(
-        data=TensorDict({"a": [1, 3, 2, 2], "b": [4, 10, 5, 6]}, batch_size=4),
-        schema=AttrSet.from_values(
+    left = Chunk.from_data_schema(
+        data={"a": torch.tensor([1, 3, 2, 2]), "b": torch.tensor([4, 10, 5, 6])},
+        schema=dict(
             a=attrs.attr(
                 device="cpu",
                 dtype="int64",
@@ -121,9 +119,9 @@ def test_simple_nested_loop_join(to_slice: Callable[[Chunk], list[Chunk]]):
             ),
         ),
     )
-    right = Chunk(
-        data=TensorDict({"a": [1, 3, 2, 2], "c": [7, 11, 8, 9]}, batch_size=4),
-        schema=AttrSet.from_values(
+    right = Chunk.from_data_schema(
+        data={"a": torch.tensor([1, 3, 2, 2]), "c": torch.tensor([7, 11, 8, 9])},
+        schema=dict(
             a=attrs.attr(
                 device="cpu",
                 dtype="int64",
@@ -152,7 +150,7 @@ def test_simple_nested_loop_join(to_slice: Callable[[Chunk], list[Chunk]]):
 
     def sort_by_abc(td: Chunk):
         for key in "cba":
-            indices = torch.argsort(td[key], stable=True)
+            indices = torch.argsort(td[key].torch(), stable=True)
             td = td[indices]
         return td
 
@@ -173,7 +171,7 @@ def test_join_equal_as_original(
     joinable_frame_block = Chunk.cat(list(rhs_stream))
 
     # Performing the join here.
-    results: list[TensorDict] = list(binary_stream)
+    results: list[Chunk] = list(binary_stream)
     assert len(results), "The binary stream is empty."
     answer_items = Chunk.cat(results)["i1d"]
 

@@ -12,6 +12,8 @@ from typing import ClassVar, Self
 
 from aioway.batches import Chunk
 
+from .series import SeriesRef
+
 __all__ = ["Stream"]
 
 
@@ -29,6 +31,9 @@ class Stream(Iterator[Chunk], ABC):
     """
     A ``Stream`` should be able to be decomposed with ``match`` statements.
     """
+
+    def col(self, name: str) -> SeriesRef:
+        return SeriesRef(stream=self, column=name)
 
     @typing.override
     def __iter__(self) -> Self:

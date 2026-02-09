@@ -2,10 +2,11 @@
 
 "Chunk is a heterogenious collection of in-memory tensor batches."
 
+import dataclasses as dcls
 import logging
 import typing
 from collections.abc import Iterator, Mapping, Sequence
-from typing import Any, Self, TypeIs
+from typing import Self, TypeIs
 
 import tensordict
 from numpy import ndarray as NpArr
@@ -17,6 +18,7 @@ from aioway.attrs import Attr, AttrSet, _validation
 from aioway.attrs import funcs as atf
 
 from . import funcs
+from .vectors import Vector
 
 __all__ = ["Chunk"]
 
@@ -24,9 +26,12 @@ LOGGER = logging.getLogger(__name__)
 
 type DataLike = TensorDict | dict[str, Tensor]
 type SchemaLike = AttrSet | dict[str, Attr]
+type ChunkLike = Chunk | dict[str, Vector]
 
 
-class Chunk(Mapping[str, Tensor]):
+@typing.final
+@dcls.dataclass(frozen=True)
+class Chunk(Mapping[str, Vector]):
     """
     A ``Chunk`` represents a batch of data, following a specific scheam.
 
@@ -34,128 +39,108 @@ class Chunk(Mapping[str, Tensor]):
     This can change in the future.
     """
 
-    def __init__(self, data: DataLike, schema: SchemaLike) -> None:
-        self._data: TensorDict = _as_tensordict(data)
-        """
-        Underlying tensordict backing the ``Block``.
-        """
+    data: TensorDict
+    "The underlying data."
 
-        self._schema: AttrSet = _as_schema(schema)
-        """
-        The schema of the current ``Block``.
-        """
+    schema: AttrSet
+    "The schema for the ``Chunk``."
 
-        # Check if the inputs of ``__init__`` is ok.
-        # Raise ``ValueError`` or ``TypeError`` if the inputs are not as expected.
-        self._check_init()
-
-        # Check if the data matches the schema.
-        _validation.validate_schema(self._schema, self._data)
+    def __post_init__(self) -> None:
+        _validation.validate_schema(self.schema, self.data)
 
     @typing.override
     def __len__(self) -> int:
         "The length of the current batch."
 
-        return len(self._data)
+        return len(self.data)
 
     @typing.override
     def __repr__(self) -> str:
-        return f"{self._schema!r}({len(self)})"
+        return f"{self.schema!r}({len(self)})"
 
     @typing.override
     def __eq__(self, rhs: object) -> bool:
         # Check if schema and data are both equal.
         if isinstance(rhs, Chunk):
-            return self.schema == rhs.schema and (self._data == rhs._data).all()
+            return self.schema == rhs.schema and (self.data == rhs.data).all()
 
         # If tensordict, don't compare schema.
         if isinstance(rhs, dict | TensorDict):
-            return (self._data == rhs).all()
+            return (self.data == rhs).all()
 
         return NotImplemented
 
     @typing.overload
-    def __getitem__(self, idx: str) -> Tensor: ...
+    def __getitem__(self, idx: str) -> Vector: ...
 
     @typing.overload
     def __getitem__(
-        self,
-        idx: int | slice | list[int] | list[str] | NpArr | Tensor | tuple[Any, ...],
-        /,
+        self, idx: int | slice | list[int] | list[str] | NpArr | Tensor, /
     ) -> Self: ...
 
     @typing.override
     def __getitem__(self, idx):
         if isinstance(idx, str):
-            return self._getitem_str(idx)
+            return self.col(idx)
 
         # Doing the batch operations that simply does type check first,
         # to avoid expensive iteration over the input.
-        if isinstance(idx, int | tuple | slice | NpArr | Tensor):
+        if isinstance(idx, int | slice | NpArr | Tensor):
             return self._getitem_direct(idx)
 
-        if _is_list_of_str(idx):
-            return self._getitem_list_str(idx)
+        if _is_seq_of_str(idx):
+            return self.select(*idx)
 
         if _is_list_of_int(idx):
             return self._getitem_direct(idx)
 
-        raise NotImplementedError(f"Unsupported {type(idx)=}")
+        raise TypeError(type(idx))
 
     @typing.override
     def __iter__(self) -> Iterator[str]:
-        return iter(self._schema)
+        return iter(self.schema)
 
     def rename(self, **renames: str) -> Self:
         if not renames:
             return self
 
         schema = atf.renames(self.schema, **renames)
-        data = funcs.rename(self._data, **renames)
-        return type(self)(data=data, schema=schema)
+        data = funcs.rename(self.data, **renames)
+        return self.from_data_schema(data=data, schema=schema)
 
     def filter(self, expr: str | Expr) -> Self:
-        return type(self)(data=funcs.filter(self._data, expr), schema=self.schema)
+        return self.from_data_schema(
+            data=funcs.filter(self.data, expr), schema=self.schema
+        )
 
     def zip(self, rhs: Self) -> Self:
-        data = tensordict.merge_tensordicts(self._data, rhs._data)
+        data = tensordict.merge_tensordicts(self.data, rhs.data)
         schema = {**self.schema, **rhs.schema}
-        return type(self)(data=data, schema=schema)
+        return self.from_data_schema(data=data, schema=schema)
 
-    def _getitem_str(self, key: str) -> Tensor:
-        return self._data[key]
+    def col(self, key: str) -> Vector:
+        tensor = self.data[key]
+        attr = self.schema[key]
 
-    def _getitem_list_str(self, keys: list[str]) -> Self:
-        data = self._data.select(*keys)
+        # No need to validate as it's already verified in ``Chunk.__post_init__``.
+        return Vector(data=tensor, attr=attr, validate=False)
+
+    def select(self, *keys: str) -> Self:
+        data = self.data.select(*keys)
         schema = {key: self.schema[key] for key in keys}
-        return type(self)(data=data, schema=schema)
+        return self.from_data_schema(data=data, schema=schema)
 
-    def _getitem_direct(
-        self, idx: slice | list[int] | Tensor | tuple[Any, ...]
-    ) -> Self:
-        return type(self)(data=self._data[idx], schema=atf.index(self.schema, idx))
-
-    @property
-    def schema(self) -> AttrSet:
-        "The schema of a ``Chunk``."
-
-        return self._schema
+    def _getitem_direct(self, idx: int | slice | list[int] | NpArr | Tensor) -> Self:
+        return self.from_data_schema(
+            data=self.data[idx], schema=atf.index(self.schema, idx)
+        )
 
     @property
     def shape(self) -> Size:
-        return self._data.shape
+        return self.data.shape
 
-    @typing.no_type_check
-    def _check_init(self) -> None:
-        if not isinstance(self._data, TensorDict):
-            raise TypeError(
-                f"Expected a `TensorDict`, got type of data: {type(self._data)}"
-            )
-
-        if not isinstance(self._schema, AttrSet):
-            raise TypeError(
-                f"Expected an `AttrSet`, got type of schema: {type(self.schema)}"
-            )
+    def torch(self):
+        return self.data
 
     @classmethod
     def cat(cls, chunks: Sequence[Self]) -> Self:
@@ -167,12 +152,36 @@ class Chunk(Mapping[str, Tensor]):
 
         schema = chunks[0].schema
 
-        data = tensordict.cat([c._data for c in chunks])
+        data = tensordict.cat([c.data for c in chunks])
 
         return cls(schema=schema, data=data)
 
+    @classmethod
+    def from_data_schema(cls, data: DataLike, schema: SchemaLike) -> Self:
+        td = _as_tensordict(data)
+        td.auto_batch_size_()
+        td.auto_device_()
+        attrs = _as_schema(schema)
+        return cls(data=td, schema=attrs)
 
-def _as_tensordict(data: DataLike) -> TensorDict:
+    @classmethod
+    def from_mapping(cls, chunk: ChunkLike) -> Self:
+        if isinstance(chunk, cls):
+            return chunk
+
+        if _is_mapping_of_vector(chunk):
+            data = {key: chunk[key].data for key in chunk.keys()}
+            schema = {key: chunk[key].attr for key in chunk.keys()}
+            return cls.from_data_schema(data=data, schema=schema)
+
+        raise TypeError
+
+
+def parse_chunk(*, data: DataLike, schema: SchemaLike) -> Chunk:
+    return Chunk.from_data_schema(data=data, schema=schema)
+
+
+def _as_tensordict(data: DataLike, /) -> TensorDict:
     if isinstance(data, TensorDict):
         return data
 
@@ -184,7 +193,7 @@ def _as_tensordict(data: DataLike) -> TensorDict:
     )
 
 
-def _as_schema(schema: SchemaLike) -> AttrSet:
+def _as_schema(schema: SchemaLike, /) -> AttrSet:
     if isinstance(schema, AttrSet):
         return schema
 
@@ -205,6 +214,15 @@ def _is_dict_of_tensor(obj) -> TypeIs[dict[str, Tensor]]:
     )
 
 
+def _is_mapping_of_vector(obj) -> TypeIs[Mapping[str, Vector]]:
+    return (
+        True
+        and isinstance(obj, Mapping)
+        and all(isinstance(key, str) for key in obj.keys())
+        and all(isinstance(val, Vector) for val in obj.values())
+    )
+
+
 def _is_dict_of_attr(obj) -> TypeIs[dict[str, Attr]]:
     return (
         True
@@ -214,8 +232,8 @@ def _is_dict_of_attr(obj) -> TypeIs[dict[str, Attr]]:
     )
 
 
-def _is_list_of_str(obj) -> TypeIs[list[str]]:
-    return isinstance(obj, list) and all(isinstance(i, str) for i in obj)
+def _is_seq_of_str(obj) -> TypeIs[Sequence[str]]:
+    return isinstance(obj, Sequence) and all(isinstance(i, str) for i in obj)
 
 
 def _is_list_of_int(obj) -> TypeIs[list[int]]:

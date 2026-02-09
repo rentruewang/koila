@@ -63,7 +63,7 @@ def _expr_filter_builder(source: Stream):
 def _pred_filter_builder(source: Stream):
     return FuncFilterStream(
         source=source,
-        predicate=lambda t: (t["f1d"] > 0).cpu(),
+        predicate=lambda t: (t["f1d"] > 0).torch(),
     )
 
 

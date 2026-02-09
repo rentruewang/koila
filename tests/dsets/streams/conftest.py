@@ -2,7 +2,6 @@
 
 "The shared utilities for ``Stream`` testing."
 
-
 import pytest
 
 from aioway.dsets import ChunkTable, TableStream, TableStreamLoader
