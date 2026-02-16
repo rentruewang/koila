@@ -3,11 +3,19 @@
 import dataclasses as dcls
 import functools
 import subprocess as sp
+import sys
 from argparse import ArgumentParser
 from collections.abc import Callable
+from typing import Literal
 
 import gha
 import sh
+
+
+def in_venv() -> bool:
+    "Check if we are running inside a venv."
+
+    return sys.prefix != sys.base_prefix
 
 
 def ensure(binary: str, /):
@@ -27,6 +35,7 @@ def ensure(binary: str, /):
 @functools.cache
 def _check_binary(binary: str, /) -> None:
     print(f"Trying to check if '{binary}' is installed...", end=" ")
+
     try:
         _ = sp.run([binary], check=True, capture_output=True)
         print("Yes")
@@ -44,27 +53,32 @@ def command(command: str, /) -> None:
 
 
 @ensure("pdm")
+def _setup_deps(mode: Literal["sync", "install"], /, extras: bool = True) -> None:
+    # No need to re-setup.
+    if in_venv():
+        return None
+
+    cmd: list[str] = [mode]
+
+    if extras:
+        cmd.append("-G:all")
+
+    if gha.in_github_actions():
+        cmd.append("-v")
+
+    command(" ".join(cmd))
+
+
 def sync() -> None:
     "Sync the dependencies. Must have ``pdm.lock`` present."
 
-    cmd = "sync -G:all"
-
-    if gha.in_github_actions():
-        cmd = f"{cmd} -v"
-
-    command(cmd)
+    _setup_deps("sync")
 
 
-@ensure("pdm")
 def install() -> None:
     "Install the dependencies. Might update ``pdm.lock``."
 
-    cmd = "install -G:all"
-
-    if gha.in_github_actions():
-        cmd = f"{cmd} -v"
-
-    command(cmd)
+    _setup_deps("install")
 
 
 @ensure("pdm")
@@ -88,17 +102,18 @@ def publish() -> None:
     command("publish")
 
 
+@dcls.dataclass(frozen=True, kw_only=True)
+class ParsedArgs:
+    cmd: str
+    args: list[str] = dcls.field(default_factory=list)
+
+
 def parse_args():
 
     parser = ArgumentParser()
     parser.add_argument("command", type=str)
     parser.add_argument("args", nargs="*")
     flags = vars(parser.parse_args())
-
-    @dcls.dataclass(frozen=True)
-    class ParsedArgs:
-        cmd: str
-        args: list[str] = dcls.field(default_factory=list)
 
     return ParsedArgs(cmd=flags["command"], args=flags["args"])
 
