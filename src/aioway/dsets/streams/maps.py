@@ -148,7 +148,7 @@ class FuncFilterStream(MapStream):
         pred = self.predicate(batch)
 
         if pred.dtype is not torch.bool:
-            raise ValueError()
+            raise ValueError(f"Should return a boolean `Tensor`. Got {pred.dtype}.")
 
         return batch[pred]
 
