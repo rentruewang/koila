@@ -174,7 +174,7 @@ class Chunk(Mapping[str, Vector]):
             schema = {key: chunk[key].attr for key in chunk.keys()}
             return cls.from_data_schema(data=data, schema=schema)
 
-        raise TypeError
+        raise TypeError(type(chunk))
 
 
 def parse_chunk(*, data: TensorDictLike, schema: AttrSetLike) -> Chunk:
@@ -188,9 +188,7 @@ def _as_tensordict(data: TensorDictLike, /) -> TensorDict:
     if _is_dict_of_tensor(data):
         return TensorDict(data)
 
-    raise TypeError(
-        f"Unknown: {type(data)=}. Only accepts `TensorDict` or `dict[str, Tensor]`."
-    )
+    raise TypeError(type(data))
 
 
 def _as_attrset(schema: AttrSetLike, /) -> AttrSet:
@@ -200,9 +198,7 @@ def _as_attrset(schema: AttrSetLike, /) -> AttrSet:
     if _is_dict_of_attr(schema):
         return AttrSet.from_dict(schema)
 
-    raise TypeError(
-        f"Unknown: {type(schema)=}. Only accepts `AttrSet` or `dict[str, Attr]`."
-    )
+    raise TypeError(type(schema))
 
 
 def _is_dict_of_tensor(obj) -> TypeIs[dict[str, Tensor]]:
