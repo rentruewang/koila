@@ -1,58 +1,83 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
+import dataclasses as dcls
 from argparse import ArgumentParser
+from collections.abc import Generator
 
 import gha
 import pdm
 import sh
 
 
-def parse_args() -> str:
+@dcls.dataclass(kw_only=True)
+class Args:
+    command: str
+    dry_run: bool
+
+
+def parse_args() -> Args:
 
     parser = ArgumentParser()
     parser.add_argument("command", type=str)
+    parser.add_argument("-n", "--dry-run", action="store_true")
 
-    flags = vars(parser.parse_args())
+    flags = parser.parse_args()
 
-    return flags["command"]
+    return Args(command=flags.command, dry_run=flags.dry_run)
 
 
-def commands_to_run(command: str, /):
+@dcls.dataclass(kw_only=True)
+class Tool:
+    "The tools and their descriptions."
+
+    name: str
+    "The name of the tool."
+
+    cmd: str
+    "The command that actually runs."
+
+
+def commands_to_run(command: str, /) -> Generator[Tool]:
     match command:
         case "all":
-            yield from commands_to_run("typing")
             yield from commands_to_run("format")
+            yield from commands_to_run("typing")
         case "autoflake" | "isort" | "black":
-            yield f"{command} ."
+            yield Tool(name=command, cmd=f"{command} .")
         case "mypy" | "typing":
-            yield "mypy src/"
+            yield Tool(name="mypy", cmd="mypy src/")
         case "format":
-            yield "autoflake ."
-            yield "isort ."
-            yield "black ."
+            for cmd in ["autoflake", "isort", "black"]:
+                yield from commands_to_run(cmd)
         case _:
             raise NotImplementedError(
                 f"Support for '{command}' command is not yet implemented."
             )
 
 
-def run_tools(command: str) -> list[str]:
+def run_tools(args: Args) -> list[str]:
+    "Execute the tools, return the tools that failed."
+
+    # Maybe run the command. Depends on the ``dry_run`` flag.
+    run = print if args.dry_run else pdm.run
+
     failures: list[str] = []
-    for tool in commands_to_run(command):
+    for tool in commands_to_run(args.command):
         try:
-            pdm.run(tool)
+            run(tool.cmd)
         except Exception:
-            failures.append(tool)
+            failures.append(tool.name)
     return failures
 
 
 if __name__ == "__main__":
     gha.setup()
-    pdm.sync()
-    command = parse_args()
+    pdm.install()
+
+    args = parse_args()
 
     with sh.run_in_project_root():
-        failed_tools = run_tools(command)
+        failed_tools = run_tools(args)
 
     if failed_tools:
         failed = ",".join(map(lambda tool: f"'{tool}'", failed_tools))
