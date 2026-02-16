@@ -31,7 +31,7 @@ class FaissIndex(Index):
         assert isinstance(operator, IndexAnn)
 
         if value.ndim != 2:
-            raise ValueError("Value must be 2 dimensions.")
+            raise ValueError(f"Value must be 2 dimensions. Got {value.ndim=}.")
 
         _, indices = self.index.search(value, operator.k)
         return indices

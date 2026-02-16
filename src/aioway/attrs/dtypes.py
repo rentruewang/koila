@@ -178,7 +178,7 @@ class ComposedDType(DType):
             case "int" | "float":
                 return f"{f}{self._bits}"
             case _:
-                raise AssertionError("Unreachable code.")
+                raise NotImplementedError(self._family)
 
     @property
     @typing.override
@@ -204,7 +204,7 @@ class ComposedDType(DType):
         if m := _bool_dtype().match(dtype):
             return cls(family="bool", bits=8)
 
-        raise ValueError(f"Cannot parse {dtype=}")
+        raise ValueError(dtype)
 
 
 @functools.cache
@@ -232,7 +232,7 @@ class TorchDType(DType):
         try:
             self._check_torch_dtype()
         except (TypeError, ValueError) as e:
-            raise ValueError(f"Value {dtype=} cannot be validated.") from e
+            raise ValueError(dtype) from e
 
     def __str__(self):
         return str(self._dtype).removeprefix("torch.")
@@ -243,7 +243,7 @@ class TorchDType(DType):
 
         # Try getting the family.
         if not str(self._dtype).startswith(f"torch.{self._family}"):
-            raise ValueError(f"Do not know how to handle value: {self._dtype}")
+            raise ValueError(self._dtype)
 
     @functools.cached_property
     def _family(self) -> DTypeFamily:
@@ -256,7 +256,7 @@ class TorchDType(DType):
         if self._dtype in [torch.float16, torch.float32, torch.float64]:
             return "float"
 
-        raise ValueError(f"Cannot parse {self._dtype}.")
+        raise ValueError(self._dtype)
 
     @property
     @typing.override
@@ -279,7 +279,7 @@ class TorchDType(DType):
         try:
             return cls(getattr(torch, dtype))
         except AttributeError as ae:
-            raise ValueError(f"Invalid dtype {dtype}.") from ae
+            raise ValueError(dtype) from ae
 
 
 @typing.final
@@ -296,7 +296,7 @@ class NumpyDType(DType):
         try:
             self._check_numpy_dtype()
         except Exception as e:
-            raise ValueError(f"Cannot parse {dtype=}") from e
+            raise ValueError(dtype) from e
 
     @typing.override
     def __str__(self) -> str:
@@ -346,6 +346,6 @@ class NumpyDType(DType):
         try:
             dt = np.dtype(dtype)
         except Exception as e:
-            raise ValueError(f"Numpy does not know how to handle {dtype=}") from e
+            raise ValueError(dtype) from e
 
         return cls(dt)

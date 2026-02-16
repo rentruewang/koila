@@ -43,7 +43,7 @@ class Shape(Sequence[int]):
 
     def __post_init__(self):
         if not self.valid():
-            raise ValueError(f"Shape: {self} is not valid")
+            raise ValueError(self)
 
         LOGGER.debug("Shape created: %s", self)
 
@@ -91,10 +91,7 @@ class Shape(Sequence[int]):
             case slice():
                 return type(self)(self.dims[idx])
             case _:
-                raise TypeError(
-                    "`Shape`'s __getitem__ does not know "
-                    f"how to handle index of type: {type(idx)}"
-                )
+                raise TypeError(type(idx))
 
     @typing.override
     def __iter__(self) -> Iterator[int]:
@@ -179,7 +176,7 @@ def shape(*dims) -> Shape:
 
         raise ValueError
     except ValueError:
-        raise ValueError(f"Don't know how to handle {dims=}")
+        raise ValueError(dims)
 
 
 def _shape(dims) -> Shape:

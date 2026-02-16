@@ -35,13 +35,13 @@ class Attr:
 
     def __post_init__(self) -> None:
         if not isinstance(self.device, Device):
-            raise TypeError(f"{type(self.device)=}")
+            raise TypeError(type(self.device))
 
         if not isinstance(self.dtype, DType):
-            raise TypeError(f"{type(self.dtype)=}")
+            raise TypeError(type(self.dtype))
 
         if not isinstance(self.shape, Shape):
-            raise TypeError(f"{type(self.shape)=}")
+            raise TypeError(type(self.shape))
 
 
 def attr(device: DeviceLike, dtype: DTypeLike, shape: ShapeLike) -> Attr:

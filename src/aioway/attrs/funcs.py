@@ -32,7 +32,7 @@ def index(schema: AttrSet, idx: int | slice | list[int] | NpArr | Tensor) -> Att
         modified = shapes[:]
 
     else:
-        raise TypeError(f"{type(idx)=} is not supported.")
+        raise TypeError(type(idx))
 
     return AttrSet.from_fields(
         names=names, devices=devices, dtypes=dtypes, shapes=modified
