@@ -1,9 +1,10 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-"``Column``s are a column of ``Table``."
+"``StreamColumn``s are a column of ``Stream``."
 
 import dataclasses as dcls
 import typing
+from collections.abc import Iterator
 from typing import Self
 
 from aioway.attrs import Attr
@@ -12,18 +13,18 @@ from aioway.batches import Vector
 if typing.TYPE_CHECKING:
     from .streams import Stream
 
-__all__ = ["SeriesRef"]
+__all__ = ["StreamColumn"]
 
 
 @dcls.dataclass(frozen=True)
-class SeriesRef:
+class StreamColumn(Iterator[Vector]):
     """
     A column reference (on a stream).
     Performs ``__next__`` and yield ``Vector``s.
     """
 
     stream: "Stream"
-    "The original table which this reference is derived from."
+    "The original stream which this reference is derived from."
 
     column: str
     "The column to select."

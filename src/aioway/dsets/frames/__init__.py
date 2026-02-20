@@ -2,4 +2,4 @@
 
 from .chunks import *
 from .columns import *
-from .tables import *
+from .frames import *

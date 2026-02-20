@@ -1,6 +1,6 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-"``Table``s that produce data by slicing contiguous input records."
+"``Frame``s that produce data by slicing contiguous input records."
 
 import dataclasses as dcls
 import functools
@@ -12,15 +12,15 @@ import numpy as np
 from aioway.attrs import AttrSet
 from aioway.batches import Chunk
 
-from .tables import IntArray, Table
+from .frames import Frame, IntArray
 
-__all__ = ["ChunkTable", "ChunkListTable"]
+__all__ = ["ChunkFrame", "ChunkListFrame"]
 
 
 @dcls.dataclass(frozen=True)
-class ChunkTable(Table):
+class ChunkFrame(Frame):
     """
-    A ``Table`` backed by a ``TensorDict`` (aka a batch in ``aioway``).
+    A ``Frame`` backed by a ``TensorDict`` (aka a batch in ``aioway``).
     This means that it is non-distributed, and volatile.
     """
 
@@ -45,9 +45,9 @@ class ChunkTable(Table):
 
 @typing.final
 @dcls.dataclass(frozen=True)
-class ChunkListTable(Table):
+class ChunkListFrame(Frame):
     """
-    A ``Table`` backed by a ``list[Chunk]`` (aka a batch in ``aioway``).
+    A ``Frame`` backed by a ``list[Chunk]`` (aka a batch in ``aioway``).
     This means that it is non-distributed, and volatile.
     """
 
