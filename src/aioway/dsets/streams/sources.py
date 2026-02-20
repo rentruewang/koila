@@ -17,15 +17,15 @@ from torch.utils.data import DataLoader, Sampler
 from aioway.attrs import AttrSet
 from aioway.batches import Chunk
 
-from ..tables import Table
+from ..frames import Frame
 from .streams import Stream
 
 __all__ = [
     "BoundedStream",
     "CacheStream",
     "ListStream",
-    "TableStream",
-    "TableStreamLoader",
+    "FrameStream",
+    "FrameStreamLoader",
 ]
 
 LOGGER = logging.getLogger(__name__)
@@ -170,9 +170,9 @@ class ListStream(BoundedStream):
 
 
 @dcls.dataclass(frozen=True)
-class TableStreamLoader:
+class FrameStreamLoader:
     """
-    The optoins for ``DataLoader`` on ``Table`` in ``TableStream``.
+    The optoins for ``DataLoader`` on ``Frame`` in ``FrameStream``.
     """
 
     batch_size: int = 1
@@ -189,15 +189,15 @@ class TableStreamLoader:
 
 
 @dcls.dataclass
-class TableStream(Stream):
+class FrameStream(Stream):
     """
-    A ``Stream`` backed by a ``Table``.
+    A ``Stream`` backed by a ``Frame``.
     """
 
-    table: Table
-    "The underlying ``Table``."
+    frame: Frame
+    "The underlying ``Frame``."
 
-    options: TableStreamLoader
+    options: FrameStreamLoader
     """
     The options passed directly to ``DataLoader``.
     """
@@ -214,7 +214,7 @@ class TableStream(Stream):
     def _dataloader(self) -> DataLoader:
         # Note that ``__dict__`` of a dataclass is just the custom fields.
         return DataLoader(
-            self.table,
+            self.frame,
             **self.options.__dict__,
             collate_fn=_identity,
         )
@@ -227,14 +227,14 @@ class TableStream(Stream):
     @property
     @typing.override
     def attrs(self) -> AttrSet:
-        return self.table.attrs
+        return self.frame.attrs
 
     @functools.cached_property
     def _size(self) -> int:
         batch_size = self.options.batch_size
         drop_last = self.options.drop_last
         rounding = math.floor if drop_last else math.ceil
-        return rounding(len(self.table) / batch_size)
+        return rounding(len(self.frame) / batch_size)
 
     def _get_batch(self, idx: int) -> Chunk:
         batch_size = self.options.batch_size
@@ -242,11 +242,11 @@ class TableStream(Stream):
         if not -self.size <= idx < self.size:
             raise IndexError(
                 f"Index {idx=} out of bounds for stream {self.size=}, "
-                f"backed by {self.table}."
+                f"backed by {self.frame}."
             )
 
         idx %= self.size
-        return self.table[idx : idx + batch_size]
+        return self.frame[idx : idx + batch_size]
 
     @typing.override
     def _children(self) -> Generator[Stream]:

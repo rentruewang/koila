@@ -7,7 +7,7 @@ from typing import NamedTuple
 
 from numpy.typing import NDArray
 
-from ..tables import Table
+from ..frames import Frame
 from .indices import Index
 from .ops import IndexPlan
 
@@ -50,7 +50,7 @@ class IndexManager(Mapping[MultiCol, MultiPlanIndex]):
     providing some additional utility to make the API easy to use.
     """
 
-    frame: Table
+    frame: Frame
     """
     The framem for which the ``IndexManager`` manages indices.
     """

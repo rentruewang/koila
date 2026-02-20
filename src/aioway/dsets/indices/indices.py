@@ -8,7 +8,7 @@ from collections.abc import Sequence
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
-from ..tables import Table
+from ..frames import Frame
 from .ops import IndexPlan
 
 __all__ = ["Index", "IndexContext"]
@@ -20,7 +20,7 @@ class IndexContext:
     The indexing information for looking upu an index.
     """
 
-    frame: Table
+    frame: Frame
     """
     The ``Frame`` to apply the index on.
     """
