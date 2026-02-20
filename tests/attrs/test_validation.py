@@ -2,7 +2,6 @@
 
 import pytest
 import torch
-from pytest import FixtureRequest
 from tensordict import TensorDict
 
 from aioway import attrs
@@ -57,15 +56,15 @@ def _invalid_data():
 
 
 @pytest.fixture(params=_invalid_data())
-def invalid_data(request: FixtureRequest):
+def invalid_data(request) -> TensorDict:
     return request.param
 
 
-def test_validation_ok(schema: AttrSet, valid_data: TensorDict):
+def test_validation_ok(schema, valid_data):
     _validation.validate_schema(schema, valid_data)
 
 
-def test_validation_fail(schema: AttrSet, invalid_data: TensorDict):
+def test_validation_fail(schema, invalid_data):
     with pytest.raises(RuntimeError):
         _validation.validate_schema(schema, invalid_data)
 

@@ -15,12 +15,12 @@ from aioway.dsets import (
 from tests import fake
 
 
-def block_table(device: str, batch_size: int, data_size: int) -> ChunkFrame:
+def block_table(device: str, batch_size: int, data_size: int):
     block = fake.chunk_ok(size=data_size, device=device)
     return ChunkFrame(block)
 
 
-def list_table(device, batch_size, data_size):
+def list_table(device: str, batch_size: int, data_size: int):
     return ChunkListFrame(
         [
             fake.chunk_ok(size=batch_size, device=device)
@@ -30,29 +30,24 @@ def list_table(device, batch_size, data_size):
 
 
 @pytest.fixture(params=[block_table, list_table])
-def frame(
-    request: pytest.FixtureRequest,
-    device: str,
-    batch_size: int,
-    data_size: int,
-) -> Frame:
+def frame(request, device, batch_size, data_size) -> Frame:
     return request.param(device=device, batch_size=batch_size, data_size=data_size)
 
 
 @pytest.fixture
-def table_stream(frame: Frame, batch_size: int):
+def table_stream(frame, batch_size):
     return FrameStream(
         frame,
         FrameStreamLoader(batch_size=batch_size),
     )
 
 
-def test_table_not_empty(frame: Frame):
+def test_table_not_empty(frame):
     assert frame
     assert len(frame)
 
 
-def test_table_idx_arr(frame: Frame):
+def test_table_idx_arr(frame):
     idx = random.randint(low=-len(frame), high=len(frame), size=[len(frame)])
 
     assert np.all(-len(frame) <= idx)
@@ -64,15 +59,12 @@ def test_table_idx_arr(frame: Frame):
     assert len(out) == len(idx)
 
 
-def test_table_idx_slice(frame: Frame):
+def test_table_idx_slice(frame):
     out = frame[-len(frame) : len(frame)]
     assert isinstance(out, Chunk)
     assert len(out) == len(frame)
 
 
-def test_table_out_of_bounds(frame: Frame):
-    with pytest.raises(IndexError):
-        _ = frame[[2 * len(frame)]]
-
+def test_table_out_of_bounds(frame):
     with pytest.raises(IndexError):
         _ = frame[[-2 * len(frame)]]
