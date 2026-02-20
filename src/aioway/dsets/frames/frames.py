@@ -1,6 +1,6 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-"The ``Table`` interface."
+"The ``Frame`` interface."
 
 import abc
 import dataclasses as dcls
@@ -14,27 +14,27 @@ from numpy.typing import NDArray
 from aioway.attrs import AttrSet
 from aioway.batches import Chunk
 
-from .columns import ColumnRef
+from .columns import FrameColumn
 
-__all__ = ["Table"]
+__all__ = ["Frame"]
 
 type IntArray = NDArray[np.int_]
 "Integer numpy array."
 
-type TableIndex = slice | list[int] | IntArray
-"The types that can be used for index accessing on ``Table``s."
+type FrameBatchIndex = slice | list[int] | IntArray
+"The types that can be used for index accessing on ``Frame``s."
 
 
 @dcls.dataclass(frozen=True)
-class Table(ABC):
+class Frame(ABC):
     """
-    ``Table`` represents a set of heterogenious data stored in memory,
+    ``Frame`` represents a set of heterogenious data stored in memory,
     it is one of the main physical abstractions in ``aioway`` to represent eager computation.
 
     Think of it as a normal ``Sequence`` of ``Chunk``,
     where computation happens eagerly, imperatively, and the result is stored in memory.
 
-    Each ``Chunk`` retrieved from ``Table`` is a minibatch of data.
+    Each ``Chunk`` retrieved from ``Frame`` is a minibatch of data.
 
     Similar to ``Dataset``, but only allows retrieving a batch at a time.
     To get a single item, retrieve a batch of size 1.
@@ -50,9 +50,9 @@ class Table(ABC):
         Get the number of items (rows) in the current dataframe.
         """
 
-    def __getitem__(self, idx: TableIndex, /) -> Chunk:
+    def __getitem__(self, idx: FrameBatchIndex, /) -> Chunk:
         """
-        Get individual items from the current ``Table``.
+        Get individual items from the current ``Frame``.
 
         Args:
             idx:
@@ -88,12 +88,12 @@ class Table(ABC):
         return bool(len(self))
 
     def col(self, idx: str, /):
-        return ColumnRef(table=self, column=idx)
+        return FrameColumn(frame=self, column=idx)
 
     @property
     @abc.abstractmethod
     def attrs(self) -> AttrSet:
-        "The schema of the current table."
+        "The schema of the current frame."
 
         ...
 
@@ -124,7 +124,7 @@ class Table(ABC):
         return idx % length
 
 
-def _is_table_index(idx: Any) -> TypeIs[TableIndex]:
+def _is_table_index(idx: Any) -> TypeIs[FrameBatchIndex]:
     "Check if the ``idx`` passed in is a valid type."
 
     # Check if it's a valid slice.
