@@ -49,9 +49,9 @@ def _dtypes():
 
 
 @pytest.fixture(params=_golden())
-def golden(request):
+def golden(request) -> _CaseChecker:
     return request.param
 
 
-def test_dtype_cases(golden: _CaseChecker):
+def test_dtype_cases(golden):
     golden.check()

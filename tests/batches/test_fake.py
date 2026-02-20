@@ -4,31 +4,30 @@ import numpy as np
 import pytest
 import torch
 from numpy import random as np_rand
-from pytest import FixtureRequest
 
 from tests import fake
 
 
 @pytest.fixture(params=fake.cpu_and_maybe_cuda(), scope="session")
-def device(request: FixtureRequest) -> str:
+def device(request) -> str:
     return request.param
 
 
 @pytest.fixture(params=fake.batch_sizes(), scope="module")
-def batch(request: FixtureRequest) -> int:
+def batch(request) -> int:
     return request.param
 
 
-def test_chunk_init_success(device: str, batch: int):
+def test_chunk_init_success(device, batch):
     _ = fake.chunk_ok(device=device, size=batch)
 
 
-def test_chunk_len(device: str, batch: int):
+def test_chunk_len(device, batch):
     block = fake.chunk_ok(device=device, size=batch)
     assert len(block) == batch
 
 
-def test_chunk_getitem_size(device: str, batch: int):
+def test_chunk_getitem_size(device, batch):
     block = fake.chunk_ok(device=device, size=batch)
 
     assert len(block[batch - 1 : batch]) == 1
@@ -51,12 +50,12 @@ def test_chunk_getitem_size(device: str, batch: int):
     assert len(block[np.arange(len(np_idx))[np_idx]]) == np_idx.sum()
 
 
-def test_chunk_keys(device: str, batch: int):
+def test_chunk_keys(device, batch):
     block = fake.chunk_ok(device=device, size=batch)
     assert set(block.keys()) == {"f1d", "f2d", "i1d", "i2d"}
 
 
-def test_chunk_filter(device: str, batch: int):
+def test_chunk_filter(device, batch):
     block = fake.chunk_ok(device=device, size=batch)
 
     f1d = block["f1d"]
