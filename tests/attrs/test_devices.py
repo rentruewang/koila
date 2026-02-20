@@ -3,7 +3,6 @@
 import pytest
 
 from aioway import attrs
-from aioway.attrs import Device
 
 
 @pytest.fixture
@@ -11,6 +10,6 @@ def cpu():
     return attrs.device("cpu")
 
 
-def test_eq(cpu: Device):
+def test_eq(cpu):
     assert cpu == "cpu"
     assert cpu == attrs.device("cpu")

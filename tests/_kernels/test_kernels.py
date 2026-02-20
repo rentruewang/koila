@@ -30,7 +30,7 @@ class BcastCase:
         ),
     ],
 )
-def test_bcast_same(case: BcastCase):
+def test_bcast_same(case):
     left, right, out = case
     kernel = BroadCastSameKernel(left, right)
     assert kernel.compute() == out
