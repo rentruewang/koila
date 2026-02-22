@@ -79,8 +79,8 @@ check_untyped_defs = true
 [[tool.mypy.overrides]]
 module = [
     "tensordict.*",
-    "sympy.*",
     "faiss.*",
+    "sympy.*",
 ]
 ignore_missing_imports = true
 

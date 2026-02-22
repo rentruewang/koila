@@ -7,19 +7,44 @@ import dataclasses as dcls
 import functools
 import typing
 from abc import ABC
-from collections.abc import Generator, Iterator
+from collections.abc import Generator, Iterator, KeysView
 from typing import ClassVar, Self
 
 from aioway.attrs import AttrSet
 from aioway.batches import Chunk
+from aioway.tables import Table
 
-from .columns import StreamColumn
-
-__all__ = ["Stream"]
+__all__ = ["Stream", "StreamState"]
 
 
 @dcls.dataclass
-class Stream(Iterator[Chunk], ABC):
+class StreamState:
+    """
+    The mutable stream state.
+
+    This is created because ``Stream`` subclasses from a frozen ``dataclass``,
+    so the stream state is created to manage mutable parts of the ``Stream``.
+
+    Subclasses of ``Stream`` should also subclass from ``StreamState``.
+    """
+
+    idx: int = 0
+    "How many steps have been called."
+
+    def step(self):
+        self.idx += 1
+
+    @property
+    def started(self) -> bool:
+        """
+        Shortcut function to check if ``self.idx == 0``.
+        """
+
+        return self.idx != 0
+
+
+@dcls.dataclass(frozen=True)
+class Stream(Iterator[Chunk], Table, ABC):
     """
     ``Stream`` produces a stream of batches of data, in the form of ``TensorDict``s,
     everytime ``__next__`` is called on it, a ``TensorDict`` is yielded.
@@ -33,8 +58,21 @@ class Stream(Iterator[Chunk], ABC):
     A ``Stream`` should be able to be decomposed with ``match`` statements.
     """
 
-    def col(self, name: str) -> StreamColumn:
-        return StreamColumn(stream=self, column=name)
+    @typing.override
+    def keys(self) -> KeysView[str]:
+        return self.attrs.keys()
+
+    @typing.override
+    def column(self, name: str):
+        from .views import StreamColumnView
+
+        return StreamColumnView(table=self, column=name)
+
+    @typing.override
+    def select(self, *keys: str) -> "Stream":
+        from .views import StreamSelectView
+
+        return StreamSelectView(table=self, columns=keys)
 
     @typing.override
     def __iter__(self) -> Self:
@@ -56,7 +94,7 @@ class Stream(Iterator[Chunk], ABC):
         if (result := self._read()).attrs != self.attrs:
             raise TypeError(f"Schema mismatch: {result.attrs=}, {self.attrs=}.")
 
-        self.__done_count += 1
+        self.state.step()
         return result
 
     @property
@@ -118,25 +156,26 @@ class Stream(Iterator[Chunk], ABC):
 
         ...
 
+    @functools.cached_property
+    def state(self) -> StreamState:
+        """
+        The state of the stream. Should be a field, but a ``cached_property``,
+        because if it has a default value it would make subclassing difficult.
+        """
+        return StreamState()
+
     @property
     def idx(self) -> int:
         """
         The number of batches completed..
         """
 
-        return self.__done_count
-
-    @functools.cached_property
-    def __done_count(self) -> int:
-        """
-        The number of ``__next__`` calls that have been made. Exposed via ``idx``.
-        """
-        return 0
+        return self.state.idx
 
     @property
-    def started(self):
+    def started(self) -> bool:
         """
         Shortcut function to check if ``self.idx == 0``.
         """
 
-        return self.idx != 0
+        return self.state.started
