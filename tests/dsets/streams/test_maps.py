@@ -19,24 +19,35 @@ from aioway.dsets import (
     ProjectStream,
     RenameStream,
     Stream,
+    StreamState,
 )
 
 
 @dcls.dataclass
-class SaveLastMapStream(MapStream):
-    "``Stream`` that saves the last ``__next__`` call."
+class SaveLastState(StreamState):
 
     last: Chunk = dcls.field(init=False, repr=False)
     "The last batch."
 
+
+@dcls.dataclass(frozen=True)
+class SaveLastMapStream(MapStream):
+    "``Stream`` that saves the last ``__next__`` call."
+
+    state: SaveLastState = dcls.field(default_factory=SaveLastState)
+
     @typing.override
     def _apply(self, batch: Chunk) -> Chunk:
-        self.last = batch
+        self.state.last = batch
         return batch
 
     @property
     def attrs(self) -> AttrSet:
         return self.source.attrs
+
+    @property
+    def last(self):
+        return self.state.last
 
 
 @pytest.fixture

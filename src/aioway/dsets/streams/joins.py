@@ -12,12 +12,12 @@ from aioway.attrs import AttrSet
 from aioway.batches import Chunk
 
 from .sources import CacheStream
-from .streams import Stream
+from .streams import Stream, StreamState
 
 __all__ = ["ZipStream", "NestedLoopJoinStream"]
 
 
-@dcls.dataclass
+@dcls.dataclass(frozen=True)
 class ZipStream(Stream):
     """
     ``ZipStream`` is similar to what ``zip`` does.
@@ -58,6 +58,14 @@ class ZipStream(Stream):
 
 
 @dcls.dataclass
+class NestedState(StreamState):
+    lhs_batch: Chunk | None = None
+
+    # It is necessary to save the last batch for the LHS,
+    # as it would be paired with multiple RHS batches.
+
+
+@dcls.dataclass(frozen=True)
 class NestedLoopJoinStream(Stream):
     """
     This is a stream that combines 2 input streams in a nested-loop matter,
@@ -81,10 +89,7 @@ class NestedLoopJoinStream(Stream):
     The key to join on.
     """
 
-    def __post_init__(self) -> None:
-        # It is necessary to save the last batch for the LHS,
-        # as it would be paired with multiple RHS batches.
-        self.__lhs_batch: Chunk | None = None
+    state: NestedState = dcls.field(default_factory=NestedState)
 
     @property
     @typing.override
@@ -119,9 +124,9 @@ class NestedLoopJoinStream(Stream):
     def _get_lhs(self) -> Chunk:
         # Clear cache and re-evalaute.
         if self._right_idx == 0:
-            self.__lhs_batch = next(self.left)
-        assert self.__lhs_batch
-        return self.__lhs_batch
+            self.state.lhs_batch = next(self.left)
+        assert self.state.lhs_batch
+        return self.state.lhs_batch
 
     def _get_rhs(self) -> Chunk:
         if self.idx < self.right.size:
