@@ -4,7 +4,9 @@
 
 import abc
 import dataclasses as dcls
+import typing
 from abc import ABC
+from collections.abc import KeysView
 from typing import Any, TypeIs
 
 import numpy as np
@@ -13,8 +15,7 @@ from numpy.typing import NDArray
 
 from aioway.attrs import AttrSet
 from aioway.batches import Chunk
-
-from .columns import FrameColumn
+from aioway.tables import Table
 
 __all__ = ["Frame"]
 
@@ -26,7 +27,7 @@ type FrameBatchIndex = slice | list[int] | IntArray
 
 
 @dcls.dataclass(frozen=True)
-class Frame(ABC):
+class Frame(Table, ABC):
     """
     ``Frame`` represents a set of heterogenious data stored in memory,
     it is one of the main physical abstractions in ``aioway`` to represent eager computation.
@@ -87,15 +88,28 @@ class Frame(ABC):
     def __bool__(self) -> bool:
         return bool(len(self))
 
-    def col(self, idx: str, /):
-        return FrameColumn(frame=self, column=idx)
-
     @property
     @abc.abstractmethod
     def attrs(self) -> AttrSet:
         "The schema of the current frame."
 
         ...
+
+    @typing.override
+    def keys(self) -> KeysView[str]:
+        return self.attrs.keys()
+
+    @typing.override
+    def column(self, key: str) -> Any:
+        from .views import FrameColumnView
+
+        return FrameColumnView(table=self, column=key)
+
+    @typing.override
+    def select(self, *keys: str):
+        from .views import FrameSelectView
+
+        return FrameSelectView(table=self, columns=keys)
 
     @abc.abstractmethod
     def _getitem(self, idx: IntArray, /) -> Chunk:

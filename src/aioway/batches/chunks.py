@@ -16,6 +16,7 @@ from torch import Size, Tensor
 
 from aioway.attrs import Attr, AttrSet, _validation
 from aioway.attrs import funcs as atf
+from aioway.tables import Table
 
 from . import funcs
 from .vectors import Vector
@@ -31,7 +32,7 @@ type ChunkLike = Chunk | dict[str, Vector]
 
 @typing.final
 @dcls.dataclass(frozen=True)
-class Chunk(Mapping[str, Vector]):
+class Chunk(Mapping[str, Vector], Table):
     """
     A ``Chunk`` represents a batch of data, following a specific scheam.
 
@@ -81,7 +82,7 @@ class Chunk(Mapping[str, Vector]):
     @typing.override
     def __getitem__(self, idx):
         if isinstance(idx, str):
-            return self.col(idx)
+            return self.column(idx)
 
         # Doing the batch operations that simply does type check first,
         # to avoid expensive iteration over the input.
@@ -118,13 +119,15 @@ class Chunk(Mapping[str, Vector]):
         schema = {**self.attrs, **rhs.attrs}
         return self.from_data_schema(data=data, schema=schema)
 
-    def col(self, key: str) -> Vector:
+    @typing.override
+    def column(self, key: str) -> Vector:
         tensor = self.data[key]
         attr = self.attrs[key]
 
         # No need to validate as it's already verified in ``Chunk.__post_init__``.
         return Vector(data=tensor, attr=attr, validate=False)
 
+    @typing.override
     def select(self, *keys: str) -> Self:
         data = self.data.select(*keys)
         schema = {key: self.attrs[key] for key in keys}

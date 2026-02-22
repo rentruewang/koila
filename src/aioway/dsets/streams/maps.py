@@ -28,7 +28,7 @@ __all__ = [
 ]
 
 
-@dcls.dataclass
+@dcls.dataclass(frozen=True)
 class MapStream(Stream, ABC):
     """
     The shared base class for all the ``map`` like ``Stream``s,
@@ -94,7 +94,7 @@ class MapStream(Stream, ABC):
         yield self.source
 
 
-@dcls.dataclass
+@dcls.dataclass(frozen=True)
 class ApplyStream(MapStream):
     """
     A ``Stream`` that you can customize what the ``__next__`` function do.
@@ -124,7 +124,7 @@ class ApplyStream(MapStream):
         return self.schema(self.source.attrs)
 
 
-@dcls.dataclass
+@dcls.dataclass(frozen=True)
 class FuncFilterStream(MapStream):
     """
     A ``Stream`` that filteres on its inputs, based on a preducate function.
@@ -158,7 +158,7 @@ class FuncFilterStream(MapStream):
         return self.source.attrs
 
 
-@dcls.dataclass
+@dcls.dataclass(frozen=True)
 class ExprFilterStream(MapStream):
     """
     A ``Stream`` that filteres on its inputs, based on a preducate expression.
@@ -184,7 +184,7 @@ class ExprFilterStream(MapStream):
         return self.source.attrs
 
 
-@dcls.dataclass
+@dcls.dataclass(frozen=True)
 class ProjectStream(MapStream):
     """
     Projection of the input table. The ``subset`` should be a subset of the input columns.
@@ -206,7 +206,7 @@ class ProjectStream(MapStream):
         return AttrSet.from_dict({key: source_attrs[key] for key in self.subset})
 
 
-@dcls.dataclass
+@dcls.dataclass(frozen=True)
 class RenameStream(MapStream):
     """
     Renames some columns in the inputs in the outputs.

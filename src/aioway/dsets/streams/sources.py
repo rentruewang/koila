@@ -31,7 +31,7 @@ __all__ = [
 LOGGER = logging.getLogger(__name__)
 
 
-@dcls.dataclass
+@dcls.dataclass(frozen=True)
 class BoundedStream(Stream, ABC):
     """
     A stream with ``__len__`` and ``__getitem__``.
@@ -56,7 +56,7 @@ class BoundedStream(Stream, ABC):
         """
 
 
-@dcls.dataclass
+@dcls.dataclass(frozen=True)
 class CacheStream(BoundedStream):
     """
     Exhaust the input stream, store it into a cache for repeating access.
@@ -121,7 +121,7 @@ class CacheStream(BoundedStream):
         return self.stream.attrs
 
 
-@dcls.dataclass
+@dcls.dataclass(frozen=True)
 class ListStream(BoundedStream):
     "A ``Stream`` backed by a list of ``TensorDict``."
 
@@ -188,7 +188,7 @@ class FrameStreamLoader:
     "How to sample in case when want to shuffle."
 
 
-@dcls.dataclass
+@dcls.dataclass(frozen=True)
 class FrameStream(Stream):
     """
     A ``Stream`` backed by a ``Frame``.

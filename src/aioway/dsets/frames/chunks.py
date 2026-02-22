@@ -17,6 +17,7 @@ from .frames import Frame, IntArray
 __all__ = ["ChunkFrame", "ChunkListFrame"]
 
 
+@typing.final
 @dcls.dataclass(frozen=True)
 class ChunkFrame(Frame):
     """
