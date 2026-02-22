@@ -4,18 +4,18 @@
 
 import pytest
 
-from aioway.dsets import ChunkFrame, FrameStream, FrameStreamLoader
+from aioway.datasets import ChunkFrame, FrameStream, FrameStreamLoader
 from tests import fake
 
 
 @pytest.fixture
-def block_table(device: str, data_size: int) -> ChunkFrame:
+def block_table(device, data_size):
     block = fake.chunk_ok(size=data_size, device=device)
     return ChunkFrame(data=block)
 
 
 @pytest.fixture
-def table_stream(block_table: ChunkFrame, batch_size: int) -> FrameStream:
+def table_stream(block_table, batch_size):
     return FrameStream(
         frame=block_table,
         options=FrameStreamLoader(batch_size=batch_size),
@@ -23,13 +23,13 @@ def table_stream(block_table: ChunkFrame, batch_size: int) -> FrameStream:
 
 
 @pytest.fixture
-def concat_frame(device: str, data_size: int) -> ChunkFrame:
+def concat_frame(device, data_size):
     block = fake.concat_ok(size=data_size, device=device)
     return ChunkFrame(data=block)
 
 
 @pytest.fixture
-def concat_stream(concat_frame: ChunkFrame, batch_size: int):
+def concat_stream(concat_frame, batch_size):
     return FrameStream(
         frame=concat_frame,
         options=FrameStreamLoader(batch_size=batch_size),
@@ -37,7 +37,7 @@ def concat_stream(concat_frame: ChunkFrame, batch_size: int):
 
 
 @pytest.fixture
-def joinable_frame(device: str, data_size: int) -> ChunkFrame:
+def joinable_frame(device, data_size):
     "``Frame`` for joining on the RHS."
 
     block = fake.unionable_ok(size=data_size, device=device)
@@ -45,7 +45,7 @@ def joinable_frame(device: str, data_size: int) -> ChunkFrame:
 
 
 @pytest.fixture
-def joinable_stream(joinable_frame: ChunkFrame, batch_size: int):
+def joinable_stream(joinable_frame, batch_size):
     "``Stream`` for joining on the RHS."
     return FrameStream(
         frame=joinable_frame,

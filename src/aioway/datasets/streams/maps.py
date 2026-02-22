@@ -202,8 +202,7 @@ class ProjectStream(MapStream):
     @property
     @typing.override
     def attrs(self) -> AttrSet:
-        source_attrs = self.source.attrs
-        return AttrSet.from_dict({key: source_attrs[key] for key in self.subset})
+        return self.source.attrs.select(*self.subset)
 
 
 @dcls.dataclass(frozen=True)

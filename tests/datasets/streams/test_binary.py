@@ -8,7 +8,7 @@ import torch
 
 from aioway import attrs
 from aioway.batches import Chunk
-from aioway.dsets import (
+from aioway.datasets import (
     CacheStream,
     ListStream,
     NestedLoopJoinStream,

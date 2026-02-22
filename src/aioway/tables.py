@@ -69,11 +69,20 @@ class Table[C: Column](ABC):
 
         ...
 
-    def get(self, key: str, /) -> C | None:
+    @typing.overload
+    def get(self, key: str, /) -> C | None: ...
+
+    @typing.overload
+    def get(self, key: str, /, default: C) -> C: ...
+
+    @typing.overload
+    def get[T](self, key: str, /, default: T) -> C | T: ...
+
+    def get(self, key, /, default):
         "This is the ``Mapping.get`` method."
 
         if key not in self.keys():
-            return None
+            return default
 
         return self.column(key)
 
