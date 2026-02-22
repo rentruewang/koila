@@ -7,12 +7,13 @@ import dataclasses as dcls
 import functools
 import typing
 from abc import ABC
-from collections.abc import Generator, Iterator, KeysView
+from collections.abc import Generator, Iterator
 from typing import ClassVar, Self
 
 from aioway.attrs import AttrSet
 from aioway.batches import Chunk
-from aioway.tables import Table
+
+from ..datasets import Dataset, DatasetViewTypes
 
 __all__ = ["Stream", "StreamState"]
 
@@ -44,7 +45,7 @@ class StreamState:
 
 
 @dcls.dataclass(frozen=True)
-class Stream(Iterator[Chunk], Table, ABC):
+class Stream(Iterator[Chunk], Dataset, ABC):
     """
     ``Stream`` produces a stream of batches of data, in the form of ``TensorDict``s,
     everytime ``__next__`` is called on it, a ``TensorDict`` is yielded.
@@ -57,22 +58,6 @@ class Stream(Iterator[Chunk], Table, ABC):
     """
     A ``Stream`` should be able to be decomposed with ``match`` statements.
     """
-
-    @typing.override
-    def keys(self) -> KeysView[str]:
-        return self.attrs.keys()
-
-    @typing.override
-    def column(self, name: str):
-        from .views import StreamColumnView
-
-        return StreamColumnView(table=self, column=name)
-
-    @typing.override
-    def select(self, *keys: str) -> "Stream":
-        from .views import StreamSelectView
-
-        return StreamSelectView(table=self, columns=keys)
 
     @typing.override
     def __iter__(self) -> Self:
@@ -179,3 +164,10 @@ class Stream(Iterator[Chunk], Table, ABC):
         """
 
         return self.state.started
+
+    @classmethod
+    @typing.override
+    def view_types(cls):
+        from .views import StreamColumnView, StreamSelectView
+
+        return DatasetViewTypes(column=StreamColumnView, select=StreamSelectView)

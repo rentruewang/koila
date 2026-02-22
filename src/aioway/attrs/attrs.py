@@ -4,6 +4,8 @@
 
 import dataclasses as dcls
 
+from aioway.tables import Column
+
 from . import devices, dtypes, shapes
 from .devices import Device, DeviceLike
 from .dtypes import DType, DTypeLike
@@ -13,7 +15,7 @@ __all__ = ["Attr", "attr"]
 
 
 @dcls.dataclass(frozen=True)
-class Attr:
+class Attr(Column):
     """
     Attributes for a single column in a ``Table``.
     """
