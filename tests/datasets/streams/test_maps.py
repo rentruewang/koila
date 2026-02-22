@@ -10,7 +10,7 @@ from tensordict import TensorDict
 from aioway.attrs import AttrSet
 from aioway.attrs import funcs as atf
 from aioway.batches import Chunk
-from aioway.dsets import (
+from aioway.datasets import (
     ApplyStream,
     CacheStream,
     ExprFilterStream,
@@ -58,7 +58,7 @@ def save_last(table_stream):
 
 
 @pytest.fixture
-def map_stream(request, save_last) -> MapStream:
+def map_stream(request, save_last):
     "Indirect fixture to create ``MapStream``s based on a builder function."
 
     builder: Callable[[Stream], MapStream] = request.param
@@ -66,7 +66,7 @@ def map_stream(request, save_last) -> MapStream:
     if not callable(builder):
         raise TypeError("The `map_stream` fixture only accepts function parameters.")
 
-    return builder(save_last)
+    return typing.cast(MapStream, builder(save_last))
 
 
 def _expr_filter_builder(source):

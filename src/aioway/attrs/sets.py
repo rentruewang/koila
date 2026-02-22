@@ -10,6 +10,8 @@ from typing import NamedTuple, Self
 
 import numpy as np
 
+from aioway.tables import Table
+
 from . import attrs
 from .attrs import Attr
 from .devices import Device
@@ -31,8 +33,9 @@ class AttrSetCol(NamedTuple):
     "The attribute that the column has."
 
 
+@typing.final
 @dcls.dataclass(frozen=True, repr=False)
-class AttrSet(Mapping[str, Attr]):
+class AttrSet(Table[Attr], Mapping[str, Attr]):
     """
     A set of attributes. Representing the schema in a ``Table``.
 
@@ -76,6 +79,14 @@ class AttrSet(Mapping[str, Attr]):
     @typing.override
     def keys(self):
         return self._keys_view
+
+    @typing.override
+    def column(self, key: str, /) -> Attr:
+        return self[key]
+
+    @typing.override
+    def select(self, *keys: str) -> Self:
+        return type(self).from_dict({key: self[key] for key in keys})
 
     @functools.cached_property
     def _repr_string(self):
