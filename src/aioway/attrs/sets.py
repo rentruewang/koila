@@ -12,16 +12,16 @@ import numpy as np
 
 from aioway.tables import Table
 
-from . import attrs
+from . import attrs, devices, dtypes, shapes
 from .attrs import Attr
-from .devices import Device
-from .dtypes import DType
-from .shapes import Shape
+from .devices import Device, DeviceLike
+from .dtypes import DType, DTypeLike
+from .shapes import Shape, ShapeLike
 
 __all__ = ["AttrSet"]
 
 
-class AttrSetCol(NamedTuple):
+class _AttrItem[T](NamedTuple):
     """
     The name and attribute for each column.
     """
@@ -29,13 +29,12 @@ class AttrSetCol(NamedTuple):
     name: str
     "The name of the column."
 
-    attr: Attr
+    attr: T
     "The attribute that the column has."
 
 
-@typing.final
 @dcls.dataclass(frozen=True, repr=False)
-class AttrSet(Table[Attr], Mapping[str, Attr]):
+class _AttrSetBase[T](Table[T], Mapping[str, T]):
     """
     A set of attributes. Representing the schema in a ``Table``.
 
@@ -43,7 +42,7 @@ class AttrSet(Table[Attr], Mapping[str, Attr]):
     Most likely will change in the future.
     """
 
-    attrs: tuple[AttrSetCol, ...] = ()
+    attrs: tuple[_AttrItem[T], ...] = ()
     """
     The data backing the ``AttrSet``. Must be sorted.
     """
@@ -56,7 +55,7 @@ class AttrSet(Table[Attr], Mapping[str, Attr]):
     def __repr__(self) -> str:
         return self._repr_string
 
-    def __or__(self, other: Mapping[str, Attr]) -> Self:
+    def __or__(self, other: Mapping[str, T]) -> Self:
         return type(self).from_dict({**self, **other})
 
     @typing.override
@@ -64,7 +63,7 @@ class AttrSet(Table[Attr], Mapping[str, Attr]):
         return len(self.attrs)
 
     @typing.override
-    def __getitem__(self, key: str) -> Attr:
+    def __getitem__(self, key: str) -> T:
         # Using the ``find`` function from ``AttrSetKeysView``, to be DRY.
         if (idx := self.keys().find(key)) is None:
             raise KeyError(key)
@@ -81,7 +80,7 @@ class AttrSet(Table[Attr], Mapping[str, Attr]):
         return self._keys_view
 
     @typing.override
-    def column(self, key: str, /) -> Attr:
+    def column(self, key: str, /) -> T:
         return self[key]
 
     @typing.override
@@ -95,11 +94,50 @@ class AttrSet(Table[Attr], Mapping[str, Attr]):
 
     @functools.cached_property
     def _keys_view(self):
-        return AttrSetKeysView(self)
+        return _AttrKeysView(self)
 
     @functools.cached_property
     def names(self):
         return [col.name for col in self.attrs]
+
+    @classmethod
+    def from_values(cls, **attrs: T) -> Self:
+        return cls.from_dict(attrs)
+
+    @classmethod
+    def from_dict(cls, attrs: Mapping[str, T], /) -> Self:
+        return cls(
+            tuple(
+                sorted(_AttrItem(name=name, attr=attr) for name, attr in attrs.items())
+            )
+        )
+
+
+class DTypeSet(_AttrSetBase[DType]):
+    @classmethod
+    @typing.override
+    def from_dict(cls, attrs: Mapping[str, DTypeLike], /) -> Self:
+        converted = {key: dtypes.dtype(dt) for key, dt in attrs.items()}
+        return super().from_dict(converted)
+
+
+class DeviceSet(_AttrSetBase[Device]):
+    @classmethod
+    @typing.override
+    def from_dict(cls, attrs: Mapping[str, DeviceLike]) -> Self:
+        converted = {key: devices.device(dev) for key, dev in attrs.items()}
+        return super().from_dict(converted)
+
+
+class ShapeSet(_AttrSetBase[Shape]):
+    @classmethod
+    @typing.override
+    def from_dict(cls, attrs: Mapping[str, ShapeLike]) -> Self:
+        converted = {key: shapes.shape(dev) for key, dev in attrs.items()}
+        return super().from_dict(converted)
+
+
+class AttrSet(_AttrSetBase[Attr]):
 
     @functools.cached_property
     def dtypes(self):
@@ -114,18 +152,6 @@ class AttrSet(Table[Attr], Mapping[str, Attr]):
         return [col.attr.device for col in self.attrs]
 
     @classmethod
-    def from_values(cls, **attrs: Attr) -> Self:
-        return cls.from_dict(attrs)
-
-    @classmethod
-    def from_dict(cls, attrs: dict[str, Attr]) -> Self:
-        return cls(
-            tuple(
-                sorted(AttrSetCol(name=name, attr=attr) for name, attr in attrs.items())
-            )
-        )
-
-    @classmethod
     def from_fields(
         cls,
         *,
@@ -134,6 +160,8 @@ class AttrSet(Table[Attr], Mapping[str, Attr]):
         dtypes: Sequence[DType],
         devices: Sequence[Device],
     ) -> Self:
+        "Create an ``AttrSet`` from a set of seuqences of attributes of same length."
+
         if not (len(names) == len(shapes) == len(dtypes) == len(devices)):
             raise ValueError(
                 "Should all have the same length. "
@@ -147,10 +175,38 @@ class AttrSet(Table[Attr], Mapping[str, Attr]):
 
         return cls.from_dict(mapping)
 
+    @classmethod
+    def from_sets(
+        cls, *, shapes: ShapeSet, dtypes: DTypeSet, devices: DeviceSet
+    ) -> Self:
+        "Create an ``AttrSet`` from ``*Set`` types. Keys should match."
+
+        shapes_keys = shapes.keys()
+        dtypes_keys = dtypes.keys()
+        devices_keys = devices.keys()
+
+        if not (shapes_keys == dtypes_keys == devices_keys):
+            raise ValueError(
+                "All sets should have the same keys. "
+                f"Got shapes={shapes_keys}, devices={devices_keys}, dtypes={dtypes_keys}"
+            )
+
+        names_list = list(shapes_keys)
+        dtypes_list = [dtypes[key] for key in names_list]
+        devices_list = [devices[key] for key in names_list]
+        shapes_list = [shapes[key] for key in names_list]
+
+        return cls.from_fields(
+            names=names_list,
+            dtypes=dtypes_list,
+            devices=devices_list,
+            shapes=shapes_list,
+        )
+
 
 @dcls.dataclass(frozen=True)
-class AttrSetKeysView(KeysView[str]):
-    attrset: AttrSet
+class _AttrKeysView(KeysView[str]):
+    attrset: _AttrSetBase
     "The data to view. Its names must be sorted."
 
     @typing.override
