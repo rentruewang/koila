@@ -6,7 +6,7 @@ from abc import ABC
 from collections.abc import KeysView
 from typing import Protocol, Self
 
-__all__ = ["Table", "Column", "Indexible"]
+__all__ = ["Table", "Indexible"]
 
 
 @typing.runtime_checkable
@@ -18,22 +18,13 @@ class Indexible[I](Protocol):
     def idx(self, idx: slice | list[int]) -> Self: ...
 
 
-class Column(ABC):
-    """
-    A column type for the ``Table`` type,
-    which is built from ``Column``s and ``str`` keys.
-
-    See ``Table`` for more details.
-    """
-
-
-class Table[C: Column](ABC):
+class Table[C](ABC):
     """
     A tabular type that acts like a table (can be ``Frame``, ``Stream``, ``Chunk`` etc).
 
     A ``Table`` should support the following functions:
 
-    1. ``column(key: str, /) -> Collumn``.
+    1. ``column(key: str, /) -> C``.
         Getting the individual column.
     2. ``select(*keys: str) -> Self``.
         Getting a couple of columns should return the same ``Table``.

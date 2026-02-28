@@ -6,7 +6,7 @@ import dataclasses as dcls
 import typing
 from collections.abc import Iterator, Sequence
 
-from aioway.tables import Column, Table
+from aioway.tables import Table
 
 from .exprs import Expr, TableExpr
 
@@ -26,7 +26,7 @@ class SourceExpr(TableExpr):
         return self.name
 
     @typing.override
-    def subs[C: Column](self, **table: Table[C]) -> Table[C]:
+    def subs[C](self, **table: Table[C]) -> Table[C]:
         if self.name in table:
             return table[self.name]
 
@@ -54,7 +54,7 @@ class SelectExpr(TableExpr):
         return f"select({self.source!s}, {self.columns!r})"
 
     @typing.override
-    def subs[C: Column](self, **tables: Table[C]) -> Table[C]:
+    def subs[C](self, **tables: Table[C]) -> Table[C]:
         source_table = self.source.subs(**tables)
         return source_table.select(*self.columns)
 
