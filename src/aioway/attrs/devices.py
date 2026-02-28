@@ -64,6 +64,8 @@ type DeviceLike = str | TorchDevice | Device
 
 
 def device(device: DeviceLike, /) -> Device:
+    "The convenient wrapper to create a ``Device`` from compatible types."
+
     match device:
         case Device():
             return device
