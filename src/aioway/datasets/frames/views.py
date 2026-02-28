@@ -1,6 +1,6 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-"``Column``s are a column of ``Frame``."
+"``View``s are columns and projections of tables."
 
 import dataclasses as dcls
 import typing

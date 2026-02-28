@@ -5,7 +5,7 @@
 import dataclasses as dcls
 import typing
 
-from aioway.tables import Column, Table
+from aioway.tables import Table
 
 from .exprs import ColumnExpr, TableExpr
 
@@ -27,7 +27,7 @@ class ExactColExpr(ColumnExpr):
     """
 
     @typing.override
-    def subs[C: Column](self, **tables: Table[C]) -> C:
+    def subs[C](self, **tables: Table[C]) -> C:
         table = self.table.subs(**tables)
         return table.column(self.column)
 
@@ -64,7 +64,7 @@ class PrefixColExpr(ColumnExpr):
     "The child"
 
     @typing.override
-    def subs[C: Column](self, **tables: Table[C]) -> C:
+    def subs[C](self, **tables: Table[C]) -> C:
         child = self.child.subs(**tables)
         op = prefix_op(self.op)
         return op(child)
@@ -128,7 +128,7 @@ class InfixColExpr(ColumnExpr):
     right: ColumnExpr
 
     @typing.override
-    def subs[C: Column](self, **tables: Table[C]) -> C:
+    def subs[C](self, **tables: Table[C]) -> C:
         left = self.left.subs(**tables)
         right = self.right.subs(**tables)
 
