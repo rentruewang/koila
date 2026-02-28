@@ -72,7 +72,7 @@ def run_tools(args: Args) -> list[str]:
 
 if __name__ == "__main__":
     gha.setup()
-    pdm.install()
+    pdm.sync()
 
     args = parse_args()
 
