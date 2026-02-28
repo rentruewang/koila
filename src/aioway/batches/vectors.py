@@ -10,13 +10,12 @@ from torch import Tensor
 
 from aioway import attrs
 from aioway.attrs import Attr, _validation
-from aioway.tables import Column
 
 __all__ = ["Vector"]
 
 
 @dcls.dataclass(frozen=True)
-class Vector(Column):
+class Vector:
     """
     A ``Vector`` is a ``Tensor`` plus its ``Attr``.
     """

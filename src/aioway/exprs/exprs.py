@@ -6,7 +6,7 @@ import typing
 from collections.abc import Iterator, Sequence
 from typing import ClassVar, Literal, Protocol
 
-from aioway.tables import Column, Table
+from aioway.tables import Table
 
 __all__ = ["Expr", "ColumnExpr", "TableExpr"]
 
@@ -50,7 +50,7 @@ class Expr(Protocol):
 
 class ColumnExpr(Expr, Protocol):
     @abc.abstractmethod
-    def subs[C: Column](self, **tables: Table[C]) -> C: ...
+    def subs[C](self, **tables: Table[C]) -> C: ...
 
     @typing.override
     def __repr__(self) -> str:
@@ -59,7 +59,7 @@ class ColumnExpr(Expr, Protocol):
 
 class TableExpr(Expr, Protocol):
     @abc.abstractmethod
-    def subs[C: Column](self, **tables: Table[C]) -> Table[C]: ...
+    def subs[C](self, **tables: Table[C]) -> Table[C]: ...
 
     @typing.override
     def __repr__(self) -> str:
