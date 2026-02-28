@@ -122,7 +122,9 @@ type DTypeLike = str | DType
 "Types convertible to ``DType``."
 
 
-def dtype(dtype: DTypeLike, /):
+def dtype(dtype: DTypeLike, /) -> DType:
+    "The convenient wrapper to create a ``DType`` from compatible types."
+
     match dtype:
         case DType():
             return dtype

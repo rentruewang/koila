@@ -3,6 +3,7 @@
 "Schema is a collection of metadata describing the 'type' of data."
 
 import dataclasses as dcls
+import logging
 
 from . import devices, dtypes, shapes
 from .devices import Device, DeviceLike
@@ -10,6 +11,9 @@ from .dtypes import DType, DTypeLike
 from .shapes import Shape, ShapeLike
 
 __all__ = ["Attr", "attr"]
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 @dcls.dataclass(frozen=True)
@@ -45,6 +49,18 @@ class Attr:
 
 
 def attr(device: DeviceLike, dtype: DTypeLike, shape: ShapeLike) -> Attr:
+    """
+    The convenient constructor for ``Attr``.
+
+    Args:
+        device: Things that can be converted to ``Device``.
+        dtype: Things that can be converted to ``DType``.
+        shape: Things that can be converted to ``Shape``.
+
+    Returns:
+        An attribute instance.
+    """
+
     return Attr(
         device=devices.device(device),
         dtype=dtypes.dtype(dtype),
