@@ -4,9 +4,7 @@
 
 import dataclasses as dcls
 import typing
-from collections.abc import Iterator, Sequence
-
-from aioway.tables import Table
+from collections.abc import Iterator, KeysView, Sequence
 
 from .exprs import Expr, TableExpr
 
@@ -21,16 +19,14 @@ class SourceExpr(TableExpr):
     name: str
     "The table's name. Matches the table names given in the ``subs`` method."
 
+    columns: Sequence[str]
+
     @typing.override
     def __str__(self) -> str:
         return self.name
 
-    @typing.override
-    def subs[C](self, **table: Table[C]) -> Table[C]:
-        if self.name in table:
-            return table[self.name]
-
-        raise KeyError(f"The table '{self.name}' is not provided.")
+    def keys(self) -> KeysView[str]:
+        return SeqKeysView(self.columns)
 
     @typing.override
     def _children(self) -> Iterator[Expr]:
@@ -43,7 +39,7 @@ class SourceExpr(TableExpr):
 class SelectExpr(TableExpr):
     NUM_ARGS = 1
 
-    source: TableExpr
+    table: TableExpr
     "The source to the selection."
 
     columns: Sequence[str]
@@ -51,13 +47,25 @@ class SelectExpr(TableExpr):
 
     @typing.override
     def __str__(self) -> str:
-        return f"select({self.source!s}, {self.columns!r})"
+        return f"select({self.table!s}, {self.columns!r})"
 
     @typing.override
-    def subs[C](self, **tables: Table[C]) -> Table[C]:
-        source_table = self.source.subs(**tables)
-        return source_table.select(*self.columns)
+    def keys(self) -> KeysView[str]:
+        return SeqKeysView(self.columns)
 
     @typing.override
     def _children(self) -> Iterator[Expr]:
-        yield self.source
+        yield self.table
+
+
+@dcls.dataclass(frozen=True)
+class SeqKeysView(KeysView[str]):
+    seq: Sequence[str]
+
+    @typing.override
+    def __contains__(self, key: object) -> bool:
+        return key in self.seq
+
+    @typing.override
+    def __iter__(self):
+        yield from self.seq
