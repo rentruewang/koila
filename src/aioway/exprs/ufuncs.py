@@ -11,6 +11,9 @@ from aioway.exprs.exprs import Expr
 from .exprs import ColumnExpr
 
 __all__ = [
+    "UnaryUFuncColExpr",
+    "NegColExpr",
+    "NotColExpr",
     "BinaryUFuncColExpr",
     "AddColExpr",
     "SubColExpr",
@@ -25,6 +28,43 @@ __all__ = [
     "GtColExpr",
     "LtColExpr",
 ]
+
+
+@dcls.dataclass(frozen=True, eq=False)
+class UnaryUFuncColExpr(ColumnExpr, ABC):
+    NUM_ARGS = 1
+
+    expr: ColumnExpr
+    "The child of the current operator"
+
+    @typing.override
+    def __str__(self) -> str:
+        return f"{self.token} {self.expr!s}"
+
+    @property
+    @abc.abstractmethod
+    def token(self) -> str:
+        "The token representing the current operator."
+
+        ...
+
+    @typing.final
+    def _children(self) -> Iterator[Expr]:
+        yield self.expr
+
+
+class NotColExpr(UnaryUFuncColExpr, ABC):
+    @property
+    @typing.override
+    def token(self) -> str:
+        return "~"
+
+
+class NegColExpr(UnaryUFuncColExpr, ABC):
+    @property
+    @typing.override
+    def token(self) -> str:
+        return "-"
 
 
 @dcls.dataclass(frozen=True, eq=False)
