@@ -5,15 +5,13 @@
 import dataclasses as dcls
 import typing
 
-from aioway.tables import Table
-
 from .exprs import ColumnExpr, TableExpr
 
-__all__ = ["ExactColExpr", "PrefixColExpr", "InfixColExpr"]
+__all__ = ["GetItemExpr", "PrefixColExpr", "InfixColExpr"]
 
 
-@dcls.dataclass(frozen=True)
-class ExactColExpr(ColumnExpr):
+@dcls.dataclass(frozen=True, eq=False)
+class GetItemExpr(ColumnExpr):
     NUM_ARGS = 0
 
     table: TableExpr
@@ -27,11 +25,6 @@ class ExactColExpr(ColumnExpr):
     """
 
     @typing.override
-    def subs[C](self, **tables: Table[C]) -> C:
-        table = self.table.subs(**tables)
-        return table.column(self.column)
-
-    @typing.override
     def __str__(self) -> str:
         return f"{self.table!s}.{self.column}"
 
@@ -41,17 +34,7 @@ class ExactColExpr(ColumnExpr):
         yield
 
 
-def prefix_op(op: str):
-    match op:
-        case "+":
-            return lambda x: x
-        case "-":
-            return lambda x: -x
-        case _:
-            raise NotImplementedError(op)
-
-
-@dcls.dataclass(frozen=True)
+@dcls.dataclass(frozen=True, eq=False)
 class PrefixColExpr(ColumnExpr):
     NUM_ARGS = 1
 
@@ -64,12 +47,6 @@ class PrefixColExpr(ColumnExpr):
     "The child"
 
     @typing.override
-    def subs[C](self, **tables: Table[C]) -> C:
-        child = self.child.subs(**tables)
-        op = prefix_op(self.op)
-        return op(child)
-
-    @typing.override
     def __str__(self) -> str:
         return f"{self.op}{self.child}"
 
@@ -78,63 +55,13 @@ class PrefixColExpr(ColumnExpr):
         yield self.child
 
 
-def infix_op(op: str):
-    match op:
-        case "+":
-            return lambda l, r: l + r
-
-        case "-":
-            return lambda l, r: l - r
-
-        case "*":
-            return lambda l, r: l * r
-
-        case "/":
-            return lambda l, r: l / r
-
-        case "//":
-            return lambda l, r: l // r
-
-        case "**":
-            return lambda l, r: l**r
-
-        case "==":
-            return lambda l, r: l == r
-
-        case "!=":
-            return lambda l, r: l != r
-
-        case ">=":
-            return lambda l, r: l >= r
-
-        case "<=":
-            return lambda l, r: l <= r
-
-        case ">":
-            return lambda l, r: l > r
-
-        case "<":
-            return lambda l, r: l < r
-
-        case _:
-            raise NotImplementedError
-
-
-@dcls.dataclass(frozen=True)
+@dcls.dataclass(frozen=True, eq=False)
 class InfixColExpr(ColumnExpr):
     NUM_ARGS = 2
     op: str
+
     left: ColumnExpr
     right: ColumnExpr
-
-    @typing.override
-    def subs[C](self, **tables: Table[C]) -> C:
-        left = self.left.subs(**tables)
-        right = self.right.subs(**tables)
-
-        op = infix_op(self.op)
-
-        return op(left, right)
 
     @typing.override
     def __str__(self) -> str:

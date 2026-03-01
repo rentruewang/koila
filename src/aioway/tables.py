@@ -69,6 +69,7 @@ class Table[C](ABC):
     @typing.overload
     def get[T](self, key: str, /, default: T) -> C | T: ...
 
+    @typing.no_type_check
     def get(self, key, /, default):
         "This is the ``Mapping.get`` method."
 

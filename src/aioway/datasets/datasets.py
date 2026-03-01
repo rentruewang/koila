@@ -58,7 +58,7 @@ class Dataset(Table, ABC):
 
 
 @dcls.dataclass(frozen=True)
-class DatasetView[T: Dataset]:
+class DatasetView[T: Dataset](ABC):
 
     dset: T
     "The original dataset that would be used in the view."
