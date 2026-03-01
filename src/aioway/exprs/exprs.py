@@ -50,17 +50,22 @@ class Expr(ABC):
         ...
 
 
+@variants.register_1("hi", float)
+def hi(a: int):
+    return a
+
+
 class ColumnExpr(Expr, ABC):
     @abc.abstractmethod
     def __str__(self) -> str: ...
 
     @typing.final
     def __not__(self):
-        return variants.UNARY_UFUNCS
+        return variants.find("not", ColumnExpr)
 
     @typing.final
     def __add__(self, other: "ColumnExpr"):
-        return variants.BINARY_UFUNCS.find("add", ColumnExpr)(self, other)
+        return variants.find("add", ColumnExpr)(self, other)
 
     @typing.final
     def __radd__(self, other: "ColumnExpr"):
@@ -68,7 +73,7 @@ class ColumnExpr(Expr, ABC):
 
     @typing.final
     def __sub__(self, other: "ColumnExpr"):
-        return variants.BINARY_UFUNCS.find("sub", ColumnExpr)(self, other)
+        return variants.find("sub", ColumnExpr)(self, other)
 
     @typing.final
     def __rsub__(self, other: "ColumnExpr"):
@@ -76,7 +81,7 @@ class ColumnExpr(Expr, ABC):
 
     @typing.final
     def __mul__(self, other: "ColumnExpr"):
-        return variants.BINARY_UFUNCS.find("mul", ColumnExpr)(self, other)
+        return variants.find("mul", ColumnExpr)(self, other)
 
     @typing.final
     def __rmul__(self, other: "ColumnExpr"):
@@ -84,7 +89,7 @@ class ColumnExpr(Expr, ABC):
 
     @typing.final
     def __truediv__(self, other: "ColumnExpr"):
-        return variants.BINARY_UFUNCS.find("truediv", ColumnExpr)(self, other)
+        return variants.find("truediv", ColumnExpr)(self, other)
 
     @typing.final
     def __rtruediv__(self, other: "ColumnExpr"):
@@ -92,7 +97,7 @@ class ColumnExpr(Expr, ABC):
 
     @typing.final
     def __floordiv__(self, other: "ColumnExpr"):
-        return variants.BINARY_UFUNCS.find("floordiv", ColumnExpr)(self, other)
+        return variants.find("floordiv", ColumnExpr)(self, other)
 
     @typing.final
     def __rfloordiv__(self, other: "ColumnExpr"):
@@ -100,7 +105,7 @@ class ColumnExpr(Expr, ABC):
 
     @typing.final
     def __pow__(self, other: "ColumnExpr"):
-        return variants.BINARY_UFUNCS.find("pow", ColumnExpr)(self, other)
+        return variants.find("pow", ColumnExpr)(self, other)
 
     @typing.final
     def __rpow__(self, other: "ColumnExpr"):
@@ -109,32 +114,32 @@ class ColumnExpr(Expr, ABC):
     @typing.final
     def __eq__(self, other: object):
         if isinstance(other, ColumnExpr):
-            return variants.BINARY_UFUNCS.find("eq", ColumnExpr)(self, other)
+            return variants.find("eq", ColumnExpr)(self, other)
 
         return NotImplemented
 
     @typing.final
     def __ne__(self, other: object):
         if isinstance(other, ColumnExpr):
-            return variants.BINARY_UFUNCS.find("ne", ColumnExpr)(self, other)
+            return variants.find("ne", ColumnExpr)(self, other)
 
         return NotImplemented
 
     @typing.final
     def __gt__(self, other: "ColumnExpr"):
-        return variants.BINARY_UFUNCS.find("gt", ColumnExpr)(self, other)
+        return variants.find("gt", ColumnExpr)(self, other)
 
     @typing.final
     def __ge__(self, other: "ColumnExpr"):
-        return variants.BINARY_UFUNCS.find("ge", ColumnExpr)(self, other)
+        return variants.find("ge", ColumnExpr)(self, other)
 
     @typing.final
     def __lt__(self, other: "ColumnExpr"):
-        return variants.BINARY_UFUNCS.find("lt", ColumnExpr)(self, other)
+        return variants.find("lt", ColumnExpr)(self, other)
 
     @typing.final
     def __le__(self, other: "ColumnExpr"):
-        return variants.BINARY_UFUNCS.find("le", ColumnExpr)(self, other)
+        return variants.find("le", ColumnExpr)(self, other)
 
 
 class TableExpr(Expr, Table[ColumnExpr], ABC):
