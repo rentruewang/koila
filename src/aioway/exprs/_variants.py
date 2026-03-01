@@ -8,7 +8,6 @@ from aioway import variants
 from .exprs import ColumnExpr
 from .ufuncs import (
     AddColExpr,
-    BinaryUFuncColExpr,
     ColumnExpr,
     EqColExpr,
     ExpColExpr,
@@ -23,7 +22,6 @@ from .ufuncs import (
     NotColExpr,
     SubColExpr,
     TrueDivColExpr,
-    UnaryUFuncColExpr,
 )
 
 
@@ -63,30 +61,18 @@ class ColExprClosure[T]:
         return self.expr_cls.__name__
 
 
-@dcls.dataclass(frozen=True)
-class UnaryClosure(ColExprClosure[UnaryUFuncColExpr]):
-    def __call__(self, expr: ColumnExpr) -> ColumnExpr:
-        return self.expr_cls(expr)
-
-
-@dcls.dataclass(frozen=True)
-class BinaryClosure(ColExprClosure[BinaryUFuncColExpr]):
-    def __call__(self, left: ColumnExpr, right: ColumnExpr) -> ColumnExpr:
-        return self.expr_cls(left=left, right=right)
-
-
 def registry_closure():
-    yield unary_op_expr(), variants.UNARY_UFUNCS, UnaryClosure
-    yield binary_op_expr(), variants.BINARY_UFUNCS, BinaryClosure
+    for unary_op, unary_expr in unary_op_expr():
+        yield unary_op, unary_expr, variants.register_1
+
+    for binary_op, binary_expr in binary_op_expr():
+        yield binary_op, binary_expr, variants.register_2
 
 
 @typing.no_type_check
 def register_expr_varants():
-    for op_expr_gen, registry, closure_cls in registry_closure():
-        for op, expr_cls in op_expr_gen:
-            register = registry.register(op, ColumnExpr)
-            func = closure_cls(expr_cls)
-            register(func)
+    for op_name, expr_func, register in registry_closure():
+        register(op_name, ColumnExpr)(expr_func)
 
 
 register_expr_varants()
