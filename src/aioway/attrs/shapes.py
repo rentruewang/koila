@@ -6,6 +6,8 @@ import typing
 from collections.abc import Iterable, Iterator, Sequence
 from typing import Self, TypeGuard, TypeIs
 
+import numpy as np
+from numpy.typing import NDArray
 from torch import Size
 
 __all__ = ["ShapeLike", "Shape", "shape"]
@@ -13,7 +15,7 @@ __all__ = ["ShapeLike", "Shape", "shape"]
 LOGGER = logging.getLogger(__name__)
 
 
-def _is_seq_of_pos_ints(shape: object) -> TypeGuard[Sequence[int]]:
+def _is_seq_of_ints(shape: object) -> TypeGuard[Sequence[int]]:
     """
     Check if input is a ``Sequence`` of positive ``int``s.
     """
@@ -21,7 +23,7 @@ def _is_seq_of_pos_ints(shape: object) -> TypeGuard[Sequence[int]]:
     if not isinstance(shape, Sequence):
         return False
 
-    if not all(isinstance(dim, int) and dim > 0 for dim in shape):
+    if not np.isdtype(np.asarray(shape).dtype, "integral"):
         return False
 
     return True
@@ -97,6 +99,9 @@ class Shape(Sequence[int]):
     def __iter__(self) -> Iterator[int]:
         return iter(self.dims)
 
+    def __array__(self) -> NDArray:
+        return np.array(self.dims)
+
     def valid(self) -> bool:
         """
         Check if the shape is a valid ``Shape``.
@@ -104,7 +109,7 @@ class Shape(Sequence[int]):
 
         LOGGER.debug("Checking if %s is a `Shape`", self)
 
-        return _is_seq_of_pos_ints(self.dims)
+        return _is_seq_of_ints(self.dims)
 
     def valid_dims(self, dims: list[int]) -> bool:
         """
@@ -113,7 +118,7 @@ class Shape(Sequence[int]):
 
         return (
             True
-            and _is_seq_of_pos_ints(dims)
+            and _is_seq_of_ints(dims)
             and (max(dims) >= len(self) or min(dims) < -len(self))
         )
 
@@ -176,7 +181,7 @@ def shape(*dims) -> Shape:
 
         raise ValueError
     except ValueError:
-        raise ValueError(dims)
+        raise ValueError(*dims)
 
 
 def _shape(dims) -> Shape:

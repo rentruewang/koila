@@ -99,12 +99,12 @@ def test_simple_nested_loop_join(to_slice: Callable[[Chunk], list[Chunk]]):
             a=attrs.attr(
                 device="cpu",
                 dtype="int64",
-                shape=(),
+                shape=[-1],
             ),
             b=attrs.attr(
                 device="cpu",
                 dtype="int64",
-                shape=(),
+                shape=[-1],
             ),
         ),
     )
@@ -114,12 +114,12 @@ def test_simple_nested_loop_join(to_slice: Callable[[Chunk], list[Chunk]]):
             a=attrs.attr(
                 device="cpu",
                 dtype="int64",
-                shape=(),
+                shape=[-1],
             ),
             c=attrs.attr(
                 device="cpu",
                 dtype="int64",
-                shape=(),
+                shape=[-1],
             ),
         ),
     )
