@@ -45,22 +45,22 @@ def chunk_ok(*, size: int, device: str):
     schema = AttrSet.from_values(
         f1d=attrs.attr(
             device="cpu",
-            shape=(),
+            shape=[-1],
             dtype="float32",
         ),
         f2d=attrs.attr(
             device="cpu",
-            shape=32,
+            shape=[-1, 32],
             dtype="float32",
         ),
         i1d=attrs.attr(
             device="cpu",
-            shape=(),
+            shape=[-1],
             dtype="int64",
         ),
         i2d=attrs.attr(
             device="cpu",
-            shape=32,
+            shape=[-1, 32],
             dtype="int64",
         ),
     )

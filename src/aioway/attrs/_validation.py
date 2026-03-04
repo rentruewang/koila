@@ -4,6 +4,7 @@
 
 import logging
 
+import numpy as np
 from tensordict import TensorDict
 from torch import Tensor
 
@@ -54,10 +55,26 @@ def validate_attr(attr: Attr, tensor: Tensor) -> None:
 
 
 def validate_shape_matches(shape: Shape, tensor: Tensor) -> None:
-    if shape != tensor.shape[1:]:
+    try:
+        _validate_shape_matches(shape, tensor)
+    except ValueError:
         raise RuntimeError(
             f"Shape of tensor {tensor.shape=} should match attr's {shape=}"
         )
+
+
+def _validate_shape_matches(shape: Shape, tensor: Tensor) -> None:
+    # Convert to numpy array s.t. we can elegantly formulate the verification.
+    left = np.array(shape)
+    right = tensor.shape
+
+    # Dimension mismatch.
+    if len(left) != len(right):
+        raise ValueError
+
+    # If < 0, matches anything, if >= 0, matches ``tensor.shape``.
+    if np.any((left != right) & (left >= 0)):
+        raise ValueError
 
 
 def validate_dtype_matches(dtype: DType, tensor: Tensor) -> None:
