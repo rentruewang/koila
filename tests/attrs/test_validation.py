@@ -15,12 +15,12 @@ def schema():
         a=attrs.attr(
             device="cpu",
             dtype="int32",
-            shape=[2, 3],
+            shape=[-1, 2, 3],
         ),
         b=attrs.attr(
             device="cpu",
             dtype="float32",
-            shape=[6],
+            shape=[-1, 6],
         ),
     )
 
