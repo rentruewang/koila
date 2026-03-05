@@ -50,11 +50,6 @@ class Expr(ABC):
         ...
 
 
-@variants.register_1("hi", float)
-def hi(a: int):
-    return a
-
-
 class ColumnExpr(Expr, ABC):
     @abc.abstractmethod
     def __str__(self) -> str: ...

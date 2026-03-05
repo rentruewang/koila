@@ -72,7 +72,7 @@ def registry_closure():
 @typing.no_type_check
 def register_expr_varants():
     for op_name, expr_func, register in registry_closure():
-        register(op_name, ColumnExpr)(expr_func)
+        register(ColumnExpr, op_name)(expr_func)
 
 
 register_expr_varants()
