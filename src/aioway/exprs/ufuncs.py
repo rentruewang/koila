@@ -6,9 +6,10 @@ import typing
 from abc import ABC
 from collections.abc import Iterator
 
-from aioway.exprs.exprs import Expr
+from aioway import variants
+from aioway.variants import ParamList, Signature
 
-from .exprs import ColumnExpr
+from .exprs import ColumnExpr, Expr
 
 __all__ = [
     "UnaryUFuncColExpr",
@@ -32,10 +33,15 @@ __all__ = [
 
 @dcls.dataclass(frozen=True, eq=False)
 class UnaryUFuncColExpr(ColumnExpr, ABC):
-    NUM_ARGS = 1
-
     expr: ColumnExpr
     "The child of the current operator"
+
+    @classmethod
+    def __init_subclass__(cls, key: str) -> None:
+        variants.register(
+            signature=Signature(ParamList(ColumnExpr), ColumnExpr),
+            key=key,
+        )(cls)
 
     @typing.override
     def __str__(self) -> str:
@@ -53,14 +59,14 @@ class UnaryUFuncColExpr(ColumnExpr, ABC):
         yield self.expr
 
 
-class NotColExpr(UnaryUFuncColExpr, ABC):
+class NotColExpr(UnaryUFuncColExpr, key="not"):
     @property
     @typing.override
     def token(self) -> str:
         return "~"
 
 
-class NegColExpr(UnaryUFuncColExpr, ABC):
+class NegColExpr(UnaryUFuncColExpr, key="neg"):
     @property
     @typing.override
     def token(self) -> str:
@@ -76,6 +82,13 @@ class BinaryUFuncColExpr(ColumnExpr, ABC):
 
     right: ColumnExpr
     "The RHS of the current operator."
+
+    @classmethod
+    def __init_subclass__(cls, key: str) -> None:
+        variants.register(
+            signature=Signature(ParamList(ColumnExpr, ColumnExpr), ColumnExpr),
+            key=key,
+        )(cls)
 
     @typing.override
     def __str__(self) -> str:
@@ -94,84 +107,84 @@ class BinaryUFuncColExpr(ColumnExpr, ABC):
         yield self.right
 
 
-class AddColExpr(BinaryUFuncColExpr):
+class AddColExpr(BinaryUFuncColExpr, key="add"):
     @property
     @typing.override
     def token(self) -> str:
         return "+"
 
 
-class SubColExpr(BinaryUFuncColExpr):
+class SubColExpr(BinaryUFuncColExpr, key="sub"):
     @property
     @typing.override
     def token(self) -> str:
         return "-"
 
 
-class MultColExpr(BinaryUFuncColExpr):
+class MultColExpr(BinaryUFuncColExpr, key="mul"):
     @property
     @typing.override
     def token(self) -> str:
         return "*"
 
 
-class TrueDivColExpr(BinaryUFuncColExpr):
+class TrueDivColExpr(BinaryUFuncColExpr, key="truediv"):
     @property
     @typing.override
     def token(self) -> str:
         return "/"
 
 
-class FloorDivColExpr(BinaryUFuncColExpr):
+class FloorDivColExpr(BinaryUFuncColExpr, key="floordiv"):
     @property
     @typing.override
     def token(self) -> str:
         return "//"
 
 
-class ExpColExpr(BinaryUFuncColExpr):
+class ExpColExpr(BinaryUFuncColExpr, key="pow"):
     @property
     @typing.override
     def token(self) -> str:
         return "**"
 
 
-class EqColExpr(BinaryUFuncColExpr):
+class EqColExpr(BinaryUFuncColExpr, key="eq"):
     @property
     @typing.override
     def token(self) -> str:
         return "=="
 
 
-class NeColExpr(BinaryUFuncColExpr):
+class NeColExpr(BinaryUFuncColExpr, key="ne"):
     @property
     @typing.override
     def token(self) -> str:
         return "!="
 
 
-class GeColExpr(BinaryUFuncColExpr):
+class GeColExpr(BinaryUFuncColExpr, key="ge"):
     @property
     @typing.override
     def token(self) -> str:
         return ">="
 
 
-class LeColExpr(BinaryUFuncColExpr):
+class LeColExpr(BinaryUFuncColExpr, key="le"):
     @property
     @typing.override
     def token(self) -> str:
         return "<="
 
 
-class GtColExpr(BinaryUFuncColExpr):
+class GtColExpr(BinaryUFuncColExpr, key="gt"):
     @property
     @typing.override
     def token(self) -> str:
         return ">"
 
 
-class LtColExpr(BinaryUFuncColExpr):
+class LtColExpr(BinaryUFuncColExpr, key="lt"):
     @property
     @typing.override
     def token(self) -> str:

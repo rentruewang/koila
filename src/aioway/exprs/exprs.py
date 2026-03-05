@@ -7,7 +7,6 @@ from abc import ABC
 from collections.abc import Iterator, KeysView, Sequence
 from typing import ClassVar, Literal
 
-from aioway import variants
 from aioway.tables import Table
 
 __all__ = ["Expr", "ColumnExpr", "TableExpr"]
@@ -56,11 +55,21 @@ class ColumnExpr(Expr, ABC):
 
     @typing.final
     def __not__(self):
-        return variants.find("not", ColumnExpr)
+        from .ufuncs import NotColExpr
+
+        return NotColExpr(self)
+
+    @typing.final
+    def __neg__(self):
+        from .ufuncs import NegColExpr
+
+        return NegColExpr(self)
 
     @typing.final
     def __add__(self, other: "ColumnExpr"):
-        return variants.find("add", ColumnExpr)(self, other)
+        from .ufuncs import AddColExpr
+
+        return AddColExpr(self, other)
 
     @typing.final
     def __radd__(self, other: "ColumnExpr"):
@@ -68,7 +77,9 @@ class ColumnExpr(Expr, ABC):
 
     @typing.final
     def __sub__(self, other: "ColumnExpr"):
-        return variants.find("sub", ColumnExpr)(self, other)
+        from .ufuncs import SubColExpr
+
+        return SubColExpr(self, other)
 
     @typing.final
     def __rsub__(self, other: "ColumnExpr"):
@@ -76,7 +87,9 @@ class ColumnExpr(Expr, ABC):
 
     @typing.final
     def __mul__(self, other: "ColumnExpr"):
-        return variants.find("mul", ColumnExpr)(self, other)
+        from .ufuncs import MultColExpr
+
+        return MultColExpr(self, other)
 
     @typing.final
     def __rmul__(self, other: "ColumnExpr"):
@@ -84,7 +97,9 @@ class ColumnExpr(Expr, ABC):
 
     @typing.final
     def __truediv__(self, other: "ColumnExpr"):
-        return variants.find("truediv", ColumnExpr)(self, other)
+        from .ufuncs import TrueDivColExpr
+
+        return TrueDivColExpr(self, other)
 
     @typing.final
     def __rtruediv__(self, other: "ColumnExpr"):
@@ -92,7 +107,9 @@ class ColumnExpr(Expr, ABC):
 
     @typing.final
     def __floordiv__(self, other: "ColumnExpr"):
-        return variants.find("floordiv", ColumnExpr)(self, other)
+        from .ufuncs import FloorDivColExpr
+
+        return FloorDivColExpr(self, other)
 
     @typing.final
     def __rfloordiv__(self, other: "ColumnExpr"):
@@ -100,7 +117,9 @@ class ColumnExpr(Expr, ABC):
 
     @typing.final
     def __pow__(self, other: "ColumnExpr"):
-        return variants.find("pow", ColumnExpr)(self, other)
+        from .ufuncs import ExpColExpr
+
+        return ExpColExpr(self, other)
 
     @typing.final
     def __rpow__(self, other: "ColumnExpr"):
@@ -109,32 +128,44 @@ class ColumnExpr(Expr, ABC):
     @typing.final
     def __eq__(self, other: object):
         if isinstance(other, ColumnExpr):
-            return variants.find("eq", ColumnExpr)(self, other)
+            from .ufuncs import EqColExpr
+
+            return EqColExpr(self, other)
 
         return NotImplemented
 
     @typing.final
     def __ne__(self, other: object):
         if isinstance(other, ColumnExpr):
-            return variants.find("ne", ColumnExpr)(self, other)
+            from .ufuncs import NeColExpr
+
+            return NeColExpr(self, other)
 
         return NotImplemented
 
     @typing.final
     def __gt__(self, other: "ColumnExpr"):
-        return variants.find("gt", ColumnExpr)(self, other)
+        from .ufuncs import GtColExpr
+
+        return GtColExpr(self, other)
 
     @typing.final
     def __ge__(self, other: "ColumnExpr"):
-        return variants.find("ge", ColumnExpr)(self, other)
+        from .ufuncs import GeColExpr
+
+        return GeColExpr(self, other)
 
     @typing.final
     def __lt__(self, other: "ColumnExpr"):
-        return variants.find("lt", ColumnExpr)(self, other)
+        from .ufuncs import LtColExpr
+
+        return LtColExpr(self, other)
 
     @typing.final
     def __le__(self, other: "ColumnExpr"):
-        return variants.find("le", ColumnExpr)(self, other)
+        from .ufuncs import LeColExpr
+
+        return LeColExpr(self, other)
 
 
 class TableExpr(Expr, Table[ColumnExpr], ABC):
