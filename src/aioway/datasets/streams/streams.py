@@ -5,17 +5,20 @@
 import abc
 import dataclasses as dcls
 import functools
+import inspect
 import typing
 from abc import ABC
 from collections.abc import Generator, Iterator
 from typing import ClassVar, Self
 
+from aioway import variants
 from aioway.attrs import AttrSet
 from aioway.batches import Chunk
+from aioway.variants import ParamList
 
 from ..datasets import Dataset, DatasetViewTypes
 
-__all__ = ["Stream", "StreamState"]
+__all__ = ["Stream", "StreamState", "Stream0", "Stream1", "Stream2"]
 
 
 @dcls.dataclass
@@ -54,10 +57,17 @@ class Stream(Iterator[Chunk], Dataset, ABC):
     it is an external iterator, supporting state inspection, simplifying debugging.
     """
 
+    _SIGNATURE: ClassVar[ParamList]
+    "The signature of the current class."
+
     __match_args__: ClassVar[tuple[str, ...]]
     """
     A ``Stream`` should be able to be decomposed with ``match`` statements.
     """
+
+    @classmethod
+    def __init_subclass__(cls, key: str = "") -> None:
+        cls.__register_subclass(key)
 
     @typing.override
     def __iter__(self) -> Self:
@@ -119,7 +129,7 @@ class Stream(Iterator[Chunk], Dataset, ABC):
         ...
 
     @typing.final
-    def children(self) -> Iterator["Stream"]:
+    def children(self) -> list["Stream"]:
         """
         Yields the children (dependencies of the current ``Stream``).
 
@@ -128,9 +138,18 @@ class Stream(Iterator[Chunk], Dataset, ABC):
         Yields:
             Some ``Stream``s that would be evaluated if the current is running.
         """
-        for child in self._children():
+
+        children_list = list(self._children())
+
+        if len(children_list) != self.argc():
+            raise AssertionError(
+                f"Number of children must match signature {self._SIGNATURE}."
+            )
+
+        for child in children_list:
             assert child is not self, "A `Stream` cannot depend on itself!"
-            yield child
+
+        return children_list
 
     @abc.abstractmethod
     def _children(self) -> Generator["Stream"]:
@@ -171,3 +190,32 @@ class Stream(Iterator[Chunk], Dataset, ABC):
         from .views import StreamColumnView, StreamSelectView
 
         return DatasetViewTypes(column=StreamColumnView, select=StreamSelectView)
+
+    @classmethod
+    def __register_subclass(cls, key: str):
+        # Don't do anything for abstract classes.
+        if inspect.isabstract(cls):
+            return
+
+        # Concrete subclass must have key.
+        if not key:
+            raise KeyError(f"Concrete class {cls} should provide a key.")
+
+        # Register.
+        variants.register(signature=cls._SIGNATURE, key=key)(cls)
+
+    @classmethod
+    def argc(cls) -> int:
+        return len(cls._SIGNATURE)
+
+
+class Stream0(Stream, ABC):
+    _SIGNATURE = ParamList()
+
+
+class Stream1(Stream, ABC):
+    _SIGNATURE = ParamList(Stream)
+
+
+class Stream2(Stream, ABC):
+    _SIGNATURE = ParamList(Stream, Stream)
