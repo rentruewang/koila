@@ -1,5 +1,7 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
+"The implementation for dtypes, supports different backends."
+
 import abc
 import functools
 import logging
@@ -20,6 +22,7 @@ __all__ = [
     "ComposedDType",
     "TorchDType",
     "NumpyDType",
+    "DTypeLike",
 ]
 
 LOGGER = logging.getLogger(__name__)

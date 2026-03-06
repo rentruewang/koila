@@ -38,7 +38,7 @@ class UnaryUFuncColExpr(ColumnExpr, ABC):
 
     @classmethod
     def __init_subclass__(cls, key: str) -> None:
-        variants.register(signature=ParamList(ColumnExpr), key=key)(cls)
+        variants.register(ParamList(ColumnExpr), key)(cls)
 
     @typing.override
     def __str__(self) -> str:
@@ -82,7 +82,7 @@ class BinaryUFuncColExpr(ColumnExpr, ABC):
 
     @classmethod
     def __init_subclass__(cls, key: str) -> None:
-        variants.register(signature=ParamList(ColumnExpr, ColumnExpr), key=key)(cls)
+        variants.register(ParamList(ColumnExpr, ColumnExpr), key)(cls)
 
     @typing.override
     def __str__(self) -> str:
