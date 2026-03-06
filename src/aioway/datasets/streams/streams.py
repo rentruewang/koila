@@ -202,7 +202,7 @@ class Stream(Iterator[Chunk], Dataset, ABC):
             raise KeyError(f"Concrete class {cls} should provide a key.")
 
         # Register.
-        variants.register(signature=cls._SIGNATURE, key=key)(cls)
+        variants.register(cls._SIGNATURE, key)(cls)
 
     @classmethod
     def argc(cls) -> int:

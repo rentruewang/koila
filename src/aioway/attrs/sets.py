@@ -18,7 +18,7 @@ from .devices import Device, DeviceLike
 from .dtypes import DType, DTypeLike
 from .shapes import Shape, ShapeLike
 
-__all__ = ["AttrSet"]
+__all__ = ["AttrSet", "DTypeSet", "DeviceSet", "ShapeSet"]
 
 
 class _AttrItem[T](NamedTuple):
