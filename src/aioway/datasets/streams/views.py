@@ -10,7 +10,7 @@ from typing import Self
 from aioway.batches import Chunk, Vector
 
 from ..datasets import DatasetColumnView, DatasetSelectView
-from .streams import Stream
+from .streams import Stream, Stream1
 
 __all__ = ["StreamColumnView", "StreamSelectView"]
 
@@ -35,7 +35,7 @@ class StreamColumnView(Iterator[Vector], DatasetColumnView[Stream]):
 
 
 @dcls.dataclass(frozen=True)
-class StreamSelectView(DatasetSelectView[Stream], Stream):
+class StreamSelectView(DatasetSelectView[Stream], Stream1, key="select"):
     """
     The view generated when calling ``Stream.select``.
     """

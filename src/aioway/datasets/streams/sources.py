@@ -18,7 +18,7 @@ from aioway.attrs import AttrSet
 from aioway.batches import Chunk
 
 from ..frames import Frame
-from .streams import Stream
+from .streams import Stream, Stream0
 
 __all__ = [
     "BoundedStream",
@@ -32,7 +32,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 @dcls.dataclass(frozen=True)
-class BoundedStream(Stream, ABC):
+class BoundedStream(Stream0, ABC):
     """
     A stream with ``__len__`` and ``__getitem__``.
     """
@@ -57,7 +57,7 @@ class BoundedStream(Stream, ABC):
 
 
 @dcls.dataclass(frozen=True)
-class CacheStream(BoundedStream):
+class CacheStream(BoundedStream, key="cache"):
     """
     Exhaust the input stream, store it into a cache for repeating access.
     """
@@ -122,7 +122,7 @@ class CacheStream(BoundedStream):
 
 
 @dcls.dataclass(frozen=True)
-class ListStream(BoundedStream):
+class ListStream(BoundedStream, key="list"):
     "A ``Stream`` backed by a list of ``TensorDict``."
 
     sequence: Sequence[Chunk]
@@ -189,7 +189,7 @@ class FrameStreamLoader:
 
 
 @dcls.dataclass(frozen=True)
-class FrameStream(Stream):
+class FrameStream(Stream0, key="frame"):
     """
     A ``Stream`` backed by a ``Frame``.
     """
