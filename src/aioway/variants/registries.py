@@ -5,13 +5,20 @@
 import typing
 from collections import UserDict
 from collections.abc import Callable
-from typing import Any, TypeIs
+from typing import Any, Self, TypeIs
 
 from rich.table import Table
 
 from .signatures import ParamList, Signature
 
-__all__ = ["TypeCheckedDict", "PerTypeRegistry", "SignatureRegistry", "register"]
+__all__ = [
+    "TypeCheckedDict",
+    "PerTypeRegistry",
+    "SignatureRegistry",
+    "register",
+    "default_registry",
+    "registry_for",
+]
 
 
 class TypeCheckedDict[K, V](UserDict[K, V]):
@@ -75,7 +82,7 @@ class SignatureRegistry(TypeCheckedDict[ParamList, PerTypeRegistry]):
     """
 
     def __rich__(self):
-        return _reg_rich_table()
+        return _reg_rich_table(self)
 
     @typing.override
     def __getitem__(self, key: ParamList) -> PerTypeRegistry:
@@ -95,19 +102,33 @@ class SignatureRegistry(TypeCheckedDict[ParamList, PerTypeRegistry]):
     def _is_val_type(cls, val) -> TypeIs[PerTypeRegistry]:
         return isinstance(val, PerTypeRegistry)
 
+    @property
+    def signatures(self):
+        return set(self.keys())
+
+    @property
+    def ops(self):
+        return _unique_ops(self)
+
+    def select(self, *signatures: ParamList) -> Self:
+        "Only view the types of selected signatures."
+
+        return type(self)({sig: self[sig] for sig in signatures})
+
 
 _REGISTRY = SignatureRegistry()
 
 
-def registry():
+def default_registry():
     return _REGISTRY
 
 
-def register(signature: Signature | ParamList, key: str):
+def register(signature: Signature | ParamList, /, *keys: str):
     "Register the callable based on their signature."
 
     def registrar[T: Callable](variant: T) -> T:
-        registry_for(signature)[key] = variant
+        for key in keys:
+            registry_for(signature)[key] = variant
         return variant
 
     return registrar
@@ -131,20 +152,20 @@ def _registry_key(signature: Signature | ParamList, /) -> ParamList:
             raise TypeError(type(signature))
 
 
-def _reg_rich_table() -> Table:
+def _reg_rich_table(registry: SignatureRegistry, /) -> Table:
     "A rich table of operator vs signature."
 
-    signatures = list(_REGISTRY.keys())
+    signatures = list(registry.keys())
     table = Table(" ", *map(str, signatures))
-    for op in sorted(_unique_ops()):
-        items = [_REGISTRY[sign].get(op) for sign in signatures]
+    for op in sorted(_unique_ops(registry)):
+        items = [registry[sign].get(op) for sign in signatures]
         table.add_row(op, *(i.__name__ if i else "-" for i in items))
     return table
 
 
-def _unique_ops() -> set[str]:
+def _unique_ops(registry: SignatureRegistry, /) -> set[str]:
     result: set[str] = set()
-    for per_type in _REGISTRY.values():
+    for per_type in registry.values():
         for op in per_type:
             result.add(op)
     return result

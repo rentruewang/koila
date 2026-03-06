@@ -77,18 +77,40 @@ class ParamList:
         )(**types)
 
 
-@dcls.dataclass(frozen=True)
 class Signature:
     "The signature type."
 
-    params: ParamList
-    "The parameters of the signature."
+    __match_args__ = "params", "result"
 
-    result: type
-    "The return type of the signature."
+    def __init__(self, *types: type) -> None:
+        *params, result = types
 
-    def __str__(self):
+        self._params = ParamList(*params)
+        self._result = result
+
+    def __eq__(self, other: object):
+        if isinstance(other, Signature):
+            return self._params == other._params and self._result == other._result
+
+        return NotImplemented
+
+    def __repr__(self) -> str:
         return f"{self.params!s} -> {self.result.__qualname__}"
+
+    def __hash__(self) -> int:
+        return hash((self.params, self.result))
+
+    @property
+    def params(self) -> ParamList:
+        "The parameters of the signature."
+
+        return self._params
+
+    @property
+    def result(self) -> type:
+        "The return type of the signature."
+
+        return self._result
 
     @classmethod
     def parse(cls, text: str, /, **types: type):
@@ -132,7 +154,7 @@ class _ParamListTransformer(Transformer):
 @_inline_transform
 class _SignatureTransformer(_ParamListTransformer):
     def signature(self, param_list: ParamList, result: str):
-        return Signature(params=param_list, result=self._mapping[result])
+        return Signature(*param_list, self._mapping[result])
 
 
 @functools.cache
