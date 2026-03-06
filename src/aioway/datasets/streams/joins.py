@@ -12,13 +12,13 @@ from aioway.attrs import AttrSet
 from aioway.batches import Chunk
 
 from .sources import CacheStream
-from .streams import Stream, StreamState
+from .streams import Stream, Stream2, StreamState
 
 __all__ = ["ZipStream", "NestedLoopJoinStream"]
 
 
 @dcls.dataclass(frozen=True)
-class ZipStream(Stream):
+class ZipStream(Stream2, key="zip"):
     """
     ``ZipStream`` is similar to what ``zip`` does.
     """
@@ -66,7 +66,7 @@ class NestedState(StreamState):
 
 
 @dcls.dataclass(frozen=True)
-class NestedLoopJoinStream(Stream):
+class NestedLoopJoinStream(Stream2, key="nested-loop"):
     """
     This is a stream that combines 2 input streams in a nested-loop matter,
     as in ``[[x, y] for x in left for y in right if x.key == y.key]``.

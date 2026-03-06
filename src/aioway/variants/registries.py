@@ -99,6 +99,10 @@ class SignatureRegistry(TypeCheckedDict[ParamList, PerTypeRegistry]):
 _REGISTRY = SignatureRegistry()
 
 
+def registry():
+    return _REGISTRY
+
+
 def register(signature: Signature | ParamList, key: str):
     "Register the callable based on their signature."
 

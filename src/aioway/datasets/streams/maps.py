@@ -16,7 +16,7 @@ from aioway.attrs import AttrSet
 from aioway.attrs import funcs as atf
 from aioway.batches import Chunk
 
-from .streams import Stream
+from .streams import Stream, Stream1
 
 __all__ = [
     "MapStream",
@@ -29,7 +29,7 @@ __all__ = [
 
 
 @dcls.dataclass(frozen=True)
-class MapStream(Stream, ABC):
+class MapStream(Stream1, ABC):
     """
     The shared base class for all the ``map`` like ``Stream``s,
     which share the trait of::
@@ -95,7 +95,7 @@ class MapStream(Stream, ABC):
 
 
 @dcls.dataclass(frozen=True)
-class ApplyStream(MapStream):
+class ApplyStream(MapStream, key="apply"):
     """
     A ``Stream`` that you can customize what the ``__next__`` function do.
 
@@ -125,7 +125,7 @@ class ApplyStream(MapStream):
 
 
 @dcls.dataclass(frozen=True)
-class FuncFilterStream(MapStream):
+class FuncFilterStream(MapStream, key="func-filter"):
     """
     A ``Stream`` that filteres on its inputs, based on a preducate function.
 
@@ -159,7 +159,7 @@ class FuncFilterStream(MapStream):
 
 
 @dcls.dataclass(frozen=True)
-class ExprFilterStream(MapStream):
+class ExprFilterStream(MapStream, key="expr-filter"):
     """
     A ``Stream`` that filteres on its inputs, based on a preducate expression.
 
@@ -185,7 +185,7 @@ class ExprFilterStream(MapStream):
 
 
 @dcls.dataclass(frozen=True)
-class ProjectStream(MapStream):
+class ProjectStream(MapStream, key="project"):
     """
     Projection of the input table. The ``subset`` should be a subset of the input columns.
     """
@@ -206,7 +206,7 @@ class ProjectStream(MapStream):
 
 
 @dcls.dataclass(frozen=True)
-class RenameStream(MapStream):
+class RenameStream(MapStream, key="rename"):
     """
     Renames some columns in the inputs in the outputs.
     """
