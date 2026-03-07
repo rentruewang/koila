@@ -1,0 +1,216 @@
+# Copyright (c) AIoWay Authors - All Rights Reserved
+
+import dataclasses as dcls
+import functools
+import os
+
+import nox
+from nox import Session
+
+PYTHON_VERSIONS = ["3.13", "3.14"]
+os.environ["PDM_IGNORE_SAVED_PYTHON"] = "1"
+
+
+@nox.session
+def publish(session: Session):
+    "Nox ``publish`` command. Calls ``pdm publish``."
+    commands(session).publish()
+
+
+@nox.session
+def build(session: Session):
+    "Nox ``build`` command. Calls ``pdm build``."
+    commands(session).build()
+
+
+@nox.session(python=PYTHON_VERSIONS)
+def testing(session: Session):
+    "Nox ``testing`` command. Calls ``pytest`` command. Runs in multiple python versions."
+    commands(session).test()
+
+
+@nox.session
+def formatting(session: Session):
+    "Nox ``formatting`` command. Calls ``autoflake``, ``isort``, ``black``, in that order."
+    autoflake(session)
+    isort(session)
+    black(session)
+
+
+@nox.session
+def autoflake(session: Session):
+    "Nox ``autoflake`` command. Calls ``autoflake`` command."
+    commands(session).autoflake()
+
+
+@nox.session
+def isort(session: Session):
+    "Nox ``isort`` command. Calls ``isort`` command."
+    commands(session).isort()
+
+
+@nox.session
+def black(session: Session):
+    "Nox ``black`` command. Calls ``black`` command."
+    commands(session).black()
+
+
+@nox.session
+def mypy(session: Session):
+    "Nox ``mypy`` command. Calls ``mypy`` command."
+    commands(session).mypy()
+
+
+@nox.session
+def typing(session: Session):
+    "Nox ``typing`` command. Calls ``mypy`` command."
+    mypy(session)
+
+
+@functools.cache
+def github(session: Session):
+    "Global singleton of ``github``."
+    return _Github(session)
+
+
+@functools.cache
+def pdm(session: Session):
+    "Global singleton of ``pdm``."
+    return _Pdm(session)
+
+
+@functools.cache
+def commands(session: Session):
+    "Global singleton of ``commands``."
+    return _Commands(session)
+
+
+@dcls.dataclass(frozen=True)
+class _Github:
+    "The manager for setting up github."
+
+    session: Session
+    "The nox session to use."
+
+    @functools.cache
+    def setup(self) -> None:
+        "The shared entrypoint to GitHub Actions scripts"
+
+        # Does nothing outside of GitHub Actions.
+        if not self.active():
+            return
+
+        self._remove_unwanted_files()
+        self._log_storage_usage()
+
+    def _run(self, *args: str):
+        self.session.run_install(*args, external=True)
+
+    def _remove_unwanted_files(self) -> None:
+        "Remove the files GitHub Actions pre-installed."
+
+        print("Removing files we did not ask for...")
+
+        for folder in [
+            "/usr/local/lib/android",
+            "/usr/share/dotnet",
+            "/usr/local/.ghcup",
+        ]:
+            self._run("sudo", "rm", "-rf", folder)
+
+        self._run("docker", "system", "prune", "-af", "--volumes")
+
+    def _log_storage_usage(self) -> None:
+        "Log how much usage is currently being used by GitHub Actions."
+        print("Investigating how much storage is used in GitHub Actions...")
+
+        self._run("df", "-h")
+
+    @staticmethod
+    def active() -> bool:
+        "Detect whether or not it is running in GitHub Actions."
+
+        print("Checking if we are in GitHub Actions...", end=" ")
+        result = os.getenv("GITHUB_ACTIONS") == "true"
+        print("Yes" if result else "No")
+        return result
+
+
+@dcls.dataclass(frozen=True)
+class _Pdm:
+    session: Session
+
+    def __post_init__(self):
+        gh = github(self.session)
+
+        gh.setup()
+
+        if gh.active():
+            self._run("pdm", "config", "python.use_venv", "true")
+
+    @functools.cache
+    def sync(self):
+        self._sync_or_install("sync")
+
+    @functools.cache
+    def install(self):
+        self._sync_or_install("install")
+
+    def build(self):
+        self.install()
+        self._run("pdm", "build")
+
+    def publish(self):
+        self.install()
+        self._run("pdm", "publish")
+
+    def run(self, *args: str):
+        self.install()
+        self._run("pdm", "run", *args)
+
+    @functools.cache
+    def _sync_or_install(self, mode: str):
+        self.session.run_install("pdm", mode, "-G:all")
+
+    def _run(self, *args: str):
+        self.session.run(*args, external=True)
+
+
+@dcls.dataclass(frozen=True)
+class _Commands:
+    session: Session
+
+    def __post_init__(self):
+        github(self.session).setup()
+
+    def build(self):
+        "``pdm build`` command."
+        self.pdm.build()
+
+    def publish(self):
+        "``pdm publish`` command."
+        self.pdm.publish()
+
+    def test(self):
+        "``pytest`` command."
+        self.pdm.run("pytest")
+
+    def autoflake(self):
+        "``autoflake`` command."
+        self.pdm.run("autoflake", ".")
+
+    def isort(self):
+        "``isort`` command."
+        self.pdm.run("isort", ".")
+
+    def black(self):
+        "``black`` command."
+        self.pdm.run("black", ".")
+
+    def mypy(self):
+        "``mypy`` command."
+        self.pdm.run("mypy", "src")
+
+    @property
+    def pdm(self):
+        return pdm(self.session)
