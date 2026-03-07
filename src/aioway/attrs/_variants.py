@@ -1,7 +1,6 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-from aioway import variants
-from aioway.variants import ParamList
+from aioway.variants import Signature
 
 from . import devices, dtypes, shapes
 from .attrs import Attr
@@ -15,12 +14,12 @@ _ARITH_UFUNC_OPS = "add", "sub", "mul", "truediv", "floordiv", "pow"
 _CMP_UFUNC_OPS = "eq", "ne", "gt", "ge", "lt", "le"
 
 
-@variants.register(ParamList(Device), *_UNARY_UFUNC_OPS)
+@Signature.ufunc1(Device).register_keys(*_UNARY_UFUNC_OPS)
 def same_device(device: DeviceLike) -> Device:
     return devices.device(device)
 
 
-@variants.register(ParamList(Device, Device), *_ARITH_UFUNC_OPS, *_CMP_UFUNC_OPS)
+@Signature.ufunc2(Device).register_keys(*_ARITH_UFUNC_OPS, *_CMP_UFUNC_OPS)
 def matching_device(l: DeviceLike, r: DeviceLike) -> Device:
     left, right = map(devices.device, [l, r])
 
@@ -30,12 +29,12 @@ def matching_device(l: DeviceLike, r: DeviceLike) -> Device:
     return left
 
 
-@variants.register(ParamList(DType), *_UNARY_UFUNC_OPS)
+@Signature.ufunc1(DType).register_keys(*_UNARY_UFUNC_OPS)
 def same_dtype(dtype: DTypeLike) -> DType:
     return dtypes.dtype(dtype)
 
 
-@variants.register(ParamList(DType, DType), *_ARITH_UFUNC_OPS, *_CMP_UFUNC_OPS)
+@Signature.ufunc2(DType).register_keys(*_ARITH_UFUNC_OPS, *_CMP_UFUNC_OPS)
 def binary_broadcast(l: DTypeLike, r: DTypeLike) -> DType:
     left, right = map(dtypes.dtype, [l, r])
 
@@ -49,12 +48,12 @@ def binary_broadcast(l: DTypeLike, r: DTypeLike) -> DType:
             return dtypes.dtype("bool")
 
 
-@variants.register(ParamList(Shape), *_UNARY_UFUNC_OPS)
+@Signature.ufunc1(Shape).register_keys(*_UNARY_UFUNC_OPS)
 def same_shape(shape: ShapeLike) -> Shape:
     return shapes.shape(shape)
 
 
-@variants.register(ParamList(Shape, Shape), *_ARITH_UFUNC_OPS, *_CMP_UFUNC_OPS)
+@Signature.ufunc2(Shape).register_keys(*_ARITH_UFUNC_OPS, *_CMP_UFUNC_OPS)
 def matching_shape(l: ShapeLike, r: ShapeLike):
     left, right = map(shapes.shape, [l, r])
 
@@ -64,20 +63,20 @@ def matching_shape(l: ShapeLike, r: ShapeLike):
     return left
 
 
-@variants.register(ParamList(Attr), *_UNARY_UFUNC_OPS)
-@variants.register(ParamList(AttrSet), *_UNARY_UFUNC_OPS)
-@variants.register(ParamList(DeviceSet), *_UNARY_UFUNC_OPS)
-@variants.register(ParamList(DTypeSet), *_UNARY_UFUNC_OPS)
-@variants.register(ParamList(ShapeSet), *_UNARY_UFUNC_OPS)
+@Signature.ufunc1(Attr).register_keys(*_UNARY_UFUNC_OPS)
+@Signature.ufunc1(AttrSet).register_keys(*_UNARY_UFUNC_OPS)
+@Signature.ufunc1(DeviceSet).register_keys(*_UNARY_UFUNC_OPS)
+@Signature.ufunc1(DTypeSet).register_keys(*_UNARY_UFUNC_OPS)
+@Signature.ufunc1(ShapeSet).register_keys(*_UNARY_UFUNC_OPS)
 def same[T](s: T) -> T:
     return s
 
 
-@variants.register(ParamList(Attr, Attr))
-@variants.register(ParamList(AttrSet, AttrSet), *_ARITH_UFUNC_OPS, *_CMP_UFUNC_OPS)
-@variants.register(ParamList(DeviceSet, DeviceSet), *_ARITH_UFUNC_OPS, *_CMP_UFUNC_OPS)
-@variants.register(ParamList(DTypeSet, DTypeSet), *_ARITH_UFUNC_OPS, *_CMP_UFUNC_OPS)
-@variants.register(ParamList(ShapeSet, ShapeSet), *_ARITH_UFUNC_OPS, *_CMP_UFUNC_OPS)
+@Signature.ufunc2(Attr).register_keys(*_ARITH_UFUNC_OPS, *_CMP_UFUNC_OPS)
+@Signature.ufunc2(AttrSet).register_keys(*_ARITH_UFUNC_OPS, *_CMP_UFUNC_OPS)
+@Signature.ufunc2(DeviceSet).register_keys(*_ARITH_UFUNC_OPS, *_CMP_UFUNC_OPS)
+@Signature.ufunc2(DTypeSet).register_keys(*_ARITH_UFUNC_OPS, *_CMP_UFUNC_OPS)
+@Signature.ufunc2(ShapeSet).register_keys(*_ARITH_UFUNC_OPS, *_CMP_UFUNC_OPS)
 def matching[T](l: T, r: T) -> T:
     if l != r:
         raise ValueError(f"{l} != {r}")
