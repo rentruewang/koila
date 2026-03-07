@@ -55,6 +55,7 @@ build = [
     "setuptools>=80.9.0",
     "setuptools-scm>=8.3.1",
     "wheel>=0.45.1",
+    "nox[pbs]>=2026.2.9",
 ]
 
 [tool.autoflake]
