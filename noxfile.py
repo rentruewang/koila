@@ -165,7 +165,7 @@ class _Pdm:
         self._run("pdm", "publish")
 
     def run(self, *args: str):
-        self.install()
+        self.sync()
         self._run("pdm", "run", *args)
 
     @functools.cache

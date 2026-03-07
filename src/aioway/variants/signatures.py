@@ -7,7 +7,7 @@ import functools
 import logging
 import typing
 from collections.abc import Callable
-from typing import Any
+from typing import Any, Self
 
 import lark
 from lark import Lark, Transformer
@@ -119,6 +119,20 @@ class Signature:
             transformer=_SignatureTransformer,
             text=text,
         )(**types)
+
+    def register_keys(self, *keys: str):
+        "Convenient wrapper s.t. ``register`` doesn't need to be imported."
+        from . import registries
+
+        return registries.register(self, *keys)
+
+    @classmethod
+    def ufunc1(cls, typ: type, /) -> Self:
+        return cls(typ, typ)
+
+    @classmethod
+    def ufunc2(cls, typ: type, /) -> Self:
+        return cls(typ, typ, typ)
 
 
 _PARAM_LIST_GRAMMAR = r"""

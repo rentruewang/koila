@@ -11,10 +11,9 @@ from abc import ABC
 from collections.abc import Generator, Iterator
 from typing import ClassVar, Self
 
-from aioway import variants
 from aioway.attrs import AttrSet
 from aioway.batches import Chunk
-from aioway.variants import ParamList
+from aioway.variants import Signature
 
 from ..datasets import Dataset, DatasetViewTypes
 
@@ -57,7 +56,7 @@ class Stream(Iterator[Chunk], Dataset, ABC):
     it is an external iterator, supporting state inspection, simplifying debugging.
     """
 
-    _SIGNATURE: ClassVar[ParamList]
+    _SIGNATURE: ClassVar[Signature]
     "The signature of the current class."
 
     __match_args__: ClassVar[tuple[str, ...]]
@@ -202,20 +201,20 @@ class Stream(Iterator[Chunk], Dataset, ABC):
             raise KeyError(f"Concrete class {cls} should provide a key.")
 
         # Register.
-        variants.register(cls._SIGNATURE, key)(cls)
+        cls._SIGNATURE.register_keys(key)(cls)
 
     @classmethod
     def argc(cls) -> int:
-        return len(cls._SIGNATURE)
+        return len(cls._SIGNATURE.params)
 
 
 class Stream0(Stream, ABC):
-    _SIGNATURE = ParamList()
+    _SIGNATURE = Signature(Stream)
 
 
 class Stream1(Stream, ABC):
-    _SIGNATURE = ParamList(Stream)
+    _SIGNATURE = Signature.ufunc1(Stream)
 
 
 class Stream2(Stream, ABC):
-    _SIGNATURE = ParamList(Stream, Stream)
+    _SIGNATURE = Signature.ufunc2(Stream)

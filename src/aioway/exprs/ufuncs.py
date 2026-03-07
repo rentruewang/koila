@@ -6,8 +6,7 @@ import typing
 from abc import ABC
 from collections.abc import Iterator
 
-from aioway import variants
-from aioway.variants import ParamList
+from aioway.variants import Signature
 
 from .exprs import ColumnExpr, Expr
 
@@ -38,7 +37,7 @@ class UnaryUFuncColExpr(ColumnExpr, ABC):
 
     @classmethod
     def __init_subclass__(cls, key: str) -> None:
-        variants.register(ParamList(ColumnExpr), key)(cls)
+        Signature.ufunc1(ColumnExpr).register_keys(key)(cls)
 
     @typing.override
     def __str__(self) -> str:
@@ -82,7 +81,7 @@ class BinaryUFuncColExpr(ColumnExpr, ABC):
 
     @classmethod
     def __init_subclass__(cls, key: str) -> None:
-        variants.register(ParamList(ColumnExpr, ColumnExpr), key)(cls)
+        Signature.ufunc2(ColumnExpr).register_keys(key)(cls)
 
     @typing.override
     def __str__(self) -> str:

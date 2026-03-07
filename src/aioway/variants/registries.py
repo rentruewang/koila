@@ -9,7 +9,7 @@ from typing import Any, Self, TypeIs
 
 from rich.table import Table
 
-from .signatures import ParamList, Signature
+from .signatures import Signature
 
 __all__ = [
     "TypeCheckedDict",
@@ -65,6 +65,12 @@ class TypeCheckedDict[K, V](UserDict[K, V]):
 
 
 class PerTypeRegistry(TypeCheckedDict[str, Callable]):
+    def __setitem__(self, key, val) -> None:
+        if key in self:
+            raise KeyError(f"Cannnot set again on {key=} with {val=}.")
+
+        super().__setitem__(key, val)
+
     @classmethod
     @typing.override
     def _is_key_type(cls, key) -> TypeIs[str]:
@@ -76,7 +82,7 @@ class PerTypeRegistry(TypeCheckedDict[str, Callable]):
         return callable(val)
 
 
-class SignatureRegistry(TypeCheckedDict[ParamList, PerTypeRegistry]):
+class SignatureRegistry(TypeCheckedDict[Signature, PerTypeRegistry]):
     """
     The global registry that is based on signatures.
     """
@@ -85,7 +91,7 @@ class SignatureRegistry(TypeCheckedDict[ParamList, PerTypeRegistry]):
         return _reg_rich_table(self)
 
     @typing.override
-    def __getitem__(self, key: ParamList) -> PerTypeRegistry:
+    def __getitem__(self, key: Signature) -> PerTypeRegistry:
         # DefaultDict behavior.
         if key not in self:
             self[key] = PerTypeRegistry()
@@ -94,8 +100,8 @@ class SignatureRegistry(TypeCheckedDict[ParamList, PerTypeRegistry]):
 
     @classmethod
     @typing.override
-    def _is_key_type(cls, key) -> TypeIs[ParamList]:
-        return isinstance(key, ParamList)
+    def _is_key_type(cls, key) -> TypeIs[Signature]:
+        return isinstance(key, Signature)
 
     @classmethod
     @typing.override
@@ -110,7 +116,7 @@ class SignatureRegistry(TypeCheckedDict[ParamList, PerTypeRegistry]):
     def ops(self):
         return _unique_ops(self)
 
-    def select(self, *signatures: ParamList) -> Self:
+    def select(self, *signatures: Signature) -> Self:
         "Only view the types of selected signatures."
 
         return type(self)({sig: self[sig] for sig in signatures})
@@ -123,7 +129,7 @@ def default_registry():
     return _REGISTRY
 
 
-def register(signature: Signature | ParamList, /, *keys: str):
+def register(signature: Signature, /, *keys: str):
     "Register the callable based on their signature."
 
     def registrar[T: Callable](variant: T) -> T:
@@ -134,22 +140,10 @@ def register(signature: Signature | ParamList, /, *keys: str):
     return registrar
 
 
-def registry_for(signature: Signature | ParamList, /) -> PerTypeRegistry:
+def registry_for(signature: Signature, /) -> PerTypeRegistry:
     "Get the registry for a given signature."
 
-    return _REGISTRY[_registry_key(signature)]
-
-
-def _registry_key(signature: Signature | ParamList, /) -> ParamList:
-    "Convert the signature into the key for registry."
-
-    match signature:
-        case Signature(params):
-            return params
-        case ParamList():
-            return signature
-        case _:
-            raise TypeError(type(signature))
+    return _REGISTRY[signature]
 
 
 def _reg_rich_table(registry: SignatureRegistry, /) -> Table:
