@@ -13,7 +13,6 @@ from sympy import Expr
 from torch import Tensor
 
 from aioway.attrs import AttrSet
-from aioway.attrs import funcs as atf
 from aioway.batches import Chunk
 
 from .streams import Stream, Stream1
@@ -223,4 +222,4 @@ class RenameStream(MapStream, key="rename"):
     @property
     @typing.override
     def attrs(self) -> AttrSet:
-        return atf.renames(self.source.attrs, **self.renames)
+        return self.source.attrs.rename(**self.renames)
