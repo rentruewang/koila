@@ -6,9 +6,11 @@ import dataclasses as dcls
 import functools
 import typing
 from collections.abc import Iterator, KeysView, Mapping, Sequence
-from typing import NamedTuple, Self
+from typing import NamedTuple, Self, TypeIs
 
 import numpy as np
+from numpy import ndarray as NpArr
+from torch import Tensor
 
 from aioway.tables import Table
 
@@ -18,7 +20,9 @@ from .devices import Device, DeviceLike
 from .dtypes import DType, DTypeLike
 from .shapes import Shape, ShapeLike
 
-__all__ = ["AttrSet", "DTypeSet", "DeviceSet", "ShapeSet"]
+__all__ = ["AttrSet", "DTypeSet", "DeviceSet", "ShapeSet", "AttrSetLike", "attr_set"]
+
+type AttrSetLike = AttrSet | dict[str, Attr]
 
 
 class _AttrItem[T](NamedTuple):
@@ -139,6 +143,43 @@ class ShapeSet(_AttrSetBase[Shape]):
 
 class AttrSet(_AttrSetBase[Attr]):
 
+    @typing.overload
+    def __getitem__(self, idx: str) -> Attr: ...
+
+    @typing.overload
+    def __getitem__(self, idx: int | slice | list[int] | NpArr | Tensor) -> Self: ...
+
+    def __getitem__(self, idx):
+
+        if isinstance(idx, str):
+            return super().__getitem__(idx)
+
+        names = self.names
+        devices = self.devices
+        shapes = self.shapes
+        dtypes = self.dtypes
+
+        if isinstance(idx, int):
+            modified = [shape[1:] for shape in shapes]
+
+        elif isinstance(idx, slice | NpArr | Tensor):
+            modified = shapes[:]
+
+        elif isinstance(idx, list) and all(isinstance(i, int) for i in idx):
+            modified = shapes[:]
+
+        else:
+            raise TypeError(type(idx))
+
+        return self.from_fields(
+            names=names, devices=devices, dtypes=dtypes, shapes=modified
+        )
+
+    def rename(self, **renames: str):
+        return self.from_dict(
+            {renames.get(key, key): attr for key, attr in self.items()}
+        )
+
     @functools.cached_property
     def dtypes(self):
         return [col.attr.dtype for col in self.attrs]
@@ -253,3 +294,22 @@ class _AttrKeysView(KeysView[str]):
     @property
     def keys(self) -> list[str]:
         return self.attrset.names
+
+
+def attr_set(schema: AttrSetLike, /) -> AttrSet:
+    if isinstance(schema, AttrSet):
+        return schema
+
+    if _is_dict_of_attr(schema):
+        return AttrSet.from_dict(schema)
+
+    raise TypeError(type(schema))
+
+
+def _is_dict_of_attr(obj) -> TypeIs[dict[str, Attr]]:
+    return (
+        True
+        and isinstance(obj, dict)
+        and all(isinstance(key, str) for key in obj.keys())
+        and all(isinstance(val, Attr) for val in obj.values())
+    )

@@ -10,27 +10,27 @@ repos:
     hooks:
       - id: autoflake
         name: autoflake
-        entry: nox -s autoflake
+        entry: nox -rs autoflake
         language: system
         pass_filenames: false
   - repo: local
     hooks:
       - id: isort
         name: isort
-        entry: nox -s isort
+        entry: nox -rs isort
         language: system
         pass_filenames: false
   - repo: local
     hooks:
       - id: black
         name: black
-        entry: nox -s black
+        entry: nox -rs black
         language: system
         pass_filenames: false
   - repo: local
     hooks:
       - id: mypy
         name: mypy
-        entry: nox -s mypy
+        entry: nox -rs mypy
         language: system
         pass_filenames: false

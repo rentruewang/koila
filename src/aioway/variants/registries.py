@@ -18,6 +18,7 @@ __all__ = [
     "register",
     "default_registry",
     "registry_for",
+    "find",
 ]
 
 
@@ -67,7 +68,7 @@ class TypeCheckedDict[K, V](UserDict[K, V]):
 class PerTypeRegistry(TypeCheckedDict[str, Callable]):
     def __setitem__(self, key, val) -> None:
         if key in self:
-            raise KeyError(f"Cannnot set again on {key=} with {val=}.")
+            raise KeyError(f"Cannnot set again for registry on {key=} with {val=}.")
 
         super().__setitem__(key, val)
 
@@ -144,6 +145,11 @@ def registry_for(signature: Signature, /) -> PerTypeRegistry:
     "Get the registry for a given signature."
 
     return _REGISTRY[signature]
+
+
+def find(signature: Signature, key: str, /) -> Callable:
+    registry = registry_for(signature)
+    return registry[key]
 
 
 def _reg_rich_table(registry: SignatureRegistry, /) -> Table:

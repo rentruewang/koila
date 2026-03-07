@@ -8,7 +8,6 @@ import pytest
 from tensordict import TensorDict
 
 from aioway.attrs import AttrSet
-from aioway.attrs import funcs as atf
 from aioway.batches import Chunk
 from aioway.datasets import (
     ApplyStream,
@@ -114,7 +113,7 @@ def test_rename(map_stream, save_last):
 
 def _apply_builder(save_last):
     func = lambda td: td.rename(f1d="f", i1d="i")
-    schema = lambda attrs: atf.renames(attrs, f1d="f", i1d="i")
+    schema = lambda attrs: attrs.rename(f1d="f", i1d="i")
     return ApplyStream(source=save_last, apply=func, schema=schema)
 
 
