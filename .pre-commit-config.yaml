@@ -10,27 +10,27 @@ repos:
     hooks:
       - id: autoflake
         name: autoflake
-        entry: make -C ci autoflake
+        entry: nox -s autoflake
         language: system
         pass_filenames: false
   - repo: local
     hooks:
       - id: isort
         name: isort
-        entry: make -C ci isort
+        entry: nox -s isort
         language: system
         pass_filenames: false
   - repo: local
     hooks:
       - id: black
         name: black
-        entry: make -C ci black
+        entry: nox -s black
         language: system
         pass_filenames: false
   - repo: local
     hooks:
       - id: mypy
         name: mypy
-        entry: make -C ci mypy
+        entry: nox -s mypy
         language: system
         pass_filenames: false

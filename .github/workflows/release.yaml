@@ -20,7 +20,7 @@ jobs:
       - name: ⬇️ Python PDM
         uses: pdm-project/setup-pdm@v4
         with:
-          python-version: "3.13"
+          cache: true
 
       - name: ⚙️ Release
-        run: make -C ci publish
+        run: pip install nox[pbs] && nox -rs publish
