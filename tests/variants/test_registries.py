@@ -6,7 +6,7 @@ import pytest
 
 from aioway import variants
 from aioway.attrs import Attr, AttrSet, Device, DeviceSet, DTypeSet, Shape, ShapeSet
-from aioway.variants import ParamList, SignatureRegistry, Signature
+from aioway.variants import ParamList, Signature, SignatureRegistry
 
 
 def _signatures() -> Generator[list[Signature]]:

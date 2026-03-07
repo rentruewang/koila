@@ -14,8 +14,8 @@ from sympy import Expr
 from tensordict import TensorDict
 from torch import Size, Tensor
 
-from aioway.attrs import Attr, AttrSet, _validation
-from aioway.attrs import funcs as atf
+from aioway import attrs
+from aioway.attrs import AttrSet, AttrSetLike, _validation
 from aioway.tables import Table
 
 from . import funcs
@@ -26,7 +26,6 @@ __all__ = ["Chunk"]
 LOGGER = logging.getLogger(__name__)
 
 type TensorDictLike = TensorDict | dict[str, Tensor]
-type AttrSetLike = AttrSet | dict[str, Attr]
 type ChunkLike = Chunk | dict[str, Vector]
 
 
@@ -105,7 +104,7 @@ class Chunk(Mapping[str, Vector], Table):
         if not renames:
             return self
 
-        schema = atf.renames(self.attrs, **renames)
+        schema = self.attrs.rename(**renames)
         data = funcs.rename(self.data, **renames)
         return self.from_data_schema(data=data, schema=schema)
 
@@ -125,7 +124,7 @@ class Chunk(Mapping[str, Vector], Table):
         attr = self.attrs[key]
 
         # No need to validate as it's already verified in ``Chunk.__post_init__``.
-        return Vector(data=tensor, attr=attr, validate=False)
+        return Vector(data=tensor, attr=attr)
 
     @typing.override
     def select(self, *keys: str) -> Self:
@@ -134,9 +133,7 @@ class Chunk(Mapping[str, Vector], Table):
         return self.from_data_schema(data=data, schema=schema)
 
     def _getitem_direct(self, idx: int | slice | list[int] | NpArr | Tensor) -> Self:
-        return self.from_data_schema(
-            data=self.data[idx], schema=atf.index(self.attrs, idx)
-        )
+        return self.from_data_schema(data=self.data[idx], schema=self.attrs[idx])
 
     @property
     def shape(self) -> Size:
@@ -164,8 +161,8 @@ class Chunk(Mapping[str, Vector], Table):
         td = _as_tensordict(data)
         td.auto_batch_size_()
         td.auto_device_()
-        attrs = _as_attrset(schema)
-        return cls(data=td, attrs=attrs)
+        aset = attrs.attr_set(schema)
+        return cls(data=td, attrs=aset)
 
     @classmethod
     def from_mapping(cls, chunk: ChunkLike) -> Self:
@@ -180,10 +177,6 @@ class Chunk(Mapping[str, Vector], Table):
         raise TypeError(type(chunk))
 
 
-def parse_chunk(*, data: TensorDictLike, schema: AttrSetLike) -> Chunk:
-    return Chunk.from_data_schema(data=data, schema=schema)
-
-
 def _as_tensordict(data: TensorDictLike, /) -> TensorDict:
     if isinstance(data, TensorDict):
         return data
@@ -192,16 +185,6 @@ def _as_tensordict(data: TensorDictLike, /) -> TensorDict:
         return TensorDict(data)
 
     raise TypeError(type(data))
-
-
-def _as_attrset(schema: AttrSetLike, /) -> AttrSet:
-    if isinstance(schema, AttrSet):
-        return schema
-
-    if _is_dict_of_attr(schema):
-        return AttrSet.from_dict(schema)
-
-    raise TypeError(type(schema))
 
 
 def _is_dict_of_tensor(obj) -> TypeIs[dict[str, Tensor]]:
@@ -219,15 +202,6 @@ def _is_mapping_of_vector(obj) -> TypeIs[Mapping[str, Vector]]:
         and isinstance(obj, Mapping)
         and all(isinstance(key, str) for key in obj.keys())
         and all(isinstance(val, Vector) for val in obj.values())
-    )
-
-
-def _is_dict_of_attr(obj) -> TypeIs[dict[str, Attr]]:
-    return (
-        True
-        and isinstance(obj, dict)
-        and all(isinstance(key, str) for key in obj.keys())
-        and all(isinstance(val, Attr) for val in obj.values())
     )
 
 
