@@ -11,7 +11,6 @@ jobs:
       - name: ⬇️ Python PDM
         uses: pdm-project/setup-pdm@v4
         with:
-          python-version: "3.13"
           cache: true
 
       - name: 🏃 Formatting
@@ -27,7 +26,6 @@ jobs:
       - name: ⬇️ Python PDM
         uses: pdm-project/setup-pdm@v4
         with:
-          python-version: "3.13"
           cache: true
 
       - name: 🏃 Type checking
