@@ -13,7 +13,7 @@ from typing import ClassVar, Self
 
 from aioway.attrs import AttrSet
 from aioway.batches import Chunk
-from aioway.variants import Signature
+from aioway.ops import Signature
 
 from ..datasets import Dataset, DatasetViewTypes
 

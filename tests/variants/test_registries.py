@@ -4,9 +4,9 @@ from collections.abc import Generator
 
 import pytest
 
-from aioway import variants
+from aioway import ops
 from aioway.attrs import Attr, AttrSet, Device, DeviceSet, DTypeSet, Shape, ShapeSet
-from aioway.variants import ParamList, Signature, SignatureRegistry
+from aioway.ops import ParamList, Signature, SignatureRegistry
 
 
 def _signatures() -> Generator[list[Signature]]:
@@ -45,7 +45,7 @@ def signature_list(request) -> list[ParamList]:
 @pytest.fixture(scope="module")
 def registry(signature_list) -> SignatureRegistry:
     "The (partial) registry used for testing."
-    return variants.default_registry().select(*signature_list)
+    return ops.default_registry().select(*signature_list)
 
 
 def test_registry_select(registry, signature_list):

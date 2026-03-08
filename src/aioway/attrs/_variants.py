@@ -2,8 +2,7 @@
 
 import dataclasses as dcls
 
-from aioway import variants
-from aioway.variants import Signature
+from aioway.ops import Signature
 
 from . import devices, dtypes, shapes
 from .attrs import Attr
@@ -77,9 +76,9 @@ class _UnaryAttrVariant:
 
     def __call__(self, attr: Attr) -> Attr:
         return Attr(
-            device=variants.find(Signature.ufunc1(Device), self.op_name)(attr.device),
-            dtype=variants.find(Signature.ufunc1(DType), self.op_name)(attr.dtype),
-            shape=variants.find(Signature.ufunc1(Shape), self.op_name)(attr.shape),
+            device=Signature.ufunc1(Device).dispatch(self.op_name)(attr.device),
+            dtype=Signature.ufunc1(DType).dispatch(self.op_name)(attr.dtype),
+            shape=Signature.ufunc1(Shape).dispatch(self.op_name)(attr.shape),
         )
 
 
@@ -118,9 +117,9 @@ class _BinaryAttrVariant:
     op_name: str
 
     def __call__(self, left: Attr, right: Attr) -> Attr:
-        device_reg = variants.find(Signature.ufunc2(Device), self.op_name)
-        dtype_reg = variants.find(Signature.ufunc2(DType), self.op_name)
-        shape_reg = variants.find(Signature.ufunc2(Shape), self.op_name)
+        device_reg = Signature.ufunc2(Device).dispatch(self.op_name)
+        dtype_reg = Signature.ufunc2(DType).dispatch(self.op_name)
+        shape_reg = Signature.ufunc2(Shape).dispatch(self.op_name)
         return Attr(
             device=device_reg(left.device, right.device),
             dtype=dtype_reg(left.dtype, right.dtype),
