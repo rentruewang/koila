@@ -6,7 +6,7 @@ import typing
 from abc import ABC
 from collections.abc import Iterator
 
-from aioway.variants import Signature
+from aioway.ops import Signature
 
 from .exprs import ColumnExpr, Expr
 

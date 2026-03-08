@@ -2,7 +2,7 @@
 
 import pytest
 
-from aioway.variants import ParamList, Signature
+from aioway.ops import ParamList, Signature
 
 
 def _signature_str():

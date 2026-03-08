@@ -9,9 +9,9 @@ from collections.abc import Callable
 
 from torch import Tensor
 
-from aioway import attrs, variants
+from aioway import attrs
 from aioway.attrs import Attr, TorchDType, _validation
-from aioway.variants import Signature
+from aioway.ops import Signature
 
 __all__ = ["Vector"]
 
@@ -35,22 +35,22 @@ class Vector:
         return f"Vector(data={self.data}, attr={self.attr})"
 
     def __add__(self, rhs):
-        return variants.find(Signature.ufunc2(Vector), "add")(self, rhs)
+        return Signature.ufunc2(Vector).dispatch("add")(self, rhs)
 
     def __sub__(self, rhs):
-        return variants.find(Signature.ufunc2(Vector), "sub")(self, rhs)
+        return Signature.ufunc2(Vector).dispatch("sub")(self, rhs)
 
     def __mul__(self, rhs):
-        return variants.find(Signature.ufunc2(Vector), "mul")(self, rhs)
+        return Signature.ufunc2(Vector).dispatch("mul")(self, rhs)
 
     def __truediv__(self, rhs):
-        return variants.find(Signature.ufunc2(Vector), "truediv")(self, rhs)
+        return Signature.ufunc2(Vector).dispatch("truediv")(self, rhs)
 
     def __floordiv__(self, rhs):
-        return variants.find(Signature.ufunc2(Vector), "floordiv")(self, rhs)
+        return Signature.ufunc2(Vector).dispatch("floordiv")(self, rhs)
 
     def __pow__(self, rhs):
-        return variants.find(Signature.ufunc2(Vector), "pow")(self, rhs)
+        return Signature.ufunc2(Vector).dispatch("pow")(self, rhs)
 
     def __eq__(self, rhs):
         return self._cmp_op(rhs, operator.eq)
@@ -125,7 +125,7 @@ class VectorBinary:
                 )
 
         data = self.op(lhs.data, rhs_data)
-        attr_func = variants.find(Signature(Attr, type(rhs), Attr), self.op.__name__)
+        attr_func = Signature(Attr, type(rhs), Attr).dispatch(self.op.__name__)
         attr = attr_func(lhs.attr, rhs_attr)
         return Vector(data=data, attr=attr)
 
