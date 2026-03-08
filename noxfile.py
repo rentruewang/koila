@@ -23,6 +23,14 @@ def build(session: Session):
     commands(session).build()
 
 
+@nox.session
+def pre_commit(session: Session):
+    "Runs the pre-commit commands."
+
+    formatting(session)
+    typing(session)
+
+
 @nox.session(python=PYTHON_VERSIONS)
 def testing(session: Session):
     "Nox ``testing`` command. Calls ``pytest`` command. Runs in multiple python versions."
@@ -141,18 +149,14 @@ class _Pdm:
     session: Session
 
     def __post_init__(self):
-        gh = github(self.session)
+        github(self.session).setup()
 
-        gh.setup()
-
-        if gh.active():
+        if _is_remote(self.session):
             self._run("pdm", "config", "python.use_venv", "true")
 
-    @functools.cache
-    def sync(self):
+    def sync(self) -> None:
         self._sync_or_install("sync")
 
-    @functools.cache
     def install(self):
         self._sync_or_install("install")
 
@@ -168,8 +172,11 @@ class _Pdm:
         self.sync()
         self._run("pdm", "run", *args)
 
-    @functools.cache
-    def _sync_or_install(self, mode: str):
+    def _sync_or_install(self, mode: str) -> None:
+        # Don't repeatedly reinstall locally.
+        if not _is_remote(self.session):
+            return
+
         self.session.run_install("pdm", mode, "-G:all")
 
     def _run(self, *args: str):
@@ -214,3 +221,7 @@ class _Commands:
     @property
     def pdm(self):
         return pdm(self.session)
+
+
+def _is_remote(session: Session):
+    return github(session).active()

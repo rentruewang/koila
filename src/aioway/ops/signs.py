@@ -69,7 +69,7 @@ class ParamList:
         return True
 
     @classmethod
-    def parse(cls, text: str, /, **types: type):
+    def parse(cls, text: str, /, **types: type) -> Self:
         return _parse_and_transform_later(
             parser=_param_list_lark_parser,
             transformer=_ParamListTransformer,
@@ -113,7 +113,7 @@ class Signature:
         return self._result
 
     @classmethod
-    def parse(cls, text: str, /, **types: type):
+    def parse(cls, text: str, /, **types: type) -> Self:
         return _parse_and_transform_later(
             parser=_signature_lark_parser,
             transformer=_SignatureTransformer,
@@ -121,10 +121,19 @@ class Signature:
         )(**types)
 
     def register_keys(self, *keys: str):
-        "Convenient wrapper s.t. ``register`` doesn't need to be imported."
-        from . import registries
+        "Convenient wrapper s.t. ``register`` doesn't need to be imported manually."
+        from . import regs
 
-        return registries.register(self, *keys)
+        return regs.register(self, *keys)
+
+    def dispatch(self, name: str, /):
+        from . import regs
+
+        return regs.dispatch(self, name)
+
+    @classmethod
+    def ufunc0(cls, typ: type, /) -> Self:
+        return cls(typ)
 
     @classmethod
     def ufunc1(cls, typ: type, /) -> Self:
