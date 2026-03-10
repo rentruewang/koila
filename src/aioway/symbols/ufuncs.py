@@ -44,7 +44,6 @@ class UFuncSymColExpr1(ColumnSymbolExpr, ABC):
     def _inputs(self):
         return (self.source,)
 
-    @property
     @abc.abstractmethod
     def token(self) -> str:
         "The token representing the current operator."
@@ -62,13 +61,12 @@ class UFuncSymColExpr2(ColumnSymbolExpr, ABC):
 
     @typing.override
     def _compute(self) -> str:
-        return f"{self.left!s} {self.token} {self.right!s}"
+        return f"{self.left!s} {self.token()} {self.right!s}"
 
     @typing.override
     def _inputs(self):
         return self.left, self.right
 
-    @property
     @abc.abstractmethod
     def token(self) -> str:
         "The token representing the current operator."
@@ -76,100 +74,113 @@ class UFuncSymColExpr2(ColumnSymbolExpr, ABC):
         ...
 
 
+@_common.symbol_dataclass
 class NotColExpr(UFuncSymColExpr1, key="+"):
 
-    @property
     @typing.override
     def token(self) -> str:
         return "~"
 
 
+@_common.symbol_dataclass
 class NegColExpr(UFuncSymColExpr1, key="-"):
-    @property
+
     @typing.override
     def token(self) -> str:
         return "-"
 
 
+@_common.symbol_dataclass
 class AddColExpr(UFuncSymColExpr2, key="add"):
-    @property
+
     @typing.override
     def token(self) -> str:
         return "+"
 
 
+@_common.symbol_dataclass
 class SubColExpr(UFuncSymColExpr2, key="sub"):
-    @property
+
     @typing.override
     def token(self) -> str:
         return "-"
 
 
+@_common.symbol_dataclass
 class MultColExpr(UFuncSymColExpr2, key="mul"):
-    @property
+
     @typing.override
     def token(self) -> str:
         return "*"
 
 
+@_common.symbol_dataclass
 class TrueDivColExpr(UFuncSymColExpr2, key="truediv"):
-    @property
+
     @typing.override
     def token(self) -> str:
         return "/"
 
 
+@_common.symbol_dataclass
 class FloorDivColExpr(UFuncSymColExpr2, key="floordiv"):
-    @property
+
     @typing.override
     def token(self) -> str:
         return "//"
 
 
+@_common.symbol_dataclass
 class ExpColExpr(UFuncSymColExpr2, key="pow"):
-    @property
+
     @typing.override
     def token(self) -> str:
         return "**"
 
 
+@_common.symbol_dataclass
 class EqColExpr(UFuncSymColExpr2, key="eq"):
-    @property
+
     @typing.override
     def token(self) -> str:
         return "=="
 
 
+@_common.symbol_dataclass
 class NeColExpr(UFuncSymColExpr2, key="ne"):
-    @property
+
     @typing.override
     def token(self) -> str:
         return "!="
 
 
+@_common.symbol_dataclass
 class GeColExpr(UFuncSymColExpr2, key="ge"):
-    @property
+
     @typing.override
     def token(self) -> str:
         return ">="
 
 
+@_common.symbol_dataclass
 class LeColExpr(UFuncSymColExpr2, key="le"):
-    @property
+
     @typing.override
     def token(self) -> str:
         return "<="
 
 
+@_common.symbol_dataclass
 class GtColExpr(UFuncSymColExpr2, key="gt"):
-    @property
+
     @typing.override
     def token(self) -> str:
         return ">"
 
 
+@_common.symbol_dataclass
 class LtColExpr(UFuncSymColExpr2, key="lt"):
-    @property
+
     @typing.override
     def token(self) -> str:
         return "<"

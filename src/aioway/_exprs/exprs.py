@@ -54,7 +54,7 @@ class Expr[T](ABC):
         ...
 
     @property
-    def inputs(self) -> tuple["Expr[T]", ...]:
+    def inputs(self) -> tuple[Expr[T], ...]:
         "The sub expressions. The length must match the signature's parameters."
 
         inputs = self._inputs()
@@ -71,7 +71,7 @@ class Expr[T](ABC):
         return inputs
 
     @abc.abstractmethod
-    def _inputs(self) -> tuple["Expr[T]", ...]:
+    def _inputs(self) -> tuple[Expr[T], ...]:
         "The inputs of the"
         ...
 

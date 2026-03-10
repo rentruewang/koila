@@ -23,7 +23,7 @@ class MultiPlanIndex:
     for a given set of columns.
     """
 
-    mgr: "IndexManager"
+    mgr: IndexManager
     columns: MultiCol
     indices: dict[type[IndexPlan], Index]
 

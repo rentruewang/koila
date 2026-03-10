@@ -102,7 +102,7 @@ class NestedLoopJoinStream(Stream2, key="nested-loop"):
         return self.left.attrs | self.right.attrs
 
     @typing.override
-    def _children(self) -> Generator["Stream"]:
+    def _children(self) -> Generator[Stream]:
         yield self.left
         yield self.right
 

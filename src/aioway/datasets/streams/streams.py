@@ -127,7 +127,7 @@ class Stream(Iterator[Chunk], Dataset, ABC):
         ...
 
     @typing.final
-    def children(self) -> list["Stream"]:
+    def children(self) -> list[Stream]:
         """
         Yields the children (dependencies of the current ``Stream``).
 
@@ -150,7 +150,7 @@ class Stream(Iterator[Chunk], Dataset, ABC):
         return children_list
 
     @abc.abstractmethod
-    def _children(self) -> Generator["Stream"]:
+    def _children(self) -> Generator[Stream]:
         """
         ``Stream``'s children, the dependent ``Stream``s that would also be evaluated
         when calling ``__next__`` on the current ``Stream``.
