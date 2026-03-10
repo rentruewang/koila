@@ -1,14 +1,13 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-
 import operator
 from collections.abc import Callable
 from typing import NamedTuple
 
 import pytest
 
-from aioway.exprs import (
-    ColumnExpr,
+from aioway.symbols import (
+    ColumnSymbolExpr,
     GetItemExpr,
     InfixColExpr,
     PrefixColExpr,
@@ -42,7 +41,7 @@ def e(b):
 
 
 @pytest.fixture(params="cde")
-def col_expr(request) -> ColumnExpr:
+def col_expr(request) -> ColumnSymbolExpr:
     return request.getfixturevalue(request.param)
 
 
@@ -102,8 +101,8 @@ def test_binray_ufunc_repr(c, d, op, func) -> None:
     ],
 )
 def test_binary_ufunc_type(c, e, op) -> None:
-    assert isinstance(expr := op(c, e), ColumnExpr), type(expr)
-    assert isinstance(expr := op(e, c), ColumnExpr), type(expr)
+    assert isinstance(expr := op(c, e), ColumnSymbolExpr), type(expr)
+    assert isinstance(expr := op(e, c), ColumnSymbolExpr), type(expr)
 
 
 @pytest.mark.parametrize("op", "+-")

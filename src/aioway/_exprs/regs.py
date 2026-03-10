@@ -9,16 +9,9 @@ from typing import Self
 
 from rich.table import Table
 
-from .ops import Op
-from .signs import Signature
+from .ops import Op, OpSign
 
-__all__ = [
-    "PerSignReg",
-    "SignatureRegistry",
-    "default_registry",
-    "register",
-    "dispatch",
-]
+__all__ = ["PerSignReg", "SignatureRegistry", "default_registry"]
 
 LOGGER = logging.getLogger(__name__)
 
@@ -30,7 +23,7 @@ class PerSignReg(Mapping[str, Op]):
     This is a mapping from ``str -> Op``, by wrapping the registered ``Callable`` into ``Op``.
     """
 
-    def __init__(self, signature: Signature) -> None:
+    def __init__(self, signature: OpSign) -> None:
         """
         Args:
             signature: The signature that the registry must have.
@@ -70,7 +63,7 @@ class PerSignReg(Mapping[str, Op]):
         return self._registry.keys()
 
 
-class SignatureRegistry(Mapping[Signature, PerSignReg]):
+class SignatureRegistry(Mapping[OpSign, PerSignReg]):
     """
     The global registry that is based on signatures.
 
@@ -78,14 +71,14 @@ class SignatureRegistry(Mapping[Signature, PerSignReg]):
     """
 
     def __init__(self) -> None:
-        self._regs: dict[Signature, PerSignReg] = {}
+        self._regs: dict[OpSign, PerSignReg] = {}
 
         LOGGER.info("Global registry initialied.")
 
     def __contains__(self, key: object) -> bool:
         return key in self.keys()
 
-    def __getitem__(self, signature: Signature) -> PerSignReg:
+    def __getitem__(self, signature: OpSign) -> PerSignReg:
         # DefaultDict behavior.
         if signature not in self:
             self._regs[signature] = PerSignReg(signature=signature)
@@ -95,13 +88,13 @@ class SignatureRegistry(Mapping[Signature, PerSignReg]):
     def __len__(self) -> int:
         return len(self._regs)
 
-    def __iter__(self) -> Iterator[Signature]:
+    def __iter__(self) -> Iterator[OpSign]:
         return iter(self.keys())
 
     def __rich__(self):
         return _reg_rich_table(self)
 
-    def keys(self) -> KeysView[Signature]:
+    def keys(self) -> KeysView[OpSign]:
         return self._regs.keys()
 
     @property
@@ -112,7 +105,7 @@ class SignatureRegistry(Mapping[Signature, PerSignReg]):
     def ops(self):
         return _unique_ops(self)
 
-    def select(self, *signatures: Signature) -> Self:
+    def select(self, *signatures: OpSign) -> Self:
         "Only view the types of selected signatures."
 
         result = type(self)()
@@ -130,10 +123,14 @@ def default_registry():
     return _REGISTRY
 
 
-def register(signature: Signature, /, *keys: str):
-    "Register the callable based on their signature."
+def register(signature: OpSign, /, *keys: str):
+    """
+    Module private method for registering the callable based on their signature.
 
-    registry = registry_for(signature)
+    The functionality is publically exposed in ``Signature.register_keys``.
+    """
+
+    registry = _REGISTRY[signature]
 
     def registrar[T: Callable](function: T) -> T:
         for key in keys:
@@ -144,14 +141,14 @@ def register(signature: Signature, /, *keys: str):
     return registrar
 
 
-def registry_for(signature: Signature, /) -> PerSignReg:
-    "Get the registry for a given signature."
+def dispatch(signature: OpSign, key: str, /) -> Op:
+    """
+    Module private method for dispaptching with signature and key.
 
-    return _REGISTRY[signature]
+    The functionality is publically exposed in ``Signature.dispatch``.
+    """
 
-
-def dispatch(signature: Signature, key: str, /) -> Op:
-    registry = registry_for(signature)
+    registry = _REGISTRY[signature]
     return registry[key]
 
 
