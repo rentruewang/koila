@@ -1,0 +1,30 @@
+# Copyright (c) AIoWay Authors - All Rights Reserved
+
+import pytest
+
+from aioway._exprs import OpSign, TypeList
+
+
+def _signature_str():
+    yield "(int, int) -> int"
+    yield "(float, float) -> float"
+    yield "(int, float) -> bool"
+
+
+@pytest.fixture(params=_signature_str())
+def signature(request):
+    return OpSign.parse(request.param, int=int, float=float, bool=bool)
+
+
+def test_signature_param(signature):
+    assert len(signature.param_types) == 2
+
+
+@pytest.fixture
+def type_list():
+    return TypeList(int, int, float)
+
+
+def test_param_list_compat(type_list):
+    assert type_list.check_values([1, 2, 3.0])
+    assert not type_list.check_values([1.0, 2, 3.0])

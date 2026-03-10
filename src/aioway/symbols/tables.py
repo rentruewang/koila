@@ -2,51 +2,49 @@
 
 "The expressions represent a table or a view."
 
-import dataclasses as dcls
 import typing
-from collections.abc import Iterator, KeysView, Sequence
+from collections.abc import KeysView, Sequence
 
-from .exprs import Expr, TableExpr
+from . import _common
+from .exprs import TableSymbolExpr
 
 __all__ = ["SourceExpr", "SelectExpr"]
 
 
 @typing.final
-@dcls.dataclass(frozen=True)
-class SourceExpr(TableExpr):
+@_common.symbol_dataclass
+class SourceExpr(TableSymbolExpr):
     NUM_ARGS = 0
 
     name: str
     "The table's name. Matches the table names given in the ``subs`` method."
 
     columns: Sequence[str]
+    "The columns in the table."
 
-    @typing.override
-    def __str__(self) -> str:
+    def _compute(self) -> str:
         return self.name
 
     def keys(self) -> KeysView[str]:
         return SeqKeysView(self.columns)
 
-    @typing.override
-    def _children(self) -> Iterator[Expr]:
-        return
-        yield
+    def _inputs(self) -> tuple[()]:
+        return ()
 
 
 @typing.final
-@dcls.dataclass(frozen=True)
-class SelectExpr(TableExpr):
+@_common.symbol_dataclass
+class SelectExpr(TableSymbolExpr):
     NUM_ARGS = 1
 
-    table: TableExpr
+    table: TableSymbolExpr
     "The source to the selection."
 
     columns: Sequence[str]
     "The columns to select."
 
     @typing.override
-    def __str__(self) -> str:
+    def _compute(self) -> str:
         return f"select({self.table!s}, {self.columns!r})"
 
     @typing.override
@@ -54,11 +52,11 @@ class SelectExpr(TableExpr):
         return SeqKeysView(self.columns)
 
     @typing.override
-    def _children(self) -> Iterator[Expr]:
-        yield self.table
+    def _inputs(self):
+        return (self.table,)
 
 
-@dcls.dataclass(frozen=True)
+@_common.symbol_dataclass
 class SeqKeysView(KeysView[str]):
     seq: Sequence[str]
 

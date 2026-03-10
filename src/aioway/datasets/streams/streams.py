@@ -11,9 +11,9 @@ from abc import ABC
 from collections.abc import Generator, Iterator
 from typing import ClassVar, Self
 
+from aioway._exprs import OpSign
 from aioway.attrs import AttrSet
 from aioway.batches import Chunk
-from aioway.ops import Signature
 
 from ..datasets import Dataset, DatasetViewTypes
 
@@ -56,7 +56,7 @@ class Stream(Iterator[Chunk], Dataset, ABC):
     it is an external iterator, supporting state inspection, simplifying debugging.
     """
 
-    _SIGNATURE: ClassVar[Signature]
+    _SIGNATURE: ClassVar[OpSign]
     "The signature of the current class."
 
     __match_args__: ClassVar[tuple[str, ...]]
@@ -64,7 +64,6 @@ class Stream(Iterator[Chunk], Dataset, ABC):
     A ``Stream`` should be able to be decomposed with ``match`` statements.
     """
 
-    @classmethod
     def __init_subclass__(cls, key: str = "") -> None:
         cls.__register_subclass(key)
 
@@ -205,16 +204,16 @@ class Stream(Iterator[Chunk], Dataset, ABC):
 
     @classmethod
     def argc(cls) -> int:
-        return len(cls._SIGNATURE.params)
+        return len(cls._SIGNATURE.param_types)
 
 
 class Stream0(Stream, ABC):
-    _SIGNATURE = Signature(Stream)
+    _SIGNATURE = OpSign(Stream)
 
 
 class Stream1(Stream, ABC):
-    _SIGNATURE = Signature.ufunc1(Stream)
+    _SIGNATURE = OpSign.ufunc1(Stream)
 
 
 class Stream2(Stream, ABC):
-    _SIGNATURE = Signature.ufunc2(Stream)
+    _SIGNATURE = OpSign.ufunc2(Stream)
