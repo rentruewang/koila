@@ -7,9 +7,6 @@ import os
 import nox
 from nox import Session
 
-PYTHON_VERSIONS = ["3.13", "3.14"]
-os.environ["PDM_IGNORE_SAVED_PYTHON"] = "1"
-
 
 @nox.session
 def publish(session: Session):
@@ -31,7 +28,7 @@ def pre_commit(session: Session):
     typing(session)
 
 
-@nox.session(python=PYTHON_VERSIONS)
+@nox.session
 def testing(session: Session):
     "Nox ``testing`` command. Calls ``pytest`` command. Runs in multiple python versions."
     commands(session).test()

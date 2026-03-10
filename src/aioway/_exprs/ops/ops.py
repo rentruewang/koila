@@ -67,7 +67,7 @@ class OpExpr(Expr):
     The operator signature.
     """
 
-    def __init__(self, op: Op, *inputs: "OpExpr") -> None:
+    def __init__(self, op: Op, *inputs: OpExpr) -> None:
         self._op = op
         self.__inputs = inputs
 
