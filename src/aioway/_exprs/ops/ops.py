@@ -1,29 +1,34 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-"The operators (stateless)."
+"The operators (output purely dependent on input and state)."
 
 import dataclasses as dcls
 import logging
+import typing
 from collections.abc import Callable
 from typing import Any
 
-from .signs import Signature
+from ..exprs import Expr
+from .signs import OpSign, TypeList
 
 __all__ = ["Op"]
 
 LOGGER = logging.getLogger(__name__)
+
+__all__ = ["Op", "OpExpr"]
 
 
 @dcls.dataclass(frozen=True)
 class Op[T: Callable]:
     """
     The type that is returned by the registry, contains both the callable and the signature.
+    The operator must be stateless.
     """
 
     name: str
     "The name of the operator"
 
-    signature: Signature
+    signature: OpSign
     "The signature of the funciton."
 
     function: T
@@ -39,15 +44,15 @@ class Op[T: Callable]:
         return f"{self.name}<{self.signature}>"
 
     def __call__(self, *args: Any) -> Any:
-        if not self.signature.params.check(*args):
+        if not self.signature.param_types.check_values(*args):
             return NotImplemented
 
         # Calling the function. Doesn't expect any errors.
         answer = self.function(*args)
 
-        if not isinstance(answer, self.signature.result):
+        if not isinstance(answer, self.signature.return_type):
             raise AssertionError(
-                f"Expected {self.signature.result}, got {type(answer)=}."
+                f"Expected {self.signature.return_type}, got {type(answer)=}."
             )
 
         return answer
@@ -55,3 +60,31 @@ class Op[T: Callable]:
     @property
     def __func__(self) -> T:
         return self.function
+
+
+class OpExpr(Expr):
+    """
+    The operator signature.
+    """
+
+    def __init__(self, op: Op, *inputs: "OpExpr") -> None:
+        self._op = op
+        self.__inputs = inputs
+
+    @typing.override
+    def _compute(self) -> Any:
+        input_data = [i.compute() for i in self.inputs]
+        self.param_types.check_values(input_data)
+        return self._op.function(*input_data)
+
+    @typing.override
+    def _return_type(self) -> Any:
+        return self._op.signature.return_type
+
+    @property
+    def param_types(self) -> TypeList:
+        return self._op.signature.param_types
+
+    @typing.override
+    def _inputs(self):
+        return self.__inputs

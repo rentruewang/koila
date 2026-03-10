@@ -2,7 +2,7 @@
 
 import dataclasses as dcls
 
-from aioway.ops import Signature
+from aioway._exprs import OpSign
 
 from . import devices, dtypes, shapes
 from .attrs import Attr
@@ -16,12 +16,12 @@ _ARITH_UFUNC_OPS = "add", "sub", "mul", "truediv", "floordiv", "pow"
 _CMP_UFUNC_OPS = "eq", "ne", "gt", "ge", "lt", "le"
 
 
-@Signature.ufunc1(Device).register_keys(*_UNARY_UFUNC_OPS)
+@OpSign.ufunc1(Device).register_keys(*_UNARY_UFUNC_OPS)
 def same_device(device: DeviceLike) -> Device:
     return devices.device(device)
 
 
-@Signature.ufunc2(Device).register_keys(*_ARITH_UFUNC_OPS, *_CMP_UFUNC_OPS)
+@OpSign.ufunc2(Device).register_keys(*_ARITH_UFUNC_OPS, *_CMP_UFUNC_OPS)
 def matching_device(l: DeviceLike, r: DeviceLike) -> Device:
     left, right = map(devices.device, [l, r])
 
@@ -31,12 +31,12 @@ def matching_device(l: DeviceLike, r: DeviceLike) -> Device:
     return left
 
 
-@Signature.ufunc1(DType).register_keys(*_UNARY_UFUNC_OPS)
+@OpSign.ufunc1(DType).register_keys(*_UNARY_UFUNC_OPS)
 def same_dtype(dtype: DTypeLike) -> DType:
     return dtypes.dtype(dtype)
 
 
-@Signature.ufunc2(DType).register_keys(*_ARITH_UFUNC_OPS)
+@OpSign.ufunc2(DType).register_keys(*_ARITH_UFUNC_OPS)
 def binary_broadcast(l: DTypeLike, r: DTypeLike) -> DType:
     left, right = map(dtypes.dtype, [l, r])
 
@@ -50,17 +50,17 @@ def binary_broadcast(l: DTypeLike, r: DTypeLike) -> DType:
             return dtypes.dtype("bool")
 
 
-@Signature.ufunc2(DType).register_keys(*_CMP_UFUNC_OPS)
+@OpSign.ufunc2(DType).register_keys(*_CMP_UFUNC_OPS)
 def boolean_dtypes(l: DTypeLike, r: DTypeLike) -> DType:
     return dtypes.dtype("bool")
 
 
-@Signature.ufunc1(Shape).register_keys(*_UNARY_UFUNC_OPS)
+@OpSign.ufunc1(Shape).register_keys(*_UNARY_UFUNC_OPS)
 def same_shape(shape: ShapeLike) -> Shape:
     return shapes.shape(shape)
 
 
-@Signature.ufunc2(Shape).register_keys(*_ARITH_UFUNC_OPS, *_CMP_UFUNC_OPS)
+@OpSign.ufunc2(Shape).register_keys(*_ARITH_UFUNC_OPS, *_CMP_UFUNC_OPS)
 def matching_shape(l: ShapeLike, r: ShapeLike):
     left, right = map(shapes.shape, [l, r])
 
@@ -76,35 +76,35 @@ class _UnaryAttrVariant:
 
     def __call__(self, attr: Attr) -> Attr:
         return Attr(
-            device=Signature.ufunc1(Device).dispatch(self.op_name)(attr.device),
-            dtype=Signature.ufunc1(DType).dispatch(self.op_name)(attr.dtype),
-            shape=Signature.ufunc1(Shape).dispatch(self.op_name)(attr.shape),
+            device=OpSign.ufunc1(Device).dispatch(self.op_name)(attr.device),
+            dtype=OpSign.ufunc1(DType).dispatch(self.op_name)(attr.dtype),
+            shape=OpSign.ufunc1(Shape).dispatch(self.op_name)(attr.shape),
         )
 
 
 for unary_op in _UNARY_UFUNC_OPS:
-    Signature.ufunc1(Attr).register_keys(unary_op)(_UnaryAttrVariant(unary_op))
+    OpSign.ufunc1(Attr).register_keys(unary_op)(_UnaryAttrVariant(unary_op))
 
 
-@Signature.ufunc1(AttrSet).register_keys(*_UNARY_UFUNC_OPS)
-@Signature.ufunc1(DeviceSet).register_keys(*_UNARY_UFUNC_OPS)
-@Signature.ufunc1(DTypeSet).register_keys(*_UNARY_UFUNC_OPS)
-@Signature.ufunc1(ShapeSet).register_keys(*_UNARY_UFUNC_OPS)
+@OpSign.ufunc1(AttrSet).register_keys(*_UNARY_UFUNC_OPS)
+@OpSign.ufunc1(DeviceSet).register_keys(*_UNARY_UFUNC_OPS)
+@OpSign.ufunc1(DTypeSet).register_keys(*_UNARY_UFUNC_OPS)
+@OpSign.ufunc1(ShapeSet).register_keys(*_UNARY_UFUNC_OPS)
 def same[T](s: T) -> T:
     return s
 
 
-@Signature.ufunc2(AttrSet).register_keys(*_ARITH_UFUNC_OPS, *_CMP_UFUNC_OPS)
-@Signature.ufunc2(DeviceSet).register_keys(*_ARITH_UFUNC_OPS, *_CMP_UFUNC_OPS)
-@Signature.ufunc2(DTypeSet).register_keys(*_ARITH_UFUNC_OPS)
-@Signature.ufunc2(ShapeSet).register_keys(*_ARITH_UFUNC_OPS, *_CMP_UFUNC_OPS)
+@OpSign.ufunc2(AttrSet).register_keys(*_ARITH_UFUNC_OPS, *_CMP_UFUNC_OPS)
+@OpSign.ufunc2(DeviceSet).register_keys(*_ARITH_UFUNC_OPS, *_CMP_UFUNC_OPS)
+@OpSign.ufunc2(DTypeSet).register_keys(*_ARITH_UFUNC_OPS)
+@OpSign.ufunc2(ShapeSet).register_keys(*_ARITH_UFUNC_OPS, *_CMP_UFUNC_OPS)
 def matching[T](l: T, r: T) -> T:
     if l != r:
         raise ValueError(f"{l} != {r}")
     return l
 
 
-@Signature.ufunc2(DTypeSet).register_keys(*_CMP_UFUNC_OPS)
+@OpSign.ufunc2(DTypeSet).register_keys(*_CMP_UFUNC_OPS)
 def boolean(l: DTypeSet, r: DTypeSet) -> DTypeSet:
     if l.keys() != r.keys():
         raise ValueError(f"{list(l.keys())=} != {list(r.keys())=}")
@@ -117,9 +117,9 @@ class _BinaryAttrVariant:
     op_name: str
 
     def __call__(self, left: Attr, right: Attr) -> Attr:
-        device_reg = Signature.ufunc2(Device).dispatch(self.op_name)
-        dtype_reg = Signature.ufunc2(DType).dispatch(self.op_name)
-        shape_reg = Signature.ufunc2(Shape).dispatch(self.op_name)
+        device_reg = OpSign.ufunc2(Device).dispatch(self.op_name)
+        dtype_reg = OpSign.ufunc2(DType).dispatch(self.op_name)
+        shape_reg = OpSign.ufunc2(Shape).dispatch(self.op_name)
         return Attr(
             device=device_reg(left.device, right.device),
             dtype=dtype_reg(left.dtype, right.dtype),
@@ -128,4 +128,4 @@ class _BinaryAttrVariant:
 
 
 for binary_op in _CMP_UFUNC_OPS + _ARITH_UFUNC_OPS:
-    Signature.ufunc2(Attr).register_keys(binary_op)(_BinaryAttrVariant(binary_op))
+    OpSign.ufunc2(Attr).register_keys(binary_op)(_BinaryAttrVariant(binary_op))

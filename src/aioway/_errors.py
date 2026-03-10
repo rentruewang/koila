@@ -1,11 +1,6 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-"""
-This module defines the custom errors that are user facing (high level),
-and where users can take actions to resolve (no internal errors).
-
-All user facing errors would be subclasses of ``AiowayError``.
-"""
+"""User facing high level erros. Subclasses of ``AiowayError``."""
 
 import contextlib as ctxl
 from types import ModuleType
@@ -71,10 +66,7 @@ class FrameworkUnexpected(AiowayError):
         return "\n".join(msg)
 
 
-class PlannedNotYetImplemented(AiowayError, NotImplementedError): ...
-
-
-class GitHubTicketFiled(PlannedNotYetImplemented):
+class GitHubTicketFiled(NotImplementedError):
     """
     The ticket is filed on GitHub, when encountered, show the URL.
     """
@@ -97,3 +89,11 @@ class GitHubTicketFiled(PlannedNotYetImplemented):
             msg.extend(self._msgs)
 
         return "\n".join(msg)
+
+
+class UserDefinedFunctionError(AiowayError, ValueError):
+    """
+    The user provided function is not valid.
+    """
+
+    ...
