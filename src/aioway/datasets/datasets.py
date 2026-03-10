@@ -34,18 +34,18 @@ class Dataset(Table, ABC):
         return self.attrs.keys()
 
     @typing.override
-    def column(self, key: str) -> "DatasetColumnView[Self]":
+    def column(self, key: str) -> DatasetColumnView[Self]:
         col_type, _ = self.view_types()
         return col_type.from_column(self, key)
 
     @typing.override
-    def select(self, *keys: str) -> "DatasetSelectView[Self]":
+    def select(self, *keys: str) -> DatasetSelectView[Self]:
         _, select_type = self.view_types()
         return select_type.from_columns(self, *keys)
 
     @classmethod
     @abc.abstractmethod
-    def view_types(cls) -> "DatasetViewTypes":
+    def view_types(cls) -> DatasetViewTypes:
         """
         The type used to construct ``.column``, ``.select`` views.
 

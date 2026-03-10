@@ -4,7 +4,7 @@
 
 import logging
 
-import sympy as sym
+import sympy as sym  # noqa
 import torch
 from sympy import Basic, Expr
 from tensordict import TensorDict

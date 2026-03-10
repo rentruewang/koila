@@ -21,7 +21,7 @@ class FaissIndex(Index):
     The ``Index`` backed by the ``faiss`` library.
     """
 
-    index: "FaissIdx"
+    index: FaissIdx
     """
     The faiss index.
     """
