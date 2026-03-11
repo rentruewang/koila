@@ -8,10 +8,10 @@ import functools
 import inspect
 import typing
 from abc import ABC
-from collections.abc import Generator, Iterator
+from collections.abc import Iterator
 from typing import ClassVar, Self
 
-from aioway._exprs import OpSign
+from aioway._exprs import Expr, OpSign
 from aioway.attrs import AttrSet
 from aioway.batches import Chunk
 
@@ -47,7 +47,7 @@ class StreamState:
 
 
 @dcls.dataclass(frozen=True)
-class Stream(Iterator[Chunk], Dataset, ABC):
+class Stream(Expr[Chunk], Iterator[Chunk], Dataset, ABC):
     """
     ``Stream`` produces a stream of batches of data, in the form of ``TensorDict``s,
     everytime ``__next__`` is called on it, a ``TensorDict`` is yielded.
@@ -84,7 +84,7 @@ class Stream(Iterator[Chunk], Dataset, ABC):
         ``__next__`` allows ``Stream``s to be used in ``for`` loops.
         """
 
-        if (result := self._read()).attrs != self.attrs:
+        if (result := self._compute()).attrs != self.attrs:
             raise TypeError(f"Schema mismatch: {result.attrs=}, {self.attrs=}.")
 
         self.state.step()
@@ -110,7 +110,7 @@ class Stream(Iterator[Chunk], Dataset, ABC):
         ...
 
     @abc.abstractmethod
-    def _read(self) -> Chunk:
+    def _compute(self) -> Chunk:
         """
         Compute the next batch (a ``Chunk``).
 
@@ -126,31 +126,8 @@ class Stream(Iterator[Chunk], Dataset, ABC):
 
         ...
 
-    @typing.final
-    def children(self) -> list[Stream]:
-        """
-        Yields the children (dependencies of the current ``Stream``).
-
-        Does not yield ``self``.
-
-        Yields:
-            Some ``Stream``s that would be evaluated if the current is running.
-        """
-
-        children_list = list(self._children())
-
-        if len(children_list) != self.argc():
-            raise AssertionError(
-                f"Number of children must match signature {self._SIGNATURE}."
-            )
-
-        for child in children_list:
-            assert child is not self, "A `Stream` cannot depend on itself!"
-
-        return children_list
-
     @abc.abstractmethod
-    def _children(self) -> Generator[Stream]:
+    def _inputs(self) -> tuple[Stream, ...]:
         """
         ``Stream``'s children, the dependent ``Stream``s that would also be evaluated
         when calling ``__next__`` on the current ``Stream``.
@@ -202,9 +179,8 @@ class Stream(Iterator[Chunk], Dataset, ABC):
         # Register.
         cls._SIGNATURE.register_keys(key)(cls)
 
-    @classmethod
-    def argc(cls) -> int:
-        return len(cls._SIGNATURE.param_types)
+    def _return_type(self):
+        return Chunk
 
 
 class Stream0(Stream, ABC):
