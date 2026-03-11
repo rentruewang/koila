@@ -94,7 +94,7 @@ class MapStream(Stream1, ABC):
 
 
 @dcls.dataclass(frozen=True)
-class ApplyStream(MapStream, key="APPLY"):
+class ApplyStream(MapStream):
     """
     A ``Stream`` that you can customize what the ``__next__`` function do.
 
@@ -124,7 +124,7 @@ class ApplyStream(MapStream, key="APPLY"):
 
 
 @dcls.dataclass(frozen=True)
-class FuncFilterStream(MapStream, key="FILTER_FUNC"):
+class FuncFilterStream(MapStream):
     """
     A ``Stream`` that filteres on its inputs, based on a preducate function.
 
@@ -158,7 +158,7 @@ class FuncFilterStream(MapStream, key="FILTER_FUNC"):
 
 
 @dcls.dataclass(frozen=True)
-class ExprFilterStream(MapStream, key="FILTER_EXPR"):
+class ExprFilterStream(MapStream):
     """
     A ``Stream`` that filteres on its inputs, based on a preducate expression.
 
@@ -184,7 +184,7 @@ class ExprFilterStream(MapStream, key="FILTER_EXPR"):
 
 
 @dcls.dataclass(frozen=True)
-class ProjectStream(MapStream, key="PROJECT"):
+class ProjectStream(MapStream):
     """
     Projection of the input table. The ``subset`` should be a subset of the input columns.
     """
@@ -205,7 +205,7 @@ class ProjectStream(MapStream, key="PROJECT"):
 
 
 @dcls.dataclass(frozen=True)
-class RenameStream(MapStream, key="RENAME"):
+class RenameStream(MapStream):
     """
     Renames some columns in the inputs in the outputs.
     """

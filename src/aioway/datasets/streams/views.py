@@ -35,7 +35,7 @@ class StreamColumnView(Iterator[Vector], DatasetColumnView[Stream]):
 
 
 @dcls.dataclass(frozen=True)
-class StreamSelectView(DatasetSelectView[Stream], Stream1, key="SELECT"):
+class StreamSelectView(DatasetSelectView[Stream], Stream1):
     """
     The view generated when calling ``Stream.select``.
     """

@@ -4,8 +4,6 @@ import abc
 import typing
 from abc import ABC
 
-from aioway._exprs import OpSign
-
 from . import _common
 from .exprs import ColumnSymbolExpr
 
@@ -33,9 +31,6 @@ __all__ = [
 class UFuncSymColExpr1(ColumnSymbolExpr, ABC):
     source: ColumnSymbolExpr
 
-    def __init_subclass__(cls, key: str) -> None:
-        OpSign.ufunc1(ColumnSymbolExpr).register_keys(key)(cls)
-
     @typing.override
     def _compute(self) -> str:
         return f"{self.token} {self.source!s}"
@@ -56,9 +51,6 @@ class UFuncSymColExpr2(ColumnSymbolExpr, ABC):
     left: ColumnSymbolExpr
     right: ColumnSymbolExpr
 
-    def __init_subclass__(cls, key: str) -> None:
-        OpSign.ufunc2(ColumnSymbolExpr).register_keys(key)(cls)
-
     @typing.override
     def _compute(self) -> str:
         return f"{self.left!s} {self.token()} {self.right!s}"
@@ -75,7 +67,7 @@ class UFuncSymColExpr2(ColumnSymbolExpr, ABC):
 
 
 @_common.symbol_dataclass
-class NotColExpr(UFuncSymColExpr1, key="+"):
+class NotColExpr(UFuncSymColExpr1):
 
     @typing.override
     def token(self) -> str:
@@ -83,7 +75,7 @@ class NotColExpr(UFuncSymColExpr1, key="+"):
 
 
 @_common.symbol_dataclass
-class NegColExpr(UFuncSymColExpr1, key="-"):
+class NegColExpr(UFuncSymColExpr1):
 
     @typing.override
     def token(self) -> str:
@@ -91,7 +83,7 @@ class NegColExpr(UFuncSymColExpr1, key="-"):
 
 
 @_common.symbol_dataclass
-class AddColExpr(UFuncSymColExpr2, key="add"):
+class AddColExpr(UFuncSymColExpr2):
 
     @typing.override
     def token(self) -> str:
@@ -99,7 +91,7 @@ class AddColExpr(UFuncSymColExpr2, key="add"):
 
 
 @_common.symbol_dataclass
-class SubColExpr(UFuncSymColExpr2, key="sub"):
+class SubColExpr(UFuncSymColExpr2):
 
     @typing.override
     def token(self) -> str:
@@ -107,7 +99,7 @@ class SubColExpr(UFuncSymColExpr2, key="sub"):
 
 
 @_common.symbol_dataclass
-class MultColExpr(UFuncSymColExpr2, key="mul"):
+class MultColExpr(UFuncSymColExpr2):
 
     @typing.override
     def token(self) -> str:
@@ -115,7 +107,7 @@ class MultColExpr(UFuncSymColExpr2, key="mul"):
 
 
 @_common.symbol_dataclass
-class TrueDivColExpr(UFuncSymColExpr2, key="truediv"):
+class TrueDivColExpr(UFuncSymColExpr2):
 
     @typing.override
     def token(self) -> str:
@@ -123,7 +115,7 @@ class TrueDivColExpr(UFuncSymColExpr2, key="truediv"):
 
 
 @_common.symbol_dataclass
-class FloorDivColExpr(UFuncSymColExpr2, key="floordiv"):
+class FloorDivColExpr(UFuncSymColExpr2):
 
     @typing.override
     def token(self) -> str:
@@ -131,7 +123,7 @@ class FloorDivColExpr(UFuncSymColExpr2, key="floordiv"):
 
 
 @_common.symbol_dataclass
-class ExpColExpr(UFuncSymColExpr2, key="pow"):
+class ExpColExpr(UFuncSymColExpr2):
 
     @typing.override
     def token(self) -> str:
@@ -139,7 +131,7 @@ class ExpColExpr(UFuncSymColExpr2, key="pow"):
 
 
 @_common.symbol_dataclass
-class EqColExpr(UFuncSymColExpr2, key="eq"):
+class EqColExpr(UFuncSymColExpr2):
 
     @typing.override
     def token(self) -> str:
@@ -147,7 +139,7 @@ class EqColExpr(UFuncSymColExpr2, key="eq"):
 
 
 @_common.symbol_dataclass
-class NeColExpr(UFuncSymColExpr2, key="ne"):
+class NeColExpr(UFuncSymColExpr2):
 
     @typing.override
     def token(self) -> str:
@@ -155,7 +147,7 @@ class NeColExpr(UFuncSymColExpr2, key="ne"):
 
 
 @_common.symbol_dataclass
-class GeColExpr(UFuncSymColExpr2, key="ge"):
+class GeColExpr(UFuncSymColExpr2):
 
     @typing.override
     def token(self) -> str:
@@ -163,7 +155,7 @@ class GeColExpr(UFuncSymColExpr2, key="ge"):
 
 
 @_common.symbol_dataclass
-class LeColExpr(UFuncSymColExpr2, key="le"):
+class LeColExpr(UFuncSymColExpr2):
 
     @typing.override
     def token(self) -> str:
@@ -171,7 +163,7 @@ class LeColExpr(UFuncSymColExpr2, key="le"):
 
 
 @_common.symbol_dataclass
-class GtColExpr(UFuncSymColExpr2, key="gt"):
+class GtColExpr(UFuncSymColExpr2):
 
     @typing.override
     def token(self) -> str:
@@ -179,7 +171,7 @@ class GtColExpr(UFuncSymColExpr2, key="gt"):
 
 
 @_common.symbol_dataclass
-class LtColExpr(UFuncSymColExpr2, key="lt"):
+class LtColExpr(UFuncSymColExpr2):
 
     @typing.override
     def token(self) -> str:

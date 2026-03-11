@@ -57,7 +57,7 @@ class BoundedStream(Stream0, ABC):
 
 
 @dcls.dataclass(frozen=True)
-class CacheStream(BoundedStream, key="CACHE"):
+class CacheStream(BoundedStream):
     """
     Exhaust the input stream, store it into a cache for repeating access.
     """
@@ -122,7 +122,7 @@ class CacheStream(BoundedStream, key="CACHE"):
 
 
 @dcls.dataclass(frozen=True)
-class ListStream(BoundedStream, key="LIST"):
+class ListStream(BoundedStream):
     "A ``Stream`` backed by a list of ``TensorDict``."
 
     sequence: Sequence[Chunk]
@@ -188,7 +188,7 @@ class FrameStreamLoader:
 
 
 @dcls.dataclass(frozen=True)
-class FrameStream(Stream0, key="FRAME"):
+class FrameStream(Stream0):
     """
     A ``Stream`` backed by a ``Frame``.
     """
