@@ -9,7 +9,7 @@ import logging
 import math
 import typing
 from abc import ABC
-from collections.abc import Generator, Sequence
+from collections.abc import Sequence
 from typing import Self
 
 from torch.utils.data import DataLoader, Sampler
@@ -57,7 +57,7 @@ class BoundedStream(Stream0, ABC):
 
 
 @dcls.dataclass(frozen=True)
-class CacheStream(BoundedStream, key="cache"):
+class CacheStream(BoundedStream, key="CACHE"):
     """
     Exhaust the input stream, store it into a cache for repeating access.
     """
@@ -81,7 +81,7 @@ class CacheStream(BoundedStream, key="cache"):
         return self.saved[idx]
 
     @typing.override
-    def _read(self) -> Chunk:
+    def _compute(self) -> Chunk:
         LOGGER.debug(
             "Executing `__iter__` for `CacheStream`. self.idx=%s, stream.idx=%s",
             self.idx,
@@ -107,8 +107,8 @@ class CacheStream(BoundedStream, key="cache"):
         return item
 
     @typing.override
-    def _children(self) -> Generator[Stream]:
-        yield self.stream
+    def _inputs(self):
+        return (self.stream,)
 
     @property
     @typing.override
@@ -122,7 +122,7 @@ class CacheStream(BoundedStream, key="cache"):
 
 
 @dcls.dataclass(frozen=True)
-class ListStream(BoundedStream, key="list"):
+class ListStream(BoundedStream, key="LIST"):
     "A ``Stream`` backed by a list of ``TensorDict``."
 
     sequence: Sequence[Chunk]
@@ -157,16 +157,15 @@ class ListStream(BoundedStream, key="list"):
         raise ValueError("Chunks should have the same schema.")
 
     @typing.override
-    def _read(self) -> Chunk:
+    def _compute(self) -> Chunk:
         if self.idx < self.size:
             return self[self.idx]
         else:
             raise StopIteration
 
     @typing.override
-    def _children(self) -> Generator[Stream]:
-        return
-        yield
+    def _inputs(self):
+        return ()
 
 
 @dcls.dataclass(frozen=True)
@@ -189,7 +188,7 @@ class FrameStreamLoader:
 
 
 @dcls.dataclass(frozen=True)
-class FrameStream(Stream0, key="frame"):
+class FrameStream(Stream0, key="FRAME"):
     """
     A ``Stream`` backed by a ``Frame``.
     """
@@ -203,7 +202,7 @@ class FrameStream(Stream0, key="frame"):
     """
 
     @typing.override
-    def _read(self) -> Chunk:
+    def _compute(self) -> Chunk:
         try:
             return self._get_batch(self.idx)
         except IndexError as ie:
@@ -249,9 +248,8 @@ class FrameStream(Stream0, key="frame"):
         return self.frame[idx : idx + batch_size]
 
     @typing.override
-    def _children(self) -> Generator[Stream]:
-        return
-        yield
+    def _inputs(self):
+        return ()
 
 
 def _identity[T](item: T) -> T:

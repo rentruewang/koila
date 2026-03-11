@@ -28,7 +28,7 @@ class SymbolExpr(Expr[str], ABC):
     def _compute(self) -> str: ...
 
     @typing.final
-    def _return_type(self) -> type[str]:
+    def _return_type(self):
         return str
 
 

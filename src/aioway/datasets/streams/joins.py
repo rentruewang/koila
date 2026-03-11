@@ -4,7 +4,6 @@
 
 import dataclasses as dcls
 import typing
-from collections.abc import Generator
 
 import torch
 
@@ -18,7 +17,7 @@ __all__ = ["ZipStream", "NestedLoopJoinStream"]
 
 
 @dcls.dataclass(frozen=True)
-class ZipStream(Stream2, key="zip"):
+class ZipStream(Stream2, key="ZIP"):
     """
     ``ZipStream`` is similar to what ``zip`` does.
     """
@@ -44,7 +43,7 @@ class ZipStream(Stream2, key="zip"):
         return self.left.attrs | self.right.attrs
 
     @typing.override
-    def _read(self) -> Chunk:
+    def _compute(self) -> Chunk:
         # Either one of those may raise ``StopIteration``, at which point it is done.
         left_batch = next(self.left)
         right_batch = next(self.right)
@@ -52,9 +51,8 @@ class ZipStream(Stream2, key="zip"):
         return left_batch.zip(right_batch)
 
     @typing.override
-    def _children(self) -> Generator[Stream]:
-        yield self.left
-        yield self.right
+    def _inputs(self):
+        return self.left, self.right
 
 
 @dcls.dataclass
@@ -66,7 +64,7 @@ class NestedState(StreamState):
 
 
 @dcls.dataclass(frozen=True)
-class NestedLoopJoinStream(Stream2, key="nested-loop"):
+class NestedLoopJoinStream(Stream2, key="NESTED_LOOP"):
     """
     This is a stream that combines 2 input streams in a nested-loop matter,
     as in ``[[x, y] for x in left for y in right if x.key == y.key]``.
@@ -102,12 +100,11 @@ class NestedLoopJoinStream(Stream2, key="nested-loop"):
         return self.left.attrs | self.right.attrs
 
     @typing.override
-    def _children(self) -> Generator[Stream]:
-        yield self.left
-        yield self.right
+    def _inputs(self):
+        return self.left, self.right
 
     @typing.override
-    def _read(self) -> Chunk:
+    def _compute(self) -> Chunk:
         lhs_batch = self._get_lhs()
         rhs_batch = self._get_rhs()
 

@@ -4,7 +4,7 @@
 
 import dataclasses as dcls
 import typing
-from collections.abc import Generator, Iterator
+from collections.abc import Iterator
 from typing import Self
 
 from aioway.batches import Chunk, Vector
@@ -35,7 +35,7 @@ class StreamColumnView(Iterator[Vector], DatasetColumnView[Stream]):
 
 
 @dcls.dataclass(frozen=True)
-class StreamSelectView(DatasetSelectView[Stream], Stream1, key="select"):
+class StreamSelectView(DatasetSelectView[Stream], Stream1, key="SELECT"):
     """
     The view generated when calling ``Stream.select``.
     """
@@ -46,7 +46,7 @@ class StreamSelectView(DatasetSelectView[Stream], Stream1, key="select"):
         return self
 
     @typing.override
-    def _read(self) -> Chunk:
+    def _compute(self) -> Chunk:
         batch = next(self.dset)
         return batch.select(*self.cols)
 
@@ -56,8 +56,8 @@ class StreamSelectView(DatasetSelectView[Stream], Stream1, key="select"):
         return self.dset.size
 
     @typing.override
-    def _children(self) -> Generator[Stream, None, None]:
-        yield self.dset
+    def _inputs(self):
+        return (self.dset,)
 
     @classmethod
     def from_columns(cls, dataset: Stream, /, *columns: str) -> Self:
