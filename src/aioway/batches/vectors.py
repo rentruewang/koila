@@ -35,22 +35,22 @@ class Vector:
         return f"Vector(data={self.data}, attr={self.attr})"
 
     def __add__(self, rhs):
-        return OpSign.ufunc2(Vector).dispatch("add")(self, rhs)
+        return VectorBinary(operator.add)(self, rhs)
 
     def __sub__(self, rhs):
-        return OpSign.ufunc2(Vector).dispatch("sub")(self, rhs)
+        return VectorBinary(operator.sub)(self, rhs)
 
     def __mul__(self, rhs):
-        return OpSign.ufunc2(Vector).dispatch("mul")(self, rhs)
+        return VectorBinary(operator.mul)(self, rhs)
 
     def __truediv__(self, rhs):
-        return OpSign.ufunc2(Vector).dispatch("truediv")(self, rhs)
+        return VectorBinary(operator.truediv)(self, rhs)
 
     def __floordiv__(self, rhs):
-        return OpSign.ufunc2(Vector).dispatch("floordiv")(self, rhs)
+        return VectorBinary(operator.floordiv)(self, rhs)
 
     def __pow__(self, rhs):
-        return OpSign.ufunc2(Vector).dispatch("pow")(self, rhs)
+        return VectorBinary(operator.pow)(self, rhs)
 
     def __eq__(self, rhs):
         return self._cmp_op(rhs, operator.eq)
@@ -128,26 +128,3 @@ class VectorBinary:
         attr_func = OpSign(Attr, type(rhs), Attr).dispatch(self.op.__name__)
         attr = attr_func(lhs.attr, rhs_attr)
         return Vector(data=data, attr=attr)
-
-
-for op in [
-    operator.add,
-    operator.sub,
-    operator.mul,
-    operator.truediv,
-    operator.floordiv,
-    operator.pow,
-    operator.eq,
-    operator.ne,
-    operator.le,
-    operator.lt,
-    operator.ge,
-    operator.gt,
-]:
-    comparator = VectorBinary(op)
-
-    OpSign(Vector, Vector, Vector).register_keys(op.__name__)(comparator)
-    OpSign(Vector, Tensor, Vector).register_keys(op.__name__)(comparator)
-    OpSign(Vector, int, Vector).register_keys(op.__name__)(comparator)
-    OpSign(Vector, float, Vector).register_keys(op.__name__)(comparator)
-    OpSign(Vector, bool, Vector).register_keys(op.__name__)(comparator)

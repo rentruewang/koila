@@ -5,7 +5,6 @@
 import abc
 import dataclasses as dcls
 import functools
-import inspect
 import typing
 from abc import ABC
 from collections.abc import Iterator
@@ -63,9 +62,6 @@ class Stream(Expr[Chunk], Iterator[Chunk], Dataset, ABC):
     """
     A ``Stream`` should be able to be decomposed with ``match`` statements.
     """
-
-    def __init_subclass__(cls, key: str = "") -> None:
-        cls.__register_subclass(key)
 
     @typing.override
     def __iter__(self) -> Self:
@@ -165,19 +161,6 @@ class Stream(Expr[Chunk], Iterator[Chunk], Dataset, ABC):
         from .views import StreamColumnView, StreamSelectView
 
         return DatasetViewTypes(column=StreamColumnView, select=StreamSelectView)
-
-    @classmethod
-    def __register_subclass(cls, key: str):
-        # Don't do anything for abstract classes.
-        if inspect.isabstract(cls):
-            return
-
-        # Concrete subclass must have key.
-        if not key:
-            raise KeyError(f"Concrete class {cls} should provide a key.")
-
-        # Register.
-        cls._SIGNATURE.register_keys(key)(cls)
 
     def _return_type(self):
         return Chunk
