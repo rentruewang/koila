@@ -17,7 +17,7 @@ __all__ = ["ZipStream", "NestedLoopJoinStream"]
 
 
 @dcls.dataclass(frozen=True)
-class ZipStream(Stream2, key="ZIP"):
+class ZipStream(Stream2):
     """
     ``ZipStream`` is similar to what ``zip`` does.
     """
@@ -64,7 +64,7 @@ class NestedState(StreamState):
 
 
 @dcls.dataclass(frozen=True)
-class NestedLoopJoinStream(Stream2, key="NESTED_LOOP"):
+class NestedLoopJoinStream(Stream2):
     """
     This is a stream that combines 2 input streams in a nested-loop matter,
     as in ``[[x, y] for x in left for y in right if x.key == y.key]``.

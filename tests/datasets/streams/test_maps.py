@@ -30,7 +30,7 @@ class SaveLastState(StreamState):
 
 
 @dcls.dataclass(frozen=True)
-class SaveLastMapStream(MapStream, key="SAVE_LAST"):
+class SaveLastMapStream(MapStream):
     "``Stream`` that saves the last ``__next__`` call."
 
     state: SaveLastState = dcls.field(default_factory=SaveLastState)

@@ -31,12 +31,16 @@ class OpSign[T]:
     def __init__(self, *types: type) -> None:
         *param_types, ret = types
 
-        self._params = TypeList(*param_types)
-        self._result = ret
+        self._param_types = TypeList(*param_types)
+        self._return_type = ret
 
     def __eq__(self, other: object):
         if isinstance(other, OpSign):
-            return self._params == other._params and self._result == other._result
+            return (
+                True
+                and self._param_types == other._param_types
+                and self._return_type == other._return_type
+            )
 
         return NotImplemented
 
@@ -50,13 +54,13 @@ class OpSign[T]:
     def param_types(self) -> TypeList:
         "The parameters of the signature."
 
-        return self._params
+        return self._param_types
 
     @property
     def return_type(self) -> type[T]:
         "The return type of the signature."
 
-        return self._result
+        return self._return_type
 
     @classmethod
     def parse(cls, text: str, /, **types: type) -> Self:
@@ -65,17 +69,6 @@ class OpSign[T]:
             transformer=SignatureTransformer,
             text=text,
         )(**types)
-
-    def register_keys(self, *keys: str):
-        "Convenient wrapper s.t. ``register`` doesn't need to be imported manually."
-        from .. import regs
-
-        return regs.register(self, *keys)
-
-    def dispatch(self, name: str, /):
-        from .. import regs
-
-        return regs.dispatch(self, name)
 
     @classmethod
     def ufunc0(cls, typ: type, /) -> Self:

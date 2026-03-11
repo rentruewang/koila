@@ -18,7 +18,10 @@ LOGGER = logging.getLogger(__name__)
 
 
 class TypeList:
-    "The parameter list in signature. Here we only care about types."
+    """
+    The parameter list in signature. Here we only care about types.
+    This is useful to support type checking on ``Tensor`` related operations.
+    """
 
     def __init__(self, *types: type) -> None:
         self._types: tuple[type, ...] = types
@@ -30,7 +33,7 @@ class TypeList:
 
         LOGGER.debug("Initialized type list %r", self)
 
-    def __eq__(self, other: object):
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, TypeList):
             return self._types == other._types
 
@@ -52,11 +55,11 @@ class TypeList:
     def __len__(self) -> int:
         return len(self._types)
 
-    def __getitem__(self, idx: int):
+    def __getitem__(self, idx: int) -> type:
         return self._types[idx]
 
     def __iter__(self):
-        yield from self._types
+        return iter(self._types)
 
     def check_types(self, types: Sequence[type], /) -> bool:
         "Validate the given types."
