@@ -81,7 +81,7 @@ class MapStream(Stream1, ABC):
 
     @typing.override
     @typing.final
-    def _read(self) -> Chunk:
+    def _compute(self) -> Chunk:
         # A ``map`` kind of ``Stream`` always calls ``next`` once on its source.
         # May raise ``StopIteration`` here.
         next_batch = next(self.source)
@@ -89,12 +89,12 @@ class MapStream(Stream1, ABC):
 
     @typing.final
     @typing.override
-    def _children(self):
-        yield self.source
+    def _inputs(self):
+        return (self.source,)
 
 
 @dcls.dataclass(frozen=True)
-class ApplyStream(MapStream, key="apply"):
+class ApplyStream(MapStream, key="APPLY"):
     """
     A ``Stream`` that you can customize what the ``__next__`` function do.
 
@@ -124,7 +124,7 @@ class ApplyStream(MapStream, key="apply"):
 
 
 @dcls.dataclass(frozen=True)
-class FuncFilterStream(MapStream, key="func-filter"):
+class FuncFilterStream(MapStream, key="FILTER_FUNC"):
     """
     A ``Stream`` that filteres on its inputs, based on a preducate function.
 
@@ -158,7 +158,7 @@ class FuncFilterStream(MapStream, key="func-filter"):
 
 
 @dcls.dataclass(frozen=True)
-class ExprFilterStream(MapStream, key="expr-filter"):
+class ExprFilterStream(MapStream, key="FILTER_EXPR"):
     """
     A ``Stream`` that filteres on its inputs, based on a preducate expression.
 
@@ -184,7 +184,7 @@ class ExprFilterStream(MapStream, key="expr-filter"):
 
 
 @dcls.dataclass(frozen=True)
-class ProjectStream(MapStream, key="project"):
+class ProjectStream(MapStream, key="PROJECT"):
     """
     Projection of the input table. The ``subset`` should be a subset of the input columns.
     """
@@ -205,7 +205,7 @@ class ProjectStream(MapStream, key="project"):
 
 
 @dcls.dataclass(frozen=True)
-class RenameStream(MapStream, key="rename"):
+class RenameStream(MapStream, key="RENAME"):
     """
     Renames some columns in the inputs in the outputs.
     """

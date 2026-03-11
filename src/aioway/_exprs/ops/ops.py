@@ -62,7 +62,7 @@ class Op[T: Callable]:
         return self.function
 
 
-class OpExpr(Expr):
+class OpExpr[T](Expr[T]):
     """
     The operator signature.
     """
@@ -78,7 +78,7 @@ class OpExpr(Expr):
         return self._op.function(*input_data)
 
     @typing.override
-    def _return_type(self) -> Any:
+    def _return_type(self) -> type[T]:
         return self._op.signature.return_type
 
     @property
