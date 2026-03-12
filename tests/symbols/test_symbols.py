@@ -7,10 +7,7 @@ from typing import NamedTuple
 import pytest
 
 from aioway.symbols import (
-    ColumnSymbolExpr,
-    GetItemExpr,
-    InfixColExpr,
-    PrefixColExpr,
+    ColSymExpr,
     SourceExpr,
 )
 
@@ -26,22 +23,22 @@ def b():
 
 
 @pytest.fixture
-def c(a):
-    return GetItemExpr(a, "c")
+def c(a: SourceExpr):
+    return a["c"]
 
 
 @pytest.fixture
-def d(a):
-    return GetItemExpr(a, "d")
+def d(a: SourceExpr):
+    return a["d"]
 
 
 @pytest.fixture
-def e(b):
-    return GetItemExpr(b, "e")
+def e(b: SourceExpr):
+    return b["e"]
 
 
 @pytest.fixture(params="cde")
-def col_expr(request) -> ColumnSymbolExpr:
+def col_expr(request) -> ColSymExpr:
     return request.getfixturevalue(request.param)
 
 
@@ -51,14 +48,24 @@ def test_col_repr(c, d, e):
     assert str(e) == "b.e"
 
 
-@pytest.mark.parametrize("op", ["+", "-", "*", "/", "//", "**"])
-def test_infix_op_repr(c, d, op) -> None:
-    assert str(InfixColExpr(op=op, left=c, right=d)) == f"({c!s} {op} {d!s})"
-
-
 class _OpFunc(NamedTuple):
     name: str
     func: Callable[..., object]
+
+
+@pytest.mark.parametrize(
+    "op,func",
+    [
+        _OpFunc("+", operator.add),
+        _OpFunc("-", operator.sub),
+        _OpFunc("*", operator.mul),
+        _OpFunc("/", operator.truediv),
+        _OpFunc("//", operator.floordiv),
+        _OpFunc("**", operator.pow),
+    ],
+)
+def test_infix_op_repr(c, d, op, func) -> None:
+    assert str(func(c, d)) == f"{c!s} {op} {d!s}"
 
 
 @pytest.mark.parametrize(
@@ -101,10 +108,16 @@ def test_binray_ufunc_repr(c, d, op, func) -> None:
     ],
 )
 def test_binary_ufunc_type(c, e, op) -> None:
-    assert isinstance(expr := op(c, e), ColumnSymbolExpr), type(expr)
-    assert isinstance(expr := op(e, c), ColumnSymbolExpr), type(expr)
+    assert isinstance(expr := op(c, e), ColSymExpr), type(expr)
+    assert isinstance(expr := op(e, c), ColSymExpr), type(expr)
 
 
-@pytest.mark.parametrize("op", "+-")
-def test_prefix_op_repr(col_expr, op):
-    assert str(PrefixColExpr(op=op, child=col_expr)) == f"{op}{col_expr!s}"
+@pytest.mark.parametrize(
+    "op,func",
+    [
+        _OpFunc("-", operator.neg),
+        _OpFunc("~", operator.inv),
+    ],
+)
+def test_prefix_op_repr(col_expr: ColSymExpr, op, func):
+    assert str(func(col_expr)) == f"{op}{col_expr!s}"

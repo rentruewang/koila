@@ -6,7 +6,7 @@ from tensordict import TensorDict
 
 from aioway import attrs
 from aioway.attrs import AttrSet, _validation
-from aioway.batches import Chunk
+from aioway.chunks import Chunk
 
 
 @pytest.fixture

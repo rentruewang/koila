@@ -5,12 +5,12 @@
 import dataclasses as dcls
 import functools
 import typing
-from typing import TypeIs
 
 import numpy as np
 
+from aioway import _typing
 from aioway.attrs import AttrSet
-from aioway.batches import Chunk
+from aioway.chunks import Chunk
 
 from .frames import Frame, IntArray
 
@@ -60,6 +60,7 @@ class ChunkListFrame(Frame):
     """
 
     def __post_init__(self) -> None:
+        is_list_of_chunks = _typing.is_list_of(Chunk)
         if not is_list_of_chunks(self.chunks):
             raise ValueError(f"Expected a list of `Chunk`s. Got {self.chunks=}")
 
@@ -118,7 +119,3 @@ class ChunkListFrame(Frame):
             return attr
 
         raise ValueError("Chunks should have the same attrs.")
-
-
-def is_list_of_chunks(data) -> TypeIs[list[Chunk]]:
-    return isinstance(data, list) and all(isinstance(t, Chunk) for t in data)

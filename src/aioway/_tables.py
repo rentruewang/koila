@@ -31,6 +31,25 @@ class Table[C](ABC):
     3. ``keys() -> KeysView[str]``
     """
 
+    @typing.overload
+    def __getitem__(self, key: str, /) -> C: ...
+
+    @typing.overload
+    def __getitem__(self, key: list[str], /) -> Self: ...
+
+    def __getitem__(self, key, /):
+        match key:
+            case str():
+                return self.column(key)
+            case list() if all(isinstance(i, str) for i in key):
+                return self.select(*key)
+
+        raise TypeError(
+            "The default implemenetation of `Table.__getitem__` "
+            f"does not know how to handle {key=}. "
+            "It only supports `key` of type `str` and `list[str]`."
+        )
+
     @abc.abstractmethod
     def keys(self) -> KeysView[str]:
         """

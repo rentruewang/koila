@@ -7,7 +7,7 @@ import pytest
 import torch
 
 from aioway import attrs
-from aioway.batches import Chunk
+from aioway.chunks import Chunk
 from aioway.datasets import (
     CacheStream,
     ListStream,

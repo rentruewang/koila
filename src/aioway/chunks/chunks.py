@@ -6,19 +6,18 @@ import dataclasses as dcls
 import logging
 import typing
 from collections.abc import Iterator, Mapping, Sequence
-from typing import Self, TypeIs
+from typing import Self
 
 import tensordict
 from numpy import ndarray as NpArr
-from sympy import Expr
 from tensordict import TensorDict
 from torch import Size, Tensor
 
-from aioway import attrs
+from aioway import _typing, attrs
+from aioway._tables import Table
 from aioway.attrs import AttrSet, AttrSetLike, _validation
-from aioway.tables import Table
+from aioway.symbols import SymbolExpr
 
-from . import funcs
 from .vectors import Vector
 
 __all__ = ["Chunk"]
@@ -75,7 +74,7 @@ class Chunk(Mapping[str, Vector], Table):
 
     @typing.overload
     def __getitem__(
-        self, idx: int | slice | list[int] | list[str] | NpArr | Tensor, /
+        self, idx: int | slice | list[int] | list[str] | NpArr | Tensor | Vector, /
     ) -> Self: ...
 
     @typing.override
@@ -88,10 +87,13 @@ class Chunk(Mapping[str, Vector], Table):
         if isinstance(idx, int | slice | NpArr | Tensor):
             return self._getitem_direct(idx)
 
-        if _is_seq_of_str(idx):
+        if isinstance(idx, Vector):
+            return self._getitem_direct(idx.data)
+
+        if _typing.is_list_of(str)(idx):
             return self.select(*idx)
 
-        if _is_list_of_int(idx):
+        if _typing.is_list_of(int)(idx):
             return self._getitem_direct(idx)
 
         raise TypeError(type(idx))
@@ -105,13 +107,9 @@ class Chunk(Mapping[str, Vector], Table):
             return self
 
         schema = self.attrs.rename(**renames)
-        data = funcs.rename(self.data, **renames)
-        return self.from_data_schema(data=data, schema=schema)
 
-    def filter(self, expr: str | Expr) -> Self:
-        return self.from_data_schema(
-            data=funcs.filter(self.data, expr), schema=self.attrs
-        )
+        data = _rename(self.data, **renames)
+        return self.from_data_schema(data=data, schema=schema)
 
     def zip(self, rhs: Self) -> Self:
         data = tensordict.merge_tensordicts(self.data, rhs.data)
@@ -169,6 +167,7 @@ class Chunk(Mapping[str, Vector], Table):
         if isinstance(chunk, cls):
             return chunk
 
+        _is_mapping_of_vector = _typing.is_dict_of_str_to(Vector)
         if _is_mapping_of_vector(chunk):
             data = {key: chunk[key].data for key in chunk.keys()}
             schema = {key: chunk[key].attr for key in chunk.keys()}
@@ -181,33 +180,80 @@ def _as_tensordict(data: TensorDictLike, /) -> TensorDict:
     if isinstance(data, TensorDict):
         return data
 
+    _is_dict_of_tensor = _typing.is_dict_of_str_to(Tensor)
     if _is_dict_of_tensor(data):
         return TensorDict(data)
 
     raise TypeError(type(data))
 
 
-def _is_dict_of_tensor(obj) -> TypeIs[dict[str, Tensor]]:
-    return (
-        True
-        and isinstance(obj, dict)
-        and all(isinstance(key, str) for key in obj.keys())
-        and all(isinstance(val, Tensor) for val in obj.values())
+def _col_expr(td: TensorDict, expr: SymbolExpr, /) -> Tensor:
+    """
+    Given a ``SymbolExpr`` expression, the ``TensorDict`` would be transformed with a tree walk.
+
+    Args:
+        td: The ``DictOfTensor`` to manipulate.
+        expr:
+            The ``SymbolExpr`` expression.
+            If a string is given, ``sympify`` is called.
+
+    Raises:
+        ValueError: If the free symbols in the expression don't exist in columns.
+
+    Returns:
+        The tensor.
+    """
+
+    LOGGER.debug("Column expression: %s", expr)
+
+    raise NotImplementedError
+    # expr: Basic = sym.sympify(expr, evaluate=False)
+
+    # # Convert symbols to their string representations.
+    # keys = [str(s) for s in expr.free_symbols]
+
+    # if any(var not in td for var in keys):
+    #     raise ValueError(
+    #         f"Expression {expr} contains {keys}, not a subset of {td.keys()}"
+    #     )
+
+    # LOGGER.debug("Creating a function with expr=%s, args=%s", expr, keys)
+    # # Create a lambda function that works on self.
+    # func = sym.lambdify(keys, expr, "numpy")
+
+    # try:
+    #     # Unpacking is OK because self is of type `Mapping`.
+    #     return func(**td.select(*keys))
+    # except TypeError as te:
+    #     raise FrameworkUnexpected(sym) from te
+
+
+def _filter(td: TensorDict, expr: SymbolExpr) -> TensorDict:
+    """
+    Filter the current ``Block`` with a given expression.
+    """
+
+    LOGGER.debug("Filter called with expr=%s", expr)
+    idx = _col_expr(td, expr).bool()
+
+    if len(idx) != len(td):
+        raise AssertionError(
+            f"The result expression has a different legnth than the current sequence. "
+            f"Got {len(idx)=} and {len(td)=}."
+        )
+
+    # No conversion needed because we know that `index` must be `Tensor`.
+    return td[idx]
+
+
+def _rename(td: TensorDict, **names: str) -> TensorDict:
+    """
+    Rename the columns of the current ``Block``.
+    """
+
+    LOGGER.debug("Renamed called with names=%s", names)
+    return TensorDict(
+        {names.get(key, key): val for key, val in td.items()},
+        batch_size=td.batch_size,
+        device=td.device,
     )
-
-
-def _is_mapping_of_vector(obj) -> TypeIs[Mapping[str, Vector]]:
-    return (
-        True
-        and isinstance(obj, Mapping)
-        and all(isinstance(key, str) for key in obj.keys())
-        and all(isinstance(val, Vector) for val in obj.values())
-    )
-
-
-def _is_seq_of_str(obj) -> TypeIs[Sequence[str]]:
-    return isinstance(obj, Sequence) and all(isinstance(i, str) for i in obj)
-
-
-def _is_list_of_int(obj) -> TypeIs[list[int]]:
-    return isinstance(obj, list) and all(isinstance(i, int) for i in obj)
