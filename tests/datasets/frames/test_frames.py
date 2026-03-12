@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from numpy import random
 
-from aioway.batches import Chunk
+from aioway.chunks import Chunk
 
 
 def test_table_not_empty(frame):

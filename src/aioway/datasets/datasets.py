@@ -9,9 +9,9 @@ from abc import ABC
 from collections.abc import KeysView, Sequence
 from typing import ClassVar, NamedTuple, Self
 
+from aioway._tables import Table
 from aioway.attrs import AttrSet
 from aioway.attrs.attrs import Attr
-from aioway.tables import Table
 
 __all__ = ["Dataset", "DatasetColumnView", "DatasetSelectView", "DatasetViewTypes"]
 

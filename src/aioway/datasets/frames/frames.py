@@ -12,10 +12,14 @@ import numpy as np
 from numpy import ndarray as NpArr
 from numpy.typing import NDArray
 
+from aioway import _typing
 from aioway.attrs import AttrSet
-from aioway.batches import Chunk
+from aioway.chunks import Chunk
 
 from ..datasets import Dataset, DatasetViewTypes
+
+if typing.TYPE_CHECKING:
+    from .views import FrameColumnView, FrameSelectView
 
 __all__ = ["Frame"]
 
@@ -51,19 +55,38 @@ class Frame(Dataset, ABC):
         Get the number of items (rows) in the current dataframe.
         """
 
-    def __getitem__(self, idx: FrameBatchIndex, /) -> Chunk:
+    @typing.overload
+    def __getitem__(self, idx: FrameBatchIndex, /) -> Chunk: ...
+
+    @typing.overload
+    def __getitem__(self, idx: str, /) -> FrameColumnView: ...
+
+    @typing.overload
+    def __getitem__(self, idx: list[str], /) -> FrameSelectView: ...
+
+    @typing.no_type_check
+    def __getitem__(self, idx, /):
         """
         Get individual items from the current ``Frame``.
 
         Args:
             idx:
                 Index to the current ``Frame``.
-                Must be a slice, or list of int, or a numpy array.
+                If it is a ``str`` or ``list[str]``, it is considered a ``Table`` operation.
+
+                For indexing operations, index type must be a ``slice``,
+                or ``list[int]``, or a numpy array.
                 Should be in the range ``[-len, len)``.
 
         Returns:
             A ``TensorDict`` representing a batch of data.
         """
+
+        if isinstance(idx, str):
+            return self.column(idx)
+
+        if _typing.is_list_of(str)(idx):
+            return self.select(*idx)
 
         if not _is_table_index(idx):
             raise IndexError(f"Index type {type(idx)=} is not supported.")

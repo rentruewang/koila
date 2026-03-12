@@ -5,12 +5,12 @@ import typing
 from abc import ABC
 
 from . import _common
-from .exprs import ColumnSymbolExpr
+from .exprs import ColSymExpr
 
 __all__ = [
     "UFuncSymColExpr1",
     "NegColExpr",
-    "NotColExpr",
+    "InvColExpr",
     "UFuncSymColExpr2",
     "AddColExpr",
     "SubColExpr",
@@ -28,12 +28,12 @@ __all__ = [
 
 
 @_common.symbol_dataclass
-class UFuncSymColExpr1(ColumnSymbolExpr, ABC):
-    source: ColumnSymbolExpr
+class UFuncSymColExpr1(ColSymExpr, ABC):
+    source: ColSymExpr
 
     @typing.override
     def _compute(self) -> str:
-        return f"{self.token} {self.source!s}"
+        return f"{self.token()}{self.source!s}"
 
     @typing.override
     def _inputs(self):
@@ -47,9 +47,12 @@ class UFuncSymColExpr1(ColumnSymbolExpr, ABC):
 
 
 @_common.symbol_dataclass
-class UFuncSymColExpr2(ColumnSymbolExpr, ABC):
-    left: ColumnSymbolExpr
-    right: ColumnSymbolExpr
+class UFuncSymColExpr2(ColSymExpr, ABC):
+    left: ColSymExpr
+    "The lhs of the expression. Must be ``ColSymExpr`` because it corresponds to ``self``."
+
+    right: ColSymExpr | int | float | bool
+    "The rhs of the expression. Can be either ``ColSymExpr`` or primitive types."
 
     @typing.override
     def _compute(self) -> str:
@@ -67,7 +70,7 @@ class UFuncSymColExpr2(ColumnSymbolExpr, ABC):
 
 
 @_common.symbol_dataclass
-class NotColExpr(UFuncSymColExpr1):
+class InvColExpr(UFuncSymColExpr1):
 
     @typing.override
     def token(self) -> str:

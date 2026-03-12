@@ -6,12 +6,12 @@ import dataclasses as dcls
 import typing
 from typing import Self
 
-from aioway.batches import Chunk, Vector
+from aioway.chunks import Chunk, Vector
 
 from ..datasets import DatasetColumnView, DatasetSelectView
 from .frames import Frame, FrameBatchIndex, IntArray
 
-__all__ = ["FrameColumnView"]
+__all__ = ["FrameColumnView", "FrameSelectView"]
 
 
 @dcls.dataclass(frozen=True)

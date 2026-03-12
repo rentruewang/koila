@@ -6,16 +6,14 @@ import typing
 from collections.abc import KeysView, Sequence
 
 from . import _common
-from .exprs import TableSymbolExpr
+from .exprs import ColSymExpr, TableSymExpr
 
-__all__ = ["SourceExpr", "SelectExpr"]
+__all__ = ["SourceExpr", "SelectExpr", "GetItemExpr"]
 
 
 @typing.final
 @_common.symbol_dataclass
-class SourceExpr(TableSymbolExpr):
-    NUM_ARGS = 0
-
+class SourceExpr(TableSymExpr):
     name: str
     "The table's name. Matches the table names given in the ``subs`` method."
 
@@ -32,12 +30,9 @@ class SourceExpr(TableSymbolExpr):
         return ()
 
 
-@typing.final
 @_common.symbol_dataclass
-class SelectExpr(TableSymbolExpr):
-    NUM_ARGS = 1
-
-    table: TableSymbolExpr
+class SelectExpr(TableSymExpr):
+    table: TableSymExpr
     "The source to the selection."
 
     columns: Sequence[str]
@@ -67,3 +62,25 @@ class SeqKeysView(KeysView[str]):
     @typing.override
     def __iter__(self):
         yield from self.seq
+
+
+@_common.symbol_dataclass
+class GetItemExpr(ColSymExpr):
+    "Perform the ``__getitem__`` operation. Select one of the keys."
+
+    table: TableSymExpr
+    """
+    The table expression that the column would operate on.
+    """
+
+    column: str
+    """
+    The name of the column.
+    """
+
+    @typing.override
+    def _compute(self) -> str:
+        return f"{self.table!s}.{self.column}"
+
+    def _inputs(self):
+        return (self.table,)

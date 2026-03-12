@@ -4,29 +4,18 @@ import dataclasses as dcls
 import logging
 import typing
 from collections.abc import Iterable, Iterator, Sequence
-from typing import Self, TypeGuard, TypeIs
+from typing import Self
 
 import numpy as np
 from numpy.typing import NDArray
 from torch import Size
 
+from aioway import _typing
+
 __all__ = ["ShapeLike", "Shape", "shape"]
 
 LOGGER = logging.getLogger(__name__)
-
-
-def _is_seq_of_ints(shape: object) -> TypeGuard[Sequence[int]]:
-    """
-    Check if input is a ``Sequence`` of positive ``int``s.
-    """
-
-    if not isinstance(shape, Sequence):
-        return False
-
-    if not np.isdtype(np.asarray(shape).dtype, "integral"):
-        return False
-
-    return True
+_is_tuple_of_int = _typing.is_tuple_of(int)
 
 
 @dcls.dataclass(frozen=True)
@@ -109,18 +98,17 @@ class Shape(Sequence[int]):
 
         LOGGER.debug("Checking if %s is a `Shape`", self)
 
-        return _is_seq_of_ints(self.dims)
+        return _typing.is_seq_of(int)(self.dims)
 
     def valid_dims(self, dims: list[int]) -> bool:
         """
         Validate the dimensions amongst the shapes.
         """
 
-        return (
-            True
-            and _is_seq_of_ints(dims)
-            and (max(dims) >= len(self) or min(dims) < -len(self))
-        )
+        is_list_of_int = _typing.is_list_of(int)
+        length = len(self)
+
+        return is_list_of_int(dims) and (max(dims) >= length or min(dims) < -length)
 
     def wrap_dims(self, dims: list[int]) -> list[int]:
         # Make the dims positive.
@@ -196,7 +184,3 @@ def _shape(dims) -> Shape:
             return Shape(dims_tuple)
 
     raise ValueError
-
-
-def _is_tuple_of_int(obj, /) -> TypeIs[tuple[int, ...]]:
-    return isinstance(obj, tuple) and all(isinstance(i, int) for i in obj)

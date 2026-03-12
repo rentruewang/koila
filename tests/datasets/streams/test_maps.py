@@ -8,11 +8,10 @@ import pytest
 from tensordict import TensorDict
 
 from aioway.attrs import AttrSet
-from aioway.batches import Chunk
+from aioway.chunks import Chunk
 from aioway.datasets import (
     ApplyStream,
     CacheStream,
-    ExprFilterStream,
     FuncFilterStream,
     MapStream,
     ProjectStream,
@@ -68,13 +67,6 @@ def map_stream(request, save_last):
     return typing.cast(MapStream, builder(save_last))
 
 
-def _expr_filter_builder(source):
-    return ExprFilterStream(
-        source=source,
-        predicate="f1d > 0",
-    )
-
-
 def _pred_filter_builder(source):
     return FuncFilterStream(
         source=source,
@@ -82,14 +74,13 @@ def _pred_filter_builder(source):
     )
 
 
-@pytest.mark.parametrize(
-    "map_stream", [_expr_filter_builder, _pred_filter_builder], indirect=True
-)
+@pytest.mark.parametrize("map_stream", [_pred_filter_builder], indirect=True)
 def test_filter(map_stream, save_last):
     "Testing the 2 filter streams and whether they are doing their jobs."
 
     for filtered in map_stream:
-        manual_filtered: TensorDict = save_last.last.filter("f1d > 0")
+        f1d = save_last.last["f1d"]
+        manual_filtered: TensorDict = save_last.last[f1d > 0]
         assert filtered.shape == manual_filtered.shape, {
             "lhs.shape": filtered.shape,
             "rhs.shape": manual_filtered.shape,
@@ -136,7 +127,6 @@ def test_project(map_stream, save_last):
 @pytest.mark.parametrize(
     "map_stream",
     [
-        _expr_filter_builder,
         _pred_filter_builder,
         _rename_builder,
         _apply_builder,
