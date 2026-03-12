@@ -7,15 +7,25 @@ from collections.abc import Iterable, Iterator, Sequence
 from typing import Self
 
 import numpy as np
+from numpy import ndarray as _NumpyNDArray
 from numpy.typing import NDArray
 from torch import Size
 
 from aioway import _typing
 
+from ._terms import Term
+
 __all__ = ["ShapeLike", "Shape", "shape"]
 
 LOGGER = logging.getLogger(__name__)
+
+type _PrimitiveNumber = float | int | bool
+type _IntArrayLike = tuple[int, ...] | list[int] | NDArray[np.int_]
+type ShapeCmpType = Shape | Size | _IntArrayLike | _PrimitiveNumber
+
+
 _is_tuple_of_int = _typing.is_tuple_of(int)
+_is_list_of_int = _typing.is_list_of(int)
 
 
 @dcls.dataclass(frozen=True)
@@ -59,7 +69,12 @@ class Shape(Sequence[int]):
         if isinstance(other, Size):
             return other == self.dims
 
-        if isinstance(other, Sequence):
+        # Do the numpy check first as ``isinstance`` is cheaper than the following ones.
+        if isinstance(other, _NumpyNDArray):
+            arr = np.array(self)
+            return arr.ndim == other.ndim and np.all(arr == other).item()
+
+        if _is_tuple_of_int(other) or _is_list_of_int(other):
             return tuple(self.dims) == tuple(other)
 
         return NotImplemented
@@ -134,6 +149,19 @@ class Shape(Sequence[int]):
 
         return total
 
+    @typing.overload
+    @staticmethod
+    def parse(*dims: int) -> Shape: ...
+
+    @typing.overload
+    @staticmethod
+    def parse(dim: ShapeLike, /) -> Shape: ...
+
+    @staticmethod
+    def parse(*dims):
+        "Alias to the ``shape`` function so you won't need to import it."
+        return shape(*dims)
+
 
 type ShapeLike = int | Iterable[int] | Shape
 "Types convertible to ``Shape``s. Note that ``int`` can be converted as well."
@@ -184,3 +212,68 @@ def _shape(dims) -> Shape:
             return Shape(dims_tuple)
 
     raise ValueError
+
+
+@dcls.dataclass(frozen=True)
+class ShapeTerm(Term[Shape]):
+    shape: Shape
+
+    def __array__(self):
+        return np.array(self.shape)
+
+    def __invert__(self) -> Self:
+        return self
+
+    def __neg__(self) -> Self:
+        return self
+
+    def __add__(self, other: Self) -> Self:
+        return self._broadcast_shapes(other)
+
+    def __sub__(self, other: Self) -> Self:
+        return self._broadcast_shapes(other)
+
+    def __mul__(self, other: Self) -> Self:
+        return self._broadcast_shapes(other)
+
+    def __truediv__(self, other: Self) -> Self:
+        return self._broadcast_shapes(other)
+
+    def __floordiv__(self, other: Self) -> Self:
+        return self._broadcast_shapes(other)
+
+    def __mod__(self, other: Self) -> Self:
+        return self._broadcast_shapes(other)
+
+    def __pow__(self, other: Self) -> Self:
+        return self._broadcast_shapes(other)
+
+    @typing.no_type_check
+    def __eq__(self, other: Self) -> Self:
+        return self._broadcast_shapes(other)
+
+    @typing.no_type_check
+    def __ne__(self, other: Self) -> Self:
+        return self._broadcast_shapes(other)
+
+    def __ge__(self, other: Self) -> Self:
+        return self._broadcast_shapes(other)
+
+    def __gt__(self, other: Self) -> Self:
+        return self._broadcast_shapes(other)
+
+    def __le__(self, other: Self) -> Self:
+        return self._broadcast_shapes(other)
+
+    def __lt__(self, other: Self) -> Self:
+        return self._broadcast_shapes(other)
+
+    def _broadcast_shapes(self, other: Self):
+        return type(self)(Shape(np.broadcast_shapes(self.shape, other.shape)))
+
+    def unpack(self) -> Shape:
+        return self.shape
+
+    @classmethod
+    def make(cls, data: Shape) -> Self:
+        return cls(data)

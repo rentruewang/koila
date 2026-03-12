@@ -2,40 +2,24 @@
 
 "The implementation for dtypes, supports different backends."
 
-import abc
+import dataclasses as dcls
 import functools
 import logging
 import re
 import typing
-from abc import ABC
-from typing import ClassVar, Literal, Self
+from typing import Any, Literal, Self
 
 import numpy as np
 import torch
-from numpy import dtype as _NumpyDType
-from torch import dtype as _TorchDType
+from numpy import dtype as NumpyDType
+from torch import dtype as TorchDType
 
-__all__ = [
-    "DType",
-    "dtype_with_kind",
-    "dtype",
-    "ComposedDType",
-    "TorchDType",
-    "NumpyDType",
-    "DTypeLike",
-]
+from ._terms import Term
+
+__all__ = ["DType", "dtype", "DTypeLike"]
 
 LOGGER = logging.getLogger(__name__)
 
-
-type DTypeBackend = Literal["composed", "torch", "numpy"]
-"""
-The backend of a dtype. Must be one of the following:
-
-- composed: The dtype is backed by its family and bits.
-- torch: The dtype has `torch.dtype` underlying dtype.
-- numpy: The dtype has `np.dtype` underlying dtype.
-"""
 
 type DTypeFamily = Literal["int", "float", "bool"]
 """
@@ -43,20 +27,21 @@ The DType strings family type.
 """
 
 
-class DType(ABC):
+class DType:
     r"""
-    ``DType`` is a common base class supporting converting to and from
+    ``DType`` is a class supporting converting to and from
     its string representation in ``aioway``, effectively supporting
     comparison and conversion between different frameworks.
     """
 
-    BACKEND: ClassVar[DTypeBackend]
-    """
-    The backend of a dtype.
-    """
+    def __init__(self, family: DTypeFamily, bits: int):
+        if bits % 8 != 0:
+            raise ValueError(f"Bits should be multiple of 8. Got bits={self._bits}.")
 
-    @abc.abstractmethod
-    def __str__(self) -> str:
+        self._family: DTypeFamily = family
+        self._bits: int = bits
+
+    def __str__(self):
         """
         Get the representation of the type, must be the most specialized.
 
@@ -64,119 +49,6 @@ class DType(ABC):
         but rather "float32" or "float64" etc.
         """
 
-        ...
-
-    @typing.override
-    def __hash__(self) -> int:
-        return hash(str(self))
-
-    @typing.final
-    @typing.override
-    def __repr__(self) -> str:
-        return f"{self.BACKEND}.{str(self)}"
-
-    @typing.override
-    def __eq__(self, other: object) -> bool:
-        match other:
-            case str():
-                return str(self) == other
-
-            # Invoke ``str`` for other if ``DType``
-            case DType():
-                return str(self) == str(other)
-
-            # Convert ``self`` into a ``torch.dtype``,
-            # using ``str`` as a medium to convert into ``torch``.
-            case _TorchDType():
-                return TorchDType.parse(str(self)).dtype == other
-
-            # Don't know how to handle others.
-            case _:
-                return NotImplemented
-
-    @property
-    @abc.abstractmethod
-    def family(self) -> DTypeFamily:
-        """
-        The family of the dtype. For example, "float64"'s family is "float".
-        """
-
-    @property
-    @abc.abstractmethod
-    def bits(self) -> int:
-        """
-        The width of the dtype in bytes. Greater or equal to 1.
-        """
-
-        ...
-
-    @classmethod
-    @abc.abstractmethod
-    def parse(cls, dtype: str, /) -> Self:
-        """
-        Create the ``DType`` instance from the ``info`` object.
-
-        Raises:
-            ValueError: If the dtyep cannot be parsed.
-        """
-
-
-type DTypeLike = str | DType
-"Types convertible to ``DType``."
-
-
-def dtype(dtype: DTypeLike, /) -> DType:
-    "The convenient wrapper to create a ``DType`` from compatible types."
-
-    match dtype:
-        case DType():
-            return dtype
-        case str():
-            return dtype_with_kind(dtype, kind="composed")
-
-    raise TypeError(type(dtype))
-
-
-def dtype_with_kind(dtype: str, /, kind: DTypeBackend) -> DType:
-    """
-    This is the factory method for ``DType``,
-    responsible for getting the subclasses based on ``kind``,
-    and instantiate by parsing the ``dtype`` parameter.
-    """
-
-    LOGGER.debug("Creating datatype: %s with '%s' backend", dtype, kind)
-    result = _get_dtype_class(kind).parse(dtype)
-    LOGGER.debug("Create datatype: %s", result)
-    return result
-
-
-def _get_dtype_class(kind: DTypeBackend) -> type[DType]:
-    match kind:
-        case "composed":
-            return ComposedDType
-        case "torch":
-            return TorchDType
-        case "numpy":
-            return NumpyDType
-
-
-@typing.final
-class ComposedDType(DType):
-    """
-    The universal data format used for comparing against other ``DType``s.
-    """
-
-    BACKEND = "composed"
-
-    def __init__(self, family: DTypeFamily, bits: int):
-        if bits % 8 != 0:
-            raise ValueError(f"Bits should be multiple of 8. Got {self._bits=}.")
-
-        self._family: DTypeFamily = family
-        self._bits: int = bits
-
-    @typing.override
-    def __str__(self):
         match f := self._family:
             case "bool":
                 return "bool"
@@ -185,31 +57,170 @@ class ComposedDType(DType):
             case _:
                 raise NotImplementedError(self._family)
 
+    def __hash__(self) -> int:
+        return hash(str(self))
+
+    def __repr__(self) -> str:
+        return str(self)
+
+    def __eq__(self, other: Any) -> bool:
+        try:
+            parsed = dtype(other)
+        except ValueError:
+            return NotImplemented
+
+        # Parsing sucessful.
+        return self.family == parsed.family and self.bits == parsed.bits
+
     @property
-    @typing.override
     def family(self) -> DTypeFamily:
+        """
+        The family of the dtype. For example, "float64"'s family is "float".
+        """
+
         return self._family
 
     @property
-    @typing.override
     def bits(self) -> int:
+        """
+        The width of the dtype in bytes. Greater or equal to 1.
+        """
         return self._bits
 
+    def numpy(self) -> NumpyDType:
+        "Convert this to a numpy dtype."
+        return np.dtype(str(self))
+
+    def torch(self) -> TorchDType:
+        "Convert this to a torch dtype."
+        return getattr(torch, str(self))
+
     @classmethod
-    @typing.override
-    def parse(cls, dtype: str, /) -> Self:
-        if m := _int_dtype().match(dtype):
-            _, bits = m.groups()
-            return cls(family="int", bits=int(bits) if bits else 64)
+    def boolean(cls) -> Self:
+        return cls(family="bool", bits=8)
 
-        if m := _float_dtype().match(dtype):
-            _, bits = m.groups()
-            return cls(family="float", bits=int(bits) if bits else 32)
+    @staticmethod
+    def parse(item: DTypeLike):
+        "Alias to the ``dtype`` function so you don't need to import it."
+        return dtype(item)
 
-        if m := _bool_dtype().match(dtype):
-            return cls(family="bool", bits=8)
 
-        raise ValueError(dtype)
+type _PrimitiveType = type[int] | type[float] | type[bool]
+type DTypeLike = str | DType | _PrimitiveType | TorchDType | NumpyDType
+"Types that can be converted to ``Dtype`` with the public ``dtype`` function (or ``DType.parse``)."
+
+
+def dtype(dtype: DTypeLike, /) -> DType:
+    """
+    The convenient wrapper to create a ``DType`` from compatible types.
+
+    Raises:
+        ValueError: If we don't know how to handle the dtype.
+    """
+
+    if isinstance(dtype, DType):
+        return dtype
+
+    # Handling the basic types.
+    if isinstance(dtype, type):
+        return _parse_primitive_type(dtype)
+
+    # Convert with regex.
+    if isinstance(dtype, str):
+        return _parse_regex(dtype)
+
+    if isinstance(dtype, TorchDType):
+        return _parse_torch(dtype)
+
+    if isinstance(dtype, NumpyDType):
+        return _parse_numpy(dtype)
+
+    raise ValueError(f"Not sure how to handle {dtype=}.")
+
+
+def _parse_primitive_type(dtype: type):
+    if dtype == int:
+        return DType("int", 64)
+
+    if dtype == float:
+        return DType("float", 32)
+
+    if dtype == bool:
+        return DType("bool", 8)
+
+    raise ValueError(dtype)
+
+
+def _parse_regex(dtype: str, /) -> DType:
+    """
+    Create the ``DType`` instance from the ``info`` object.
+
+    Raises:
+        ValueError: If the dtyep cannot be parsed.
+    """
+
+    if m := _int_dtype().match(dtype):
+        _, bits = m.groups()
+        return DType(family="int", bits=int(bits) if bits else 64)
+
+    if m := _float_dtype().match(dtype):
+        _, bits = m.groups()
+        return DType(family="float", bits=int(bits) if bits else 32)
+
+    if m := _bool_dtype().match(dtype):
+        return DType(family="bool", bits=8)
+
+    raise ValueError(dtype)
+
+
+def _parse_torch(dtype: TorchDType, /) -> DType:
+    "Create a ``Dtype`` from a ``torch.dtype``."
+    if dtype == torch.bool:
+        return DType.boolean()
+
+    if dtype.is_complex:
+        raise ValueError("We do not handle complex types yet!")
+
+    # Itemsize correspond to bytes.
+    bits = dtype.itemsize * 8
+
+    # Both complex and bool are handled above.
+    family: DTypeFamily = "float" if dtype.is_floating_point else "int"
+
+    return DType(family=family, bits=bits)
+
+
+def _parse_numpy(dtype: NumpyDType, /) -> DType:
+    family = _parse_numpy_family(dtype)
+    bits = _parse_numpy_bits(dtype, family)
+
+    return DType(family=family, bits=bits)
+
+
+def _parse_numpy_family(dtype: NumpyDType, /) -> DTypeFamily:
+    "Create a ``Dtype`` from a ``numpy.dtype``."
+    if np.isdtype(dtype, "integral"):
+        return "int"
+
+    if np.isdtype(dtype, "real floating"):
+        return "float"
+
+    if np.isdtype(dtype, "bool"):
+        return "bool"
+
+    raise ValueError(f"Cannot handle numpy {dtype=}.")
+
+
+def _parse_numpy_bits(dtype: NumpyDType, family: DTypeFamily, /):
+    match family:
+        case "bool":
+            return 8
+        case "int":
+            return np.iinfo(dtype).bits
+        case "float":
+            return np.finfo(dtype).bits
+
+    raise ValueError(f"Unhandled {family=}")
 
 
 @functools.cache
@@ -219,7 +230,7 @@ def _float_dtype():
 
 @functools.cache
 def _int_dtype():
-    return re.compile(r"^(int)(16|32|64|128)?$", re.IGNORECASE)
+    return re.compile(r"^(int)(8|16|32|64|128)?$", re.IGNORECASE)
 
 
 @functools.cache
@@ -227,130 +238,77 @@ def _bool_dtype():
     return re.compile(r"^(bool)$", re.IGNORECASE)
 
 
-@typing.final
-class TorchDType(DType):
-    BACKEND = "torch"
+@dcls.dataclass(frozen=True)
+class DTypeTerm(Term[DType]):
+    dtype: DType
 
-    def __init__(self, dtype: _TorchDType) -> None:
-        self._dtype = dtype
+    def __invert__(self):
+        return self
 
-        try:
-            self._check_torch_dtype()
-        except (TypeError, ValueError) as e:
-            raise ValueError(dtype) from e
+    def __neg__(self):
+        return self
 
-    def __str__(self):
-        return str(self._dtype).removeprefix("torch.")
+    def __add__(self, other: Self | DTypeLike):
+        return self._broadcast(self.dtype, other)
 
-    def _check_torch_dtype(self):
-        if not isinstance(self._dtype, _TorchDType):
-            raise TypeError(f"Must accept a {_TorchDType}. Got {type(self._dtype)}.")
+    def __sub__(self, other: Self | DTypeLike):
+        return self._broadcast(self.dtype, other)
 
-        # Try getting the family.
-        if not str(self._dtype).startswith(f"torch.{self._family}"):
-            raise ValueError(self._dtype)
+    def __mul__(self, other: Self | DTypeLike):
+        return self._broadcast(self.dtype, other)
 
-    @functools.cached_property
-    def _family(self) -> DTypeFamily:
-        if self._dtype == torch.bool:
-            return "bool"
+    def __truediv__(self, other: Self | DTypeLike):
+        return self._broadcast(self.dtype, other)
 
-        if self._dtype in [torch.int8, torch.int16, torch.int32, torch.int64]:
-            return "int"
+    def __floordiv__(self, other: Self | DTypeLike):
+        return self._broadcast(self.dtype, other)
 
-        if self._dtype in [torch.float16, torch.float32, torch.float64]:
-            return "float"
+    def __mod__(self, other: Self | DTypeLike):
+        return self._broadcast(self.dtype, other)
 
-        raise ValueError(self._dtype)
+    def __pow__(self, other: Self | DTypeLike):
+        return self._broadcast(self.dtype, other)
 
-    @property
-    @typing.override
-    def family(self) -> DTypeFamily:
-        return self._family
+    @typing.no_type_check
+    def __eq__(self, other: Self | DTypeLike):
+        return self._broadcast(self.dtype, other)
 
-    @property
-    @typing.override
-    def bits(self) -> int:
-        return self._dtype.itemsize * 8
+    @typing.no_type_check
+    def __ne__(self, other: Self | DTypeLike):
+        return self._broadcast(self.dtype, other)
 
-    @property
-    def dtype(self):
-        return self._dtype
+    def __ge__(self, other: Self | DTypeLike):
+        return self._broadcast(self.dtype, other)
 
-    @classmethod
-    @typing.override
-    def parse(cls, dtype: str, /) -> Self:
-        "Create the ``TorchDType`` instance from ``DTypeInfo``."
-        try:
-            return cls(getattr(torch, dtype))
-        except AttributeError as ae:
-            raise ValueError(dtype) from ae
+    def __gt__(self, other: Self | DTypeLike):
+        return self._broadcast(self.dtype, other)
 
+    def __le__(self, other: Self | DTypeLike):
+        return self._broadcast(self.dtype, other)
 
-@typing.final
-class NumpyDType(DType):
-    """
-    A ``DType`` backed by ``np.dtype``.
-    """
+    def __lt__(self, other: Self | DTypeLike):
+        return self._broadcast(self.dtype, other)
 
-    BACKEND = "numpy"
-
-    def __init__(self, dtype: _NumpyDType) -> None:
-        self._dtype = dtype
-
-        try:
-            self._check_numpy_dtype()
-        except Exception as e:
-            raise ValueError(dtype) from e
-
-    @typing.override
-    def __str__(self) -> str:
-        return str(self._dtype)
-
-    def _check_numpy_dtype(self):
-        if not isinstance(self._dtype, _NumpyDType):
-            raise TypeError(f"DType: {self._dtype} is not numpy.")
-
-        if self._bits % 8 != 0:
-            raise AssertionError("Bit should be a multiple of 8.")
-
-    @property
-    @typing.override
-    def family(self) -> DTypeFamily:
-        if np.isdtype(self._dtype, "integral"):
-            return "int"
-
-        if np.isdtype(self._dtype, "real floating"):
-            return "float"
-
-        if np.isdtype(self._dtype, "bool"):
-            return "bool"
-
-        raise ValueError(f"Cannot handle numpy dtype {self._dtype}")
-
-    @property
-    @typing.override
-    def bits(self) -> int:
-        return self._bits
-
-    @functools.cached_property
-    def _bits(self) -> int:
-        match self.family:
-            case "bool":
-                return 8
-            case "int":
-                return np.iinfo(self._dtype).bits
-            case "float":
-                return np.finfo(self._dtype).bits
+    def unpack(self) -> DType:
+        return self.dtype
 
     @classmethod
-    @typing.override
-    def parse(cls, dtype: str, /) -> Self:
-        "Create the ``TorchDType`` instance from ``DTypeInfo``."
-
+    def _broadcast(cls, left: DType, right: Self | DTypeLike) -> Self:
         try:
-            dt = np.dtype(dtype)
-        except Exception as e:
-            raise ValueError(dtype) from e
+            rhs = DType.parse(_as_dtype(right))
+        except ValueError:
+            return NotImplemented
 
-        return cls(dt)
+        np_lhs = left.numpy()
+        np_rhs = rhs.numpy()
+
+        promoted = np.result_type(np_lhs, np_rhs)
+        return cls(DType.parse(promoted))
+
+    @classmethod
+    def make(cls, data: DType) -> Self:
+        return cls(data)
+
+
+def _as_dtype(item: DTypeTerm | DTypeLike, /) -> DTypeLike:
+    return item.dtype if isinstance(item, DTypeTerm) else item

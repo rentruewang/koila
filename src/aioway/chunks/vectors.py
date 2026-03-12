@@ -11,7 +11,7 @@ from torch import Tensor
 
 from aioway import attrs
 from aioway._exprs import OpSign
-from aioway.attrs import Attr, TorchDType, _validation
+from aioway.attrs import Attr, _validation
 
 __all__ = ["Vector"]
 
@@ -72,7 +72,7 @@ class Vector:
 
     def _cmp_op(self, rhs, op: Callable):
         data = op(self.data, rhs)
-        attr = attr = attrs.attr(
+        attr = attr = Attr.parse(
             device=self.attr.device,
             shape=self.attr.shape,
             dtype="bool",
@@ -87,7 +87,7 @@ class Vector:
 
     def cpu(self):
         data = self.data.cpu()
-        attr = attrs.attr(
+        attr = Attr.parse(
             device="cpu",
             shape=self.attr.shape,
             dtype=self.attr.dtype,
@@ -113,14 +113,14 @@ class VectorBinary:
                 rhs_attr = rhs.attr
             case Tensor():
                 rhs_data = rhs
-                rhs_attr = attrs.attr(
+                rhs_attr = Attr.parse(
                     device=rhs.device,
-                    dtype=TorchDType(rhs.dtype),
+                    dtype=attrs.dtype(rhs.dtype),
                     shape=rhs.shape,
                 )
             case _:
                 rhs_data = rhs
-                rhs_attr = attrs.attr(
+                rhs_attr = Attr.parse(
                     device="cpu", dtype=rhs.__class__.__name__, shape=[]
                 )
 
