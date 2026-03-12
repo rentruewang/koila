@@ -8,6 +8,8 @@ import operator
 import typing
 from typing import Protocol, Self
 
+from torch import Tensor
+
 from ._terms import Term
 from .devices import Device, DeviceLike, DeviceOperand
 from .dtypes import DType, DTypeLike, DTypeTerm
@@ -51,13 +53,21 @@ class Attr:
             raise TypeError(type(self.shape))
 
     @property
-    def operand(self):
+    def term(self):
         return AttrTerm(self)
 
     @staticmethod
     def parse(device: DeviceLike, dtype: DTypeLike, shape: ShapeLike) -> Attr:
         "Alias for ``attr`` s.t. you don't need to import it."
         return attr(device=device, dtype=dtype, shape=shape)
+
+    @staticmethod
+    def from_tensor(tensor: Tensor, /) -> Attr:
+        return attr(
+            device=tensor.device,
+            shape=tensor.shape,
+            dtype=tensor.dtype,
+        )
 
 
 def attr(device: DeviceLike, dtype: DTypeLike, shape: ShapeLike) -> Attr:

@@ -1,12 +1,18 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-"Operand allows attributes to support the same operations."
+"Terms allows attributes to support the same operations."
 
 import typing
 from typing import Protocol, Self
 
+__all__ = ["Term"]
+
 
 class Term[T](Protocol):
+    """
+    The terms API is equivalent to a registry; defining the operations that we must support.
+    """
+
     def __invert__(self) -> Self: ...
 
     def __neg__(self) -> Self: ...
