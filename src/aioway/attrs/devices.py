@@ -1,9 +1,13 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
+import dataclasses as dcls
 import logging
 import typing
+from typing import Self
 
 from torch import device as TorchDevice
+
+from ._terms import Term
 
 __all__ = ["Device", "device", "DeviceLike"]
 
@@ -43,8 +47,8 @@ class Device:
                 # Instead of converting ``other`` with ``torch.device``,
                 # which may fail, compare the string directly.
                 return str(self._device) == other
-            case _:
-                return NotImplemented
+
+        return NotImplemented
 
     @typing.override
     def __repr__(self) -> str:
@@ -57,6 +61,11 @@ class Device:
     @property
     def device(self):
         return self._device
+
+    @staticmethod
+    def parse(item: DeviceLike) -> Device:
+        "Alias to the ``device`` function so you don't need to import."
+        return device(item)
 
 
 type DeviceLike = str | TorchDevice | Device
@@ -73,3 +82,79 @@ def device(device: DeviceLike, /) -> Device:
             return Device(device)
         case _:
             raise TypeError(device)
+
+
+@dcls.dataclass(frozen=True)
+class DeviceOperand(Term[Device]):
+    device: Device
+
+    def __invert__(self) -> Self:
+        return self
+
+    def __neg__(self) -> Self:
+        return self
+
+    def __add__(self, other: Self | DeviceLike) -> Self:
+        return self._matching_device(self, other)
+
+    def __sub__(self, other: Self | DeviceLike) -> Self:
+        return self._matching_device(self, other)
+
+    def __mul__(self, other: Self | DeviceLike) -> Self:
+        return self._matching_device(self, other)
+
+    def __truediv__(self, other: Self | DeviceLike) -> Self:
+        return self._matching_device(self, other)
+
+    def __floordiv__(self, other: Self | DeviceLike) -> Self:
+        return self._matching_device(self, other)
+
+    def __mod__(self, other: Self | DeviceLike) -> Self:
+        return self._matching_device(self, other)
+
+    def __pow__(self, other: Self | DeviceLike) -> Self:
+        return self._matching_device(self, other)
+
+    @typing.no_type_check
+    def __eq__(self, other: Self | DeviceLike) -> Self:
+        return self._matching_device(self, other)
+
+    @typing.no_type_check
+    def __ne__(self, other: Self | DeviceLike) -> Self:
+        return self._matching_device(self, other)
+
+    def __ge__(self, other: Self | DeviceLike) -> Self:
+        return self._matching_device(self, other)
+
+    def __gt__(self, other: Self | DeviceLike) -> Self:
+        return self._matching_device(self, other)
+
+    def __le__(self, other: Self | DeviceLike) -> Self:
+        return self._matching_device(self, other)
+
+    def __lt__(self, other: Self | DeviceLike) -> Self:
+        return self._matching_device(self, other)
+
+    def unpack(self) -> Device:
+        return self.device
+
+    @classmethod
+    def make(cls, data: Device) -> Self:
+        return cls(data)
+
+    @classmethod
+    def parse(cls, item: Self | DeviceLike) -> Device:
+        if isinstance(item, DeviceOperand):
+            return item.device
+        else:
+            return Device.parse(item)
+
+    @classmethod
+    def _matching_device(cls, l: Self | DeviceLike, r: Self | DeviceLike) -> Self:
+        left = cls.parse(l)
+        right = cls.parse(r)
+
+        if left != right:
+            return NotImplemented
+
+        return cls(left)

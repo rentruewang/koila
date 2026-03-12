@@ -4,11 +4,14 @@
 
 import dataclasses as dcls
 import logging
+import operator
+import typing
+from typing import Protocol, Self
 
-from . import devices, dtypes, shapes
-from .devices import Device, DeviceLike
-from .dtypes import DType, DTypeLike
-from .shapes import Shape, ShapeLike
+from ._terms import Term
+from .devices import Device, DeviceLike, DeviceOperand
+from .dtypes import DType, DTypeLike, DTypeTerm
+from .shapes import Shape, ShapeLike, ShapeTerm
 
 __all__ = ["Attr", "attr"]
 
@@ -47,6 +50,15 @@ class Attr:
         if not isinstance(self.shape, Shape):
             raise TypeError(type(self.shape))
 
+    @property
+    def operand(self):
+        return AttrTerm(self)
+
+    @staticmethod
+    def parse(device: DeviceLike, dtype: DTypeLike, shape: ShapeLike) -> Attr:
+        "Alias for ``attr`` s.t. you don't need to import it."
+        return attr(device=device, dtype=dtype, shape=shape)
+
 
 def attr(device: DeviceLike, dtype: DTypeLike, shape: ShapeLike) -> Attr:
     """
@@ -62,7 +74,110 @@ def attr(device: DeviceLike, dtype: DTypeLike, shape: ShapeLike) -> Attr:
     """
 
     return Attr(
-        device=devices.device(device),
-        dtype=dtypes.dtype(dtype),
-        shape=shapes.shape(shape),
+        device=Device.parse(device),
+        dtype=DType.parse(dtype),
+        shape=Shape.parse(shape),
     )
+
+
+class UFunc1(Protocol):
+    def __call__[T](self, item: T, /) -> T: ...
+
+
+class UFunc2(Protocol):
+    def __call__[T](self, left: T, right: T, /) -> T: ...
+
+
+@dcls.dataclass(frozen=True)
+class AttrTerm(Term[Attr]):
+    attr: Attr
+
+    @typing.no_type_check
+    def __invert__(self) -> Self:
+        return self._apply_op1(operator.invert)
+
+    @typing.no_type_check
+    def __neg__(self) -> Self:
+        return self._apply_op1(operator.neg)
+
+    def __add__(self, other: Self) -> Self:
+        return self._apply_op2(other, operator.add)
+
+    def __sub__(self, other: Self) -> Self:
+        return self._apply_op2(other, operator.sub)
+
+    def __mul__(self, other: Self) -> Self:
+        return self._apply_op2(other, operator.mul)
+
+    def __truediv__(self, other: Self) -> Self:
+        return self._apply_op2(other, operator.truediv)
+
+    def __floordiv__(self, other: Self) -> Self:
+        return self._apply_op2(other, operator.floordiv)
+
+    def __mod__(self, other: Self) -> Self:
+        return self._apply_op2(other, operator.mod)
+
+    def __pow__(self, other: Self) -> Self:
+        return self._apply_op2(other, operator.pow)
+
+    @typing.no_type_check
+    def __eq__(self, other: Self) -> Self:
+        return self._apply_op2(other, operator.eq)
+
+    @typing.no_type_check
+    def __ne__(self, other: Self) -> Self:
+        return self._apply_op2(other, operator.ne)
+
+    @typing.no_type_check
+    def __ge__(self, other: Self) -> Self:
+        return self._apply_op2(other, operator.ge)
+
+    @typing.no_type_check
+    def __gt__(self, other: Self) -> Self:
+        return self._apply_op2(other, operator.gt)
+
+    @typing.no_type_check
+    def __le__(self, other: Self) -> Self:
+        return self._apply_op2(other, operator.le)
+
+    @typing.no_type_check
+    def __lt__(self, other: Self) -> Self:
+        return self._apply_op2(other, operator.lt)
+
+    def _apply_op1(self, op: UFunc1) -> Self:
+        return self.make(
+            Attr(
+                device=op(self.device_op).unpack(),
+                shape=op(self.shape_op).unpack(),
+                dtype=op(self.dtype_op).unpack(),
+            )
+        )
+
+    def _apply_op2(self, other: Self, op: UFunc2):
+        return self.make(
+            Attr(
+                device=op(self.device_op, other.device_op).unpack(),
+                shape=op(self.shape_op, other.shape_op).unpack(),
+                dtype=op(self.dtype_op, other.dtype_op).unpack(),
+            )
+        )
+
+    @property
+    def device_op(self):
+        return DeviceOperand.make(self.attr.device)
+
+    @property
+    def shape_op(self):
+        return ShapeTerm.make(self.attr.shape)
+
+    @property
+    def dtype_op(self):
+        return DTypeTerm.make(self.attr.dtype)
+
+    def unpack(self) -> Attr:
+        return self.attr
+
+    @classmethod
+    def make(cls, data: Attr) -> Self:
+        return cls(data)

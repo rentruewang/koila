@@ -1,7 +1,7 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 
-from . import devices, dtypes, shapes
+from . import devices, shapes
 from .devices import Device, DeviceLike
 from .dtypes import DType, DTypeLike
 from .sets import DTypeSet
@@ -13,7 +13,7 @@ _CMP_UFUNC_OPS = "eq", "ne", "gt", "ge", "lt", "le"
 
 
 def same_device(device: DeviceLike) -> Device:
-    return devices.device(device)
+    return Device.parse(device)
 
 
 def matching_device(l: DeviceLike, r: DeviceLike) -> Device:
@@ -26,28 +26,15 @@ def matching_device(l: DeviceLike, r: DeviceLike) -> Device:
 
 
 def same_dtype(dtype: DTypeLike) -> DType:
-    return dtypes.dtype(dtype)
-
-
-def binary_broadcast(l: DTypeLike, r: DTypeLike) -> DType:
-    left, right = map(dtypes.dtype, [l, r])
-
-    larger = max(left.bits, right.bits)
-    match left.family, right.family:
-        case ("float", _) | (_, "float"):
-            return dtypes.dtype(f"float{larger}")
-        case ("int", _) | (_, "int"):
-            return dtypes.dtype(f"int{larger}")
-        case _:
-            return dtypes.dtype("bool")
+    return DType.parse(dtype)
 
 
 def boolean_dtypes(l: DTypeLike, r: DTypeLike) -> DType:
-    return dtypes.dtype("bool")
+    return DType.parse("bool")
 
 
 def same_shape(shape: ShapeLike) -> Shape:
-    return shapes.shape(shape)
+    return Shape.parse(shape)
 
 
 def matching_shape(l: ShapeLike, r: ShapeLike):
@@ -73,4 +60,4 @@ def boolean(l: DTypeSet, r: DTypeSet) -> DTypeSet:
     if l.keys() != r.keys():
         raise ValueError(f"{list(l.keys())=} != {list(r.keys())=}")
 
-    return DTypeSet.from_dict({k: dtypes.dtype("bool") for k in l.keys()})
+    return DTypeSet.from_dict({k: DType.parse("bool") for k in l.keys()})

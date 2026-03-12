@@ -118,7 +118,7 @@ class TensorDictExpr(Expr[TensorDict], Table[TensorExpr], ABC):
     @abc.abstractmethod
     def keys(self) -> KeysView[str]: ...
 
-    def select(self, *keys: str) -> "TensorDictExpr":
+    def select(self, *keys: str) -> TensorDictExpr:
         from .data import SelectTensorDictExpr
 
         return SelectTensorDictExpr(self, keys)

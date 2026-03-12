@@ -1,15 +1,25 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import pytest
+import torch
 
 from aioway import attrs
 
 
-@pytest.fixture
-def cpu():
-    return attrs.device("cpu")
+def _cpus():
+    yield "cpu"
+    yield torch.device("cpu")
+
+
+@pytest.fixture(params=_cpus())
+def cpu(request):
+    return attrs.device(request.param)
 
 
 def test_eq(cpu):
     assert cpu == "cpu"
     assert cpu == attrs.device("cpu")
+
+
+def test_no_fail(cpu):
+    assert cpu != object()
