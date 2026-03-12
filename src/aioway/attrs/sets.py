@@ -10,6 +10,7 @@ from typing import NamedTuple, Self
 
 import numpy as np
 from numpy import ndarray as NpArr
+from tensordict import TensorDict
 from torch import Tensor
 
 from aioway import _typing
@@ -243,6 +244,10 @@ class AttrSet(_AttrSetBase[Attr]):
             devices=devices_list,
             shapes=shapes_list,
         )
+
+    @classmethod
+    def from_tensordict(cls, data: TensorDict, /) -> Self:
+        return cls.from_dict({key: Attr.from_tensor(val) for key, val in data.items()})
 
 
 @dcls.dataclass(frozen=True)

@@ -64,6 +64,16 @@ def test_validation_ok(schema, valid_data):
     _validation.validate_schema(schema, valid_data)
 
 
+def test_construction_of_attrset(valid_data):
+    parsed = AttrSet.from_tensordict(valid_data)
+    assert parsed == attrs.attr_set(
+        {
+            "a": attrs.attr(device="cpu", shape=[11, 2, 3], dtype="int32"),
+            "b": attrs.attr(device="cpu", shape=[11, 6], dtype="float32"),
+        }
+    )
+
+
 def test_validation_fail(schema, invalid_data):
     with pytest.raises(RuntimeError):
         _validation.validate_schema(schema, invalid_data)
