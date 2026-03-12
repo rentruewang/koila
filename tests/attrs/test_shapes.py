@@ -1,14 +1,14 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
+import numpy as np
 import pytest
 
-from aioway import attrs
 from aioway.attrs import Shape
 
 
 def _shapes():
-    yield attrs.shape(3, 5, 7)
-    yield attrs.shape([3, 5, 7])
+    yield Shape.parse(3, 5, 7)
+    yield Shape.parse([3, 5, 7])
 
 
 @pytest.fixture(params=_shapes())
@@ -28,3 +28,14 @@ def test_shape_size(shape):
 
 def test_shape_ndim(shape):
     assert shape.ndim == 3
+
+
+def test_shape_no_fail(shape):
+    "Ensure that shapes do not crash when the other type is not recognized."
+
+    assert shape != object()
+
+
+def test_shape_ndarray(shape):
+    assert shape == np.array([3, 5, 7])
+    assert shape != np.array([[3, 5, 7]])

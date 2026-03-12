@@ -15,7 +15,6 @@ from torch import Tensor
 from aioway import _typing
 from aioway._tables import Table
 
-from . import attrs, devices, dtypes, shapes
 from .attrs import Attr
 from .devices import Device, DeviceLike
 from .dtypes import DType, DTypeLike
@@ -118,7 +117,7 @@ class DTypeSet(_AttrSetBase[DType]):
     @classmethod
     @typing.override
     def from_dict(cls, attrs: Mapping[str, DTypeLike], /) -> Self:
-        converted = {key: dtypes.dtype(dt) for key, dt in attrs.items()}
+        converted = {key: DType.parse(dt) for key, dt in attrs.items()}
         return super().from_dict(converted)
 
 
@@ -126,7 +125,7 @@ class DeviceSet(_AttrSetBase[Device]):
     @classmethod
     @typing.override
     def from_dict(cls, attrs: Mapping[str, DeviceLike]) -> Self:
-        converted = {key: devices.device(dev) for key, dev in attrs.items()}
+        converted = {key: Device.parse(dev) for key, dev in attrs.items()}
         return super().from_dict(converted)
 
 
@@ -134,7 +133,7 @@ class ShapeSet(_AttrSetBase[Shape]):
     @classmethod
     @typing.override
     def from_dict(cls, attrs: Mapping[str, ShapeLike]) -> Self:
-        converted = {key: shapes.shape(dev) for key, dev in attrs.items()}
+        converted = {key: Shape.parse(dev) for key, dev in attrs.items()}
         return super().from_dict(converted)
 
 
@@ -211,7 +210,7 @@ class AttrSet(_AttrSetBase[Attr]):
             )
 
         mapping = {
-            name: attrs.attr(device=device, dtype=dtype, shape=shape)
+            name: Attr.parse(device=device, dtype=dtype, shape=shape)
             for name, device, dtype, shape in zip(names, devices, dtypes, shapes)
         }
 
