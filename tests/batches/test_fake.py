@@ -53,18 +53,3 @@ def test_chunk_getitem_size(device, batch):
 def test_chunk_keys(device, batch):
     block = fake.chunk_ok(device=device, size=batch)
     assert set(block.keys()) == {"f1d", "f2d", "i1d", "i2d"}
-
-
-def test_chunk_filter(device, batch):
-    block = fake.chunk_ok(device=device, size=batch)
-
-    f1d = block["f1d"]
-
-    positive = (f1d > 0).numpy()
-
-    golden_index = np.arange(len(block))[positive]
-    golden = block[golden_index]
-
-    filtered = block.filter("f1d > 0")
-
-    assert golden == filtered

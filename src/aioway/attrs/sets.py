@@ -6,13 +6,14 @@ import dataclasses as dcls
 import functools
 import typing
 from collections.abc import Iterator, KeysView, Mapping, Sequence
-from typing import NamedTuple, Self, TypeIs
+from typing import NamedTuple, Self
 
 import numpy as np
 from numpy import ndarray as NpArr
 from torch import Tensor
 
-from aioway.tables import Table
+from aioway import _typing
+from aioway._tables import Table
 
 from . import attrs, devices, dtypes, shapes
 from .attrs import Attr
@@ -67,15 +68,6 @@ class _AttrSetBase[T](Table[T], Mapping[str, T]):
         return len(self.attrs)
 
     @typing.override
-    def __getitem__(self, key: str) -> T:
-        # Using the ``find`` function from ``AttrSetKeysView``, to be DRY.
-        if (idx := self.keys().find(key)) is None:
-            raise KeyError(key)
-
-        assert 0 <= idx < len(self)
-        return self.attrs[idx].attr
-
-    @typing.override
     def __iter__(self) -> Iterator[str]:
         return (attr.name for attr in self.attrs)
 
@@ -85,7 +77,12 @@ class _AttrSetBase[T](Table[T], Mapping[str, T]):
 
     @typing.override
     def column(self, key: str, /) -> T:
-        return self[key]
+        # Using the ``find`` function from ``AttrSetKeysView``, to be DRY.
+        if (idx := self.keys().find(key)) is None:
+            raise KeyError(key)
+
+        assert 0 <= idx < len(self)
+        return self.attrs[idx].attr
 
     @typing.override
     def select(self, *keys: str) -> Self:
@@ -147,11 +144,15 @@ class AttrSet(_AttrSetBase[Attr]):
     def __getitem__(self, idx: str) -> Attr: ...
 
     @typing.overload
-    def __getitem__(self, idx: int | slice | list[int] | NpArr | Tensor) -> Self: ...
+    def __getitem__(
+        self, idx: int | slice | list[int] | list[str] | NpArr | Tensor
+    ) -> Self: ...
 
     def __getitem__(self, idx):
 
-        if isinstance(idx, str):
+        if isinstance(idx, str) or (
+            isinstance(idx, list) and all(isinstance(i, str) for i in idx)
+        ):
             return super().__getitem__(idx)
 
         names = self.names
@@ -300,16 +301,8 @@ def attr_set(schema: AttrSetLike, /) -> AttrSet:
     if isinstance(schema, AttrSet):
         return schema
 
+    _is_dict_of_attr = _typing.is_dict_of_str_to(Attr)
     if _is_dict_of_attr(schema):
         return AttrSet.from_dict(schema)
 
     raise TypeError(type(schema))
-
-
-def _is_dict_of_attr(obj) -> TypeIs[dict[str, Attr]]:
-    return (
-        True
-        and isinstance(obj, dict)
-        and all(isinstance(key, str) for key in obj.keys())
-        and all(isinstance(val, Attr) for val in obj.values())
-    )

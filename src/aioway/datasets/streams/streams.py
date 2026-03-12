@@ -12,11 +12,11 @@ from typing import ClassVar, Self
 
 from aioway._exprs import Expr, OpSign
 from aioway.attrs import AttrSet
-from aioway.batches import Chunk
+from aioway.chunks import Chunk
 
 from ..datasets import Dataset, DatasetViewTypes
 
-__all__ = ["Stream", "StreamState", "Stream0", "Stream1", "Stream2"]
+__all__ = ["Stream", "StreamState", "Stream", "Stream", "Stream"]
 
 
 @dcls.dataclass
@@ -164,15 +164,3 @@ class Stream(Expr[Chunk], Iterator[Chunk], Dataset, ABC):
 
     def _return_type(self):
         return Chunk
-
-
-class Stream0(Stream, ABC):
-    _SIGNATURE = OpSign(Stream)
-
-
-class Stream1(Stream, ABC):
-    _SIGNATURE = OpSign.ufunc1(Stream)
-
-
-class Stream2(Stream, ABC):
-    _SIGNATURE = OpSign.ufunc2(Stream)

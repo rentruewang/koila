@@ -8,16 +8,16 @@ import typing
 import torch
 
 from aioway.attrs import AttrSet
-from aioway.batches import Chunk
+from aioway.chunks import Chunk
 
 from .sources import CacheStream
-from .streams import Stream, Stream2, StreamState
+from .streams import Stream, StreamState
 
 __all__ = ["ZipStream", "NestedLoopJoinStream"]
 
 
 @dcls.dataclass(frozen=True)
-class ZipStream(Stream2):
+class ZipStream(Stream):
     """
     ``ZipStream`` is similar to what ``zip`` does.
     """
@@ -64,7 +64,7 @@ class NestedState(StreamState):
 
 
 @dcls.dataclass(frozen=True)
-class NestedLoopJoinStream(Stream2):
+class NestedLoopJoinStream(Stream):
     """
     This is a stream that combines 2 input streams in a nested-loop matter,
     as in ``[[x, y] for x in left for y in right if x.key == y.key]``.

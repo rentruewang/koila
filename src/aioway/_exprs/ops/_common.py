@@ -11,7 +11,7 @@ from lark import Lark, Transformer
 LOGGER = logging.getLogger(__name__)
 
 
-@typing.dataclass_transform()
+@typing.dataclass_transform(frozen_default=True)
 def lark_transformer_dcls(cls):
     "Make a class dataclass, and wrap in ``v_args``."
     cls = dcls.dataclass(frozen=True)(cls)

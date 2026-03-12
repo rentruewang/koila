@@ -9,26 +9,24 @@ from abc import ABC
 from collections.abc import Callable
 
 import torch
-from sympy import Expr
 from torch import Tensor
 
 from aioway.attrs import AttrSet
-from aioway.batches import Chunk
+from aioway.chunks import Chunk
 
-from .streams import Stream, Stream1
+from .streams import Stream
 
 __all__ = [
     "MapStream",
     "ApplyStream",
     "FuncFilterStream",
-    "ExprFilterStream",
     "ProjectStream",
     "RenameStream",
 ]
 
 
 @dcls.dataclass(frozen=True)
-class MapStream(Stream1, ABC):
+class MapStream(Stream, ABC):
     """
     The shared base class for all the ``map`` like ``Stream``s,
     which share the trait of::
@@ -150,32 +148,6 @@ class FuncFilterStream(MapStream):
             raise ValueError(f"Should return a boolean `Tensor`. Got {pred.dtype}.")
 
         return batch[pred]
-
-    @property
-    @typing.override
-    def attrs(self) -> AttrSet:
-        return self.source.attrs
-
-
-@dcls.dataclass(frozen=True)
-class ExprFilterStream(MapStream):
-    """
-    A ``Stream`` that filteres on its inputs, based on a preducate expression.
-
-    The expression represents the columns in the ``TensorDict``.
-
-    For example, an expression ``a == 0`` can be thought of as ``batch["a"] == 0``,
-    which returns a boolean ``Tensor``, and can be used to index the ``TensorDict``.
-    """
-
-    predicate: str | Expr
-    """
-    A string of a ``sympy.Expr``.
-    """
-
-    @typing.override
-    def _apply(self, batch: Chunk) -> Chunk:
-        return batch.filter(self.predicate)
 
     @property
     @typing.override

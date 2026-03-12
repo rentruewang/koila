@@ -8,7 +8,7 @@ from torch import cuda
 
 from aioway import attrs
 from aioway.attrs import AttrSet
-from aioway.batches import Chunk
+from aioway.chunks import Chunk
 
 
 def cpu_and_maybe_cuda() -> list[str]:

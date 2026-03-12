@@ -14,11 +14,12 @@ from typing import Self
 
 from torch.utils.data import DataLoader, Sampler
 
+from aioway import _typing
 from aioway.attrs import AttrSet
-from aioway.batches import Chunk
+from aioway.chunks import Chunk
 
 from ..frames import Frame
-from .streams import Stream, Stream0
+from .streams import Stream
 
 __all__ = [
     "BoundedStream",
@@ -32,7 +33,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 @dcls.dataclass(frozen=True)
-class BoundedStream(Stream0, ABC):
+class BoundedStream(Stream, ABC):
     """
     A stream with ``__len__`` and ``__getitem__``.
     """
@@ -43,8 +44,17 @@ class BoundedStream(Stream0, ABC):
 
         ...
 
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return self._getitem_int(key)
+
+        if isinstance(key, str) or _typing.is_list_of(str)(key):
+            return Stream.__getitem__(self, key)
+
+        raise TypeError(f"Do not know how to handle {type(key)=}.")
+
     @abc.abstractmethod
-    def __getitem__(self, idx: int) -> Chunk:
+    def _getitem_int(self, idx: int) -> Chunk:
         """
         Get individual items. Does not support slice input.
 
@@ -77,7 +87,7 @@ class CacheStream(BoundedStream):
         return len(self.saved)
 
     @typing.override
-    def __getitem__(self, idx: int) -> Chunk:
+    def _getitem_int(self, idx):
         return self.saved[idx]
 
     @typing.override
@@ -133,7 +143,7 @@ class ListStream(BoundedStream):
         return self.size
 
     @typing.override
-    def __getitem__(self, idx: int) -> Chunk:
+    def _getitem_int(self, idx: int) -> Chunk:
         return self.sequence[idx]
 
     @property
@@ -188,7 +198,7 @@ class FrameStreamLoader:
 
 
 @dcls.dataclass(frozen=True)
-class FrameStream(Stream0):
+class FrameStream(Stream):
     """
     A ``Stream`` backed by a ``Frame``.
     """
