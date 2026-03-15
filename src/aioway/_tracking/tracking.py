@@ -7,13 +7,13 @@ from collections.abc import Callable, Mapping, Sequence
 from types import MappingProxyType
 from typing import Any
 
-__all__ = ["track"]
+__all__ = ["track", "track_function"]
 
 LOGGER = logging.getLogger(__name__)
 
 
 @dcls.dataclass
-class FunctionTracker:
+class FunctionLogger:
     function: str
 
     logger: Callable
@@ -37,7 +37,24 @@ class FunctionTracker:
 
 @ctxl.contextmanager
 def track(name: str, logger: Callable[..., None]):
-    yield FunctionTracker(name, logger=logger)
+    yield FunctionLogger(name, logger=logger)
+
+
+@ctxl.contextmanager
+def track_function[**P, T](function: Callable[P, T], logger: Callable[..., None]):
+    def tracked(*args: P.args, **kwargs: P.kwargs) -> T:
+        with track(function.__name__, logger=logger) as tracker:
+            tracker.params(*args, **kwargs)
+            result = function(*args, **kwargs)
+            tracker.result(result)
+        return result
+
+    tracked.__name__ = function.__name__
+    tracked.__qualname__ = function.__qualname__
+    tracked.__annotations__ = function.__annotations__
+    tracked.__doc__ = function.__doc__
+
+    yield tracked
 
 
 def _format_function(func: str, *args: Any, **kwargs: Any) -> str:
