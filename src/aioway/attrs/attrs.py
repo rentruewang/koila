@@ -3,14 +3,13 @@
 "Schema is a collection of metadata describing the 'type' of data."
 
 import dataclasses as dcls
-import logging
 import operator
 import typing
 from typing import Self
 
 from torch import Tensor
 
-from aioway import _tracking
+from aioway import _logging
 from aioway._typing import AnyUFunc2, UFunc1
 
 from ._terms import Term
@@ -21,7 +20,9 @@ from .shapes import Shape, ShapeLike
 __all__ = ["Attr", "attr", "AttrTerm", "AttrTermRhs"]
 
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = _logging.get_logger(__name__)
+
+TRACKER = _logging.Logger(__name__)
 
 type AttrTermRhs = AttrTerm | Attr | Tensor | int | float | bool
 
@@ -115,64 +116,75 @@ class AttrTerm(Term[Attr]):
         return f"{self.attr!r}.term"
 
     @typing.no_type_check
+    @LOGGER.function("DEBUG")
     def __invert__(self) -> Self:
         return self.__op1(operator.invert)
 
     @typing.no_type_check
+    @LOGGER.function("DEBUG")
     def __neg__(self) -> Self:
         return self.__op1(operator.neg)
 
+    @LOGGER.function("DEBUG")
     def __add__(self, other: AttrTermRhs) -> Self:
         return self.__op2(other, operator.add)
 
+    @LOGGER.function("DEBUG")
     def __sub__(self, other: AttrTermRhs) -> Self:
         return self.__op2(other, operator.sub)
 
+    @LOGGER.function("DEBUG")
     def __mul__(self, other: AttrTermRhs) -> Self:
         return self.__op2(other, operator.mul)
 
+    @LOGGER.function("DEBUG")
     def __truediv__(self, other: AttrTermRhs) -> Self:
         return self.__op2(other, operator.truediv)
 
+    @LOGGER.function("DEBUG")
     def __floordiv__(self, other: AttrTermRhs) -> Self:
         return self.__op2(other, operator.floordiv)
 
+    @LOGGER.function("DEBUG")
     def __mod__(self, other: AttrTermRhs) -> Self:
         return self.__op2(other, operator.mod)
 
+    @LOGGER.function("DEBUG")
     def __pow__(self, other: AttrTermRhs) -> Self:
         return self.__op2(other, operator.pow)
 
     @typing.no_type_check
+    @LOGGER.function("DEBUG")
     def __eq__(self, other: AttrTermRhs) -> Self:
         return self.__op2(other, operator.eq)
 
     @typing.no_type_check
+    @LOGGER.function("DEBUG")
     def __ne__(self, other: AttrTermRhs) -> Self:
         return self.__op2(other, operator.ne)
 
     @typing.no_type_check
+    @LOGGER.function("DEBUG")
     def __ge__(self, other: AttrTermRhs) -> Self:
         return self.__op2(other, operator.ge)
 
     @typing.no_type_check
+    @LOGGER.function("DEBUG")
     def __gt__(self, other: AttrTermRhs) -> Self:
         return self.__op2(other, operator.gt)
 
     @typing.no_type_check
+    @LOGGER.function("DEBUG")
     def __le__(self, other: AttrTermRhs) -> Self:
         return self.__op2(other, operator.le)
 
     @typing.no_type_check
+    @LOGGER.function("DEBUG")
     def __lt__(self, other: AttrTermRhs) -> Self:
         return self.__op2(other, operator.lt)
 
     def __op1(self, op: UFunc1) -> Self:
-        with _tracking.track(op.__qualname__, LOGGER.debug) as tracker:
-            tracker.params(self)
-            result = self.__op1_impl(op=op)
-            tracker.result(result)
-        return result
+        return self.__op1_impl(op=op)
 
     def __op1_impl(self, op: UFunc1) -> Self:
         return self.make(
@@ -184,11 +196,7 @@ class AttrTerm(Term[Attr]):
         )
 
     def __op2(self, other: AttrTermRhs, op: AnyUFunc2):
-        with _tracking.track(op.__qualname__, LOGGER.debug) as tracker:
-            tracker.params(self, other)
-            result = self.__apply_op2_impl(other=other, op=op)
-            tracker.result(result)
-        return result
+        return self.__apply_op2_impl(other=other, op=op)
 
     def __apply_op2_impl(self, other: AttrTermRhs, op: AnyUFunc2):
         match other:

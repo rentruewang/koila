@@ -3,11 +3,12 @@
 "The signature types."
 
 import functools
-import logging
 import typing
 from typing import Self
 
 from lark import Lark
+
+from aioway import _logging
 
 from ..exprs import Expr
 from . import _common
@@ -15,7 +16,7 @@ from .types import ParamListTransformer, TypeList
 
 __all__ = ["OpSign", "OpSignExpr"]
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = _logging.get_logger(__name__)
 
 
 class OpSign[T]:

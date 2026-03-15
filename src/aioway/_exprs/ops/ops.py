@@ -3,17 +3,19 @@
 "The operators (output purely dependent on input and state)."
 
 import dataclasses as dcls
-import logging
 import typing
 from collections.abc import Callable
 from typing import Any
+
+from aioway import _logging
 
 from ..exprs import Expr
 from .signs import OpSign, TypeList
 
 __all__ = ["Op"]
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = _logging.get_logger(__name__)
+
 
 __all__ = ["Op", "OpExpr"]
 

@@ -3,7 +3,6 @@
 "Chunk is a heterogenious collection of in-memory tensor batches."
 
 import dataclasses as dcls
-import logging
 import typing
 from collections.abc import Iterator, Mapping, Sequence
 from typing import Self, TypeGuard
@@ -12,7 +11,7 @@ import tensordict
 from tensordict import TensorDict
 from torch import Size, Tensor
 
-from aioway import _typing, attrs
+from aioway import _logging, _typing, attrs
 from aioway._tensors import SourceTensorDictExpr
 from aioway.attrs import AttrSet, AttrSetLike, _validation
 
@@ -20,7 +19,8 @@ from ..vectors import Vector
 
 __all__ = ["Chunk"]
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = _logging.get_logger(__name__)
+
 
 type TensorDictLike = TensorDict | dict[str, Tensor]
 type ChunkLike = Chunk | dict[str, Vector]

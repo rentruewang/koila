@@ -4,7 +4,6 @@
 
 import dataclasses as dcls
 import functools
-import logging
 import re
 import typing
 from typing import Any, Literal, Self
@@ -14,11 +13,13 @@ import torch
 from numpy import dtype as NumpyDType
 from torch import dtype as TorchDType
 
+from aioway import _logging
+
 from ._terms import Term
 
 __all__ = ["DType", "dtype", "DTypeLike"]
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = _logging.get_logger(__name__)
 
 
 type DTypeFamily = Literal["int", "float", "bool"]

@@ -2,13 +2,13 @@
 
 "Some additional functions on ``TensorDict``s."
 
-import logging
-
 import torch
 from tensordict import TensorDict
 from torch import Tensor
 
-LOGGER = logging.getLogger(__name__)
+from aioway import _logging
+
+LOGGER = _logging.get_logger(__name__)
 
 
 def to_tensor(td: TensorDict) -> Tensor:

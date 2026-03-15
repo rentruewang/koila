@@ -2,7 +2,6 @@
 
 "The 0-ary, 1-ary expressions."
 
-import logging
 import typing
 from collections.abc import KeysView
 from typing import ClassVar
@@ -11,6 +10,7 @@ from numpy.typing import NDArray
 from tensordict import TensorDict
 from torch import Tensor
 
+from aioway import _logging
 from aioway._exprs import Expr
 
 from . import _common
@@ -26,7 +26,7 @@ __all__ = [
     "ItemTensorDictExpr",
 ]
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = _logging.get_logger(__name__)
 
 
 @_common.expr_dcls

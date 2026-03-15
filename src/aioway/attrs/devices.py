@@ -1,17 +1,18 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import dataclasses as dcls
-import logging
 import typing
 from typing import Self
 
 from torch import device as TorchDevice
 
+from aioway import _logging
+
 from ._terms import Term
 
 __all__ = ["Device", "device", "DeviceLike"]
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = _logging.get_logger(__name__)
 
 
 class Device:

@@ -4,17 +4,18 @@
 
 import dataclasses as dcls
 import functools
-import logging
 from collections.abc import Sequence
 from typing import Self
 
 from lark import Lark, Transformer
 
+from aioway import _logging
+
 from . import _common
 
 __all__ = ["TypeList"]
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = _logging.get_logger(__name__)
 
 
 class TypeList:
