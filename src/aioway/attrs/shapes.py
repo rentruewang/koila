@@ -59,7 +59,7 @@ class Shape(Sequence[int]):
     @typing.override
     def __str__(self) -> str:
         dims_str = ", ".join(map(str, self.dims))
-        return f"Shape({dims_str})"
+        return f"[{dims_str}]"
 
     @typing.override
     def __eq__(self, other: object) -> bool:

@@ -10,6 +10,7 @@ from typing import Self
 
 from torch import Tensor
 
+from aioway import _tracking
 from aioway._typing import AnyUFunc2, UFunc1
 
 from ._terms import Term
@@ -56,6 +57,15 @@ class Attr:
         if not isinstance(self.shape, Shape):
             raise TypeError(type(self.shape))
 
+    def __repr__(self):
+        return repr(
+            {
+                "shape": self.shape,
+                "dtype": self.dtype,
+                "device": self.device,
+            }
+        )
+
     @property
     def term(self):
         return AttrTerm(self)
@@ -100,6 +110,9 @@ class AttrTerm(Term[Attr]):
 
     def __post_init__(self):
         LOGGER.debug("Term for attr=%s created.", self.attr)
+
+    def __repr__(self):
+        return f"{self.attr!r}.term"
 
     @typing.no_type_check
     def __invert__(self) -> Self:
@@ -155,9 +168,10 @@ class AttrTerm(Term[Attr]):
         return self.__op2(other, operator.lt)
 
     def __op1(self, op: UFunc1) -> Self:
-        LOGGER.debug("'%s' applied on %s", op.__qualname__, self)
-        result = self.__op1_impl(op=op)
-        LOGGER.debug("'%s' result %s", op.__qualname__, result)
+        with _tracking.track(op.__qualname__, LOGGER.debug) as tracker:
+            tracker.params(self)
+            result = self.__op1_impl(op=op)
+            tracker.result(result)
         return result
 
     def __op1_impl(self, op: UFunc1) -> Self:
@@ -170,9 +184,10 @@ class AttrTerm(Term[Attr]):
         )
 
     def __op2(self, other: AttrTermRhs, op: AnyUFunc2):
-        LOGGER.debug("'%s' applied on %s and %s", op.__qualname__, self, other)
-        result = self.__apply_op2_impl(other=other, op=op)
-        LOGGER.debug("'%s' result %s", op.__qualname__, result)
+        with _tracking.track(op.__qualname__, LOGGER.debug) as tracker:
+            tracker.params(self, other)
+            result = self.__apply_op2_impl(other=other, op=op)
+            tracker.result(result)
         return result
 
     def __apply_op2_impl(self, other: AttrTermRhs, op: AnyUFunc2):
