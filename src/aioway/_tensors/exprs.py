@@ -12,7 +12,7 @@ from torch import Tensor
 from aioway._exprs import Expr
 from aioway._tables import Table
 
-__all__ = ["TensorDictExpr", "TensorExpr"]
+__all__ = ["TensorDictExpr", "TensorExpr", "TensorExprRhs"]
 
 type TensorExprRhs = TensorExpr | Tensor | int | float | bool
 
@@ -119,11 +119,24 @@ class TensorDictExpr(Expr[TensorDict], Table[TensorExpr], ABC):
     def keys(self) -> KeysView[str]: ...
 
     def select(self, *keys: str) -> TensorDictExpr:
-        from .data import SelectTensorDictExpr
+        from .relations import SelectTensorDictExpr
 
         return SelectTensorDictExpr(self, keys)
 
     def column(self, key: str) -> TensorExpr:
-        from .data import GetItemTensorExpr
+        from .data import ColumnTensorExpr
 
-        return GetItemTensorExpr(self, key)
+        return ColumnTensorExpr(self, key)
+
+    def zip(self, other: TensorDictExpr | TensorDict) -> TensorDictExpr:
+        from .data import SourceTensorDictExpr
+        from .relations import ZipTensorDictExpr
+
+        match other:
+            case TensorDictExpr():
+                return ZipTensorDictExpr(self, other)
+
+            case TensorDict():
+                return self.zip(SourceTensorDictExpr(other))
+
+        raise TypeError(f"Does not know how to handle {type(other)=}.")

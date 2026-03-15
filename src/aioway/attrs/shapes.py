@@ -149,6 +149,10 @@ class Shape(Sequence[int]):
 
         return total
 
+    @property
+    def term(self):
+        return ShapeTerm.make(self)
+
     @typing.overload
     @staticmethod
     def parse(*dims: int) -> Shape: ...

@@ -62,6 +62,10 @@ class Device:
     def device(self):
         return self._device
 
+    @property
+    def term(self):
+        return DeviceTerm.make(self)
+
     @staticmethod
     def parse(item: DeviceLike) -> Device:
         "Alias to the ``device`` function so you don't need to import."
@@ -85,7 +89,7 @@ def device(device: DeviceLike, /) -> Device:
 
 
 @dcls.dataclass(frozen=True)
-class DeviceOperand(Term[Device]):
+class DeviceTerm(Term[Device]):
     device: Device
 
     def __invert__(self) -> Self:
@@ -144,7 +148,7 @@ class DeviceOperand(Term[Device]):
 
     @classmethod
     def parse(cls, item: Self | DeviceLike) -> Device:
-        if isinstance(item, DeviceOperand):
+        if isinstance(item, DeviceTerm):
             return item.device
         else:
             return Device.parse(item)
