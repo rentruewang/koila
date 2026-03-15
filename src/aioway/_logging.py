@@ -12,7 +12,7 @@ from typing import Any, Literal
 
 from rich.logging import RichHandler
 
-__all__ = ["enable", "enable_rich", "Logger"]
+__all__ = ["enable", "enable_rich", "Logger", "get_logger"]
 
 
 @ctxl.contextmanager
