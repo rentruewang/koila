@@ -6,25 +6,29 @@ import dataclasses as dcls
 import logging
 import operator
 import typing
-from typing import Protocol, Self
+from typing import Self
 
 from torch import Tensor
 
-from ._terms import Term
-from .devices import Device, DeviceLike, DeviceOperand
-from .dtypes import DType, DTypeLike, DTypeTerm
-from .shapes import Shape, ShapeLike, ShapeTerm
+from aioway._typing import AnyUFunc2, UFunc1
 
-__all__ = ["Attr", "attr"]
+from ._terms import Term
+from .devices import Device, DeviceLike
+from .dtypes import DType, DTypeLike
+from .shapes import Shape, ShapeLike
+
+__all__ = ["Attr", "attr", "AttrTerm", "AttrTermRhs"]
 
 
 LOGGER = logging.getLogger(__name__)
+
+type AttrTermRhs = AttrTerm | Attr | Tensor | int | float | bool
 
 
 @dcls.dataclass(frozen=True)
 class Attr:
     """
-    Attributes for a single column in a ``Table``.
+    The "type' for a ``Tensor``, describing everything we want to know about it.
     """
 
     device: Device
@@ -90,104 +94,128 @@ def attr(device: DeviceLike, dtype: DTypeLike, shape: ShapeLike) -> Attr:
     )
 
 
-class UFunc1(Protocol):
-    def __call__[T](self, item: T, /) -> T: ...
-
-
-class UFunc2(Protocol):
-    def __call__[T](self, left: T, right: T, /) -> T: ...
-
-
 @dcls.dataclass(frozen=True)
 class AttrTerm(Term[Attr]):
     attr: Attr
 
+    def __post_init__(self):
+        LOGGER.debug("Term for attr=%s created.", self.attr)
+
     @typing.no_type_check
     def __invert__(self) -> Self:
-        return self._apply_op1(operator.invert)
+        return self.__op1(operator.invert)
 
     @typing.no_type_check
     def __neg__(self) -> Self:
-        return self._apply_op1(operator.neg)
+        return self.__op1(operator.neg)
 
-    def __add__(self, other: Self) -> Self:
-        return self._apply_op2(other, operator.add)
+    def __add__(self, other: AttrTermRhs) -> Self:
+        return self.__op2(other, operator.add)
 
-    def __sub__(self, other: Self) -> Self:
-        return self._apply_op2(other, operator.sub)
+    def __sub__(self, other: AttrTermRhs) -> Self:
+        return self.__op2(other, operator.sub)
 
-    def __mul__(self, other: Self) -> Self:
-        return self._apply_op2(other, operator.mul)
+    def __mul__(self, other: AttrTermRhs) -> Self:
+        return self.__op2(other, operator.mul)
 
-    def __truediv__(self, other: Self) -> Self:
-        return self._apply_op2(other, operator.truediv)
+    def __truediv__(self, other: AttrTermRhs) -> Self:
+        return self.__op2(other, operator.truediv)
 
-    def __floordiv__(self, other: Self) -> Self:
-        return self._apply_op2(other, operator.floordiv)
+    def __floordiv__(self, other: AttrTermRhs) -> Self:
+        return self.__op2(other, operator.floordiv)
 
-    def __mod__(self, other: Self) -> Self:
-        return self._apply_op2(other, operator.mod)
+    def __mod__(self, other: AttrTermRhs) -> Self:
+        return self.__op2(other, operator.mod)
 
-    def __pow__(self, other: Self) -> Self:
-        return self._apply_op2(other, operator.pow)
-
-    @typing.no_type_check
-    def __eq__(self, other: Self) -> Self:
-        return self._apply_op2(other, operator.eq)
+    def __pow__(self, other: AttrTermRhs) -> Self:
+        return self.__op2(other, operator.pow)
 
     @typing.no_type_check
-    def __ne__(self, other: Self) -> Self:
-        return self._apply_op2(other, operator.ne)
+    def __eq__(self, other: AttrTermRhs) -> Self:
+        return self.__op2(other, operator.eq)
 
     @typing.no_type_check
-    def __ge__(self, other: Self) -> Self:
-        return self._apply_op2(other, operator.ge)
+    def __ne__(self, other: AttrTermRhs) -> Self:
+        return self.__op2(other, operator.ne)
 
     @typing.no_type_check
-    def __gt__(self, other: Self) -> Self:
-        return self._apply_op2(other, operator.gt)
+    def __ge__(self, other: AttrTermRhs) -> Self:
+        return self.__op2(other, operator.ge)
 
     @typing.no_type_check
-    def __le__(self, other: Self) -> Self:
-        return self._apply_op2(other, operator.le)
+    def __gt__(self, other: AttrTermRhs) -> Self:
+        return self.__op2(other, operator.gt)
 
     @typing.no_type_check
-    def __lt__(self, other: Self) -> Self:
-        return self._apply_op2(other, operator.lt)
+    def __le__(self, other: AttrTermRhs) -> Self:
+        return self.__op2(other, operator.le)
 
-    def _apply_op1(self, op: UFunc1) -> Self:
+    @typing.no_type_check
+    def __lt__(self, other: AttrTermRhs) -> Self:
+        return self.__op2(other, operator.lt)
+
+    def __op1(self, op: UFunc1) -> Self:
+        LOGGER.debug("'%s' applied on %s", op.__qualname__, self)
+        result = self.__op1_impl(op=op)
+        LOGGER.debug("'%s' result %s", op.__qualname__, result)
+        return result
+
+    def __op1_impl(self, op: UFunc1) -> Self:
         return self.make(
             Attr(
-                device=op(self.device_op).unpack(),
-                shape=op(self.shape_op).unpack(),
-                dtype=op(self.dtype_op).unpack(),
+                device=op(self.device.term).unpack(),
+                shape=op(self.shape.term).unpack(),
+                dtype=op(self.dtype.term).unpack(),
             )
         )
 
-    def _apply_op2(self, other: Self, op: UFunc2):
-        return self.make(
-            Attr(
-                device=op(self.device_op, other.device_op).unpack(),
-                shape=op(self.shape_op, other.shape_op).unpack(),
-                dtype=op(self.dtype_op, other.dtype_op).unpack(),
-            )
-        )
+    def __op2(self, other: AttrTermRhs, op: AnyUFunc2):
+        LOGGER.debug("'%s' applied on %s and %s", op.__qualname__, self, other)
+        result = self.__apply_op2_impl(other=other, op=op)
+        LOGGER.debug("'%s' result %s", op.__qualname__, result)
+        return result
+
+    def __apply_op2_impl(self, other: AttrTermRhs, op: AnyUFunc2):
+        match other:
+            case AttrTerm():
+                return self.make(
+                    Attr(
+                        device=op(self.device.term, other.device.term).unpack(),
+                        shape=op(self.shape.term, other.shape.term).unpack(),
+                        dtype=op(self.dtype.term, other.dtype.term).unpack(),
+                    )
+                )
+            case Attr():
+                return self.__apply_op2_impl(other=other.term, op=op)
+            case Tensor():
+                return self.__apply_op2_impl(other=Attr.from_tensor(other).term, op=op)
+            case int() | float() | bool():
+                t: type[int] | type[float] | type[bool] = type(other)
+                return self.make(
+                    Attr(
+                        device=self.device,
+                        shape=self.shape,
+                        dtype=op(self.dtype.term, DType.parse(t)).unpack(),
+                    )
+                )
+
+        raise TypeError(f"Do not know how to handle {type(other)=}.")
 
     @property
-    def device_op(self):
-        return DeviceOperand.make(self.attr.device)
+    def device(self):
+        return self.attr.device
 
     @property
-    def shape_op(self):
-        return ShapeTerm.make(self.attr.shape)
+    def dtype(self):
+        return self.attr.dtype
 
     @property
-    def dtype_op(self):
-        return DTypeTerm.make(self.attr.dtype)
+    def shape(self):
+        return self.attr.shape
 
     def unpack(self) -> Attr:
         return self.attr
 
     @classmethod
-    def make(cls, data: Attr) -> Self:
+    def make(cls, data: Attr, /) -> Self:
         return cls(data)

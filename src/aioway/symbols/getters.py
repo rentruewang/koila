@@ -5,6 +5,8 @@
 import typing
 from collections.abc import KeysView, Sequence
 
+from aioway._typing import SeqKeysView
+
 from . import _common
 from .exprs import ColSymExpr, TableSymExpr
 
@@ -49,19 +51,6 @@ class SelectExpr(TableSymExpr):
     @typing.override
     def _inputs(self):
         return (self.table,)
-
-
-@_common.symbol_dataclass
-class SeqKeysView(KeysView[str]):
-    seq: Sequence[str]
-
-    @typing.override
-    def __contains__(self, key: object) -> bool:
-        return key in self.seq
-
-    @typing.override
-    def __iter__(self):
-        yield from self.seq
 
 
 @_common.symbol_dataclass

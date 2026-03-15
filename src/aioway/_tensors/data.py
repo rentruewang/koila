@@ -1,15 +1,19 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-"The 0-ary expressions, and projection."
+"The 0-ary, 1-ary expressions."
 
-import dataclasses as dcls
-from collections.abc import KeysView, Sequence
+import logging
+import typing
+from collections.abc import KeysView
+from typing import ClassVar
 
+from numpy.typing import NDArray
 from tensordict import TensorDict
 from torch import Tensor
 
 from aioway._exprs import Expr
 
+from . import _common
 from .exprs import TensorDictExpr, TensorExpr
 
 __all__ = [
@@ -17,16 +21,31 @@ __all__ = [
     "SourceTensorExpr",
     "CacheTensorDictExpr",
     "CacheTensorExpr",
-    "GetItemTensorExpr",
-    "SelectTensorDictExpr",
+    "ColumnTensorExpr",
+    "BatchTensorDictExpr",
+    "ItemTensorDictExpr",
 ]
 
+LOGGER = logging.getLogger(__name__)
 
-@dcls.dataclass(frozen=True, match_args=False)
+
+@_common.expr_dcls
 class _SourceExpr[T: Tensor | TensorDict]:
+    _DATA_TYPE: ClassVar[type[T]]
+
     __match_args__ = ()
 
     data: T
+
+    def __post_init__(self):
+        if not isinstance(self.data, self._DATA_TYPE):
+            raise TypeError(f"Expected type {self._DATA_TYPE}, got {type(self.data)}.")
+
+    def __repr__(self):
+        shape = self.data.shape
+        dtype = self.data.dtype
+        device = self.data.device
+        return f"{self.__class__.__name__}({shape=}, {dtype=}, {device=})"
 
     def _compute(self) -> T:
         return self.data
@@ -35,21 +54,24 @@ class _SourceExpr[T: Tensor | TensorDict]:
         return ()
 
 
-@dcls.dataclass(frozen=True, match_args=False)
+@_common.expr_dcls
 class SourceTensorDictExpr(_SourceExpr[TensorDict], TensorDictExpr):
     "The source expression for ``TensorDict``."
 
-    ...
+    _DATA_TYPE = TensorDict
+
+    def keys(self) -> KeysView[str]:
+        return self.data.keys()
 
 
-@dcls.dataclass(frozen=True, match_args=False)
+@_common.expr_dcls
 class SourceTensorExpr(_SourceExpr[Tensor], TensorExpr):
     "The source expression for ``Tensor``."
 
-    ...
+    _DATA_TYPE = Tensor
 
 
-@dcls.dataclass(init=False, match_args=False)
+@_common.expr_dcls
 class _CacheExpr[T: Tensor | TensorDict]:
     __match_args__ = ()
 
@@ -65,20 +87,21 @@ class _CacheExpr[T: Tensor | TensorDict]:
         return ()
 
 
-@dcls.dataclass(init=False, match_args=False)
+@_common.expr_dcls
 class CacheTensorDictExpr(_CacheExpr[TensorDict], TensorDictExpr): ...
 
 
-@dcls.dataclass(init=False, match_args=False)
+@_common.expr_dcls
 class CacheTensorExpr(_CacheExpr[Tensor], TensorExpr): ...
 
 
-@dcls.dataclass(frozen=True)
-class GetItemTensorExpr(TensorExpr):
+@_common.expr_dcls
+class ColumnTensorExpr(TensorExpr):
     source: TensorDictExpr
 
     column: str
 
+    @typing.no_type_check
     def _compute(self) -> Tensor:
         return self.source.compute()[self.column]
 
@@ -86,17 +109,31 @@ class GetItemTensorExpr(TensorExpr):
         return (self.source,)
 
 
-@dcls.dataclass(frozen=True)
-class SelectTensorDictExpr(TensorDictExpr):
+@_common.expr_dcls
+class _GetItemTensorExpr[T](TensorDictExpr):
     source: TensorDictExpr
 
-    columns: Sequence[str]
+    index: T
 
     def keys(self) -> KeysView[str]:
-        raise NotImplementedError
+        return self.source.keys()
 
+    @typing.no_type_check
     def _compute(self) -> TensorDict:
-        return self.source.compute().select(*self.columns)
+        return self.source.compute()[self.index]
 
-    def _inputs(self):
+    def _inputs(self) -> tuple[Expr[TensorDict], ...]:
         return (self.source,)
+
+
+@_common.expr_dcls
+class ItemTensorDictExpr(_GetItemTensorExpr[int], TensorDictExpr): ...
+
+
+type BatchIndex = list[int] | slice | NDArray | Tensor
+
+
+@_common.expr_dcls
+class BatchTensorDictExpr(_GetItemTensorExpr[BatchIndex], TensorDictExpr):
+    def keys(self) -> KeysView[str]:
+        return self.source.keys()

@@ -73,7 +73,7 @@ class GitHubTicketFiled(NotImplementedError):
 
     REPO_URL: ClassVar[str] = "https://github.com/rentruewang/aioway"
 
-    def __init__(self, ticket: int = 0, *messages: str) -> None:
+    def __init__(self, ticket: int = 0, /, *messages: str) -> None:
         super().__init__()
 
         self._ticket = ticket
