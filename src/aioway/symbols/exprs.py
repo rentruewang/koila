@@ -1,17 +1,17 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import abc
-import logging
 import typing
 from abc import ABC
 from collections.abc import KeysView
 
+from aioway import _logging
 from aioway._exprs import Expr
 from aioway._tables import Table
 
 __all__ = ["SymbolExpr", "ColSymExpr", "TableSymExpr"]
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = _logging.get_logger(__name__)
 
 
 class SymbolExpr(Expr[str], ABC):

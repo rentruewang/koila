@@ -1,11 +1,11 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import dataclasses as dcls
-import logging
 import operator
 import typing
 from typing import Self
 
+from aioway import _logging
 from aioway._exprs import Expr
 from aioway._tensors import SourceTensorExpr, TensorExpr
 from aioway._typing import AnyUFunc1, AnyUFunc2
@@ -15,7 +15,8 @@ from .vectors import Vector, VectorRhs
 
 __all__ = ["VectorExpr"]
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = _logging.get_logger(__name__)
+
 
 type VectorExprRhs = VectorExpr | VectorRhs
 

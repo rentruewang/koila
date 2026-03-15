@@ -3,13 +3,13 @@
 "Schema is a collection of metadata describing the 'type' of data."
 
 import dataclasses as dcls
-import logging
 import operator
 import typing
 from typing import Self
 
 from torch import Tensor
 
+from aioway import _logging
 from aioway._typing import AnyUFunc2, UFunc1
 
 from ._terms import Term
@@ -20,7 +20,7 @@ from .shapes import Shape, ShapeLike
 __all__ = ["Attr", "attr", "AttrTerm", "AttrTermRhs"]
 
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = _logging.get_logger(__name__)
 
 type AttrTermRhs = AttrTerm | Attr | Tensor | int | float | bool
 
@@ -55,6 +55,15 @@ class Attr:
 
         if not isinstance(self.shape, Shape):
             raise TypeError(type(self.shape))
+
+    def __repr__(self):
+        return repr(
+            {
+                "shape": self.shape,
+                "dtype": self.dtype,
+                "device": self.device,
+            }
+        )
 
     @property
     def term(self):
@@ -101,66 +110,78 @@ class AttrTerm(Term[Attr]):
     def __post_init__(self):
         LOGGER.debug("Term for attr=%s created.", self.attr)
 
+    def __repr__(self):
+        return f"{self.attr!r}.term"
+
     @typing.no_type_check
+    @LOGGER.function("DEBUG")
     def __invert__(self) -> Self:
         return self.__op1(operator.invert)
 
     @typing.no_type_check
+    @LOGGER.function("DEBUG")
     def __neg__(self) -> Self:
         return self.__op1(operator.neg)
 
+    @LOGGER.function("DEBUG")
     def __add__(self, other: AttrTermRhs) -> Self:
         return self.__op2(other, operator.add)
 
+    @LOGGER.function("DEBUG")
     def __sub__(self, other: AttrTermRhs) -> Self:
         return self.__op2(other, operator.sub)
 
+    @LOGGER.function("DEBUG")
     def __mul__(self, other: AttrTermRhs) -> Self:
         return self.__op2(other, operator.mul)
 
+    @LOGGER.function("DEBUG")
     def __truediv__(self, other: AttrTermRhs) -> Self:
         return self.__op2(other, operator.truediv)
 
+    @LOGGER.function("DEBUG")
     def __floordiv__(self, other: AttrTermRhs) -> Self:
         return self.__op2(other, operator.floordiv)
 
+    @LOGGER.function("DEBUG")
     def __mod__(self, other: AttrTermRhs) -> Self:
         return self.__op2(other, operator.mod)
 
+    @LOGGER.function("DEBUG")
     def __pow__(self, other: AttrTermRhs) -> Self:
         return self.__op2(other, operator.pow)
 
     @typing.no_type_check
+    @LOGGER.function("DEBUG")
     def __eq__(self, other: AttrTermRhs) -> Self:
         return self.__op2(other, operator.eq)
 
     @typing.no_type_check
+    @LOGGER.function("DEBUG")
     def __ne__(self, other: AttrTermRhs) -> Self:
         return self.__op2(other, operator.ne)
 
     @typing.no_type_check
+    @LOGGER.function("DEBUG")
     def __ge__(self, other: AttrTermRhs) -> Self:
         return self.__op2(other, operator.ge)
 
     @typing.no_type_check
+    @LOGGER.function("DEBUG")
     def __gt__(self, other: AttrTermRhs) -> Self:
         return self.__op2(other, operator.gt)
 
     @typing.no_type_check
+    @LOGGER.function("DEBUG")
     def __le__(self, other: AttrTermRhs) -> Self:
         return self.__op2(other, operator.le)
 
     @typing.no_type_check
+    @LOGGER.function("DEBUG")
     def __lt__(self, other: AttrTermRhs) -> Self:
         return self.__op2(other, operator.lt)
 
     def __op1(self, op: UFunc1) -> Self:
-        LOGGER.debug("'%s' applied on %s", op.__qualname__, self)
-        result = self.__op1_impl(op=op)
-        LOGGER.debug("'%s' result %s", op.__qualname__, result)
-        return result
-
-    def __op1_impl(self, op: UFunc1) -> Self:
         return self.make(
             Attr(
                 device=op(self.device.term).unpack(),
@@ -170,12 +191,6 @@ class AttrTerm(Term[Attr]):
         )
 
     def __op2(self, other: AttrTermRhs, op: AnyUFunc2):
-        LOGGER.debug("'%s' applied on %s and %s", op.__qualname__, self, other)
-        result = self.__apply_op2_impl(other=other, op=op)
-        LOGGER.debug("'%s' result %s", op.__qualname__, result)
-        return result
-
-    def __apply_op2_impl(self, other: AttrTermRhs, op: AnyUFunc2):
         match other:
             case AttrTerm():
                 return self.make(
@@ -186,9 +201,9 @@ class AttrTerm(Term[Attr]):
                     )
                 )
             case Attr():
-                return self.__apply_op2_impl(other=other.term, op=op)
+                return self.__op2(other=other.term, op=op)
             case Tensor():
-                return self.__apply_op2_impl(other=Attr.from_tensor(other).term, op=op)
+                return self.__op2(other=Attr.from_tensor(other).term, op=op)
             case int() | float() | bool():
                 t: type[int] | type[float] | type[bool] = type(other)
                 return self.make(

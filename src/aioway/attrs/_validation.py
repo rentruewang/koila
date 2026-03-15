@@ -2,11 +2,11 @@
 
 "Validation of data (``TensorDict``) against schema (``AttrSet``)."
 
-import logging
-
 import numpy as np
 from tensordict import TensorDict
 from torch import Tensor
+
+from aioway import _logging
 
 from .attrs import Attr
 from .devices import Device
@@ -16,7 +16,7 @@ from .shapes import Shape
 
 __all__ = ["validate_schema", "validate_attr"]
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = _logging.get_logger(__name__)
 
 
 def validate_schema(attrs: AttrSet, data: TensorDict) -> None:

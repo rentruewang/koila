@@ -2,12 +2,12 @@
 
 "The operators in relational algebra."
 
-import logging
 from collections.abc import KeysView, Sequence
 
 import tensordict as td
 from tensordict import TensorDict
 
+from aioway import _logging
 from aioway._typing import SeqKeysView, SetKeysView
 
 from . import _common
@@ -16,7 +16,7 @@ from .exprs import TensorDictExpr
 __all__ = ["SelectTensorDictExpr", "RenameTensorDictExpr", "ZipTensorDictExpr"]
 
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = _logging.get_logger(__name__)
 
 
 @_common.expr_dcls

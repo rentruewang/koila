@@ -1,7 +1,6 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import dataclasses as dcls
-import logging
 import typing
 from collections.abc import Iterable, Iterator, Sequence
 from typing import Self
@@ -11,13 +10,14 @@ from numpy import ndarray as _NumpyNDArray
 from numpy.typing import NDArray
 from torch import Size
 
-from aioway import _typing
+from aioway import _logging, _typing
 
 from ._terms import Term
 
 __all__ = ["ShapeLike", "Shape", "shape"]
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = _logging.get_logger(__name__)
+
 
 type _PrimitiveNumber = float | int | bool
 type _IntArrayLike = tuple[int, ...] | list[int] | NDArray[np.int_]
@@ -59,7 +59,7 @@ class Shape(Sequence[int]):
     @typing.override
     def __str__(self) -> str:
         dims_str = ", ".join(map(str, self.dims))
-        return f"Shape({dims_str})"
+        return f"[{dims_str}]"
 
     @typing.override
     def __eq__(self, other: object) -> bool:

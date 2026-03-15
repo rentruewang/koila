@@ -5,7 +5,6 @@
 import abc
 import dataclasses as dcls
 import functools
-import logging
 import math
 import typing
 from abc import ABC
@@ -14,7 +13,7 @@ from typing import Self
 
 from torch.utils.data import DataLoader, Sampler
 
-from aioway import _typing
+from aioway import _logging, _typing
 from aioway.attrs import AttrSet
 from aioway.chunks import Chunk
 
@@ -29,7 +28,7 @@ __all__ = [
     "FrameStreamLoader",
 ]
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = _logging.get_logger(__name__)
 
 
 @dcls.dataclass(frozen=True)

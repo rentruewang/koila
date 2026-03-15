@@ -3,7 +3,6 @@
 "Chunk is a heterogenious collection of in-memory tensor batches."
 
 import dataclasses as dcls
-import logging
 import typing
 from collections.abc import Iterator, Mapping, Sequence
 from typing import Self, TypeGuard
@@ -12,7 +11,7 @@ import tensordict
 from tensordict import TensorDict
 from torch import Size, Tensor
 
-from aioway import _typing, attrs
+from aioway import _logging, _typing, attrs
 from aioway._tensors import SourceTensorDictExpr
 from aioway.attrs import AttrSet, AttrSetLike, _validation
 
@@ -20,7 +19,8 @@ from ..vectors import Vector
 
 __all__ = ["Chunk"]
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = _logging.get_logger(__name__)
+
 
 type TensorDictLike = TensorDict | dict[str, Tensor]
 type ChunkLike = Chunk | dict[str, Vector]
@@ -56,6 +56,7 @@ class Chunk(Mapping[str, Vector]):
         return f"{self.attrs!r}({len(self)})"
 
     @typing.override
+    @LOGGER.function("DEBUG")
     def __eq__(self, rhs: object) -> bool:
         # Check if schema and data are both equal.
         if isinstance(rhs, Chunk):
@@ -63,7 +64,10 @@ class Chunk(Mapping[str, Vector]):
 
         # If tensordict, don't compare schema.
         if isinstance(rhs, dict | TensorDict):
-            return (self.data == rhs).all()
+            try:
+                return (self.data == rhs).all()
+            except KeyError:
+                return NotImplemented
 
         return NotImplemented
 
@@ -82,18 +86,22 @@ class Chunk(Mapping[str, Vector]):
             attrs=self.attrs,
         )
 
+    @LOGGER.function("DEBUG")
     def select(self, *names: str):
         return self.expr().select(*names).compute()
 
+    @LOGGER.function("DEBUG")
     def column(self, col: str):
         return self.expr().column(col).compute()
 
+    @LOGGER.function("DEBUG")
     def rename(self, **renames: str):
         if not renames:
             return self
 
         return self.expr().rename(**renames).compute()
 
+    @LOGGER.function("DEBUG")
     def zip(self, rhs: Self):
         return self.expr().zip(rhs).compute()
 
@@ -105,6 +113,7 @@ class Chunk(Mapping[str, Vector]):
         return self.data
 
     @classmethod
+    @LOGGER.function("DEBUG")
     def cat(cls, chunks: Sequence[Self]) -> Self:
         if not chunks:
             raise ValueError("Given an empty sequence. Not sure what to do.")
