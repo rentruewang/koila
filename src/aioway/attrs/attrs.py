@@ -22,8 +22,6 @@ __all__ = ["Attr", "attr", "AttrTerm", "AttrTermRhs"]
 
 LOGGER = _logging.get_logger(__name__)
 
-TRACKER = _logging.Logger(__name__)
-
 type AttrTermRhs = AttrTerm | Attr | Tensor | int | float | bool
 
 
@@ -184,9 +182,6 @@ class AttrTerm(Term[Attr]):
         return self.__op2(other, operator.lt)
 
     def __op1(self, op: UFunc1) -> Self:
-        return self.__op1_impl(op=op)
-
-    def __op1_impl(self, op: UFunc1) -> Self:
         return self.make(
             Attr(
                 device=op(self.device.term).unpack(),
@@ -196,9 +191,6 @@ class AttrTerm(Term[Attr]):
         )
 
     def __op2(self, other: AttrTermRhs, op: AnyUFunc2):
-        return self.__apply_op2_impl(other=other, op=op)
-
-    def __apply_op2_impl(self, other: AttrTermRhs, op: AnyUFunc2):
         match other:
             case AttrTerm():
                 return self.make(
@@ -209,9 +201,9 @@ class AttrTerm(Term[Attr]):
                     )
                 )
             case Attr():
-                return self.__apply_op2_impl(other=other.term, op=op)
+                return self.__op2(other=other.term, op=op)
             case Tensor():
-                return self.__apply_op2_impl(other=Attr.from_tensor(other).term, op=op)
+                return self.__op2(other=Attr.from_tensor(other).term, op=op)
             case int() | float() | bool():
                 t: type[int] | type[float] | type[bool] = type(other)
                 return self.make(

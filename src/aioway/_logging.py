@@ -4,7 +4,6 @@
 
 import contextlib as ctxl
 import dataclasses as dcls
-import functools
 import logging
 from collections.abc import Callable
 from logging import Handler
@@ -57,6 +56,7 @@ class Logger:
     "The logger class for ``aioway``. Tries to mimic the API for ``logging.Logger``."
 
     module: str
+    "The module name passed to the logger."
 
     def log(self, level: LoggingLevel, msg: str, *args, **kwargs) -> None:
         level_int = _get_level_int(level)
@@ -110,7 +110,7 @@ class Logger:
 
         return decorator
 
-    @functools.cached_property
+    @property
     def _logger(self):
         return logging.getLogger(self.module)
 
