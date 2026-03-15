@@ -5,7 +5,6 @@ import typing
 from collections.abc import Callable
 
 import pytest
-from tensordict import TensorDict
 
 from aioway.attrs import AttrSet
 from aioway.chunks import Chunk
@@ -44,7 +43,7 @@ class SaveLastMapStream(MapStream):
         return self.source.attrs
 
     @property
-    def last(self):
+    def last(self) -> Chunk:
         return self.state.last
 
 
@@ -80,7 +79,7 @@ def test_filter(map_stream, save_last):
 
     for filtered in map_stream:
         f1d = save_last.last["f1d"]
-        manual_filtered: TensorDict = save_last.last[f1d > 0]
+        manual_filtered: Chunk = save_last.last[f1d > 0]
         assert filtered.shape == manual_filtered.shape, {
             "lhs.shape": filtered.shape,
             "rhs.shape": manual_filtered.shape,

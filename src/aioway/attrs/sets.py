@@ -139,6 +139,9 @@ class ShapeSet(_AttrSetBase[Shape]):
 
 
 class AttrSet(_AttrSetBase[Attr]):
+    """
+    The collection of ``Attr``s. This is the data type for a ``TensorDict``.
+    """
 
     @typing.overload
     def __getitem__(self, idx: str) -> Attr: ...

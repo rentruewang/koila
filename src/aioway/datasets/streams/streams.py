@@ -80,7 +80,7 @@ class Stream(Expr[Chunk], Iterator[Chunk], Dataset, ABC):
         ``__next__`` allows ``Stream``s to be used in ``for`` loops.
         """
 
-        if (result := self._compute()).attrs != self.attrs:
+        if (result := self.compute()).attrs != self.attrs:
             raise TypeError(f"Schema mismatch: {result.attrs=}, {self.attrs=}.")
 
         self.state.step()

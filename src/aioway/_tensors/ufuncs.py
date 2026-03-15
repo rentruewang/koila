@@ -14,15 +14,19 @@ __all__ = ["UFuncTensorExpr1", "UFuncTensorExpr2"]
 
 @typing.dataclass_transform(eq_default=False, frozen_default=True)
 def ufunc_dcls(cls):
-    return dcls.dataclass(frozen=True, eq=False, match_args=False)(cls)
+    return dcls.dataclass(frozen=True, eq=False, match_args=False, repr=False)(cls)
 
 
 @ufunc_dcls
 class UFuncTensorExpr1(TensorExpr):
     __match_args__ = ("source",)
 
+    name: str
     source: TensorExpr
     op: Callable[[Tensor], Tensor]
+
+    def __repr__(self):
+        return f"{self.name}{self.source!r}"
 
     def _inputs(self):
         return (self.source,)
@@ -33,20 +37,24 @@ class UFuncTensorExpr1(TensorExpr):
 
     @classmethod
     def invert(cls, source: TensorExpr):
-        return cls(source=source, op=operator.invert)
+        return cls("~", source=source, op=operator.invert)
 
     @classmethod
     def neg(cls, source: TensorExpr):
-        return cls(source=source, op=operator.neg)
+        return cls("-", source=source, op=operator.neg)
 
 
 @ufunc_dcls
 class UFuncTensorExpr2(TensorExpr):
     __match_args__ = "left", "right"
 
+    name: str
     left: TensorExpr
     right: TensorExpr | Tensor | int | float | bool
     op: Callable[[Tensor, Tensor | int | float | bool], Tensor]
+
+    def __repr__(self):
+        return f"{self.left!r} {self.name} {self.right!r}"
 
     def _inputs(self):
         return self.left, self.right
@@ -63,52 +71,52 @@ class UFuncTensorExpr2(TensorExpr):
 
     @classmethod
     def add(cls, left: TensorExpr, right: TensorExprRhs):
-        return cls(left=left, right=right, op=operator.add)
+        return cls(name="+", left=left, right=right, op=operator.add)
 
     @classmethod
     def sub(cls, left: TensorExpr, right: TensorExprRhs):
-        return cls(left=left, right=right, op=operator.sub)
+        return cls(name="-", left=left, right=right, op=operator.sub)
 
     @classmethod
     def mul(cls, left: TensorExpr, right: TensorExprRhs):
-        return cls(left=left, right=right, op=operator.mul)
+        return cls(name="*", left=left, right=right, op=operator.mul)
 
     @classmethod
     def truediv(cls, left: TensorExpr, right: TensorExprRhs):
-        return cls(left=left, right=right, op=operator.truediv)
+        return cls(name="/", left=left, right=right, op=operator.truediv)
 
     @classmethod
     def floordiv(cls, left: TensorExpr, right: TensorExprRhs):
-        return cls(left=left, right=right, op=operator.floordiv)
+        return cls(name="//", left=left, right=right, op=operator.floordiv)
 
     @classmethod
     def mod(cls, left: TensorExpr, right: TensorExprRhs):
-        return cls(left=left, right=right, op=operator.mod)
+        return cls(name="%", left=left, right=right, op=operator.mod)
 
     @classmethod
     def pow(cls, left: TensorExpr, right: TensorExprRhs):
-        return cls(left=left, right=right, op=operator.pow)
+        return cls(name="**", left=left, right=right, op=operator.pow)
 
     @classmethod
     def eq(cls, left: TensorExpr, right: TensorExprRhs):
-        return cls(left=left, right=right, op=operator.eq)
+        return cls(name="==", left=left, right=right, op=operator.eq)
 
     @classmethod
     def ne(cls, left: TensorExpr, right: TensorExprRhs):
-        return cls(left=left, right=right, op=operator.ne)
+        return cls(name="!=", left=left, right=right, op=operator.ne)
 
     @classmethod
     def ge(cls, left: TensorExpr, right: TensorExprRhs):
-        return cls(left=left, right=right, op=operator.ge)
+        return cls(name=">=", left=left, right=right, op=operator.ge)
 
     @classmethod
     def gt(cls, left: TensorExpr, right: TensorExprRhs):
-        return cls(left=left, right=right, op=operator.gt)
+        return cls(name=">", left=left, right=right, op=operator.gt)
 
     @classmethod
     def le(cls, left: TensorExpr, right: TensorExprRhs):
-        return cls(left=left, right=right, op=operator.le)
+        return cls(name="<=", left=left, right=right, op=operator.le)
 
     @classmethod
     def lt(cls, left: TensorExpr, right: TensorExprRhs):
-        return cls(left=left, right=right, op=operator.lt)
+        return cls(name="<", left=left, right=right, op=operator.lt)

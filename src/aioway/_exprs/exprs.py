@@ -31,7 +31,10 @@ class Expr[T](ABC):
         result = self._compute()
 
         if not isinstance(result, self.return_type):
-            raise TypeError(f"Output {type(result)=}, but {self.return_type=}.")
+            raise TypeError(
+                f"Output {type(result)=}, but {self.return_type=}. "
+                f"This means that your implementation {self._impl()} is buggy."
+            )
 
         return result
 
@@ -54,7 +57,7 @@ class Expr[T](ABC):
         ...
 
     @property
-    def inputs(self) -> tuple[Expr[T], ...]:
+    def inputs(self) -> tuple[Expr, ...]:
         "The sub expressions. The length must match the signature's parameters."
 
         inputs = self._inputs()
@@ -71,9 +74,15 @@ class Expr[T](ABC):
         return inputs
 
     @abc.abstractmethod
-    def _inputs(self) -> tuple[Expr[T], ...]:
-        "The inputs of the"
+    def _inputs(self) -> tuple[Expr, ...]:
+        "The inputs of the expression."
+
         ...
+
+    def _impl(self):
+        "The implementation location."
+
+        return type(self)
 
     @property
     def argc(self) -> int:

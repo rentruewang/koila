@@ -95,6 +95,10 @@ class DType:
         "Convert this to a torch dtype."
         return getattr(torch, str(self))
 
+    @property
+    def term(self):
+        return DTypeTerm.make(self)
+
     @classmethod
     def boolean(cls) -> Self:
         return cls(family="bool", bits=8)
@@ -271,23 +275,23 @@ class DTypeTerm(Term[DType]):
 
     @typing.no_type_check
     def __eq__(self, other: Self | DTypeLike):
-        return self._broadcast(self.dtype, other)
+        return self._boolean(other)
 
     @typing.no_type_check
     def __ne__(self, other: Self | DTypeLike):
-        return self._broadcast(self.dtype, other)
+        return self._boolean(other)
 
     def __ge__(self, other: Self | DTypeLike):
-        return self._broadcast(self.dtype, other)
+        return self._boolean(other)
 
     def __gt__(self, other: Self | DTypeLike):
-        return self._broadcast(self.dtype, other)
+        return self._boolean(other)
 
     def __le__(self, other: Self | DTypeLike):
-        return self._broadcast(self.dtype, other)
+        return self._boolean(other)
 
     def __lt__(self, other: Self | DTypeLike):
-        return self._broadcast(self.dtype, other)
+        return self._boolean(other)
 
     def unpack(self) -> DType:
         return self.dtype
@@ -303,7 +307,16 @@ class DTypeTerm(Term[DType]):
         np_rhs = rhs.numpy()
 
         promoted = np.result_type(np_lhs, np_rhs)
-        return cls(DType.parse(promoted))
+        return cls.make(DType.parse(promoted))
+
+    @classmethod
+    def _boolean(cls, right: Self | DTypeLike):
+        try:
+            rhs = DType.parse(_as_dtype(right))
+        except ValueError:
+            return NotImplemented
+
+        return cls.make(DType.boolean())
 
     @classmethod
     def make(cls, data: DType) -> Self:
