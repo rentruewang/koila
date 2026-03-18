@@ -30,8 +30,8 @@ The DType strings family type.
 
 class DType:
     r"""
-    ``DType`` is a class supporting converting to and from
-    its string representation in ``aioway``, effectively supporting
+    `DType` is a class supporting converting to and from
+    its string representation in `aioway`, effectively supporting
     comparison and conversion between different frameworks.
     """
 
@@ -106,18 +106,18 @@ class DType:
 
     @staticmethod
     def parse(item: DTypeLike):
-        "Alias to the ``dtype`` function so you don't need to import it."
+        "Alias to the `dtype` function so you don't need to import it."
         return dtype(item)
 
 
 type _PrimitiveType = type[int] | type[float] | type[bool]
 type DTypeLike = str | DType | _PrimitiveType | TorchDType | NumpyDType
-"Types that can be converted to ``Dtype`` with the public ``dtype`` function (or ``DType.parse``)."
+"Types that can be converted to `Dtype` with the public `dtype` function (or `DType.parse`)."
 
 
 def dtype(dtype: DTypeLike, /) -> DType:
     """
-    The convenient wrapper to create a ``DType`` from compatible types.
+    The convenient wrapper to create a `DType` from compatible types.
 
     Raises:
         ValueError: If we don't know how to handle the dtype.
@@ -158,7 +158,7 @@ def _parse_primitive_type(dtype: type):
 
 def _parse_regex(dtype: str, /) -> DType:
     """
-    Create the ``DType`` instance from the ``info`` object.
+    Create the `DType` instance from the `info` object.
 
     Raises:
         ValueError: If the dtyep cannot be parsed.
@@ -179,7 +179,7 @@ def _parse_regex(dtype: str, /) -> DType:
 
 
 def _parse_torch(dtype: TorchDType, /) -> DType:
-    "Create a ``Dtype`` from a ``torch.dtype``."
+    "Create a `Dtype` from a `torch.dtype`."
     if dtype == torch.bool:
         return DType.boolean()
 
@@ -203,7 +203,7 @@ def _parse_numpy(dtype: NumpyDType, /) -> DType:
 
 
 def _parse_numpy_family(dtype: NumpyDType, /) -> DTypeFamily:
-    "Create a ``Dtype`` from a ``numpy.dtype``."
+    "Create a `Dtype` from a `numpy.dtype`."
     if np.isdtype(dtype, "integral"):
         return "int"
 
