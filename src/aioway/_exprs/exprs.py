@@ -13,7 +13,7 @@ class Expr[T](ABC):
     """
     The expression type, containing signatures to connect to different types.
 
-    ``Expression`` is the base class for all lazy computation of note in ``aioway``.
+    `Expression` is the base class for all lazy computation of note in `aioway`.
     """
 
     @typing.final
@@ -25,7 +25,7 @@ class Expr[T](ABC):
             TypeError: If the output type does not match signature.
 
         Returns:
-            T: The result yielded from the user defined ``_eager`` function.
+            T: The result yielded from the user defined `_eager` function.
         """
 
         result = self._compute()
@@ -40,19 +40,19 @@ class Expr[T](ABC):
 
     @abc.abstractmethod
     def _compute(self) -> T:
-        "Implementation of ``compute``."
+        "Implementation of `compute`."
 
         ...
 
     @property
     def return_type(self) -> type[T]:
-        "The return type of ``compute``."
+        "The return type of `compute`."
 
         return self._return_type()
 
     @abc.abstractmethod
     def _return_type(self) -> type[T]:
-        "The implementation of ``return_type``."
+        "The implementation of `return_type`."
 
         ...
 
@@ -86,6 +86,6 @@ class Expr[T](ABC):
 
     @property
     def argc(self) -> int:
-        "``len(inputs)`` must be equal to ``argc``."
+        "`len(inputs)` must be equal to `argc`."
 
         return len(self.inputs)

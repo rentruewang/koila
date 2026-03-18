@@ -19,7 +19,7 @@ __all__ = [
 
 class IndexPlan(ABC):
     """
-    `IndexPlan` is the dynamic feature we would want to retrieve from an ``Index``.
+    `IndexPlan` is the dynamic feature we would want to retrieve from an `Index`.
     """
 
     @abc.abstractmethod

@@ -28,7 +28,7 @@ type AttrTermRhs = AttrTerm | Attr | Tensor | int | float | bool
 @dcls.dataclass(frozen=True)
 class Attr:
     """
-    The "type' for a ``Tensor``, describing everything we want to know about it.
+    The "type' for a `Tensor`, describing everything we want to know about it.
     """
 
     device: Device
@@ -71,7 +71,7 @@ class Attr:
 
     @staticmethod
     def parse(device: DeviceLike, dtype: DTypeLike, shape: ShapeLike) -> Attr:
-        "Alias for ``attr`` s.t. you don't need to import it."
+        "Alias for `attr` s.t. you don't need to import it."
         return attr(device=device, dtype=dtype, shape=shape)
 
     @staticmethod
@@ -85,12 +85,12 @@ class Attr:
 
 def attr(device: DeviceLike, dtype: DTypeLike, shape: ShapeLike) -> Attr:
     """
-    The convenient constructor for ``Attr``.
+    The convenient constructor for `Attr`.
 
     Args:
-        device: Things that can be converted to ``Device``.
-        dtype: Things that can be converted to ``DType``.
-        shape: Things that can be converted to ``Shape``.
+        device: Things that can be converted to `Device`.
+        dtype: Things that can be converted to `DType`.
+        shape: Things that can be converted to `Shape`.
 
     Returns:
         An attribute instance.

@@ -31,10 +31,10 @@ _is_list_of_int = _typing.is_list_of(int)
 @dcls.dataclass(frozen=True)
 class Shape(Sequence[int]):
     """
-    ``Shape`` represents a regular (non-jagged) array's dimensions,
-    must be a ``tuple`` like object, and ``tuple`` would be used on it.
+    `Shape` represents a regular (non-jagged) array's dimensions,
+    must be a `tuple` like object, and `tuple` would be used on it.
 
-    Right now, it represents the shape of a ``Tensor`` **outside** the batch dimension.
+    Right now, it represents the shape of a `Tensor` **outside** the batch dimension.
     """
 
     dims: tuple[int, ...] = ()
@@ -69,7 +69,7 @@ class Shape(Sequence[int]):
         if isinstance(other, Size):
             return other == self.dims
 
-        # Do the numpy check first as ``isinstance`` is cheaper than the following ones.
+        # Do the numpy check first as `isinstance` is cheaper than the following ones.
         if isinstance(other, _NumpyNDArray):
             arr = np.array(self)
             return arr.ndim == other.ndim and np.all(arr == other).item()
@@ -108,7 +108,7 @@ class Shape(Sequence[int]):
 
     def valid(self) -> bool:
         """
-        Check if the shape is a valid ``Shape``.
+        Check if the shape is a valid `Shape`.
         """
 
         LOGGER.debug("Checking if %s is a `Shape`", self)
@@ -163,12 +163,12 @@ class Shape(Sequence[int]):
 
     @staticmethod
     def parse(*dims):
-        "Alias to the ``shape`` function so you won't need to import it."
+        "Alias to the `shape` function so you won't need to import it."
         return shape(*dims)
 
 
 type ShapeLike = int | Iterable[int] | Shape
-"Types convertible to ``Shape``s. Note that ``int`` can be converted as well."
+"Types convertible to `Shape`s. Note that `int` can be converted as well."
 
 
 @typing.overload
@@ -181,21 +181,21 @@ def shape(dim: ShapeLike, /) -> Shape: ...
 
 def shape(*dims) -> Shape:
     """
-    Convenience constructor for ``Shape``.
+    Convenience constructor for `Shape`.
 
     Takes either of the following signature:
 
-    1. ``shape(*dims)``. Here dims must be integers.
-    2. ``shape(iterable)``. Here dims must be iterable. No additional args.
-    3. ``shape(Shape)``. Returns it by reference.
+    1. `shape(*dims)`. Here dims must be integers.
+    2. `shape(iterable)`. Here dims must be iterable. No additional args.
+    3. `shape(Shape)`. Returns it by reference.
     """
 
     try:
-        # ``shape(*int)``.
+        # `shape(*int)`.
         if _is_tuple_of_int(dims):
             return _shape(dims)
 
-        # ``shape(iterable)``.
+        # `shape(iterable)`.
         elif len(dims) == 1:
             return _shape(dims[0])
 
@@ -205,7 +205,7 @@ def shape(*dims) -> Shape:
 
 
 def _shape(dims) -> Shape:
-    "Try converting dims to ``Shape``, raise ``ValueError`` on failure."
+    "Try converting dims to `Shape`, raise `ValueError` on failure."
     if isinstance(dims, Shape):
         return dims
 

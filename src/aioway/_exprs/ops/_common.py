@@ -16,7 +16,7 @@ LOGGER = _logging.get_logger(__name__)
 
 @typing.dataclass_transform(frozen_default=True)
 def lark_transformer_dcls(cls):
-    "Make a class dataclass, and wrap in ``v_args``."
+    "Make a class dataclass, and wrap in `lark.v_args`."
     cls = dcls.dataclass(frozen=True)(cls)
     cls = lark.v_args(inline=True)(cls)
     assert isinstance(cls, type), type(cls)

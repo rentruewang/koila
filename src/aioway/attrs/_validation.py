@@ -1,6 +1,6 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-"Validation of data (``TensorDict``) against schema (``AttrSet``)."
+"Validation of data (`TensorDict`) against schema (`AttrSet`)."
 
 import numpy as np
 from tensordict import TensorDict
@@ -21,7 +21,7 @@ LOGGER = _logging.get_logger(__name__)
 
 def validate_schema(attrs: AttrSet, data: TensorDict) -> None:
     """
-    Validate ``data`` against ``attrs``.
+    Validate `data` against `attrs`.
 
     Currently it loops over all the keys and attributes, which may be slow.
 
@@ -44,9 +44,9 @@ def validate_schema(attrs: AttrSet, data: TensorDict) -> None:
 
 def validate_attr(attr: Attr, tensor: Tensor) -> None:
     """
-    Validate ``tensor`` against ``attr``.
+    Validate `tensor` against `attr`.
 
-    Only check if ``tensor`` has the exact same dtype, shape, device as ``attr``.
+    Only check if `tensor` has the exact same dtype, shape, device as `attr`.
     """
 
     validate_shape_matches(shape=attr.shape, tensor=tensor)
@@ -72,7 +72,7 @@ def _validate_shape_matches(shape: Shape, tensor: Tensor) -> None:
     if len(left) != len(right):
         raise ValueError
 
-    # If < 0, matches anything, if >= 0, matches ``tensor.shape``.
+    # If < 0, matches anything, if >= 0, matches `tensor.shape`.
     if np.any((left != right) & (left >= 0)):
         raise ValueError
 

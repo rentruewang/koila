@@ -49,10 +49,10 @@ class UFuncSymColExpr1(ColSymExpr, ABC):
 @_common.symbol_dataclass
 class UFuncSymColExpr2(ColSymExpr, ABC):
     left: ColSymExpr
-    "The lhs of the expression. Must be ``ColSymExpr`` because it corresponds to ``self``."
+    "The lhs of the expression. Must be `ColSymExpr` because it corresponds to `self`."
 
     right: ColSymExpr | int | float | bool
-    "The rhs of the expression. Can be either ``ColSymExpr`` or primitive types."
+    "The rhs of the expression. Can be either `ColSymExpr` or primitive types."
 
     @typing.override
     def _compute(self) -> str:

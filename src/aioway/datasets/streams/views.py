@@ -1,6 +1,6 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-"``StreamColumn``s are a column of ``Stream``."
+"`StreamColumn`s are a column of `Stream`."
 
 import dataclasses as dcls
 import typing
@@ -19,7 +19,7 @@ __all__ = ["StreamColumnView", "StreamSelectView"]
 class StreamColumnView(Iterator[Vector], DatasetColumnView[Stream]):
     """
     A column reference (on a stream).
-    Performs ``__next__`` and yield ``Vector``s.
+    Performs `__next__` and yield `Vector`s.
     """
 
     def __iter__(self) -> Self:
@@ -37,7 +37,7 @@ class StreamColumnView(Iterator[Vector], DatasetColumnView[Stream]):
 @dcls.dataclass(frozen=True)
 class StreamSelectView(DatasetSelectView[Stream], Stream):
     """
-    The view generated when calling ``Stream.select``.
+    The view generated when calling `Stream.select`.
     """
 
     COLUMN_TYPE = StreamColumnView

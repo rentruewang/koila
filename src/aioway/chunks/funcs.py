@@ -1,6 +1,6 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-"Some additional functions on ``TensorDict``s."
+"Some additional functions on `TensorDict`s."
 
 import torch
 from tensordict import TensorDict
@@ -13,8 +13,8 @@ LOGGER = _logging.get_logger(__name__)
 
 def to_tensor(td: TensorDict) -> Tensor:
     """
-    Convert a ``TensorDict`` to a ``Tensor``, by treating the dict as a table.
-    Respects the ``.values()`` orders of ``TensorDict``s.
+    Convert a `TensorDict` to a `Tensor`, by treating the dict as a table.
+    Respects the `.values()` orders of `TensorDict`s.
     """
 
     columns: list[Tensor] = []

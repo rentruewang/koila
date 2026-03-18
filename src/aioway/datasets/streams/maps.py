@@ -1,6 +1,6 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-"The ``Stream``s that apply a transformation on the input ``Stream``."
+"The `Stream`s that apply a transformation on the input `Stream`."
 
 import abc
 import dataclasses as dcls
@@ -28,18 +28,18 @@ __all__ = [
 @dcls.dataclass(frozen=True)
 class MapStream(Stream, ABC):
     """
-    The shared base class for all the ``map`` like ``Stream``s,
+    The shared base class for all the `map` like `Stream`s,
     which share the trait of::
 
-        #. Having 1 child, named ``source``.
-        #. Calls ``next`` on its ``source`` once per ``next``.
+        #. Having 1 child, named `source`.
+        #. Calls `next` on its `source` once per `next`.
         #. Can be represented as a pure, 1 argument function.
         #. Input to output is a batch-to-batch function.
 
     These traits are shared in this base class.
 
     .. note::
-        Though having a 1-1 input to output batch count, this is considered to be a ``flat_map``,
+        Though having a 1-1 input to output batch count, this is considered to be a `flat_map`,
         where each input row can correspond to one or multiple or 0 rows, in the same minibatch.
     """
 
@@ -68,10 +68,10 @@ class MapStream(Stream, ABC):
         This method will define how each batch is processed.
 
         Args:
-            batch: The batch to handle. Will be a ``Chunk``.
+            batch: The batch to handle. Will be a `Chunk`.
 
         Returns:
-            Another ``Chunk``. Does not need to have the same ``__len__`` to the input.
+            Another `Chunk`. Does not need to have the same `__len__` to the input.
             See class docstring for more details.
         """
 
@@ -80,8 +80,8 @@ class MapStream(Stream, ABC):
     @typing.override
     @typing.final
     def _compute(self) -> Chunk:
-        # A ``map`` kind of ``Stream`` always calls ``next`` once on its source.
-        # May raise ``StopIteration`` here.
+        # A `map` kind of `Stream` always calls `next` once on its source.
+        # May raise `StopIteration` here.
         next_batch = next(self.source)
         return self._apply(next_batch)
 
@@ -94,7 +94,7 @@ class MapStream(Stream, ABC):
 @dcls.dataclass(frozen=True)
 class ApplyStream(MapStream):
     """
-    A ``Stream`` that you can customize what the ``__next__`` function do.
+    A `Stream` that you can customize what the `__next__` function do.
 
     The full loop would be something like:
 
@@ -106,7 +106,7 @@ class ApplyStream(MapStream):
 
     apply: Callable[[Chunk], Chunk]
     """
-    Compute the output of ``__next__`` based on the input.
+    Compute the output of `__next__` based on the input.
     """
 
     schema: Callable[[AttrSet], AttrSet]
@@ -124,10 +124,10 @@ class ApplyStream(MapStream):
 @dcls.dataclass(frozen=True)
 class FuncFilterStream(MapStream):
     """
-    A ``Stream`` that filteres on its inputs, based on a preducate function.
+    A `Stream` that filteres on its inputs, based on a preducate function.
 
     The input is being used to generate predicate,
-    and the output of predicate must be a boolean ``Tensor`` of the same length as the input.
+    and the output of predicate must be a boolean `Tensor` of the same length as the input.
 
     .. code-block:: python
 
@@ -137,7 +137,7 @@ class FuncFilterStream(MapStream):
 
     predicate: Callable[[Chunk], Tensor]
     """
-    A function of ``Chunk -> Tensor``.
+    A function of `Chunk -> Tensor`.
     """
 
     @typing.override
@@ -158,7 +158,7 @@ class FuncFilterStream(MapStream):
 @dcls.dataclass(frozen=True)
 class ProjectStream(MapStream):
     """
-    Projection of the input table. The ``subset`` should be a subset of the input columns.
+    Projection of the input table. The `subset` should be a subset of the input columns.
     """
 
     subset: list[str] = dcls.field(default_factory=list)

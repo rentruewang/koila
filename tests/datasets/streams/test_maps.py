@@ -29,7 +29,7 @@ class SaveLastState(StreamState):
 
 @dcls.dataclass(frozen=True)
 class SaveLastMapStream(MapStream):
-    "``Stream`` that saves the last ``__next__`` call."
+    "`Stream` that saves the last `__next__` call."
 
     state: SaveLastState = dcls.field(default_factory=SaveLastState)
 
@@ -56,7 +56,7 @@ def save_last(table_stream):
 
 @pytest.fixture
 def map_stream(request, save_last):
-    "Indirect fixture to create ``MapStream``s based on a builder function."
+    "Indirect fixture to create `MapStream`s based on a builder function."
 
     builder: Callable[[Stream], MapStream] = request.param
 

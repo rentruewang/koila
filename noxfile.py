@@ -10,13 +10,13 @@ from nox import Session
 
 @nox.session
 def publish(session: Session):
-    "Nox ``publish`` command. Calls ``pdm publish``."
+    "Nox `publish` command. Calls `pdm publish`."
     commands(session).publish()
 
 
 @nox.session
 def build(session: Session):
-    "Nox ``build`` command. Calls ``pdm build``."
+    "Nox `build` command. Calls `pdm build`."
     commands(session).build()
 
 
@@ -30,13 +30,13 @@ def pre_commit(session: Session):
 
 @nox.session
 def testing(session: Session):
-    "Nox ``testing`` command. Calls ``pytest`` command. Runs in multiple python versions."
+    "Nox `testing` command. Calls `pytest` command. Runs in multiple python versions (if supported)."
     commands(session).test()
 
 
 @nox.session
 def formatting(session: Session):
-    "Nox ``formatting`` command. Calls ``autoflake``, ``isort``, ``black``, in that order."
+    "Nox `formatting` command. Calls `autoflake`, `isort`, `black`, in that order."
     autoflake(session)
     isort(session)
     black(session)
@@ -44,49 +44,49 @@ def formatting(session: Session):
 
 @nox.session
 def autoflake(session: Session):
-    "Nox ``autoflake`` command. Calls ``autoflake`` command."
+    "Nox `autoflake` command. Calls `autoflake` command."
     commands(session).autoflake()
 
 
 @nox.session
 def isort(session: Session):
-    "Nox ``isort`` command. Calls ``isort`` command."
+    "Nox `isort` command. Calls `isort` command."
     commands(session).isort()
 
 
 @nox.session
 def black(session: Session):
-    "Nox ``black`` command. Calls ``black`` command."
+    "Nox `black` command. Calls `black` command."
     commands(session).black()
 
 
 @nox.session
 def mypy(session: Session):
-    "Nox ``mypy`` command. Calls ``mypy`` command."
+    "Nox `mypy` command. Calls `mypy` command."
     commands(session).mypy()
 
 
 @nox.session
 def typing(session: Session):
-    "Nox ``typing`` command. Calls ``mypy`` command."
+    "Nox `typing` command. Calls `mypy` command."
     mypy(session)
 
 
 @functools.cache
 def github(session: Session):
-    "Global singleton of ``github``."
+    "Global singleton for github."
     return _Github(session)
 
 
 @functools.cache
 def pdm(session: Session):
-    "Global singleton of ``pdm``."
+    "Global singleton for pdm."
     return _Pdm(session)
 
 
 @functools.cache
 def commands(session: Session):
-    "Global singleton of ``commands``."
+    "Global singleton for commands."
     return _Commands(session)
 
 
@@ -188,31 +188,31 @@ class _Commands:
         github(self.session).setup()
 
     def build(self):
-        "``pdm build`` command."
+        "`pdm build` command."
         self.pdm.build()
 
     def publish(self):
-        "``pdm publish`` command."
+        "`pdm publish` command."
         self.pdm.publish()
 
     def test(self):
-        "``pytest`` command."
+        "`pytest` command."
         self.pdm.run("pytest")
 
     def autoflake(self):
-        "``autoflake`` command."
+        "`autoflake` command."
         self.pdm.run("autoflake", ".")
 
     def isort(self):
-        "``isort`` command."
+        "`isort` command."
         self.pdm.run("isort", ".")
 
     def black(self):
-        "``black`` command."
+        "`black` command."
         self.pdm.run("black", ".")
 
     def mypy(self):
-        "``mypy`` command."
+        "`mypy` command."
         self.pdm.run("mypy", "src")
 
     @property

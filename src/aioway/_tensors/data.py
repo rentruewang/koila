@@ -56,7 +56,7 @@ class _SourceExpr[T: Tensor | TensorDict]:
 
 @_common.expr_dcls
 class SourceTensorDictExpr(_SourceExpr[TensorDict], TensorDictExpr):
-    "The source expression for ``TensorDict``."
+    "The source expression for `TensorDict`."
 
     _DATA_TYPE = TensorDict
 
@@ -66,7 +66,7 @@ class SourceTensorDictExpr(_SourceExpr[TensorDict], TensorDictExpr):
 
 @_common.expr_dcls
 class SourceTensorExpr(_SourceExpr[Tensor], TensorExpr):
-    "The source expression for ``Tensor``."
+    "The source expression for `Tensor`."
 
     _DATA_TYPE = Tensor
 

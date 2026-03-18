@@ -24,7 +24,7 @@ type VectorExprRhs = VectorExpr | VectorRhs
 @dcls.dataclass(frozen=True)
 class VectorExpr(Expr[Vector]):
     """
-    The expression type for ``Vector``.
+    The expression type for `Vector`.
     """
 
     tensor: TensorExpr

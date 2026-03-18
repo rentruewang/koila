@@ -1,6 +1,6 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-"``Vector`` is a homogenious array of values."
+"`Vector` is a homogenious array of values."
 
 import operator
 import typing
@@ -26,7 +26,7 @@ type VectorRhs = Vector | Tensor | int | float | bool
 
 class Vector:
     """
-    A ``Vector`` is a ``Tensor`` plus its ``Attr``.
+    A `Vector` is a `Tensor` plus its `Attr`.
     """
 
     __match_args__ = "data", "attr"
@@ -36,7 +36,7 @@ class Vector:
         _validation.validate_attr(attr=attr, tensor=data)
 
         self._attr = attr
-        "The attribute that the ``Tensor`` must satisfy."
+        "The attribute that the `Tensor` must satisfy."
 
         self._data = data
         "The underlying data."
@@ -125,11 +125,11 @@ class Vector:
         raise NotImplementedError
 
     def torch(self) -> Tensor:
-        "Get the ``Tensor`` data that this ``Vector`` contains."
+        "Get the `Tensor` data that this `Vector` contains."
         return self._data
 
     def typeof(self) -> Attr:
-        "Get the type information ``Attr`` of the ``Tensor`` that this ``Vector`` represents."
+        "Get the type information `Attr` of the `Tensor` that this `Vector` represents."
         return self._attr
 
     def cpu(self):

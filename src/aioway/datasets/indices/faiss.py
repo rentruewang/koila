@@ -18,7 +18,7 @@ __all__ = ["FaissIndex"]
 @dcls.dataclass(frozen=True)
 class FaissIndex(Index):
     """
-    The ``Index`` backed by the ``faiss`` library.
+    The `Index` backed by the `faiss` library.
     """
 
     index: FaissIdx

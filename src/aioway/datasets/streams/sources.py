@@ -1,6 +1,6 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-"The ``Stream`` that records past histories and supports random access."
+"The `Stream` that records past histories and supports random access."
 
 import abc
 import dataclasses as dcls
@@ -34,12 +34,12 @@ LOGGER = _logging.get_logger(__name__)
 @dcls.dataclass(frozen=True)
 class BoundedStream(Stream, ABC):
     """
-    A stream with ``__len__`` and ``__getitem__``.
+    A stream with `__len__` and `__getitem__`.
     """
 
     @abc.abstractmethod
     def __len__(self) -> int:
-        "The number of batches saved in the current ``Stream``."
+        "The number of batches saved in the current `Stream`."
 
         ...
 
@@ -61,7 +61,7 @@ class BoundedStream(Stream, ABC):
             idx: An integer. Must be in the range `[-len(self), len(self))`.
 
         Returns:
-            The ``Chunk`` batch.
+            The `Chunk` batch.
         """
 
 
@@ -75,7 +75,7 @@ class CacheStream(BoundedStream):
     "The input stream."
 
     saved: list[Chunk] = dcls.field(default_factory=list)
-    "The cache for the input ``Stream``."
+    "The cache for the input `Stream`."
 
     @typing.override
     def __iter__(self) -> Self:
@@ -102,14 +102,14 @@ class CacheStream(BoundedStream):
                 "Invalid idx. Not synced properly with stream or cache."
             )
 
-        # Try to get from ``self.saved`` first.
+        # Try to get from `self.saved` first.
         if self.idx < len(self):
             return self[self.idx]
 
         # Now all the previous ones still must all have been saved.
         assert self.idx == len(self), f"{self.idx=} for {len(self)=}"
 
-        # This shall raise ``StopIteration`` after done.
+        # This shall raise `StopIteration` after done.
         # This may be fragile.
         item = next(self.stream)
         self.saved.append(item)
@@ -132,7 +132,7 @@ class CacheStream(BoundedStream):
 
 @dcls.dataclass(frozen=True)
 class ListStream(BoundedStream):
-    "A ``Stream`` backed by a list of ``TensorDict``."
+    "A `Stream` backed by a list of `TensorDict`."
 
     sequence: Sequence[Chunk]
     "List of chunks."
@@ -180,14 +180,14 @@ class ListStream(BoundedStream):
 @dcls.dataclass(frozen=True)
 class FrameStreamLoader:
     """
-    The optoins for ``DataLoader`` on ``Frame`` in ``FrameStream``.
+    The optoins for `DataLoader` on `Frame` in `FrameStream`.
     """
 
     batch_size: int = 1
     "The batch size of individual batches."
 
     drop_last: bool = False
-    "Whether to drop the last batch, which may have a different ``batch_size``."
+    "Whether to drop the last batch, which may have a different `batch_size`."
 
     shuffle: bool = False
     "To shuffle or not."
@@ -199,15 +199,15 @@ class FrameStreamLoader:
 @dcls.dataclass(frozen=True)
 class FrameStream(Stream):
     """
-    A ``Stream`` backed by a ``Frame``.
+    A `Stream` backed by a `Frame`.
     """
 
     frame: Frame
-    "The underlying ``Frame``."
+    "The underlying `Frame`."
 
     options: FrameStreamLoader
     """
-    The options passed directly to ``DataLoader``.
+    The options passed directly to `DataLoader`.
     """
 
     @typing.override
@@ -220,7 +220,7 @@ class FrameStream(Stream):
     @functools.cached_property
     @typing.no_type_check
     def _dataloader(self) -> DataLoader:
-        # Note that ``__dict__`` of a dataclass is just the custom fields.
+        # Note that `__dict__` of a dataclass is just the custom fields.
         return DataLoader(
             self.frame,
             **self.options.__dict__,

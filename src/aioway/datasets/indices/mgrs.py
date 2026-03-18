@@ -46,13 +46,13 @@ class _ColTypeIndex(NamedTuple):
 @dcls.dataclass(frozen=True)
 class IndexManager(Mapping[MultiCol, MultiPlanIndex]):
     """
-    The ``IndexManager`` class is acts as a dictionary,
+    The `IndexManager` class is acts as a dictionary,
     providing some additional utility to make the API easy to use.
     """
 
     frame: Frame
     """
-    The framem for which the ``IndexManager`` manages indices.
+    The framem for which the `IndexManager` manages indices.
     """
 
     indices: list[_ColTypeIndex] = dcls.field(default_factory=list, init=False)

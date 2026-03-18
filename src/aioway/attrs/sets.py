@@ -41,7 +41,7 @@ class _AttrItem[T](NamedTuple):
 @dcls.dataclass(frozen=True, repr=False)
 class _AttrSetBase[T](Table[T], Mapping[str, T]):
     """
-    A set of attributes. Representing the schema in a ``Table``.
+    A set of attributes. Representing the schema in a `TensorDict`.
 
     Right now the columns are in sorted order, but this is not guarenteed.
     Most likely will change in the future.
@@ -49,7 +49,7 @@ class _AttrSetBase[T](Table[T], Mapping[str, T]):
 
     attrs: tuple[_AttrItem[T], ...] = ()
     """
-    The data backing the ``AttrSet``. Must be sorted.
+    The data backing the `AttrSet`. Must be sorted.
     """
 
     def __post_init__(self) -> None:
@@ -77,7 +77,7 @@ class _AttrSetBase[T](Table[T], Mapping[str, T]):
 
     @typing.override
     def column(self, key: str, /) -> T:
-        # Using the ``find`` function from ``AttrSetKeysView``, to be DRY.
+        # Using the `find` function from `AttrSetKeysView`, to be DRY.
         if (idx := self.keys().find(key)) is None:
             raise KeyError(key)
 
@@ -140,7 +140,7 @@ class ShapeSet(_AttrSetBase[Shape]):
 
 class AttrSet(_AttrSetBase[Attr]):
     """
-    The collection of ``Attr``s. This is the data type for a ``TensorDict``.
+    The collection of `Attr`s. This is the data type for a `TensorDict`.
     """
 
     @typing.overload
@@ -205,7 +205,7 @@ class AttrSet(_AttrSetBase[Attr]):
         dtypes: Sequence[DType],
         devices: Sequence[Device],
     ) -> Self:
-        "Create an ``AttrSet`` from a set of seuqences of attributes of same length."
+        "Create an `AttrSet` from a set of seuqences of attributes of same length."
 
         if not (len(names) == len(shapes) == len(dtypes) == len(devices)):
             raise ValueError(
@@ -224,7 +224,7 @@ class AttrSet(_AttrSetBase[Attr]):
     def from_sets(
         cls, *, shapes: ShapeSet, dtypes: DTypeSet, devices: DeviceSet
     ) -> Self:
-        "Create an ``AttrSet`` from ``*Set`` types. Keys should match."
+        "Create an `AttrSet` from `*Set` types. Keys should match."
 
         shapes_keys = shapes.keys()
         dtypes_keys = dtypes.keys()
@@ -276,7 +276,7 @@ class _AttrKeysView(KeysView[str]):
         try:
             rhs_set = set(rhs)
 
-        # If rhs does not have ``__iter__``, ``TypeError`` would be raised.
+        # If rhs does not have `__iter__`, `TypeError` would be raised.
         except TypeError:
             return False
 
@@ -288,7 +288,7 @@ class _AttrKeysView(KeysView[str]):
 
     def find(self, key: str) -> int | None:
         """
-        Search the ``key`` in the keys.
+        Search the `key` in the keys.
         If found, return the index. If not found, return None.
         """
 

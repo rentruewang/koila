@@ -160,7 +160,7 @@ def test_join_equal_as_original(binary_stream, lhs_stream, rhs_stream):
     assert len(results), "The binary stream is empty."
     answer_items = Chunk.cat(results)["i1d"]
 
-    # Do it at once, using ``ListStream`` as it yields everything in 1 batch.
+    # Do it at once, using `ListStream` as it yields everything in 1 batch.
     ground_truth = Chunk.cat(
         list(
             NestedLoopJoinStream(

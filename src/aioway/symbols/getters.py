@@ -17,7 +17,7 @@ __all__ = ["SourceExpr", "SelectExpr", "GetItemExpr"]
 @_common.symbol_dataclass
 class SourceExpr(TableSymExpr):
     name: str
-    "The table's name. Matches the table names given in the ``subs`` method."
+    "The table's name. Matches the table names given in the `subs` method."
 
     columns: Sequence[str]
     "The columns in the table."
@@ -55,7 +55,7 @@ class SelectExpr(TableSymExpr):
 
 @_common.symbol_dataclass
 class GetItemExpr(ColSymExpr):
-    "Perform the ``__getitem__`` operation. Select one of the keys."
+    "Perform the `__getitem__` operation. Select one of the keys."
 
     table: TableSymExpr
     """

@@ -23,7 +23,7 @@ class Device:
     __match_args__ = ("device",)
 
     def __init__(self, device: str | TorchDevice) -> None:
-        # On top of only needing to store ``torch.device``,
+        # On top of only needing to store `torch.device`,
         # it also does a check to ensure that if a string is passed,
         # the device is valid, and must follow the "device[:index]" format.
         try:
@@ -45,7 +45,7 @@ class Device:
             case Device(device):
                 return self._device == device
             case str():
-                # Instead of converting ``other`` with ``torch.device``,
+                # Instead of converting `other` with `torch.device`,
                 # which may fail, compare the string directly.
                 return str(self._device) == other
 
@@ -69,16 +69,16 @@ class Device:
 
     @staticmethod
     def parse(item: DeviceLike) -> Device:
-        "Alias to the ``device`` function so you don't need to import."
+        "Alias to the `device` function so you don't need to import."
         return device(item)
 
 
 type DeviceLike = str | TorchDevice | Device
-"Types convertible to a ``Device``."
+"Types convertible to a `Device`."
 
 
 def device(device: DeviceLike, /) -> Device:
-    "The convenient wrapper to create a ``Device`` from compatible types."
+    "The convenient wrapper to create a `Device` from compatible types."
 
     match device:
         case Device():

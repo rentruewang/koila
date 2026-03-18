@@ -1,6 +1,6 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-"The ``Frame`` interface."
+"The `Frame` interface."
 
 import abc
 import dataclasses as dcls
@@ -27,24 +27,24 @@ type IntArray = NDArray[np.int_]
 "Integer numpy array."
 
 type FrameBatchIndex = slice | list[int] | IntArray
-"The types that can be used for index accessing on ``Frame``s."
+"The types that can be used for index accessing on `Frame`s."
 
 
 @dcls.dataclass(frozen=True)
 class Frame(Dataset, ABC):
     """
-    ``Frame`` represents a set of heterogenious data stored in memory,
-    it is one of the main physical abstractions in ``aioway`` to represent eager computation.
+    `Frame` represents a set of heterogenious data stored in memory,
+    it is one of the main physical abstractions in `aioway` to represent eager computation.
 
-    Think of it as a normal ``Sequence`` of ``Chunk``,
+    Think of it as a normal `Sequence` of `Chunk`,
     where computation happens eagerly, imperatively, and the result is stored in memory.
 
-    Each ``Chunk`` retrieved from ``Frame`` is a minibatch of data.
+    Each `Chunk` retrieved from `Frame` is a minibatch of data.
 
-    Similar to ``Dataset``, but only allows retrieving a batch at a time.
+    Similar to `Dataset`, but only allows retrieving a batch at a time.
     To get a single item, retrieve a batch of size 1.
 
-    For simplicity of API, this class does not support ``__getitem__(int)``,
+    For simplicity of API, this class does not support `__getitem__(int)`,
     as that is not needed because all index access should be batched (slice, arrays),
     and unecessarily makes implementation duplicate.
     """
@@ -67,19 +67,19 @@ class Frame(Dataset, ABC):
     @typing.no_type_check
     def __getitem__(self, idx, /):
         """
-        Get individual items from the current ``Frame``.
+        Get individual items from the current `Frame`.
 
         Args:
             idx:
-                Index to the current ``Frame``.
-                If it is a ``str`` or ``list[str]``, it is considered a ``Table`` operation.
+                Index to the current `Frame`.
+                If it is a `str` or `list[str]`, it is considered a `Table` operation.
 
-                For indexing operations, index type must be a ``slice``,
-                or ``list[int]``, or a numpy array.
-                Should be in the range ``[-len, len)``.
+                For indexing operations, index type must be a `slice`,
+                or `list[int]`, or a numpy array.
+                Should be in the range `[-len, len)`.
 
         Returns:
-            A ``TensorDict`` representing a batch of data.
+            A `TensorDict` representing a batch of data.
         """
 
         if isinstance(idx, str):
@@ -91,9 +91,9 @@ class Frame(Dataset, ABC):
         if not _is_table_index(idx):
             raise IndexError(f"Index type {type(idx)=} is not supported.")
 
-        # If slice, convert to ``range(len(self))[idx]``.
+        # If slice, convert to `range(len(self))[idx]`.
         # This will be the same length as the output list,
-        # so it's ok that ``NDArray`` is less efficient than ``slice``.
+        # so it's ok that `NDArray` is less efficient than `slice`.
         it: range | list[int] | IntArray
         if isinstance(idx, slice):
             it = range(len(self))[idx]
@@ -121,7 +121,7 @@ class Frame(Dataset, ABC):
     @abc.abstractmethod
     def _getitem(self, idx: IntArray, /) -> Chunk:
         """
-        The implementation of ``__getitem__``.
+        The implementation of `__getitem__`.
 
         Args:
             idx: The index being passed in. A list of positive integers.
@@ -153,7 +153,7 @@ class Frame(Dataset, ABC):
 
 
 def _is_table_index(idx: Any) -> TypeIs[FrameBatchIndex]:
-    "Check if the ``idx`` passed in is a valid type."
+    "Check if the `idx` passed in is a valid type."
 
     # Check if it's a valid slice.
     if (
@@ -165,11 +165,11 @@ def _is_table_index(idx: Any) -> TypeIs[FrameBatchIndex]:
     ):
         return True
 
-    # Check if it's a ``list[int]``.
+    # Check if it's a `list[int]`.
     if isinstance(idx, list) and all(isinstance(i, int) for i in idx):
         return True
 
-    # Check if it's a ``NDArray[int]``.
+    # Check if it's a `NDArray[int]`.
     if isinstance(idx, NpArr) and np.isdtype(idx.dtype, "integral"):
         return True
 

@@ -1,6 +1,6 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-"``View``s are columns and projections of tables."
+"`View`s are columns and projections of tables."
 
 import dataclasses as dcls
 import typing
@@ -17,8 +17,8 @@ __all__ = ["FrameColumnView", "FrameSelectView"]
 @dcls.dataclass(frozen=True)
 class FrameColumnView(DatasetColumnView[Frame]):
     """
-    A column reference to a ``Frame``.
-    Performs ``__getitem__`` on a ``Frame``, then select the column.
+    A column reference to a `Frame`.
+    Performs `__getitem__` on a `Frame`, then select the column.
     """
 
     def __len__(self) -> int:
@@ -36,7 +36,7 @@ class FrameColumnView(DatasetColumnView[Frame]):
 @dcls.dataclass(frozen=True)
 class FrameSelectView(DatasetSelectView[Frame], Frame):
     """
-    A selection view on the ``Frame``.
+    A selection view on the `Frame`.
     """
 
     COLUMN_TYPE = FrameColumnView

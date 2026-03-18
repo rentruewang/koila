@@ -20,15 +20,15 @@ class Indexible[I](Protocol):
 
 class Table[C](ABC):
     """
-    A tabular type that acts like a table (can be ``Frame``, ``Stream``, ``Chunk`` etc).
+    A tabular type that acts like a table (can be `Frame`, `Stream`, `Chunk` etc).
 
-    A ``Table`` should support the following functions:
+    A `Table` should support the following functions:
 
-    1. ``column(key: str, /) -> C``.
+    1. `column(key: str, /) -> C`.
         Getting the individual column.
-    2. ``select(*keys: str) -> Self``.
-        Getting a couple of columns should return the same ``Table``.
-    3. ``keys() -> KeysView[str]``
+    2. `select(*keys: str) -> Self`.
+        Getting a couple of columns should return the same `Table`.
+    3. `keys() -> KeysView[str]`
     """
 
     @typing.overload
@@ -53,7 +53,7 @@ class Table[C](ABC):
     @abc.abstractmethod
     def keys(self) -> KeysView[str]:
         """
-        A ``KeysView`` object.
+        A `KeysView` object.
         """
 
         ...
@@ -61,10 +61,10 @@ class Table[C](ABC):
     @abc.abstractmethod
     def column(self, key: str, /) -> C:
         """
-        Get the column from the ``Tabular`` object.
-        A ``KeyError`` is raised if the column is not present.
+        Get the column from the `Tabular` object.
+        A `KeyError` is raised if the column is not present.
 
-        Essentially this is the ``Mapping.__getitem__`` method,
+        Essentially this is the `Mapping.__getitem__` method,
         but a normal method to simplify implementation.
 
         Args:
@@ -90,7 +90,7 @@ class Table[C](ABC):
 
     @typing.no_type_check
     def get(self, key, /, default):
-        "This is the ``Mapping.get`` method."
+        "This is the `Mapping.get` method."
 
         if key not in self.keys():
             return default
@@ -100,10 +100,10 @@ class Table[C](ABC):
     @abc.abstractmethod
     def select(self, *keys: str) -> Self:
         """
-        Select multiple columns from the ``Tabular`` object.
+        Select multiple columns from the `Tabular` object.
 
-        If a key is missing, a ``KeyError`` is raised.
+        If a key is missing, a `KeyError` is raised.
 
         Returns:
-            A ``Tabular`` that wraps the result.
+            A `Tabular` that wraps the result.
         """

@@ -1,6 +1,6 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-"The binary ``Stream``s that consumes 2 ``Stream``s."
+"The binary `Stream`s that consumes 2 `Stream`s."
 
 import dataclasses as dcls
 import typing
@@ -19,7 +19,7 @@ __all__ = ["ZipStream", "NestedLoopJoinStream"]
 @dcls.dataclass(frozen=True)
 class ZipStream(Stream):
     """
-    ``ZipStream`` is similar to what ``zip`` does.
+    `ZipStream` is similar to what `zip` does.
     """
 
     left: Stream
@@ -44,7 +44,7 @@ class ZipStream(Stream):
 
     @typing.override
     def _compute(self) -> Chunk:
-        # Either one of those may raise ``StopIteration``, at which point it is done.
+        # Either one of those may raise `StopIteration`, at which point it is done.
         left_batch = next(self.left)
         right_batch = next(self.right)
 
@@ -67,9 +67,9 @@ class NestedState(StreamState):
 class NestedLoopJoinStream(Stream):
     """
     This is a stream that combines 2 input streams in a nested-loop matter,
-    as in ``[[x, y] for x in left for y in right if x.key == y.key]``.
+    as in `[[x, y] for x in left for y in right if x.key == y.key]`.
 
-    The end result would be merged with ``tensordict.merge_tensordicts``.
+    The end result would be merged with `tensordict.merge_tensordicts`.
     """
 
     left: Stream
@@ -79,7 +79,7 @@ class NestedLoopJoinStream(Stream):
 
     right: CacheStream
     """
-    RHS is a ``Stream`` supporting index access, thus requiring materialization.
+    RHS is a `Stream` supporting index access, thus requiring materialization.
     """
 
     key: str
