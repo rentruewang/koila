@@ -21,7 +21,7 @@ LOGGER = _logging.get_logger(__name__)
 class TypeList:
     """
     The parameter list in signature. Here we only care about types.
-    This is useful to support type checking on ``Tensor`` related operations.
+    This is useful to support type checking on `Tensor` related operations.
     """
 
     def __init__(self, *types: type) -> None:

@@ -89,7 +89,7 @@ class OpSignExpr(Expr[OpSign]):
     """
     The signature expression.
 
-    The expression contains the full typing, when evaluated (``.compute()``),
+    The expression contains the full typing, when evaluated (`.compute()`),
     it would create signatures.
     """
 

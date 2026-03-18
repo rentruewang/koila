@@ -71,7 +71,7 @@ class ZipTensorDictExpr(TensorDictExpr):
 
 def _rename(td: TensorDict, **names: str) -> TensorDict:
     """
-    Rename the columns of the current ``Block``.
+    Rename the columns of the current `Block`.
     """
 
     LOGGER.debug("Renamed called with names=%s", names)
