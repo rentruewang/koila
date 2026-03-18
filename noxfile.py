@@ -30,7 +30,7 @@ def pre_commit(session: Session):
 
 @nox.session
 def testing(session: Session):
-    "Nox `testing` command. Calls `pytest` command. Runs in multiple python versions."
+    "Nox `testing` command. Calls `pytest` command. Runs in multiple python versions (if supported)."
     commands(session).test()
 
 
@@ -74,19 +74,19 @@ def typing(session: Session):
 
 @functools.cache
 def github(session: Session):
-    "Global singleton of `github`."
+    "Global singleton for github."
     return _Github(session)
 
 
 @functools.cache
 def pdm(session: Session):
-    "Global singleton of `pdm`."
+    "Global singleton for pdm."
     return _Pdm(session)
 
 
 @functools.cache
 def commands(session: Session):
-    "Global singleton of `commands`."
+    "Global singleton for commands."
     return _Commands(session)
 
 
