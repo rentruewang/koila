@@ -1,9 +1,9 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 """
-The package ``Stream``s live.
+The package `Stream`s live.
 
-``Stream``s are low level utilities that handle execution in ``aioway``.
+`Stream`s are low level utilities that handle execution in `aioway`.
 """
 
 from .joins import *

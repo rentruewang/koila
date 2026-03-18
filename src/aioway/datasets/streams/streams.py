@@ -1,6 +1,6 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-"The ``Stream`` interfaces live here."
+"The `Stream` interfaces live here."
 
 import abc
 import dataclasses as dcls
@@ -24,10 +24,10 @@ class StreamState:
     """
     The mutable stream state.
 
-    This is created because ``Stream`` subclasses from a frozen ``dataclass``,
-    so the stream state is created to manage mutable parts of the ``Stream``.
+    This is created because `Stream` subclasses from a frozen `dataclass`,
+    so the stream state is created to manage mutable parts of the `Stream`.
 
-    Subclasses of ``Stream`` should also subclass from ``StreamState``.
+    Subclasses of `Stream` should also subclass from `StreamState`.
     """
 
     idx: int = 0
@@ -39,7 +39,7 @@ class StreamState:
     @property
     def started(self) -> bool:
         """
-        Shortcut function to check if ``self.idx == 0``.
+        Shortcut function to check if `self.idx == 0`.
         """
 
         return self.idx != 0
@@ -48,10 +48,10 @@ class StreamState:
 @dcls.dataclass(frozen=True)
 class Stream(Expr[Chunk], Iterator[Chunk], Dataset, ABC):
     """
-    ``Stream`` produces a stream of batches of data, in the form of ``TensorDict``s,
-    everytime ``__next__`` is called on it, a ``TensorDict`` is yielded.
+    `Stream` produces a stream of batches of data, in the form of `TensorDict`s,
+    everytime `__next__` is called on it, a `TensorDict` is yielded.
 
-    ``Stream`` is a stateful operation, compared to the previous implementations,
+    `Stream` is a stateful operation, compared to the previous implementations,
     it is an external iterator, supporting state inspection, simplifying debugging.
     """
 
@@ -60,15 +60,15 @@ class Stream(Expr[Chunk], Iterator[Chunk], Dataset, ABC):
 
     __match_args__: ClassVar[tuple[str, ...]]
     """
-    A ``Stream`` should be able to be decomposed with ``match`` statements.
+    A `Stream` should be able to be decomposed with `match` statements.
     """
 
     @typing.override
     def __iter__(self) -> Self:
         """
-        ``__iter__`` allows ``Stream``s to be used in ``for`` loops.
+        `__iter__` allows `Stream`s to be used in `for` loops.
 
-        As it returns ``self``, re-use carefully.
+        As it returns `self`, re-use carefully.
         """
 
         return self
@@ -77,7 +77,7 @@ class Stream(Expr[Chunk], Iterator[Chunk], Dataset, ABC):
     @typing.override
     def __next__(self) -> Chunk:
         """
-        ``__next__`` allows ``Stream``s to be used in ``for`` loops.
+        `__next__` allows `Stream`s to be used in `for` loops.
         """
 
         if (result := self.compute()).attrs != self.attrs:
@@ -90,8 +90,8 @@ class Stream(Expr[Chunk], Iterator[Chunk], Dataset, ABC):
     @abc.abstractmethod
     def size(self) -> int:
         """
-        The length of the current ``Stream``.
-        Does not change when the ``Stream`` is being iterated over.
+        The length of the current `Stream`.
+        Does not change when the `Stream` is being iterated over.
         """
 
         ...
@@ -100,7 +100,7 @@ class Stream(Expr[Chunk], Iterator[Chunk], Dataset, ABC):
     @abc.abstractmethod
     def attrs(self) -> AttrSet:
         """
-        The schema for the current ``Stream``.
+        The schema for the current `Stream`.
         """
 
         ...
@@ -108,14 +108,14 @@ class Stream(Expr[Chunk], Iterator[Chunk], Dataset, ABC):
     @abc.abstractmethod
     def _compute(self) -> Chunk:
         """
-        Compute the next batch (a ``Chunk``).
+        Compute the next batch (a `Chunk`).
 
-        An exception raised here would be translated to ``StopIteration``.
+        An exception raised here would be translated to `StopIteration`.
 
         Note:
 
-            The name ``read`` is inspired by the original release of clickhouse.
-            I think this is a great name for a as a method on ``Stream`` to poll data,
+            The name `read` is inspired by the original release of clickhouse.
+            I think this is a great name for a as a method on `Stream` to poll data,
             giving it a natural feeling like how we normally work with files.
 
         """
@@ -125,8 +125,8 @@ class Stream(Expr[Chunk], Iterator[Chunk], Dataset, ABC):
     @abc.abstractmethod
     def _inputs(self) -> tuple[Stream, ...]:
         """
-        ``Stream``'s children, the dependent ``Stream``s that would also be evaluated
-        when calling ``__next__`` on the current ``Stream``.
+        `Stream`'s children, the dependent `Stream`s that would also be evaluated
+        when calling `__next__` on the current `Stream`.
         """
 
         ...
@@ -134,7 +134,7 @@ class Stream(Expr[Chunk], Iterator[Chunk], Dataset, ABC):
     @functools.cached_property
     def state(self) -> StreamState:
         """
-        The state of the stream. Should be a field, but a ``cached_property``,
+        The state of the stream. Should be a field, but a `cached_property`,
         because if it has a default value it would make subclassing difficult.
         """
         return StreamState()
@@ -150,7 +150,7 @@ class Stream(Expr[Chunk], Iterator[Chunk], Dataset, ABC):
     @property
     def started(self) -> bool:
         """
-        Shortcut function to check if ``self.idx == 0``.
+        Shortcut function to check if `self.idx == 0`.
         """
 
         return self.state.started

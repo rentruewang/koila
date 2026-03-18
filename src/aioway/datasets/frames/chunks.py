@@ -1,6 +1,6 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-"``Frame``s that produce data by slicing contiguous input records."
+"`Frame`s that produce data by slicing contiguous input records."
 
 import dataclasses as dcls
 import functools
@@ -21,13 +21,13 @@ __all__ = ["ChunkFrame", "ChunkListFrame"]
 @dcls.dataclass(frozen=True)
 class ChunkFrame(Frame):
     """
-    A ``Frame`` backed by a ``TensorDict`` (aka a batch in ``aioway``).
+    A `Frame` backed by a `TensorDict` (aka a batch in `aioway`).
     This means that it is non-distributed, and volatile.
     """
 
     data: Chunk
     """
-    The ``Chunk`` source.
+    The `Chunk` source.
     """
 
     @typing.override
@@ -48,15 +48,15 @@ class ChunkFrame(Frame):
 @dcls.dataclass(frozen=True)
 class ChunkListFrame(Frame):
     """
-    A ``Frame`` backed by a ``list[Chunk]`` (aka a batch in ``aioway``).
+    A `Frame` backed by a `list[Chunk]` (aka a batch in `aioway`).
     This means that it is non-distributed, and volatile.
     """
 
     chunks: list[Chunk] = dcls.field(default_factory=list)
     """
-    The ``list`` of ``Chunk``s.
+    The `list` of `Chunk`s.
     The data must all have the same keys and data types (#100),
-    but not necessarily the same ``batch_size``.
+    but not necessarily the same `batch_size`.
     """
 
     def __post_init__(self) -> None:
@@ -76,7 +76,7 @@ class ChunkListFrame(Frame):
 
     @typing.override
     def _getitem(self, idx: IntArray, /) -> Chunk:
-        # Which tensordict to use in ``self.tensordicts``.
+        # Which tensordict to use in `self.tensordicts`.
         td_idx: IntArray = np.searchsorted(self._cumsum_len, idx, side="right")
         assert td_idx.shape == idx.shape
 
@@ -87,7 +87,7 @@ class ChunkListFrame(Frame):
         # Index in partition = original index - elements in prior partitions.
         idx_in_part: IntArray = idx - prior_elements[td_idx]
 
-        # ``Chunk`` that each index would correspond to.
+        # `Chunk` that each index would correspond to.
         td_for_idx: list[Chunk] = [self.chunks[t] for t in td_idx]
 
         assert len(idx_in_part) == len(td_for_idx)

@@ -1,6 +1,6 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-"The shared utilities for ``Stream`` testing."
+"The shared utilities for `Stream` testing."
 
 import pytest
 
@@ -38,7 +38,7 @@ def concat_stream(concat_frame, batch_size):
 
 @pytest.fixture
 def joinable_frame(device, data_size):
-    "``Frame`` for joining on the RHS."
+    "`Frame` for joining on the RHS."
 
     block = fake.unionable_ok(size=data_size, device=device)
     return ChunkFrame(data=block)
@@ -46,7 +46,7 @@ def joinable_frame(device, data_size):
 
 @pytest.fixture
 def joinable_stream(joinable_frame, batch_size):
-    "``Stream`` for joining on the RHS."
+    "`Stream` for joining on the RHS."
     return FrameStream(
         frame=joinable_frame,
         options=FrameStreamLoader(batch_size=batch_size),

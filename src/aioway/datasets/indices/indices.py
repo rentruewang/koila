@@ -22,7 +22,7 @@ class IndexContext:
 
     frame: Frame
     """
-    The ``Frame`` to apply the index on.
+    The `Frame` to apply the index on.
     """
 
     columns: Sequence[str]
@@ -38,18 +38,18 @@ class IndexContext:
 @dcls.dataclass(frozen=True, eq=False)
 class Index(ABC):
     """
-    ``Index`` corresponds to different types of backends, e.g. ``faiss``, ``b-tree``,
-    and is responsible for routing to different ``Index`` types.
+    `Index` corresponds to different types of backends, e.g. `faiss`, `b-tree`,
+    and is responsible for routing to different `Index` types.
 
     Note:
-        ``Index`` currently is static. i.e. it does not support updating.
+        `Index` currently is static. i.e. it does not support updating.
         This is fine so long as most other constructs in the project
         are designed to be immutable, favoring creation over mutation.
     """
 
     ctx: IndexContext
     """
-    The context of the ``Index``.
+    The context of the `Index`.
     """
 
     def __call__(self, op: IndexPlan, value: ArrayLike) -> NDArray:
