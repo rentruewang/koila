@@ -1,6 +1,6 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-"``Dataset`` is base class for all datasets."
+"`Dataset` is base class for all datasets."
 
 import abc
 import dataclasses as dcls
@@ -18,13 +18,13 @@ __all__ = ["Dataset", "DatasetColumnView", "DatasetSelectView", "DatasetViewType
 
 class Dataset(Table, ABC):
     """
-    ``Dataset`` is a shared base class for dataset classes, ``Frame``s and ``Stream``s.
+    `Dataset` is a shared base class for dataset classes, `Frame`s and `Stream`s.
     """
 
     @property
     @abc.abstractmethod
     def attrs(self) -> AttrSet:
-        "All datasets have the metadta ``attrs`` present."
+        "All datasets have the metadta `attrs` present."
 
         ...
 
@@ -47,11 +47,11 @@ class Dataset(Table, ABC):
     @abc.abstractmethod
     def view_types(cls) -> DatasetViewTypes:
         """
-        The type used to construct ``.column``, ``.select`` views.
+        The type used to construct `.column`, `.select` views.
 
-        The reason this is not a ``ClassVar`` is purely technical,
-        because ``*SelectView``s often inherit from ``Self``,
-        making it a circular dependency if it were a ``ClassVar``.
+        The reason this is not a `ClassVar` is purely technical,
+        because `*SelectView`s often inherit from `Self`,
+        making it a circular dependency if it were a `ClassVar`.
         """
 
         ...
@@ -86,11 +86,11 @@ class DatasetColumnView[T: Dataset = Dataset](DatasetView[T], ABC):
 class DatasetSelectView[T: Dataset = Dataset](Dataset, DatasetView[T], ABC):
     """
     Perform a selection in the table.
-    This is a ``View``, which means creation is cheap, but you pay the price in runtime.
+    This is a `View`, which means creation is cheap, but you pay the price in runtime.
     """
 
     COLUMN_TYPE: ClassVar[type[DatasetColumnView[T]]]
-    "The column type associated with the current ``DatasetSelectView``."
+    "The column type associated with the current `DatasetSelectView`."
 
     cols: Sequence[str]
     "The columns to select. Should be in the original table."
@@ -125,10 +125,10 @@ class DatasetViewTypes[T: Dataset](NamedTuple):
     "The view types."
 
     column: type[DatasetColumnView[T]]
-    "The type used to construct ``.column`` views."
+    "The type used to construct `.column` views."
 
     select: type[DatasetSelectView[T]]
-    "The type used to construct ``.select`` views."
+    "The type used to construct `.select` views."
 
 
 def _assert_column_in_dataset(col: str, attrs: AttrSet) -> None:

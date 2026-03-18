@@ -30,7 +30,7 @@ type ChunkLike = Chunk | dict[str, Vector]
 @dcls.dataclass(frozen=True)
 class Chunk(Mapping[str, Vector]):
     """
-    A ``Chunk`` represents a batch of data, following a specific scheam.
+    A `Chunk` represents a batch of data, following a specific scheam.
 
     For now, it is immutable as implementing mutable interface is harder.
     This can change in the future.
@@ -40,7 +40,7 @@ class Chunk(Mapping[str, Vector]):
     "The underlying data."
 
     attrs: AttrSet
-    "The schema for the ``Chunk``."
+    "The schema for the `Chunk`."
 
     def __post_init__(self) -> None:
         _validation.validate_schema(self.attrs, self.data)
@@ -161,5 +161,5 @@ def _as_tensordict(data: TensorDictLike, /) -> TensorDict:
 
 @typing.no_type_check
 def _is_mapping_of_vector(obj) -> TypeGuard[dict[str, Vector]]:
-    # Wrapper function because ``mypy`` doesn't do well with abstract type guards.
+    # Wrapper function because `mypy` doesn't do well with abstract type guards.
     return _typing.is_dict_of_str_to(Vector)(obj)

@@ -1,6 +1,6 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-"The lazy version of ``Chunk``s."
+"The lazy version of `Chunk`s."
 
 import dataclasses as dcls
 import typing
@@ -30,7 +30,7 @@ __all__ = ["ChunkExpr"]
 @dcls.dataclass(frozen=True)
 class ChunkExpr(Expr[Chunk], Table[VectorExpr]):
     """
-    The expression type for ``Chunk``.
+    The expression type for `Chunk`.
     """
 
     tensordict: TensorDictExpr
@@ -67,7 +67,7 @@ class ChunkExpr(Expr[Chunk], Table[VectorExpr]):
         if isinstance(idx, Vector):
             return self.__getitem__(idx.data)
 
-        # Only supports ``Vector`` now, not ``VectorExpr``.
+        # Only supports `Vector` now, not `VectorExpr`.
         if isinstance(idx, VectorExpr):
             raise GitHubTicketFiled(
                 209, "ChunkExpr does not yet support expression keys."
