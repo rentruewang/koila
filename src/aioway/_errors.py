@@ -1,6 +1,6 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-"""User facing high level erros. Subclasses of ``AiowayError``."""
+"""User facing high level erros. Subclasses of `AiowayError`."""
 
 import contextlib as ctxl
 from types import ModuleType
@@ -15,8 +15,8 @@ __all__ = [
 
 class AiowayError(Exception):
     """
-    ``AiowayError`` is the error thrown by the ``aioway`` library.
-    This captures all the user facing errors that might be raised by ``aioway``.
+    `AiowayError` is the error thrown by the `aioway` library.
+    This captures all the user facing errors that might be raised by `aioway`.
     """
 
     @ctxl.contextmanager
@@ -28,7 +28,7 @@ class AiowayError(Exception):
         but keeping the original traceback for debugging purposes.
 
         This method exists because there is a no low level policy in exceptions,
-        all user facing exceptions must be subclasses of ``AiowayError``.
+        all user facing exceptions must be subclasses of `AiowayError`.
 
         This can provide a simple error handling to prevent crashes.
         """
@@ -47,8 +47,8 @@ class FrameworkUnexpected(AiowayError):
         Maybe track the usage of what functions automatically,
         by perhaps monkey patching?
 
-        E.g. we can do something like ``with trace(module): ...``,
-        where ``trace`` modifies the modules to do tracking.
+        E.g. we can do something like `with trace(module): ...`,
+        where `trace` modifies the modules to do tracking.
     """
 
     def __init__(self, module: ModuleType, *reasons: str) -> None:

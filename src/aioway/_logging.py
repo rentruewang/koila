@@ -53,7 +53,7 @@ type LoggingLevel = Literal[
 
 @dcls.dataclass(frozen=True)
 class Logger:
-    "The logger class for ``aioway``. Tries to mimic the API for ``logging.Logger``."
+    "The logger class for `aioway`. Tries to mimic the API for `logging.Logger`."
 
     module: str
     "The module name passed to the logger."
@@ -79,7 +79,7 @@ class Logger:
 
     def function(self, level: LoggingLevel, /):
         """
-        Logs an entire function according to the ``level`` given.
+        Logs an entire function according to the `level` given.
 
         Replaces the function with a closure that uses the module's logger for logging purposes.
         This means that the settings changes to the logging would reflect in the new function.
@@ -116,7 +116,7 @@ class Logger:
 
 
 def get_logger(module: str, /) -> Logger:
-    "A replacement for ``logging.getLogger``."
+    "A replacement for `logging.getLogger`."
 
     return Logger(module)
 
