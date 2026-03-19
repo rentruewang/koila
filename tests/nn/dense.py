@@ -2,10 +2,10 @@
 
 "The dense layers from `torch.nn`."
 
-from torch.nn import Linear as _Linear
-import dataclasses as dcls
 import functools
-from aioway.attrs import Attr
+
+from torch.nn import Linear as _Linear
+
 from aioway import _logging
 
 __all__ = ["Linear"]
