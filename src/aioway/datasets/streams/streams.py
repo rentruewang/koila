@@ -10,7 +10,7 @@ from abc import ABC
 from collections.abc import Iterator
 from typing import ClassVar, Self
 
-from aioway._exprs import Expr, OpSign
+from aioway._exprs import Expr
 from aioway.attrs import AttrSet
 from aioway.chunks import Chunk
 
@@ -54,9 +54,6 @@ class Stream(Expr[Chunk], Iterator[Chunk], Dataset, ABC):
     `Stream` is a stateful operation, compared to the previous implementations,
     it is an external iterator, supporting state inspection, simplifying debugging.
     """
-
-    _SIGNATURE: ClassVar[OpSign]
-    "The signature of the current class."
 
     __match_args__: ClassVar[tuple[str, ...]]
     """

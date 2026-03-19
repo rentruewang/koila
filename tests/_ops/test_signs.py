@@ -2,7 +2,7 @@
 
 import pytest
 
-from aioway._exprs import OpSign, TypeList
+from aioway._ops import OpSign, TypeList
 
 
 def _signature_str():

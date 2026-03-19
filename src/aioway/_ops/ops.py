@@ -8,8 +8,8 @@ from collections.abc import Callable
 from typing import Any
 
 from aioway import _logging
+from aioway._exprs import Expr
 
-from ..exprs import Expr
 from .signs import OpSign, TypeList
 
 __all__ = ["Op"]
