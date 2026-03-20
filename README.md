@@ -8,7 +8,7 @@ Conceptually, `aioway` works in a similar way, but instead of `Tensor` ops, `aio
 
 ## 🍰 Promised features
 
-- Simple and declarative.
+- Simple and declarative, yet reproducible.
 - Detects the tasks at hand, resource available, and select the best algorithms and models.
 - The models built from aioway would be white box (explanable).
 - Allows you to scale up the model size, and to different machines.
