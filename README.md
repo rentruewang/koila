@@ -27,6 +27,6 @@ We designed Aioway in a way such that instead of thinking about **how** to do ML
 
 ## 🤝 Contributing
 
-Constributing is of course welcome. Please see the [contributing guide](./CONTRIBUTING.md) and follow the [code of conduct](./CODE_OF_CONDUCT.md).
+Contributing is of course welcome. Please see the [contributing guide](./CONTRIBUTING.md) and follow the [code of conduct](./CODE_OF_CONDUCT.md).
 
 [koila]: https://github.com/rentruewang/aioway/tree/koila
