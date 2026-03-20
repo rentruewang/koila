@@ -25,4 +25,8 @@ In the recent years, machine learning's entry barrier has gotten higher, rather 
 
 We designed Aioway in a way such that instead of thinking about **how** to do ML, you specify **what** to do. Instead of focusing on what algorithms and models to use, Aioway allows you to focus on the use cases by taking into account the context of the problem, and perform compliation according to the data to ensure good performance. Automatically.
 
+## 🤝 Contributing
+
+Constributing is of course welcome. Please see the [contributing guide](./CONTRIBUTING.md) and follow the [code of conduct](./CODE_OF_CONDUCT.md).
+
 [koila]: https://github.com/rentruewang/aioway/tree/koila
