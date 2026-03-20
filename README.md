@@ -29,4 +29,11 @@ We designed Aioway in a way such that instead of thinking about **how** to do ML
 
 Contributing is of course welcome. Please see the [contributing guide](./CONTRIBUTING.md) and follow the [code of conduct](./CODE_OF_CONDUCT.md).
 
+## 👨‍👨‍👦‍👦 Contributors
+
+<a href="https://github.com/rentruewang/aioway/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=rentruewang/aioway" />
+</a>
+
+
 [koila]: https://github.com/rentruewang/aioway/tree/koila
