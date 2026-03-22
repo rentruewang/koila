@@ -66,11 +66,3 @@ class Linear:
             out_features=self._out_features,
             bias=self._bias,
         )
-
-    @property
-    def in_attrs(self):
-        raise NotImplementedError
-
-    @property
-    def out_attrs(self):
-        raise NotImplementedError
