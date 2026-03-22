@@ -46,6 +46,7 @@ class Linear:
         return self._model(data)
 
     def attr(self, input_attr: Attr) -> Attr:
+        # Right now using `NotImplemented` to describe whether or not this is OK.
         if input_attr.device != self._device:
             return NotImplemented
 
