@@ -10,7 +10,7 @@ from typing import Self
 from torch import Tensor
 
 from aioway import _logging
-from aioway._typing import AnyUFunc2, UFunc1
+from aioway._typing import AnyUFunc2, IntArray, UFunc1
 
 from ._terms import Term
 from .devices import Device, DeviceLike
@@ -116,72 +116,104 @@ class AttrTerm(Term[Attr]):
     @typing.no_type_check
     @LOGGER.function("DEBUG")
     def __invert__(self) -> Self:
-        return self.__op1(operator.invert)
+        return self.__ufunc_op1(operator.invert)
 
     @typing.no_type_check
     @LOGGER.function("DEBUG")
     def __neg__(self) -> Self:
-        return self.__op1(operator.neg)
+        return self.__ufunc_op1(operator.neg)
+
+    @LOGGER.function("DEBUG")
+    def __getitem__(
+        self, key: int | slice | IntArray | Tensor | Attr | AttrTerm
+    ) -> Self:
+        match key:
+            case int():
+                return self.make(
+                    Attr.parse(
+                        device=self.device, dtype=self.dtype, shape=self.shape[1:]
+                    )
+                )
+
+            case slice():
+                batch, *rest = self.shape
+
+                return self.make(
+                    Attr.parse(
+                        device=self.device,
+                        dtype=self.dtype,
+                        shape=Shape.parse(len(range(batch)[key]), *rest),
+                    )
+                )
+
+            case _:
+                return self.make(
+                    Attr.parse(
+                        device=self.device,
+                        dtype=self.dtype,
+                        shape=Shape.parse(*key.shape, *self.shape[1:]),
+                    )
+                )
 
     @LOGGER.function("DEBUG")
     def __add__(self, other: AttrTermRhs) -> Self:
-        return self.__op2(other, operator.add)
+        return self.__ufunc_op2(other, operator.add)
 
     @LOGGER.function("DEBUG")
     def __sub__(self, other: AttrTermRhs) -> Self:
-        return self.__op2(other, operator.sub)
+        return self.__ufunc_op2(other, operator.sub)
 
     @LOGGER.function("DEBUG")
     def __mul__(self, other: AttrTermRhs) -> Self:
-        return self.__op2(other, operator.mul)
+        return self.__ufunc_op2(other, operator.mul)
 
     @LOGGER.function("DEBUG")
     def __truediv__(self, other: AttrTermRhs) -> Self:
-        return self.__op2(other, operator.truediv)
+        return self.__ufunc_op2(other, operator.truediv)
 
     @LOGGER.function("DEBUG")
     def __floordiv__(self, other: AttrTermRhs) -> Self:
-        return self.__op2(other, operator.floordiv)
+        return self.__ufunc_op2(other, operator.floordiv)
 
     @LOGGER.function("DEBUG")
     def __mod__(self, other: AttrTermRhs) -> Self:
-        return self.__op2(other, operator.mod)
+        return self.__ufunc_op2(other, operator.mod)
 
     @LOGGER.function("DEBUG")
     def __pow__(self, other: AttrTermRhs) -> Self:
-        return self.__op2(other, operator.pow)
+        return self.__ufunc_op2(other, operator.pow)
 
     @typing.no_type_check
     @LOGGER.function("DEBUG")
     def __eq__(self, other: AttrTermRhs) -> Self:
-        return self.__op2(other, operator.eq)
+        return self.__ufunc_op2(other, operator.eq)
 
     @typing.no_type_check
     @LOGGER.function("DEBUG")
     def __ne__(self, other: AttrTermRhs) -> Self:
-        return self.__op2(other, operator.ne)
+        return self.__ufunc_op2(other, operator.ne)
 
     @typing.no_type_check
     @LOGGER.function("DEBUG")
     def __ge__(self, other: AttrTermRhs) -> Self:
-        return self.__op2(other, operator.ge)
+        return self.__ufunc_op2(other, operator.ge)
 
     @typing.no_type_check
     @LOGGER.function("DEBUG")
     def __gt__(self, other: AttrTermRhs) -> Self:
-        return self.__op2(other, operator.gt)
+        return self.__ufunc_op2(other, operator.gt)
 
     @typing.no_type_check
     @LOGGER.function("DEBUG")
     def __le__(self, other: AttrTermRhs) -> Self:
-        return self.__op2(other, operator.le)
+        return self.__ufunc_op2(other, operator.le)
 
     @typing.no_type_check
     @LOGGER.function("DEBUG")
     def __lt__(self, other: AttrTermRhs) -> Self:
-        return self.__op2(other, operator.lt)
+        return self.__ufunc_op2(other, operator.lt)
 
-    def __op1(self, op: UFunc1) -> Self:
+    def __ufunc_op1(self, op: UFunc1) -> Self:
         return self.make(
             Attr(
                 device=op(self.device.term).unpack(),
@@ -190,7 +222,7 @@ class AttrTerm(Term[Attr]):
             )
         )
 
-    def __op2(self, other: AttrTermRhs, op: AnyUFunc2):
+    def __ufunc_op2(self, other: AttrTermRhs, op: AnyUFunc2):
         match other:
             case AttrTerm():
                 return self.make(
@@ -201,9 +233,9 @@ class AttrTerm(Term[Attr]):
                     )
                 )
             case Attr():
-                return self.__op2(other=other.term, op=op)
+                return self.__ufunc_op2(other=other.term, op=op)
             case Tensor():
-                return self.__op2(other=Attr.from_tensor(other).term, op=op)
+                return self.__ufunc_op2(other=Attr.from_tensor(other).term, op=op)
             case int() | float() | bool():
                 t: type[int] | type[float] | type[bool] = type(other)
                 return self.make(

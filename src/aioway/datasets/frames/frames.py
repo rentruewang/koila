@@ -10,9 +10,9 @@ from typing import Any, TypeIs
 
 import numpy as np
 from numpy import ndarray as NpArr
-from numpy.typing import NDArray
 
 from aioway import _typing
+from aioway._typing import BatchIndex, IntArray
 from aioway.attrs import AttrSet
 from aioway.chunks import Chunk
 
@@ -22,12 +22,6 @@ if typing.TYPE_CHECKING:
     from .views import FrameColumnView, FrameSelectView
 
 __all__ = ["Frame"]
-
-type IntArray = NDArray[np.int_]
-"Integer numpy array."
-
-type FrameBatchIndex = slice | list[int] | IntArray
-"The types that can be used for index accessing on `Frame`s."
 
 
 @dcls.dataclass(frozen=True)
@@ -56,7 +50,7 @@ class Frame(Dataset, ABC):
         """
 
     @typing.overload
-    def __getitem__(self, idx: FrameBatchIndex, /) -> Chunk: ...
+    def __getitem__(self, idx: BatchIndex, /) -> Chunk: ...
 
     @typing.overload
     def __getitem__(self, idx: str, /) -> FrameColumnView: ...
@@ -152,7 +146,7 @@ class Frame(Dataset, ABC):
         return idx % length
 
 
-def _is_table_index(idx: Any) -> TypeIs[FrameBatchIndex]:
+def _is_table_index(idx: Any) -> TypeIs[BatchIndex]:
     "Check if the `idx` passed in is a valid type."
 
     # Check if it's a valid slice.

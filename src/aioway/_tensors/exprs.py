@@ -30,6 +30,17 @@ class TensorExpr(Expr[Tensor], ABC):
 
         return UFuncTensorExpr1.neg(self)
 
+    def __getitem__(self, key: int | slice | Tensor | TensorExpr):
+        from .gathers import GatherTensorExpr, StaticIndexGatherTensorExpr
+
+        # Self is symbolic. If key is symbolic, use the 2-ary expression.
+        if isinstance(key, TensorExpr):
+            return GatherTensorExpr(self, key)
+
+        # This is a unary expression.
+        else:
+            return StaticIndexGatherTensorExpr(self, key)
+
     def __add__(self, other: TensorExprRhs):
         from .ufuncs import UFuncTensorExpr2
 
