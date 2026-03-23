@@ -2,6 +2,7 @@
 
 import numpy as np
 import pytest
+from pytest import FixtureRequest
 
 from aioway.attrs import Shape
 
@@ -12,30 +13,30 @@ def _shapes():
 
 
 @pytest.fixture(params=_shapes())
-def shape(request) -> Shape:
+def shape(request: FixtureRequest) -> Shape:
     return request.param
 
 
-def test_shape_getitem(shape):
+def test_shape_getitem(shape: Shape):
     assert shape[0] == 3
     assert shape[1] == 5
     assert shape[2] == 7
 
 
-def test_shape_size(shape):
+def test_shape_size(shape: Shape):
     assert shape.size == 3 * 5 * 7
 
 
-def test_shape_ndim(shape):
+def test_shape_ndim(shape: Shape):
     assert shape.ndim == 3
 
 
-def test_shape_no_fail(shape):
+def test_shape_no_fail(shape: Shape):
     "Ensure that shapes do not crash when the other type is not recognized."
 
     assert shape != object()
 
 
-def test_shape_ndarray(shape):
+def test_shape_ndarray(shape: Shape):
     assert shape == np.array([3, 5, 7])
     assert shape != np.array([[3, 5, 7]])

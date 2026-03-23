@@ -6,6 +6,7 @@ from typing import Any
 import numpy as np
 import pytest
 import torch
+from pytest import FixtureRequest
 
 from aioway import attrs
 from aioway.attrs import DType
@@ -68,9 +69,9 @@ def _dtypes():
 
 
 @pytest.fixture(params=_golden())
-def golden(request) -> _CaseChecker:
+def golden(request: FixtureRequest) -> _CaseChecker:
     return request.param
 
 
-def test_dtype_cases(golden):
+def test_dtype_cases(golden: _CaseChecker):
     golden.check()

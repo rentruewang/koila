@@ -1,6 +1,5 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-
 import numpy as np
 import torch
 from tensordict import TensorDict
@@ -31,7 +30,7 @@ def batch_sizes():
     yield 1024
 
 
-def chunk_ok(*, size: int, device: str):
+def chunk_ok(*, size: int, device: str) -> Chunk:
     data = TensorDict(
         {
             "f1d": torch.randn(size),
