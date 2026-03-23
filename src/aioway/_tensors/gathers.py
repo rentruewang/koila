@@ -6,6 +6,8 @@ import typing
 
 from torch import Tensor
 
+from aioway._typing import BatchIndex
+
 from . import _common
 from .exprs import TensorExpr
 
@@ -61,7 +63,7 @@ class StaticIndexGatherTensorExpr:
 
     array: TensorExpr
 
-    index: Tensor | int | list[int]
+    index: int | BatchIndex
 
     def _compute(self) -> Tensor:
         tensor = self.array.compute()
