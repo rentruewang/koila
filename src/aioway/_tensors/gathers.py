@@ -19,33 +19,33 @@ class GatherTensorExpr(TensorExpr):
     The tensor that supports `__getitem__`.
     """
 
-    __match_args__ = "array", "index"
+    __match_args__ = "tensor", "index"
 
-    array: TensorExpr
+    tensor: TensorExpr
 
     index: TensorExpr
 
     def _compute(self) -> Tensor:
-        tensor = self.array.compute()
+        tensor = self.tensor.compute()
         index = self.index.compute()
 
         return tensor[index]
 
     def _inputs(self):
-        return self.array, self.index
+        return self.tensor, self.index
 
 
 @typing.final
 @_common.expr_dcls
 class StaticArrayGatherTensorExpr(TensorExpr):
-    __match_args__ = "array", "index"
+    __match_args__ = "tensor", "index"
 
-    array: Tensor
+    tensor: Tensor
 
     index: TensorExpr
 
     def _compute(self) -> Tensor:
-        tensor = self.array
+        tensor = self.tensor
         index = self.index.compute()
 
         return tensor[index]
@@ -57,17 +57,17 @@ class StaticArrayGatherTensorExpr(TensorExpr):
 @typing.final
 @_common.expr_dcls
 class StaticIndexGatherTensorExpr(TensorExpr):
-    __match_args__ = "array", "index"
+    __match_args__ = "tensor", "index"
 
-    array: TensorExpr
+    tensor: TensorExpr
 
     index: int | slice | Tensor
 
     def _compute(self) -> Tensor:
-        tensor = self.array.compute()
+        tensor = self.tensor.compute()
         index = self.index
 
         return tensor[index]
 
     def _inputs(self):
-        return (self.array,)
+        return (self.tensor,)
