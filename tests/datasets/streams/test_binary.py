@@ -6,6 +6,7 @@ from collections.abc import Callable
 import pytest
 import torch
 from pytest import FixtureRequest
+
 from aioway import attrs
 from aioway.chunks import Chunk
 from aioway.datasets import (
