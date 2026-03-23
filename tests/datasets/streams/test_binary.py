@@ -5,7 +5,7 @@ from collections.abc import Callable
 
 import pytest
 import torch
-
+from pytest import FixtureRequest
 from aioway import attrs
 from aioway.chunks import Chunk
 from aioway.datasets import (
@@ -18,25 +18,25 @@ from aioway.datasets import (
 
 
 @pytest.fixture
-def lhs_stream(concat_stream):
+def lhs_stream(concat_stream: Stream) -> CacheStream:
     return CacheStream(concat_stream)
 
 
 @pytest.fixture
-def rhs_stream(joinable_stream):
+def rhs_stream(joinable_stream: Stream) -> CacheStream:
     return CacheStream(joinable_stream)
 
 
-def test_lhs_stream_length(concat_stream, lhs_stream):
+def test_lhs_stream_length(concat_stream: Stream, lhs_stream: Stream):
     assert concat_stream.size == lhs_stream.size
 
 
-def test_rhs_stream_length(joinable_stream, rhs_stream):
+def test_rhs_stream_length(joinable_stream: Stream, rhs_stream: CacheStream):
     assert joinable_stream.size == rhs_stream.size
 
 
 @pytest.fixture
-def binary_stream(request, lhs_stream, rhs_stream):
+def binary_stream(request: FixtureRequest, lhs_stream: Stream, rhs_stream: CacheStream):
     "An indirect fixture that takes in a builder function and outputs a stream."
 
     builder: Callable[[Stream, Stream], Stream] = request.param
@@ -49,21 +49,19 @@ def binary_stream(request, lhs_stream, rhs_stream):
     return result
 
 
-def _zip_builder(lhs_stream, rhs_stream):
+def _zip_builder(lhs_stream: Stream, rhs_stream: CacheStream):
     return ZipStream(left=lhs_stream, right=rhs_stream)
 
 
 @pytest.mark.parametrize("binary_stream", [_zip_builder], indirect=True)
-def test_zip_input_len(binary_stream, concat_stream, rhs_stream):
+def test_zip_input_len(
+    binary_stream: Stream, concat_stream: Stream, rhs_stream: CacheStream
+):
     assert min(concat_stream.size, rhs_stream.size) == binary_stream.size
 
 
 @pytest.mark.parametrize("binary_stream", [_zip_builder], indirect=True)
-def test_zip(
-    binary_stream,
-    lhs_stream,
-    rhs_stream,
-):
+def test_zip(binary_stream: Stream, lhs_stream: Stream, rhs_stream: Stream):
     assert not lhs_stream.started
     assert not rhs_stream.started
     assert not binary_stream.started
@@ -75,12 +73,14 @@ def test_zip(
         assert result == concat
 
 
-def _join_builder(lhs_stream, rhs_stream):
+def _join_builder(lhs_stream: Stream, rhs_stream: CacheStream):
     return NestedLoopJoinStream(left=lhs_stream, right=rhs_stream, key="i1d")
 
 
 @pytest.mark.parametrize("binary_stream", [_join_builder], indirect=True)
-def test_join_input_len(binary_stream, lhs_stream, rhs_stream):
+def test_join_input_len(
+    binary_stream: Stream, lhs_stream: Stream, rhs_stream: CacheStream
+):
     assert binary_stream.size == lhs_stream.size * rhs_stream.size
 
 
@@ -151,7 +151,9 @@ def test_simple_nested_loop_join(to_slice: Callable[[Chunk], list[Chunk]]):
 
 
 @pytest.mark.parametrize("binary_stream", [_join_builder], indirect=True)
-def test_join_equal_as_original(binary_stream, lhs_stream, rhs_stream):
+def test_join_equal_as_original(
+    binary_stream: Stream, lhs_stream: Stream, rhs_stream: CacheStream
+):
     block_frame_block = Chunk.cat(list(lhs_stream))
     joinable_frame_block = Chunk.cat(list(rhs_stream))
 
@@ -178,7 +180,9 @@ def test_join_equal_as_original(binary_stream, lhs_stream, rhs_stream):
 
 
 @pytest.mark.parametrize("binary_stream", [_join_builder], indirect=True)
-def test_match_functionally(binary_stream, lhs_stream, rhs_stream):
+def test_match_functionally(
+    binary_stream: Stream, lhs_stream: Stream, rhs_stream: CacheStream
+):
     block_frame_block = Chunk.cat(list(lhs_stream))
     joinable_frame_block = Chunk.cat(list(rhs_stream))
 
