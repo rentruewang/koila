@@ -124,15 +124,28 @@ class AttrTerm(Term[Attr]):
         return self.__ufunc_op1(operator.neg)
 
     @LOGGER.function("DEBUG")
-    def __getitem__(self, key: int | Tensor | Attr | AttrTerm) -> Self:
+    def __getitem__(self, key: int | slice | Tensor | Attr | AttrTerm) -> Self:
         match key:
             case int():
                 return self.make(
-                    attr(device=self.device, dtype=self.dtype, shape=self.shape[1:])
+                    Attr.parse(
+                        device=self.device, dtype=self.dtype, shape=self.shape[1:]
+                    )
                 )
+            case slice():
+                batch, *rest = self.shape
+
+                return self.make(
+                    Attr.parse(
+                        device=self.device,
+                        dtype=self.dtype,
+                        shape=Shape.parse(len(range(batch)[key]), *rest),
+                    )
+                )
+
             case Attr() | AttrTerm() | Tensor():
                 return self.make(
-                    attr(
+                    Attr.parse(
                         device=self.device,
                         dtype=self.dtype,
                         shape=Shape.parse(*key.shape, *self.shape[1:]),
