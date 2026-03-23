@@ -75,7 +75,7 @@ def test_construction_of_attrset(valid_data: TensorDict):
     )
 
 
-def test_validation_fail(schema: AttrSet, valid_data: TensorDict):
+def test_validation_fail(schema: AttrSet, invalid_data: TensorDict):
     with pytest.raises(RuntimeError):
         _validation.validate_schema(schema, invalid_data)
 
