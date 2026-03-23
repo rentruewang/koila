@@ -1,23 +1,17 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-import dataclasses as dcls
 import operator
-import typing
 from collections.abc import Callable
 
 from torch import Tensor
 
+from . import _common
 from .exprs import TensorExpr, TensorExprRhs
 
 __all__ = ["UFuncTensorExpr1", "UFuncTensorExpr2"]
 
 
-@typing.dataclass_transform(eq_default=False, frozen_default=True)
-def ufunc_dcls(cls):
-    return dcls.dataclass(frozen=True, eq=False, match_args=False, repr=False)(cls)
-
-
-@ufunc_dcls
+@_common.expr_dcls
 class UFuncTensorExpr1(TensorExpr):
     __match_args__ = ("source",)
 
@@ -44,7 +38,7 @@ class UFuncTensorExpr1(TensorExpr):
         return cls("-", source=source, op=operator.neg)
 
 
-@ufunc_dcls
+@_common.expr_dcls
 class UFuncTensorExpr2(TensorExpr):
     __match_args__ = "left", "right"
 

@@ -4,7 +4,10 @@ import dataclasses as dcls
 import typing
 from collections.abc import KeysView, Sequence, Set
 
-__all__ = ["SeqKeysView", "SetKeysView"]
+import numpy as np
+from numpy.typing import NDArray
+
+__all__ = ["SeqKeysView", "SetKeysView", "IntArray", "BatchIndex"]
 
 
 @dcls.dataclass(frozen=True)
@@ -24,3 +27,10 @@ class SeqKeysView(_ContainerKeysView[Sequence[str]]): ...
 
 
 class SetKeysView(_ContainerKeysView[set[str]]): ...
+
+
+type IntArray = NDArray[np.int_]
+"Integer numpy array."
+
+type BatchIndex = slice | list[int] | IntArray
+"The types that can be used for bath indexing."
