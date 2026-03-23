@@ -10,7 +10,7 @@ from typing import Self
 from torch import Tensor
 
 from aioway import _logging
-from aioway._typing import AnyUFunc2, UFunc1, BatchIndex
+from aioway._typing import AnyUFunc2, UFunc1
 
 from ._terms import Term
 from .devices import Device, DeviceLike
@@ -124,8 +124,20 @@ class AttrTerm(Term[Attr]):
         return self.__ufunc_op1(operator.neg)
 
     @LOGGER.function("DEBUG")
-    def __getitem__(self, key: int | BatchIndex | AttrTermRhs) -> Self:
-        raise NotImplementedError
+    def __getitem__(self, key: int | Tensor | Attr | AttrTerm) -> Self:
+        match key:
+            case int():
+                return self.make(
+                    attr(device=self.device, dtype=self.dtype, shape=self.shape[1:])
+                )
+            case Attr() | AttrTerm() | Tensor():
+                return self.make(
+                    attr(
+                        device=self.device,
+                        dtype=self.dtype,
+                        shape=Shape.parse(*key.shape, *self.shape[1:]),
+                    )
+                )
 
     @LOGGER.function("DEBUG")
     def __add__(self, other: AttrTermRhs) -> Self:

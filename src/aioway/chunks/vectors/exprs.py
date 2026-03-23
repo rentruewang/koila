@@ -8,9 +8,9 @@ from typing import Self
 from aioway import _logging
 from aioway._exprs import Expr
 from aioway._tensors import SourceTensorExpr, TensorExpr
-from aioway._typing import AnyUFunc1, AnyUFunc2
+from aioway._typing import AnyUFunc1, AnyUFunc2, BatchIndex
 from aioway.attrs import Attr, AttrTerm
-from aioway._typing import BatchIndex
+
 from .vectors import Vector, VectorRhs
 
 __all__ = ["VectorExpr"]
