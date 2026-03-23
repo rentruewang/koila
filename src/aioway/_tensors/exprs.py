@@ -11,7 +11,6 @@ from torch import Tensor
 
 from aioway._exprs import Expr
 from aioway._tables import Table
-from aioway._typing import BatchIndex
 
 __all__ = ["TensorDictExpr", "TensorExpr", "TensorExprRhs"]
 
@@ -31,7 +30,7 @@ class TensorExpr(Expr[Tensor], ABC):
 
         return UFuncTensorExpr1.neg(self)
 
-    def __getitem__(self, key: int | BatchIndex | TensorExpr):
+    def __getitem__(self, key: int | slice | Tensor | TensorExpr):
         from .gathers import GatherTensorExpr, StaticIndexGatherTensorExpr
 
         # Self is symbolic. If key is symbolic, use the 2-ary expression.

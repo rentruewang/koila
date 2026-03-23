@@ -52,8 +52,7 @@ class ChunkExpr(Expr[Chunk], Table[VectorExpr]):
         self,
         idx: int | slice | list[int] | list[str] | NpArr | Tensor | Vector,
         /,
-    ) -> Self:
-        return type(self)()
+    ) -> Self: ...
 
     def __getitem__(self, idx):
         if isinstance(idx, str):

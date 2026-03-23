@@ -5,10 +5,12 @@ import operator
 import typing
 from typing import Self
 
+from torch import Tensor
+
 from aioway import _logging
 from aioway._exprs import Expr
 from aioway._tensors import SourceTensorExpr, TensorExpr
-from aioway._typing import AnyUFunc1, AnyUFunc2, BatchIndex
+from aioway._typing import AnyUFunc1, AnyUFunc2
 from aioway.attrs import Attr, AttrTerm
 
 from .vectors import Vector, VectorRhs
@@ -46,8 +48,18 @@ class VectorExpr(Expr[Vector]):
     def __invert__(self) -> Self:
         return self.__ufunc1(operator.invert)
 
-    def __getitem__(self, key: int | BatchIndex | TensorExpr):
-        raise NotImplementedError
+    def __getitem__(self, key: int | slice | Tensor | VectorExpr) -> Self:
+        if isinstance(key, VectorExpr):
+            return type(self)(
+                attr=self.attr.term[key.attr].unpack(),
+                tensor=self.tensor[key.tensor],
+            )
+
+        else:
+            return type(self)(
+                attr=self.attr.term[key].unpack(),
+                tensor=self.tensor[key],
+            )
 
     def __add__(self, other: VectorExprRhs) -> Self:
         return self.__ufunc2(other, operator.add)

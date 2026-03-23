@@ -10,7 +10,7 @@ from typing import Self
 from torch import Tensor
 
 from aioway import _logging
-from aioway._typing import AnyUFunc2, UFunc1
+from aioway._typing import AnyUFunc2, IntArray, UFunc1
 
 from ._terms import Term
 from .devices import Device, DeviceLike
@@ -124,7 +124,9 @@ class AttrTerm(Term[Attr]):
         return self.__ufunc_op1(operator.neg)
 
     @LOGGER.function("DEBUG")
-    def __getitem__(self, key: int | slice | Tensor | Attr | AttrTerm) -> Self:
+    def __getitem__(
+        self, key: int | slice | IntArray | Tensor | Attr | AttrTerm
+    ) -> Self:
         match key:
             case int():
                 return self.make(
@@ -132,6 +134,7 @@ class AttrTerm(Term[Attr]):
                         device=self.device, dtype=self.dtype, shape=self.shape[1:]
                     )
                 )
+
             case slice():
                 batch, *rest = self.shape
 
@@ -143,7 +146,7 @@ class AttrTerm(Term[Attr]):
                     )
                 )
 
-            case Attr() | AttrTerm() | Tensor():
+            case _:
                 return self.make(
                     Attr.parse(
                         device=self.device,
