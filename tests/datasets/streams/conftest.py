@@ -4,8 +4,7 @@
 
 import pytest
 
-from aioway.datasets import ChunkFrame, FrameStream, FrameStreamLoader
-from aioway.datasets import Frame
+from aioway.datasets import ChunkFrame, Frame, FrameStream, FrameStreamLoader
 from tests import fake
 
 
