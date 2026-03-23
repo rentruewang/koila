@@ -11,7 +11,7 @@ from aioway.chunks import Chunk
 
 
 @pytest.fixture
-def schema():
+def schema() -> AttrSet:
     return AttrSet.from_values(
         a=attrs.attr(
             device="cpu",
@@ -27,7 +27,7 @@ def schema():
 
 
 @pytest.fixture
-def valid_data():
+def valid_data() -> TensorDict:
     result = TensorDict(
         {
             "a": torch.randn(11, 2, 3).to(torch.int32),
@@ -61,11 +61,11 @@ def invalid_data(request: FixtureRequest) -> TensorDict:
     return request.param
 
 
-def test_validation_ok(schema, valid_data):
+def test_validation_ok(schema: AttrSet, valid_data: TensorDict) -> None:
     _validation.validate_schema(schema, valid_data)
 
 
-def test_construction_of_attrset(valid_data):
+def test_construction_of_attrset(valid_data: TensorDict):
     parsed = AttrSet.from_tensordict(valid_data)
     assert parsed == attrs.attr_set(
         {
@@ -75,15 +75,15 @@ def test_construction_of_attrset(valid_data):
     )
 
 
-def test_validation_fail(schema, invalid_data):
+def test_validation_fail(schema: AttrSet, valid_data: TensorDict):
     with pytest.raises(RuntimeError):
         _validation.validate_schema(schema, invalid_data)
 
 
 @pytest.fixture
-def block(schema, valid_data):
+def block(schema: AttrSet, valid_data: TensorDict) -> Chunk:
     return Chunk.from_data_schema(data=valid_data, schema=schema)
 
 
-def test_block_init(block):
+def test_block_init(block: Chunk):
     _ = block

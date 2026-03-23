@@ -11,12 +11,12 @@ from aioway.symbols import ColSymExpr, SourceExpr
 
 
 @pytest.fixture
-def a():
+def a() -> SourceExpr:
     return SourceExpr("a", "cde")
 
 
 @pytest.fixture
-def b():
+def b() -> SourceExpr:
     return SourceExpr("b", "cde")
 
 

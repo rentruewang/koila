@@ -73,5 +73,5 @@ def golden(request: FixtureRequest) -> _CaseChecker:
     return request.param
 
 
-def test_dtype_cases(golden):
+def test_dtype_cases(golden: _CaseChecker):
     golden.check()

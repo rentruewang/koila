@@ -1,7 +1,9 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
+from aioway.datasets import Frame
 
-def test_column_attr(frame):
+
+def test_column_attr(frame: Frame) -> None:
     attrs = frame.attrs
     first_key = list(attrs.keys())[0]
 
@@ -9,7 +11,7 @@ def test_column_attr(frame):
     assert frame.select(first_key).attrs == attrs.select(first_key)
 
 
-def test_select_attr(frame):
+def test_select_attr(frame: Frame) -> None:
     attrs = frame.attrs
     two_keys = list(attrs.keys())[:2]
 
