@@ -1,6 +1,7 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import pytest
+from pytest import FixtureRequest
 
 from aioway.datasets import (
     ChunkFrame,
@@ -27,12 +28,14 @@ def list_table(device: str, batch_size: int, data_size: int):
 
 
 @pytest.fixture(params=[block_table, list_table])
-def frame(request, device, batch_size, data_size) -> Frame:
+def frame(
+    request: FixtureRequest, device: str, batch_size: int, data_size: int
+) -> Frame:
     return request.param(device=device, batch_size=batch_size, data_size=data_size)
 
 
 @pytest.fixture
-def table_stream(frame, batch_size):
+def table_stream(frame: Frame, batch_size: int):
     return FrameStream(
         frame,
         FrameStreamLoader(batch_size=batch_size),
