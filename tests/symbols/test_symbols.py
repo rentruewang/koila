@@ -2,14 +2,12 @@
 
 import operator
 from collections.abc import Callable
-from typing import NamedTuple
+from typing import Any, NamedTuple
 
 import pytest
+from pytest import FixtureRequest
 
-from aioway.symbols import (
-    ColSymExpr,
-    SourceExpr,
-)
+from aioway.symbols import ColSymExpr, SourceExpr
 
 
 @pytest.fixture
@@ -38,11 +36,11 @@ def e(b: SourceExpr):
 
 
 @pytest.fixture(params="cde")
-def col_expr(request) -> ColSymExpr:
+def col_expr(request: FixtureRequest) -> ColSymExpr:
     return request.getfixturevalue(request.param)
 
 
-def test_col_repr(c, d, e):
+def test_col_repr(c: str, d: str, e: str):
     assert str(c) == "a.c"
     assert str(d) == "a.d"
     assert str(e) == "b.e"
@@ -64,7 +62,9 @@ class _OpFunc(NamedTuple):
         _OpFunc("**", operator.pow),
     ],
 )
-def test_infix_op_repr(c, d, op, func) -> None:
+def test_infix_op_repr(
+    c: str, d: str, op: str, func: Callable[[Any, Any], Any]
+) -> None:
     assert str(func(c, d)) == f"{c!s} {op} {d!s}"
 
 
@@ -85,7 +85,9 @@ def test_infix_op_repr(c, d, op, func) -> None:
         _OpFunc("<", operator.lt),
     ],
 )
-def test_binray_ufunc_repr(c, d, op, func) -> None:
+def test_binray_ufunc_repr(
+    c: str, d: str, op: str, func: Callable[[Any, Any], Any]
+) -> None:
     assert str(func(c, d)) == f"{c!s} {op} {d!s}"
     assert str(func(d, c)) == f"{d!s} {op} {c!s}"
 
@@ -107,7 +109,7 @@ def test_binray_ufunc_repr(c, d, op, func) -> None:
         operator.le,
     ],
 )
-def test_binary_ufunc_type(c, e, op) -> None:
+def test_binary_ufunc_type(c: str, e: str, op: Callable[[Any, Any], Any]) -> None:
     assert isinstance(expr := op(c, e), ColSymExpr), type(expr)
     assert isinstance(expr := op(e, c), ColSymExpr), type(expr)
 
@@ -119,5 +121,5 @@ def test_binary_ufunc_type(c, e, op) -> None:
         _OpFunc("~", operator.inv),
     ],
 )
-def test_prefix_op_repr(col_expr: ColSymExpr, op, func):
+def test_prefix_op_repr(col_expr: ColSymExpr, op: str, func: Callable[[Any, Any], Any]):
     assert str(func(col_expr)) == f"{op}{col_expr!s}"

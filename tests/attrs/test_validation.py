@@ -2,6 +2,7 @@
 
 import pytest
 import torch
+from pytest import FixtureRequest
 from tensordict import TensorDict
 
 from aioway import attrs
@@ -56,7 +57,7 @@ def _invalid_data():
 
 
 @pytest.fixture(params=_invalid_data())
-def invalid_data(request) -> TensorDict:
+def invalid_data(request: FixtureRequest) -> TensorDict:
     return request.param
 
 
