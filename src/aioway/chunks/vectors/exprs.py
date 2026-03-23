@@ -10,7 +10,7 @@ from aioway._exprs import Expr
 from aioway._tensors import SourceTensorExpr, TensorExpr
 from aioway._typing import AnyUFunc1, AnyUFunc2
 from aioway.attrs import Attr, AttrTerm
-
+from aioway._typing import BatchIndex
 from .vectors import Vector, VectorRhs
 
 __all__ = ["VectorExpr"]
@@ -45,6 +45,9 @@ class VectorExpr(Expr[Vector]):
 
     def __invert__(self) -> Self:
         return self.__ufunc1(operator.invert)
+
+    def __getitem__(self, key: int | BatchIndex | TensorExpr):
+        raise NotImplementedError
 
     def __add__(self, other: VectorExprRhs) -> Self:
         return self.__ufunc2(other, operator.add)
