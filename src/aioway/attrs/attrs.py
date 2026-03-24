@@ -221,7 +221,9 @@ class AttrTerm(Term[Attr]):
         match key:
             case int():
                 return self.__make_attr(
-                    device=self.device, dtype=self.dtype, shape=self.shape[1:]
+                    device=self.device,
+                    dtype=self.dtype,
+                    shape=self.shape[1:],
                 )
 
             case slice():
