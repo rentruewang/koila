@@ -11,11 +11,11 @@ from typing import Any, Literal
 
 from rich.logging import RichHandler
 
-__all__ = ["enable", "enable_rich", "Logger", "get_logger"]
+__all__ = ["enable_log", "enable_rich_log", "Logger", "get_logger"]
 
 
 @ctxl.contextmanager
-def enable(level: str | int, /, *handlers: Handler):
+def enable_log(level: str | int, /, *handlers: Handler):
     """
     Enable logging for the duration of the block package wide.
     """
@@ -37,12 +37,12 @@ def enable(level: str | int, /, *handlers: Handler):
 
 
 @ctxl.contextmanager
-def enable_rich(level: str | int, /):
+def enable_rich_log(level: str | int, /):
     """
     Enable logging for the duration of the block with rich handlers.
     """
 
-    with enable(level, RichHandler(show_path=False)) as logger:
+    with enable_log(level, RichHandler(show_path=False)) as logger:
         yield logger
 
 
