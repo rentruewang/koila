@@ -2,15 +2,17 @@
 
 "Tracking high level modules."
 
-import inspect
-from collections.abc import Callable
-from . import logging
-import typing
 import contextlib as ctxl
 import dataclasses as dcls
+import typing
+from collections.abc import Callable
+
+from . import logging
 
 if typing.TYPE_CHECKING:
     from aioway._ops import OpSign
+
+__all__ = ["ModuleApiTracker"]
 
 # The global API logger.
 LOGGER = logging.get_logger("__api__")
@@ -50,6 +52,5 @@ class ModuleApiTracker:
         wrapper.__name__ = function.__name__
         wrapper.__qualname__ = function.__qualname__
         wrapper.__doc__ = function.__doc__
-        wrapper.__signature__ = inspect.signature(function)
 
         return wrapper
