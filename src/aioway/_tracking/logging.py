@@ -114,6 +114,10 @@ class Logger:
     def _logger(self):
         return logging.getLogger(self.module)
 
+    @property
+    def level(self) -> int:
+        return self._logger.level
+
 
 def get_logger(module: str, /) -> Logger:
     "A replacement for `logging.getLogger`."
