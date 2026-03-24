@@ -6,7 +6,7 @@ import numpy as np
 from tensordict import TensorDict
 from torch import Tensor
 
-from aioway import _logging
+from aioway._tracking import logging
 
 from .attrs import Attr
 from .devices import Device
@@ -16,7 +16,7 @@ from .shapes import Shape
 
 __all__ = ["validate_schema", "validate_attr"]
 
-LOGGER = _logging.get_logger(__name__)
+LOGGER = logging.get_logger(__name__)
 
 
 def validate_schema(attrs: AttrSet, data: TensorDict) -> None:

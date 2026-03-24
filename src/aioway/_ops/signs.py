@@ -8,18 +8,18 @@ from typing import Self
 
 from lark import Lark
 
-from aioway import _logging
+from aioway._exprs import Expr
+from aioway._tracking import logging
 
-from ..exprs import Expr
 from . import _common
 from .types import ParamListTransformer, TypeList
 
 __all__ = ["OpSign", "OpSignExpr"]
 
-LOGGER = _logging.get_logger(__name__)
+LOGGER = logging.get_logger(__name__)
 
 
-class OpSign[T]:
+class OpSign:
     """
     The signature type, used to describe the computation in a single expression node.
 
@@ -58,7 +58,7 @@ class OpSign[T]:
         return self._param_types
 
     @property
-    def return_type(self) -> type[T]:
+    def return_type(self) -> type:
         "The return type of the signature."
 
         return self._return_type

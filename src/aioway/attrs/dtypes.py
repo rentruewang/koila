@@ -13,14 +13,15 @@ import torch
 from numpy import dtype as NumpyDType
 from torch import dtype as TorchDType
 
-from aioway import _logging
+from aioway._ops import OpSign
+from aioway._tracking import ModuleApiTracker, logging
 
 from ._terms import Term
 
 __all__ = ["DType", "dtype", "DTypeLike"]
 
-LOGGER = _logging.get_logger(__name__)
-
+LOGGER = logging.get_logger(__name__)
+TRACKER = ModuleApiTracker(lambda: DType)
 
 type DTypeFamily = Literal["int", "float", "bool"]
 """
@@ -248,57 +249,66 @@ class DTypeTerm(Term[DType]):
     dtype: DType
 
     def __invert__(self):
-        return self
+        return self.__identical("__invert__")
 
     def __neg__(self):
-        return self
+        return self.__identical("__neg__")
 
-    def __add__(self, other: Self | DTypeLike):
-        return self._broadcast(self.dtype, other)
+    def __add__(self, other: Self | DTypeLike) -> Self:
+        return self.__broadcast(self.dtype, other, name="__add__")
 
-    def __sub__(self, other: Self | DTypeLike):
-        return self._broadcast(self.dtype, other)
+    def __sub__(self, other: Self | DTypeLike) -> Self:
+        return self.__broadcast(self.dtype, other, name="__sub__")
 
-    def __mul__(self, other: Self | DTypeLike):
-        return self._broadcast(self.dtype, other)
+    def __mul__(self, other: Self | DTypeLike) -> Self:
+        return self.__broadcast(self.dtype, other, name="__mul__")
 
-    def __truediv__(self, other: Self | DTypeLike):
-        return self._broadcast(self.dtype, other)
+    def __truediv__(self, other: Self | DTypeLike) -> Self:
+        return self.__broadcast(self.dtype, other, name="__truediv__")
 
-    def __floordiv__(self, other: Self | DTypeLike):
-        return self._broadcast(self.dtype, other)
+    def __floordiv__(self, other: Self | DTypeLike) -> Self:
+        return self.__broadcast(self.dtype, other, name="__floordiv__")
 
-    def __mod__(self, other: Self | DTypeLike):
-        return self._broadcast(self.dtype, other)
+    def __mod__(self, other: Self | DTypeLike) -> Self:
+        return self.__broadcast(self.dtype, other, name="__mod__")
 
-    def __pow__(self, other: Self | DTypeLike):
-        return self._broadcast(self.dtype, other)
+    def __pow__(self, other: Self | DTypeLike) -> Self:
+        return self.__broadcast(self.dtype, other, name="__pow__")
 
     @typing.no_type_check
     def __eq__(self, other: Self | DTypeLike):
-        return self._boolean(other)
+        return self.__boolean(other, name="eq")
 
     @typing.no_type_check
     def __ne__(self, other: Self | DTypeLike):
-        return self._boolean(other)
+        return self.__boolean(other, name="ne")
 
     def __ge__(self, other: Self | DTypeLike):
-        return self._boolean(other)
+        return self.__boolean(other, name="ge")
 
     def __gt__(self, other: Self | DTypeLike):
-        return self._boolean(other)
+        return self.__boolean(other, name="gt")
 
     def __le__(self, other: Self | DTypeLike):
-        return self._boolean(other)
+        return self.__boolean(other, name="le")
 
     def __lt__(self, other: Self | DTypeLike):
-        return self._boolean(other)
+        return self.__boolean(other, name="lt")
 
     def unpack(self) -> DType:
         return self.dtype
 
+    def __identical(self, name: str) -> Self:
+        with TRACKER(name=name, signature=OpSign(DType, DType)):
+            return self
+
     @classmethod
-    def _broadcast(cls, left: DType, right: Self | DTypeLike) -> Self:
+    def __broadcast(cls, left: DType, right: Self | DTypeLike, name: str) -> Self:
+        with TRACKER(name=name, signature=OpSign(DType, DType, DType)):
+            return cls.__broadcast_impl(left, right)
+
+    @classmethod
+    def __broadcast_impl(cls, left: DType, right: Self | DTypeLike) -> Self:
         try:
             rhs = DType.parse(_as_dtype(right))
         except ValueError:
@@ -311,9 +321,14 @@ class DTypeTerm(Term[DType]):
         return cls.make(DType.parse(promoted))
 
     @classmethod
-    def _boolean(cls, right: Self | DTypeLike):
+    def __boolean(cls, right: Self | DTypeLike, name: str):
+        with TRACKER(name=name, signature=OpSign(DType, DType, DType)):
+            return cls.__boolean_impl(right=right)
+
+    @classmethod
+    def __boolean_impl(cls, right: Self | DTypeLike):
         try:
-            rhs = DType.parse(_as_dtype(right))
+            _ = DType.parse(_as_dtype(right))
         except ValueError:
             return NotImplemented
 

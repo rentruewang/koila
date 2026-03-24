@@ -11,11 +11,11 @@ from typing import Any, Literal
 
 from rich.logging import RichHandler
 
-__all__ = ["enable", "enable_rich", "Logger", "get_logger"]
+__all__ = ["enable_log", "enable_rich_log", "Logger", "get_logger"]
 
 
 @ctxl.contextmanager
-def enable(level: str | int, /, *handlers: Handler):
+def enable_log(level: str | int, /, *handlers: Handler):
     """
     Enable logging for the duration of the block package wide.
     """
@@ -37,12 +37,12 @@ def enable(level: str | int, /, *handlers: Handler):
 
 
 @ctxl.contextmanager
-def enable_rich(level: str | int, /):
+def enable_rich_log(level: str | int, /):
     """
     Enable logging for the duration of the block with rich handlers.
     """
 
-    with enable(level, RichHandler(show_path=False)) as logger:
+    with enable_log(level, RichHandler(show_path=False)) as logger:
         yield logger
 
 
@@ -76,6 +76,10 @@ class Logger:
 
     def critical(self, msg: str, *args, **kwargs) -> None:
         self._logger.critical(msg, *args, **kwargs)
+
+    def is_enabled_for(self, level: LoggingLevel) -> bool:
+        "Wrapper for `logging.Logger.isEnabledFor`."
+        return self._logger.isEnabledFor(_get_level_int(level))
 
     def function(self, level: LoggingLevel, /):
         """
@@ -113,6 +117,10 @@ class Logger:
     @property
     def _logger(self):
         return logging.getLogger(self.module)
+
+    @property
+    def level(self) -> int:
+        return self._logger.level
 
 
 def get_logger(module: str, /) -> Logger:

@@ -2,12 +2,14 @@
 
 "The operators in relational algebra."
 
+import typing
 from collections.abc import KeysView, Sequence
 
 import tensordict as td
 from tensordict import TensorDict
 
-from aioway import _logging
+from aioway._ops import OpSign
+from aioway._tracking import logging
 from aioway._typing import SeqKeysView, SetKeysView
 
 from . import _common
@@ -16,7 +18,7 @@ from .exprs import TensorDictExpr
 __all__ = ["SelectTensorDictExpr", "RenameTensorDictExpr", "ZipTensorDictExpr"]
 
 
-LOGGER = _logging.get_logger(__name__)
+LOGGER = logging.get_logger(__name__)
 
 
 @_common.expr_dcls
@@ -28,9 +30,17 @@ class SelectTensorDictExpr(TensorDictExpr):
     def keys(self) -> KeysView[str]:
         raise NotImplementedError
 
+    @typing.override
     def _compute(self) -> TensorDict:
-        return self.source.compute().select(*self.columns)
+        pulled = self.source.compute()
 
+        with _common.TRACKER(
+            name="select",
+            signature=OpSign(TensorDict, TensorDict),
+        ):
+            return pulled.select(*self.columns)
+
+    @typing.override
     def _inputs(self):
         return (self.source,)
 
@@ -41,13 +51,20 @@ class RenameTensorDictExpr(TensorDictExpr):
 
     renames: dict[str, str]
 
+    @typing.override
     def keys(self) -> KeysView[str]:
         return SeqKeysView([self.renames.get(key, key) for key in self.keys()])
 
+    @typing.override
     def _compute(self) -> TensorDict:
         td = self.source.compute()
-        return _rename(td, **self.renames)
+        with _common.TRACKER(
+            name="rename",
+            signature=OpSign(TensorDict, TensorDict),
+        ):
+            return _rename(td, **self.renames)
 
+    @typing.override
     def _inputs(self):
         return (self.source,)
 
@@ -57,14 +74,22 @@ class ZipTensorDictExpr(TensorDictExpr):
     left: TensorDictExpr
     right: TensorDictExpr
 
+    @typing.override
     def keys(self) -> KeysView[str]:
         return SetKeysView({*self.left.keys(), *self.right.keys()})
 
+    @typing.override
     def _compute(self) -> TensorDict:
         left = self.left.compute()
         right = self.right.compute()
-        return td.merge_tensordicts(left, right)
 
+        with _common.TRACKER(
+            name="zip",
+            signature=OpSign(TensorDict, TensorDict, TensorDict),
+        ):
+            return td.merge_tensordicts(left, right)
+
+    @typing.override
     def _inputs(self):
         return self.left, self.right
 

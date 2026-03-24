@@ -11,15 +11,16 @@ import tensordict
 from tensordict import TensorDict
 from torch import Size, Tensor
 
-from aioway import _logging, _typing, attrs
+from aioway import _typing, attrs
 from aioway._tensors import SourceTensorDictExpr
+from aioway._tracking import logging
 from aioway.attrs import AttrSet, AttrSetLike, _validation
 
 from ..vectors import Vector
 
 __all__ = ["Chunk"]
 
-LOGGER = _logging.get_logger(__name__)
+LOGGER = logging.get_logger(__name__)
 
 
 type TensorDictLike = TensorDict | dict[str, Tensor]

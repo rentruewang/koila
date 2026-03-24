@@ -5,13 +5,13 @@ import typing
 from abc import ABC
 from collections.abc import KeysView
 
-from aioway import _logging
 from aioway._exprs import Expr
 from aioway._tables import Table
+from aioway._tracking import logging
 
 __all__ = ["SymbolExpr", "ColSymExpr", "TableSymExpr"]
 
-LOGGER = _logging.get_logger(__name__)
+LOGGER = logging.get_logger(__name__)
 
 
 class SymbolExpr(Expr[str], ABC):

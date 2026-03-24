@@ -7,14 +7,14 @@ import typing
 from collections.abc import Callable
 from typing import Any
 
-from aioway import _logging
+from aioway._exprs import Expr
+from aioway._tracking import logging
 
-from ..exprs import Expr
 from .signs import OpSign, TypeList
 
 __all__ = ["Op"]
 
-LOGGER = _logging.get_logger(__name__)
+LOGGER = logging.get_logger(__name__)
 
 
 __all__ = ["Op", "OpExpr"]

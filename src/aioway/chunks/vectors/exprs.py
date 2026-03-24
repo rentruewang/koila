@@ -7,9 +7,9 @@ from typing import Self
 
 from torch import Tensor
 
-from aioway import _logging
 from aioway._exprs import Expr
 from aioway._tensors import SourceTensorExpr, TensorExpr
+from aioway._tracking import logging
 from aioway._typing import AnyUFunc1, AnyUFunc2
 from aioway.attrs import Attr, AttrTerm
 
@@ -17,7 +17,7 @@ from .vectors import Vector, VectorRhs
 
 __all__ = ["VectorExpr"]
 
-LOGGER = _logging.get_logger(__name__)
+LOGGER = logging.get_logger(__name__)
 
 
 type VectorExprRhs = VectorExpr | VectorRhs

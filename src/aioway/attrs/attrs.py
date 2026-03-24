@@ -9,7 +9,8 @@ from typing import Self
 
 from torch import Tensor
 
-from aioway import _logging
+from aioway._ops import OpSign
+from aioway._tracking import ModuleApiTracker, logging
 from aioway._typing import AnyUFunc2, IntArray, UFunc1
 
 from ._terms import Term
@@ -20,7 +21,8 @@ from .shapes import Shape, ShapeLike
 __all__ = ["Attr", "attr", "AttrTerm", "AttrTermRhs"]
 
 
-LOGGER = _logging.get_logger(__name__)
+LOGGER = logging.get_logger(__name__)
+TRACKER = ModuleApiTracker(lambda: Attr)
 
 type AttrTermRhs = AttrTerm | Attr | Tensor | int | float | bool
 
@@ -114,139 +116,131 @@ class AttrTerm(Term[Attr]):
         return f"{self.attr!r}.term"
 
     @typing.no_type_check
-    @LOGGER.function("DEBUG")
     def __invert__(self) -> Self:
         return self.__ufunc_op1(operator.invert)
 
     @typing.no_type_check
-    @LOGGER.function("DEBUG")
     def __neg__(self) -> Self:
         return self.__ufunc_op1(operator.neg)
 
-    @LOGGER.function("DEBUG")
     def __getitem__(
         self, key: int | slice | IntArray | Tensor | Attr | AttrTerm
     ) -> Self:
-        match key:
-            case int():
-                return self.make(
-                    Attr.parse(
-                        device=self.device, dtype=self.dtype, shape=self.shape[1:]
-                    )
-                )
+        sign = OpSign(Attr, type(key), Attr)
+        with TRACKER(name="__getitem__", signature=sign):
+            return self.__getitem_impl(key)
 
-            case slice():
-                batch, *rest = self.shape
-
-                return self.make(
-                    Attr.parse(
-                        device=self.device,
-                        dtype=self.dtype,
-                        shape=Shape.parse(len(range(batch)[key]), *rest),
-                    )
-                )
-
-            case _:
-                return self.make(
-                    Attr.parse(
-                        device=self.device,
-                        dtype=self.dtype,
-                        shape=Shape.parse(*key.shape, *self.shape[1:]),
-                    )
-                )
-
-    @LOGGER.function("DEBUG")
     def __add__(self, other: AttrTermRhs) -> Self:
         return self.__ufunc_op2(other, operator.add)
 
-    @LOGGER.function("DEBUG")
     def __sub__(self, other: AttrTermRhs) -> Self:
         return self.__ufunc_op2(other, operator.sub)
 
-    @LOGGER.function("DEBUG")
     def __mul__(self, other: AttrTermRhs) -> Self:
         return self.__ufunc_op2(other, operator.mul)
 
-    @LOGGER.function("DEBUG")
     def __truediv__(self, other: AttrTermRhs) -> Self:
         return self.__ufunc_op2(other, operator.truediv)
 
-    @LOGGER.function("DEBUG")
     def __floordiv__(self, other: AttrTermRhs) -> Self:
         return self.__ufunc_op2(other, operator.floordiv)
 
-    @LOGGER.function("DEBUG")
     def __mod__(self, other: AttrTermRhs) -> Self:
         return self.__ufunc_op2(other, operator.mod)
 
-    @LOGGER.function("DEBUG")
     def __pow__(self, other: AttrTermRhs) -> Self:
         return self.__ufunc_op2(other, operator.pow)
 
     @typing.no_type_check
-    @LOGGER.function("DEBUG")
     def __eq__(self, other: AttrTermRhs) -> Self:
         return self.__ufunc_op2(other, operator.eq)
 
     @typing.no_type_check
-    @LOGGER.function("DEBUG")
     def __ne__(self, other: AttrTermRhs) -> Self:
         return self.__ufunc_op2(other, operator.ne)
 
     @typing.no_type_check
-    @LOGGER.function("DEBUG")
     def __ge__(self, other: AttrTermRhs) -> Self:
         return self.__ufunc_op2(other, operator.ge)
 
     @typing.no_type_check
-    @LOGGER.function("DEBUG")
     def __gt__(self, other: AttrTermRhs) -> Self:
         return self.__ufunc_op2(other, operator.gt)
 
     @typing.no_type_check
-    @LOGGER.function("DEBUG")
     def __le__(self, other: AttrTermRhs) -> Self:
         return self.__ufunc_op2(other, operator.le)
 
     @typing.no_type_check
-    @LOGGER.function("DEBUG")
     def __lt__(self, other: AttrTermRhs) -> Self:
         return self.__ufunc_op2(other, operator.lt)
 
     def __ufunc_op1(self, op: UFunc1) -> Self:
-        return self.make(
-            Attr(
+        signature = OpSign(Attr, Attr)
+        with TRACKER(name=f"__{op.__qualname__}__", signature=signature):
+            return self.__make_attr(
                 device=op(self.device.term).unpack(),
                 shape=op(self.shape.term).unpack(),
                 dtype=op(self.dtype.term).unpack(),
             )
-        )
 
     def __ufunc_op2(self, other: AttrTermRhs, op: AnyUFunc2):
         match other:
             case AttrTerm():
-                return self.make(
-                    Attr(
-                        device=op(self.device.term, other.device.term).unpack(),
-                        shape=op(self.shape.term, other.shape.term).unpack(),
-                        dtype=op(self.dtype.term, other.dtype.term).unpack(),
-                    )
-                )
+                return self.__ufunc_op2_attr(other=other, op=op)
             case Attr():
                 return self.__ufunc_op2(other=other.term, op=op)
             case Tensor():
                 return self.__ufunc_op2(other=Attr.from_tensor(other).term, op=op)
             case int() | float() | bool():
-                t: type[int] | type[float] | type[bool] = type(other)
-                return self.make(
-                    Attr(
-                        device=self.device,
-                        shape=self.shape,
-                        dtype=op(self.dtype.term, DType.parse(t)).unpack(),
-                    )
-                )
+                return self.__ufunc_op2_primitive(other=other, op=op)
 
         raise TypeError(f"Do not know how to handle {type(other)=}.")
+
+    @typing.no_type_check
+    def __ufunc_op2_attr(self, other: Attr, op: AnyUFunc2) -> Self:
+        signature = OpSign(Attr, Attr, Attr)
+        with TRACKER(name=f"__{op.__qualname__}__", signature=signature):
+            return self.__make_attr(
+                device=op(self.device.term, other.device.term).unpack(),
+                shape=op(self.shape.term, other.shape.term).unpack(),
+                dtype=op(self.dtype.term, other.dtype.term).unpack(),
+            )
+
+    @typing.no_type_check
+    def __ufunc_op2_primitive(self, other: int | float | bool, op: AnyUFunc2) -> Self:
+        signature = OpSign(Attr, type(other), Attr)
+        with TRACKER(name=f"__{op.__qualname__}__", signature=signature):
+            return self.__make_attr(
+                device=self.device,
+                shape=self.shape,
+                dtype=op(self.dtype.term, DType.parse(type(other))).unpack(),
+            )
+
+    def __getitem_impl(self, key: int | slice | IntArray | Tensor | Attr | AttrTerm):
+        match key:
+            case int():
+                return self.__make_attr(
+                    device=self.device,
+                    dtype=self.dtype,
+                    shape=self.shape[1:],
+                )
+
+            case slice():
+                batch, *rest = self.shape
+
+                return self.__make_attr(
+                    device=self.device,
+                    dtype=self.dtype,
+                    shape=Shape.parse(len(range(batch)[key]), *rest),
+                )
+
+            case _:
+                return self.__make_attr(
+                    device=self.device,
+                    dtype=self.dtype,
+                    shape=Shape.parse(*key.shape, *self.shape[1:]),
+                )
 
     @property
     def device(self):
@@ -266,3 +260,9 @@ class AttrTerm(Term[Attr]):
     @classmethod
     def make(cls, data: Attr, /) -> Self:
         return cls(data)
+
+    @classmethod
+    def __make_attr(
+        cls, device: DeviceLike, shape: ShapeLike, dtype: DTypeLike
+    ) -> Self:
+        return cls.make(Attr.parse(device=device, shape=shape, dtype=dtype))
