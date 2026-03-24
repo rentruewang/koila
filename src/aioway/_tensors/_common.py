@@ -6,7 +6,13 @@ import dataclasses as dcls
 import typing
 from typing import Any
 
-__all__ = ["expr_dcls"]
+from torch import Tensor
+
+from aioway._tracking import ModuleApiTracker
+
+__all__ = ["expr_dcls", "TRACKER"]
+
+TRACKER = ModuleApiTracker(lambda: Tensor)
 
 
 @typing.dataclass_transform(eq_default=False)

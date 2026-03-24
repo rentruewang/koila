@@ -128,7 +128,7 @@ class AttrTerm(Term[Attr]):
     ) -> Self:
         sign = OpSign(Attr, type(key), Attr)
         with TRACKER(name="__getitem__", signature=sign):
-            return self.__getitem_impl(self, key)
+            return self.__getitem_impl(key)
 
     def __add__(self, other: AttrTermRhs) -> Self:
         return self.__ufunc_op2(other, operator.add)

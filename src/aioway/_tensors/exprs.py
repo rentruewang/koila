@@ -14,6 +14,7 @@ from aioway._tables import Table
 
 __all__ = ["TensorDictExpr", "TensorExpr", "TensorExprRhs"]
 
+
 type TensorExprRhs = TensorExpr | Tensor | int | float | bool
 
 
@@ -148,6 +149,6 @@ class TensorDictExpr(Expr[TensorDict], Table[TensorExpr], ABC):
                 return ZipTensorDictExpr(self, other)
 
             case TensorDict():
-                return self.zip(SourceTensorDictExpr(other))
+                return self.zip(other=SourceTensorDictExpr(other))
 
         raise TypeError(f"Does not know how to handle {type(other)=}.")

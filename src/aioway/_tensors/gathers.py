@@ -6,10 +6,15 @@ import typing
 
 from torch import Tensor
 
+from aioway._ops import OpSign
+
 from . import _common
 from .exprs import TensorExpr
 
 __all__ = ["GatherTensorExpr"]
+
+
+_TENSOR_BINOP = OpSign(Tensor, Tensor, Tensor)
 
 
 @typing.final
@@ -29,7 +34,8 @@ class GatherTensorExpr(TensorExpr):
         tensor = self.tensor.compute()
         index = self.index.compute()
 
-        return tensor[index]
+        with _common.TRACKER(name="__getitem__", signature=_TENSOR_BINOP):
+            return tensor[index]
 
     def _inputs(self):
         return self.tensor, self.index
@@ -48,7 +54,8 @@ class StaticArrayGatherTensorExpr(TensorExpr):
         tensor = self.tensor
         index = self.index.compute()
 
-        return tensor[index]
+        with _common.TRACKER(name="gather", signature=_TENSOR_BINOP):
+            return tensor[index]
 
     def _inputs(self):
         return (self.index,)
@@ -67,7 +74,8 @@ class StaticIndexGatherTensorExpr(TensorExpr):
         tensor = self.tensor.compute()
         index = self.index
 
-        return tensor[index]
+        with _common.TRACKER(name="__getitem__", signature=_TENSOR_BINOP):
+            return tensor[index]
 
     def _inputs(self):
         return (self.tensor,)
