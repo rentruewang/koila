@@ -11,14 +11,15 @@ from numpy.typing import NDArray
 from torch import Size
 
 from aioway import _typing
-from aioway._tracking import logging
+from aioway._ops import OpSign
+from aioway._tracking import ModuleApiTracker, logging
 
 from ._terms import Term
 
 __all__ = ["ShapeLike", "Shape", "shape"]
 
 LOGGER = logging.get_logger(__name__)
-
+TRACKER = ModuleApiTracker(lambda: Shape)
 
 type _PrimitiveNumber = float | int | bool
 type _IntArrayLike = tuple[int, ...] | list[int] | NDArray[np.int_]
@@ -227,53 +228,61 @@ class ShapeTerm(Term[Shape]):
         return np.array(self.shape)
 
     def __invert__(self) -> Self:
-        return self
+        return self.__identity("__invert__")
 
     def __neg__(self) -> Self:
-        return self
+        return self.__identity("__neg__")
 
     def __add__(self, other: Self) -> Self:
-        return self._broadcast_shapes(other)
+        return self.__broadcast_shapes(other, name="__add__")
 
     def __sub__(self, other: Self) -> Self:
-        return self._broadcast_shapes(other)
+        return self.__broadcast_shapes(other, name="__sub__")
 
     def __mul__(self, other: Self) -> Self:
-        return self._broadcast_shapes(other)
+        return self.__broadcast_shapes(other, name="__mul__")
 
     def __truediv__(self, other: Self) -> Self:
-        return self._broadcast_shapes(other)
+        return self.__broadcast_shapes(other, name="__truediv__")
 
     def __floordiv__(self, other: Self) -> Self:
-        return self._broadcast_shapes(other)
+        return self.__broadcast_shapes(other, name="__floordiv__")
 
     def __mod__(self, other: Self) -> Self:
-        return self._broadcast_shapes(other)
+        return self.__broadcast_shapes(other, name="__mod__")
 
     def __pow__(self, other: Self) -> Self:
-        return self._broadcast_shapes(other)
+        return self.__broadcast_shapes(other, name="__pow__")
 
     @typing.no_type_check
     def __eq__(self, other: Self) -> Self:
-        return self._broadcast_shapes(other)
+        return self.__broadcast_shapes(other, name="__eq__")
 
     @typing.no_type_check
     def __ne__(self, other: Self) -> Self:
-        return self._broadcast_shapes(other)
-
-    def __ge__(self, other: Self) -> Self:
-        return self._broadcast_shapes(other)
+        return self.__broadcast_shapes(other, name="__ne__")
 
     def __gt__(self, other: Self) -> Self:
-        return self._broadcast_shapes(other)
+        return self.__broadcast_shapes(other, name="__gt__")
 
-    def __le__(self, other: Self) -> Self:
-        return self._broadcast_shapes(other)
+    def __ge__(self, other: Self) -> Self:
+        return self.__broadcast_shapes(other, name="__ge__")
 
     def __lt__(self, other: Self) -> Self:
-        return self._broadcast_shapes(other)
+        return self.__broadcast_shapes(other, name="__lt__")
 
-    def _broadcast_shapes(self, other: Self):
+    def __le__(self, other: Self) -> Self:
+        return self.__broadcast_shapes(other, name="__le__")
+
+    def __identity(self, name: str):
+        with TRACKER(name=name, signature=OpSign(Shape, Shape)):
+            return self
+
+    def __broadcast_shapes(self, other: Self, name: str) -> Self:
+        with TRACKER(name=name, signature=OpSign(Shape, Shape, Shape)):
+            return self.__broadcast_shapes_impl(other)
+
+    def __broadcast_shapes_impl(self, other: Self) -> Self:
         return type(self)(Shape(np.broadcast_shapes(self.shape, other.shape)))
 
     def unpack(self) -> Shape:
