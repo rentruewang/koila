@@ -77,6 +77,10 @@ class Logger:
     def critical(self, msg: str, *args, **kwargs) -> None:
         self._logger.critical(msg, *args, **kwargs)
 
+    def is_enabled_for(self, level: LoggingLevel) -> bool:
+        "Wrapper for `logging.Logger.isEnabledFor`."
+        return self._logger.isEnabledFor(_get_level_int(level))
+
     def function(self, level: LoggingLevel, /):
         """
         Logs an entire function according to the `level` given.

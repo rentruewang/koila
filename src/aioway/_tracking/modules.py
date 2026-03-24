@@ -20,6 +20,14 @@ __all__ = ["ModuleApiTracker"]
 LOGGER = logging.get_logger("aioway.__api__")
 
 
+def _logging_enter(info: ModuleMethodInfo) -> None:
+    LOGGER.info("Enter %s.%s%s", info.module.__qualname__, info.name, info.signature)
+
+
+def _logging_exit(info: ModuleMethodInfo) -> None:
+    LOGGER.info("Exit %s.%s%s", info.module.__qualname__, info.name, info.signature)
+
+
 @dcls.dataclass(frozen=True)
 class ModuleApiTracker:
     "The object for module API tracking."
@@ -31,6 +39,12 @@ class ModuleApiTracker:
     s.t. the tracker can be placed before the class definition, which can be more elegant.
     """
 
+    enter: Callable[[ModuleMethodInfo], None] = _logging_enter
+    "The function to call before entering."
+
+    exit: Callable[[ModuleMethodInfo], None] = _logging_exit
+    "The function to call before exiting."
+
     @ctxl.contextmanager
     def __call__(self, name: str, signature: OpSign):
         """
@@ -41,13 +55,13 @@ class ModuleApiTracker:
             signature: The signature of the operator. This is useful because an operator can be overloaded.
         """
 
-        module = self.module().__qualname__
+        info = ModuleMethodInfo(module=self.module(), name=name, signature=signature)
 
         try:
-            LOGGER.info("Enter %s.%s%s", module, name, signature)
+            self.enter(info)
             yield
         finally:
-            LOGGER.info("Exit %s.%s%s", module, name, signature)
+            self.exit(info)
 
     def wrap[**P, T](self, name: str, signature: OpSign):
 
@@ -63,3 +77,10 @@ class ModuleApiTracker:
             return wrapper
 
         return decorator
+
+
+@dcls.dataclass(frozen=True)
+class ModuleMethodInfo:
+    module: type
+    name: str
+    signature: OpSign
