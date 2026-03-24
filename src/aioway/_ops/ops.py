@@ -7,8 +7,8 @@ import typing
 from collections.abc import Callable
 from typing import Any
 
-from aioway._tracking import logging
 from aioway._exprs import Expr
+from aioway._tracking import logging
 
 from .signs import OpSign, TypeList
 

@@ -8,8 +8,8 @@ from typing import Self
 
 from lark import Lark
 
-from aioway._tracking import logging
 from aioway._exprs import Expr
+from aioway._tracking import logging
 
 from . import _common
 from .types import ParamListTransformer, TypeList
