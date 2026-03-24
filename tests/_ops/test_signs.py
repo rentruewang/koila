@@ -5,7 +5,7 @@ from typing import Any
 import pytest
 from pytest import FixtureRequest
 
-from aioway._exprs import OpSign, TypeList
+from aioway._ops import OpSign, TypeList
 
 
 def _signature_str():
