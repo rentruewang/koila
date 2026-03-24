@@ -9,13 +9,13 @@ from typing import Self
 
 from lark import Lark, Transformer
 
-from aioway import _logging
+from aioway._tracking import logging
 
 from . import _common
 
 __all__ = ["TypeList"]
 
-LOGGER = _logging.get_logger(__name__)
+LOGGER = logging.get_logger(__name__)
 
 
 class TypeList:

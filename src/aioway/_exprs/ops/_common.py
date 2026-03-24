@@ -7,11 +7,11 @@ from collections.abc import Callable
 import lark
 from lark import Lark, Transformer
 
-from aioway import _logging
+from aioway._tracking import logging
 
 __all__ = ["lark_transformer_dcls", "parse_and_transform_later"]
 
-LOGGER = _logging.get_logger(__name__)
+LOGGER = logging.get_logger(__name__)
 
 
 @typing.dataclass_transform(frozen_default=True)

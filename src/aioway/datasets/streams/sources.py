@@ -13,7 +13,8 @@ from typing import Self
 
 from torch.utils.data import DataLoader, Sampler
 
-from aioway import _logging, _typing
+from aioway import _typing
+from aioway._tracking import logging
 from aioway.attrs import AttrSet
 from aioway.chunks import Chunk
 
@@ -28,7 +29,7 @@ __all__ = [
     "FrameStreamLoader",
 ]
 
-LOGGER = _logging.get_logger(__name__)
+LOGGER = logging.get_logger(__name__)
 
 
 @dcls.dataclass(frozen=True)

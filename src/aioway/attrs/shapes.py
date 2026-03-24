@@ -10,13 +10,14 @@ from numpy import ndarray as _NumpyNDArray
 from numpy.typing import NDArray
 from torch import Size
 
-from aioway import _logging, _typing
+from aioway import _typing
+from aioway._tracking import logging
 
 from ._terms import Term
 
 __all__ = ["ShapeLike", "Shape", "shape"]
 
-LOGGER = _logging.get_logger(__name__)
+LOGGER = logging.get_logger(__name__)
 
 
 type _PrimitiveNumber = float | int | bool

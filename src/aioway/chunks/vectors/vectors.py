@@ -8,8 +8,8 @@ from typing import Self
 
 from torch import Tensor
 
-from aioway import _logging
 from aioway._tensors import SourceTensorExpr
+from aioway._tracking import logging
 from aioway._typing import AnyUFunc1, AnyUFunc2
 from aioway.attrs import Attr, _validation
 
@@ -18,7 +18,7 @@ if typing.TYPE_CHECKING:
 
 __all__ = ["Vector"]
 
-LOGGER = _logging.get_logger(__name__)
+LOGGER = logging.get_logger(__name__)
 
 
 type VectorRhs = Vector | Tensor | int | float | bool

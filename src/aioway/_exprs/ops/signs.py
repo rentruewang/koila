@@ -8,7 +8,7 @@ from typing import Self
 
 from lark import Lark
 
-from aioway import _logging
+from aioway._tracking import logging
 
 from ..exprs import Expr
 from . import _common
@@ -16,7 +16,7 @@ from .types import ParamListTransformer, TypeList
 
 __all__ = ["OpSign", "OpSignExpr"]
 
-LOGGER = _logging.get_logger(__name__)
+LOGGER = logging.get_logger(__name__)
 
 
 class OpSign[T]:

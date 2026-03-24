@@ -6,13 +6,13 @@ from typing import Self
 
 from torch import device as TorchDevice
 
-from aioway import _logging
+from aioway._tracking import logging
 
 from ._terms import Term
 
 __all__ = ["Device", "device", "DeviceLike"]
 
-LOGGER = _logging.get_logger(__name__)
+LOGGER = logging.get_logger(__name__)
 
 
 class Device:

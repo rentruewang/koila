@@ -9,7 +9,7 @@ from typing import Self
 
 from torch import Tensor
 
-from aioway import _logging
+from aioway._tracking import logging
 from aioway._typing import AnyUFunc2, IntArray, UFunc1
 
 from ._terms import Term
@@ -20,7 +20,7 @@ from .shapes import Shape, ShapeLike
 __all__ = ["Attr", "attr", "AttrTerm", "AttrTermRhs"]
 
 
-LOGGER = _logging.get_logger(__name__)
+LOGGER = logging.get_logger(__name__)
 
 type AttrTermRhs = AttrTerm | Attr | Tensor | int | float | bool
 

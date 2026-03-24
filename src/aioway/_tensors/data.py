@@ -10,8 +10,8 @@ from numpy.typing import NDArray
 from tensordict import TensorDict
 from torch import Tensor
 
-from aioway import _logging
 from aioway._exprs import Expr
+from aioway._tracking import logging
 
 from . import _common
 from .exprs import TensorDictExpr, TensorExpr
@@ -26,7 +26,7 @@ __all__ = [
     "ItemTensorDictExpr",
 ]
 
-LOGGER = _logging.get_logger(__name__)
+LOGGER = logging.get_logger(__name__)
 
 
 @_common.expr_dcls

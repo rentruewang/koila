@@ -13,13 +13,13 @@ import torch
 from numpy import dtype as NumpyDType
 from torch import dtype as TorchDType
 
-from aioway import _logging
+from aioway._tracking import logging
 
 from ._terms import Term
 
 __all__ = ["DType", "dtype", "DTypeLike"]
 
-LOGGER = _logging.get_logger(__name__)
+LOGGER = logging.get_logger(__name__)
 
 
 type DTypeFamily = Literal["int", "float", "bool"]
