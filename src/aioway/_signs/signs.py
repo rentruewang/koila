@@ -14,12 +14,12 @@ from aioway._tracking import logging
 from . import _common
 from .types import ParamListTransformer, TypeList
 
-__all__ = ["OpSign", "OpSignExpr"]
+__all__ = ["Signature", "OpSignExpr"]
 
 LOGGER = logging.get_logger(__name__)
 
 
-class OpSign:
+class Signature:
     """
     The signature type, used to describe the computation in a single expression node.
 
@@ -36,7 +36,7 @@ class OpSign:
         self._return_type = ret
 
     def __eq__(self, other: object):
-        if isinstance(other, OpSign):
+        if isinstance(other, Signature):
             return (
                 True
                 and self._param_types == other._param_types
@@ -85,7 +85,7 @@ class OpSign:
 
 
 @typing.final
-class OpSignExpr(Expr[OpSign]):
+class OpSignExpr(Expr[Signature]):
     """
     The signature expression.
 
@@ -110,12 +110,12 @@ class OpSignExpr(Expr[OpSign]):
         return f"({self.__sub_strs}) -> {self.return_type.__name__}"
 
     @typing.override
-    def _compute(self) -> OpSign:
+    def _compute(self) -> Signature:
         input_types = (i.return_type for i in self.inputs)
-        return OpSign(*input_types, self.return_type)
+        return Signature(*input_types, self.return_type)
 
     @typing.override
-    def _return_type(self) -> type[OpSign]:
+    def _return_type(self) -> type[Signature]:
         return self.__return_type
 
     @typing.override
@@ -139,7 +139,7 @@ signature: param_list "->" VAR_NAME
 @_common.lark_transformer_dcls
 class SignatureTransformer(ParamListTransformer):
     def signature(self, param_list: TypeList, result: str):
-        return OpSign(*param_list, self._mapping[result])
+        return Signature(*param_list, self._mapping[result])
 
 
 @functools.cache

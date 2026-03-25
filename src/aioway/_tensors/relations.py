@@ -8,7 +8,7 @@ from collections.abc import KeysView, Sequence
 import tensordict as td
 from tensordict import TensorDict
 
-from aioway._ops import OpSign
+from aioway._signs import Signature
 from aioway._tracking import logging
 from aioway._typing import SeqKeysView, SetKeysView
 
@@ -36,7 +36,7 @@ class SelectTensorDictExpr(TensorDictExpr):
 
         with _common.TRACKER(
             name="select",
-            signature=OpSign(TensorDict, TensorDict),
+            signature=Signature(TensorDict, TensorDict),
         ):
             return pulled.select(*self.columns)
 
@@ -60,7 +60,7 @@ class RenameTensorDictExpr(TensorDictExpr):
         td = self.source.compute()
         with _common.TRACKER(
             name="rename",
-            signature=OpSign(TensorDict, TensorDict),
+            signature=Signature(TensorDict, TensorDict),
         ):
             return _rename(td, **self.renames)
 
@@ -85,7 +85,7 @@ class ZipTensorDictExpr(TensorDictExpr):
 
         with _common.TRACKER(
             name="zip",
-            signature=OpSign(TensorDict, TensorDict, TensorDict),
+            signature=Signature(TensorDict, TensorDict, TensorDict),
         ):
             return td.merge_tensordicts(left, right)
 

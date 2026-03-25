@@ -6,7 +6,7 @@ from typing import Self
 
 from torch import device as TorchDevice
 
-from aioway._ops import OpSign
+from aioway._signs import Signature
 from aioway._tracking import ModuleApiTracker, logging
 
 from ._terms import Term
@@ -160,12 +160,12 @@ class DeviceTerm(Term[Device]):
             return Device.parse(item)
 
     def __identity(self, name: str):
-        with TRACKER(name=name, signature=OpSign(Device, Device)):
+        with TRACKER(name=name, signature=Signature(Device, Device)):
             return self
 
     @classmethod
     def __matching_device(cls, l: DeviceTermRhs, r: DeviceTermRhs, name: str) -> Self:
-        with TRACKER(name=name, signature=OpSign(Device, Device, Device)):
+        with TRACKER(name=name, signature=Signature(Device, Device, Device)):
             return cls.__matching_device_impl(l, r)
 
     @classmethod

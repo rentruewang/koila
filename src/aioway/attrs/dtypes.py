@@ -13,7 +13,7 @@ import torch
 from numpy import dtype as NumpyDType
 from torch import dtype as TorchDType
 
-from aioway._ops import OpSign
+from aioway._signs import Signature
 from aioway._tracking import ModuleApiTracker, logging
 
 from ._terms import Term
@@ -299,12 +299,12 @@ class DTypeTerm(Term[DType]):
         return self.dtype
 
     def __identical(self, name: str) -> Self:
-        with TRACKER(name=name, signature=OpSign(DType, DType)):
+        with TRACKER(name=name, signature=Signature(DType, DType)):
             return self
 
     @classmethod
     def __broadcast(cls, left: DType, right: Self | DTypeLike, name: str) -> Self:
-        with TRACKER(name=name, signature=OpSign(DType, DType, DType)):
+        with TRACKER(name=name, signature=Signature(DType, DType, DType)):
             return cls.__broadcast_impl(left, right)
 
     @classmethod
@@ -322,7 +322,7 @@ class DTypeTerm(Term[DType]):
 
     @classmethod
     def __boolean(cls, right: Self | DTypeLike, name: str):
-        with TRACKER(name=name, signature=OpSign(DType, DType, DType)):
+        with TRACKER(name=name, signature=Signature(DType, DType, DType)):
             return cls.__boolean_impl(right=right)
 
     @classmethod
