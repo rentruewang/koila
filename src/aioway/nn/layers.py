@@ -37,7 +37,7 @@ class Linear(Preview):
         if len(shape) <= 1:
             return NotImplemented
 
-        if shape[0] != self.in_features:
+        if shape[-1] != self.in_features:
             return NotImplemented
 
         return [*shape[:-1], self.out_features]

@@ -11,12 +11,14 @@ from collections.abc import Iterator, KeysView, Mapping
 from typing import Any, ClassVar
 
 from torch import Tensor
+from torch import device as TorchDevice
+from torch import dtype as TorchDType
 from torch.nn import Module
 
 from aioway._ops import OpSign
 from aioway._tracking import ModuleApiTracker, logging
 from aioway._typing import SeqKeysView
-from aioway.attrs import Attr, Device, DeviceLike, DType, DTypeLike, Shape, ShapeLike
+from aioway.attrs import Attr, Device, DType, Shape, ShapeLike
 
 __all__ = ["Preview"]
 
@@ -34,8 +36,8 @@ class Preview(Mapping[str, Any], ABC):
     The constructor for the module.
     """
 
-    device: DeviceLike
-    dtype: DTypeLike
+    device: TorchDevice
+    dtype: TorchDType
 
     def __post_init__(self) -> None: ...
 
