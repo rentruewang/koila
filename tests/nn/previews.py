@@ -77,6 +77,8 @@ class Preview(Mapping[str, Any], ABC):
 
     @functools.cached_property
     def module(self) -> Module:
+        "The lazy `module` property constructing the `nn.Module`."
+
         return self.MODULE_TYPE(**self)
 
     @functools.cached_property

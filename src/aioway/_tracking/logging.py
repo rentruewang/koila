@@ -49,6 +49,7 @@ def enable_rich_log(level: str | int, /):
 type LoggingLevel = Literal[
     "NOTSET", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL", 0, 10, 20, 30, 40, 50
 ]
+"The accepted logging levels. Same as `logging` library."
 
 
 @dcls.dataclass(frozen=True)
