@@ -1,5 +1,7 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
+"The preview module protocol definition."
+
 import abc
 import dataclasses as dcls
 import functools
@@ -11,7 +13,8 @@ from typing import Any, ClassVar
 from torch import Tensor
 from torch.nn import Module
 
-from aioway._tracking import logging
+from aioway._ops import OpSign
+from aioway._tracking import ModuleApiTracker, logging
 from aioway._typing import SeqKeysView
 from aioway.attrs import Attr
 
@@ -46,21 +49,31 @@ class Preview(Mapping[str, Any], ABC):
 
         raise KeyError(key)
 
-    @abc.abstractmethod
     def preview(self, attr: Attr) -> Attr:
         """
         Transforms the input attribute into an attribute describing the output.
         """
 
-        ...
+        with self._tracker()(name="attr", signature=OpSign(Attr, Attr)):
+            return self._preview(attr)
 
     @abc.abstractmethod
+    def _preview(self, attr: Attr) -> Attr: ...
+
     def forward(self, tensor: Tensor) -> Tensor:
         """
         Do a forward pass on the input `tensor`.
         """
 
-        ...
+        with self._tracker()(name="forward", signature=OpSign(Tensor, Tensor)):
+            return self._forward(tensor)
+
+    @abc.abstractmethod
+    def _forward(self, tensor: Tensor) -> Tensor: ...
+
+    @classmethod
+    def _tracker(cls) -> ModuleApiTracker:
+        return ModuleApiTracker(lambda: cls)
 
     @functools.cached_property
     def module(self) -> Module:
