@@ -51,7 +51,7 @@ or a `tuple[int, ...]` allowing per-dimension configuration.
 
 
 @dcls.dataclass(frozen=True)
-class _ConvNd(ABC):
+class _ConvNd(Preview, ABC):
     in_channels: int
     out_channels: int
     kernel_size: ConvSize
@@ -80,7 +80,23 @@ class _ConvNd(ABC):
         _check_maybe_tuple(self.padding, "padding")
         _check_maybe_tuple(self.dilation, "dilation")
 
-    def _dim_size_compute(self, at: int) -> _ConvDim:
+    @typing.override
+    @typing.final
+    def _preview_shape(self, shape: Shape, /) -> ShapeLike:
+        if len(shape) != self.NDIM + 2:
+            return NotImplemented
+
+        batch, channels, *dim_ins = shape
+
+        # Should match `in_channels` like `Linear`.
+        if channels != self.in_channels:
+            return NotImplemented
+
+        dim_outs = [self._dim_size(i, dim_in) for i, dim_in in enumerate(dim_ins)]
+
+        return [batch, self.out_channels, *dim_outs]
+
+    def _dim_size(self, at: int, in_size: int) -> int:
         if not 0 <= at < self.NDIM:
             raise ValueError
 
@@ -89,7 +105,7 @@ class _ConvNd(ABC):
             stride=_index_conv_dim(self.stride, dim=at),
             dilation=_index_conv_dim(self.dilation, dim=at),
             kernel_size=_index_conv_dim(self.kernel_size, dim=at),
-        )
+        )(in_size)
 
 
 def _index_conv_dim(item: ConvSize, dim: int) -> int:
@@ -127,21 +143,6 @@ class Conv1d(_ConvNd, Preview):
     MODULE_TYPE = _Conv1d
     NDIM = 1
 
-    @typing.override
-    def _preview_shape(self, shape: Shape, /) -> ShapeLike:
-        try:
-            n, c, l_in = shape
-        except ValueError, TypeError:
-            return NotImplemented
-
-        # Should match `in_channels` like `Linear`.
-        if c != self.in_channels:
-            return NotImplemented
-
-        l_out = self._dim_size_compute(0)(l_in)
-
-        return [n, self.out_channels, l_out]
-
 
 @dcls.dataclass(frozen=True)
 class Conv2d(_ConvNd, Preview):
@@ -154,10 +155,6 @@ class Conv2d(_ConvNd, Preview):
     MODULE_TYPE = _Conv2d
     NDIM = 2
 
-    @typing.override
-    def _preview_shape(self, shape: Shape, /) -> ShapeLike:
-        raise NotImplementedError
-
 
 @dcls.dataclass(frozen=True)
 class Conv3d(_ConvNd, Preview):
@@ -169,10 +166,6 @@ class Conv3d(_ConvNd, Preview):
 
     MODULE_TYPE = _Conv3d
     NDIM = 3
-
-    @typing.override
-    def _preview_shape(self, shape: Shape, /) -> ShapeLike:
-        raise NotImplementedError
 
 
 @dcls.dataclass(frozen=True)
