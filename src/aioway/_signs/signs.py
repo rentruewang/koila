@@ -71,18 +71,6 @@ class Signature:
             text=text,
         )(**types)
 
-    @classmethod
-    def ufunc0(cls, typ: type, /) -> Self:
-        return cls(typ)
-
-    @classmethod
-    def ufunc1(cls, typ: type, /) -> Self:
-        return cls(typ, typ)
-
-    @classmethod
-    def ufunc2(cls, typ: type, /) -> Self:
-        return cls(typ, typ, typ)
-
 
 @typing.final
 class SignatureExpr(Expr[Signature]):
