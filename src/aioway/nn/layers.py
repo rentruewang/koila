@@ -116,10 +116,17 @@ class Conv1d(_ConvNd, Preview):
         stride = unpack(self.stride)
         dilation = unpack(self.dilation)
         kernel_size = unpack(self.kernel_size)
-        result = math.floor(
-            (l + 2 * padding - dilation * (kernel_size - 1) - 1) / stride + 1
-        )
-        return [n, self.out_channels, result]
+
+        return [
+            n,
+            self.out_channels,
+            _ConvDim(
+                padding=padding,
+                dilation=dilation,
+                stride=stride,
+                kernel_size=kernel_size,
+            )(l),
+        ]
 
 
 @dcls.dataclass(frozen=True)
@@ -167,3 +174,17 @@ class Identity(Preview):
     @typing.override
     def _preview_shape(self, shape: Shape, /) -> ShapeLike:
         return shape
+
+
+@dcls.dataclass(frozen=True)
+class _ConvDim:
+    padding: int
+    dilation: int
+    kernel_size: int
+    stride: int
+
+    def __call__(self, in_dim: int) -> int:
+        denominator = (
+            in_dim + 2 * self.padding - self.dilation * (self.kernel_size - 1) - 1
+        )
+        return math.floor(denominator / self.stride + 1)
