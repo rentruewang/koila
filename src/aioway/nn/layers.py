@@ -4,6 +4,8 @@
 
 import dataclasses as dcls
 import typing
+from abc import ABC
+from typing import ClassVar
 
 from aioway._tracking import logging
 from aioway.attrs import Shape, ShapeLike
@@ -45,8 +47,7 @@ or a `tuple[int, ...]` allowing per-dimension configuration.
 
 
 @dcls.dataclass(frozen=True)
-class _ConvNd:
-
+class _ConvNd(ABC):
     in_channels: int
     out_channels: int
     kernel_size: ConvSize
@@ -56,7 +57,9 @@ class _ConvNd:
     bias: bool = True
     padding_mode: str = "zeros"
 
-    def _validate_sizing(self, dims: int) -> None:
+    NDIM: ClassVar[int]
+
+    def __post_init__(self) -> None:
         """
         Validate `ConvSize` to have `dims` as its length.
         """
@@ -65,8 +68,8 @@ class _ConvNd:
             if not isinstance(t, tuple):
                 return
 
-            if len(t) != dims:
-                raise ValueError(f"self.{name}={t}, expected ndim={dims}.")
+            if len(t) != self.NDIM:
+                raise ValueError(f"self.{name}={t}, expected ndim={self.NDIM}.")
 
         _check_tuple(self.kernel_size, "kernel_size")
         _check_tuple(self.stride, "stride")
@@ -83,9 +86,7 @@ class Conv1d(_ConvNd, Preview):
     from torch.nn import Conv1d as _Conv1d
 
     MODULE_TYPE = _Conv1d
-
-    def __post_init__(self) -> None:
-        self._validate_sizing(1)
+    NDIM = 1
 
     @typing.override
     def _preview_shape(self, shape: Shape, /) -> ShapeLike:
@@ -101,9 +102,7 @@ class Conv2d(_ConvNd, Preview):
     from torch.nn import Conv2d as _Conv2d
 
     MODULE_TYPE = _Conv2d
-
-    def __post_init__(self) -> None:
-        self._validate_sizing(2)
+    NDIM = 2
 
     @typing.override
     def _preview_shape(self, shape: Shape, /) -> ShapeLike:
@@ -119,9 +118,7 @@ class Conv3d(_ConvNd, Preview):
     from torch.nn import Conv3d as _Conv3d
 
     MODULE_TYPE = _Conv3d
-
-    def __post_init__(self) -> None:
-        self._validate_sizing(3)
+    NDIM = 3
 
     @typing.override
     def _preview_shape(self, shape: Shape, /) -> ShapeLike:
