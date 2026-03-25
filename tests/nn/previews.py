@@ -1,11 +1,12 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
+import abc
 import dataclasses as dcls
 import functools
 import typing
 from abc import ABC
-from collections.abc import Callable, KeysView, Mapping
-from typing import Any
+from collections.abc import KeysView, Mapping
+from typing import Any, ClassVar
 
 from torch import Tensor
 from torch.nn import Module
@@ -20,7 +21,16 @@ LOGGER = logging.get_logger(__name__)
 
 
 @dcls.dataclass(frozen=True)
-class Config(Mapping[str, Any]):
+class Preview(Mapping[str, Any], ABC):
+    """
+    Preview informs us how an `nn.Module` would be behave without initializing it.
+    """
+
+    MODULE_TYPE: ClassVar[type[Module]]
+    """
+    The constructor for the module.
+    """
+
     @typing.override
     def keys(self) -> KeysView[str]:
         return self.__keys_view
@@ -36,6 +46,26 @@ class Config(Mapping[str, Any]):
 
         raise KeyError(key)
 
+    @abc.abstractmethod
+    def preview(self, attr: Attr) -> Attr:
+        """
+        Transforms the input attribute into an attribute describing the output.
+        """
+
+        ...
+
+    @abc.abstractmethod
+    def forward(self, tensor: Tensor) -> Tensor:
+        """
+        Do a forward pass on the input `tensor`.
+        """
+
+        ...
+
+    @functools.cached_property
+    def module(self) -> Module:
+        return self.MODULE_TYPE(**self)
+
     @functools.cached_property
     def __keys_view(self):
         return SeqKeysView([f.name for f in self.__fields])
@@ -43,27 +73,3 @@ class Config(Mapping[str, Any]):
     @functools.cached_property
     def __fields(self):
         return dcls.fields(self)
-
-
-@dcls.dataclass(frozen=True)
-class Preview(ABC):
-    """
-    Preview lets us know about the layers before we initialize it.
-    """
-
-    config: type[Config]
-    """
-    The configuration type for the module. This is star-unpacked to the constructor of module.
-    """
-
-    module: type[Module]
-    """
-    The constructor for the module.
-    """
-
-    attr: Callable[[Config, Attr], Attr]
-    """
-    Get the output attribute from the input attribute.
-    """
-
-    compute: Callable[[Tensor], Tensor]
