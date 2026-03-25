@@ -3,6 +3,7 @@
 "The dense layers from `torch.nn`."
 
 import dataclasses as dcls
+import math
 import typing
 from abc import ABC
 from typing import ClassVar
@@ -34,6 +35,9 @@ class Linear(Preview):
     @typing.override
     def _preview_shape(self, shape: Shape, /) -> ShapeLike:
         if len(shape) <= 1:
+            return NotImplemented
+
+        if shape[0] != self.in_features:
             return NotImplemented
 
         return [*shape[:-1], self.out_features]
@@ -90,7 +94,32 @@ class Conv1d(_ConvNd, Preview):
 
     @typing.override
     def _preview_shape(self, shape: Shape, /) -> ShapeLike:
-        raise NotImplementedError
+        try:
+            n, c, l = shape
+        except ValueError, TypeError:
+            return NotImplemented
+
+        # Should match `in_channels` like `Linear`.
+        if c != self.in_channels:
+            return NotImplemented
+
+        def unpack(item: ConvSize) -> int:
+            match item:
+                case int():
+                    return item
+                case [item]:
+                    return item
+                case _:
+                    raise ValueError("Impossible.")
+
+        padding = unpack(self.padding)
+        stride = unpack(self.stride)
+        dilation = unpack(self.dilation)
+        kernel_size = unpack(self.kernel_size)
+        result = math.floor(
+            (l + 2 * padding - dilation * (kernel_size - 1) - 1) / stride + 1
+        )
+        return [n, self.out_channels, result]
 
 
 @dcls.dataclass(frozen=True)
