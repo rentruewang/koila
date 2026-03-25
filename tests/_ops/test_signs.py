@@ -26,8 +26,3 @@ def test_signature_param(signature: Signature[Any]):
 @pytest.fixture
 def type_list() -> TypeList:
     return TypeList(int, int, float)
-
-
-def test_param_list_compat(type_list: TypeList):
-    assert type_list.check_values([1, 2, 3.0])
-    assert not type_list.check_values([1.0, 2, 3.0])

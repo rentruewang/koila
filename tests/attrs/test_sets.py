@@ -6,7 +6,7 @@ from pytest import FixtureRequest
 from tensordict import TensorDict
 
 from aioway import attrs
-from aioway.attrs import AttrSet, _validation
+from aioway.attrs import Attr, AttrSet, _validation
 from aioway.chunks import Chunk
 
 
@@ -59,6 +59,12 @@ def _invalid_data():
 @pytest.fixture(params=_invalid_data())
 def invalid_data(request: FixtureRequest) -> TensorDict:
     return request.param
+
+
+def test_attrset_getitem(schema: AttrSet):
+    assert isinstance(schema["a"], Attr)
+    assert isinstance(schema[["a", "b"]], AttrSet)
+    assert schema == schema[["a", "b"]]
 
 
 def test_validation_ok(schema: AttrSet, valid_data: TensorDict) -> None:

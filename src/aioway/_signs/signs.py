@@ -4,6 +4,7 @@
 
 import functools
 import typing
+from types import GenericAlias
 from typing import Self
 
 from lark import Lark
@@ -29,10 +30,16 @@ class Signature:
 
     __match_args__ = "param_types", "return_type"
 
-    def __init__(self, *types: type) -> None:
+    def __init__(self, *types: type | GenericAlias) -> None:
         *param_types, ret = types
 
         self._param_types = TypeList(*param_types)
+
+        if not isinstance(ret, type):
+            raise TypeError(
+                f"The last argument to `Signature` must be a type. Got {ret}."
+            )
+
         self._return_type = ret
 
     def __eq__(self, other: object):
