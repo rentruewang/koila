@@ -12,7 +12,7 @@ from aioway.attrs import Shape, ShapeLike
 
 from .previews import Preview
 
-__all__ = ["Linear", "Conv1d", "Conv2d", "Conv3d", "Transformer", "Identity"]
+__all__ = ["Linear", "Conv1d", "Conv2d", "Conv3d", "Identity"]
 
 LOGGER = logging.get_logger(__name__)
 
@@ -126,21 +126,6 @@ class Conv3d(_ConvNd, Preview):
 
 
 @dcls.dataclass(frozen=True)
-class Transformer(Preview):
-    """
-    The wrapper for `torch.nn.Transformer`.
-    """
-
-    from torch.nn import Transformer as _Transformer
-
-    MODULE_TYPE = _Transformer
-
-    @typing.override
-    def _preview_shape(self, shape: Shape, /) -> ShapeLike:
-        raise NotImplementedError
-
-
-@dcls.dataclass(frozen=True)
 class Identity(Preview):
     """
     The wrapper for `torch.nn.Identity`.
@@ -152,4 +137,4 @@ class Identity(Preview):
 
     @typing.override
     def _preview_shape(self, shape: Shape, /) -> ShapeLike:
-        raise NotImplementedError
+        return shape
