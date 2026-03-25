@@ -16,7 +16,7 @@ from torch.nn import Module
 from aioway._ops import OpSign
 from aioway._tracking import ModuleApiTracker, logging
 from aioway._typing import SeqKeysView
-from aioway.attrs import Attr
+from aioway.attrs import Attr, Device, DeviceLike, DType, DTypeLike, Shape, ShapeLike
 
 __all__ = ["Preview"]
 
@@ -33,6 +33,9 @@ class Preview(Mapping[str, Any], ABC):
     """
     The constructor for the module.
     """
+
+    device: DeviceLike
+    dtype: DTypeLike
 
     def __post_init__(self) -> None: ...
 
@@ -58,13 +61,29 @@ class Preview(Mapping[str, Any], ABC):
     def preview(self, attr: Attr) -> Attr:
         """
         Transforms the input attribute into an attribute describing the output.
+
+        Returns `NotImplemented` when the input `Attr` is incompatible (usually device and dtype).
         """
 
-        with self._tracker()(name="attr", signature=OpSign(Attr, Attr)):
-            return self._preview(attr)
+        with self._tracker()(name="attr", signature=OpSign(Device, Device)):
+            if attr.device != self.device:
+                return NotImplemented
+
+        with self._tracker()(name="attr", signature=OpSign(DType, DType)):
+            dtype = attr.dtype.term * self.dtype
+
+        with self._tracker()(name="attr", signature=OpSign(Shape, Shape)):
+            if (shape := self._preview_shape(attr.shape)) is NotImplemented:
+                return NotImplemented
+
+        return Attr.parse(
+            device=attr.device,
+            dtype=dtype.unpack(),
+            shape=shape,
+        )
 
     @abc.abstractmethod
-    def _preview(self, attr: Attr, /) -> Attr: ...
+    def _preview_shape(self, shape: Shape, /) -> ShapeLike: ...
 
     def forward(self, tensor: Tensor) -> Tensor:
         """

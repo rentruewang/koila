@@ -8,7 +8,7 @@ import typing
 from torch.nn import Linear as _Linear
 
 from aioway._tracking import logging
-from aioway.attrs import Attr
+from aioway.attrs import Shape, ShapeLike
 
 from .previews import Preview
 
@@ -30,13 +30,11 @@ class Linear(Preview):
     bias: bool = True
 
     @typing.override
-    def _preview(self, attr: Attr) -> Attr:
-        shape = [*attr.shape[:-1], self.out_features]
-        return Attr.parse(
-            device=attr.device,
-            dtype=(attr.dtype.term * "float32").unpack(),
-            shape=shape,
-        )
+    def _preview_shape(self, shape: Shape, /) -> ShapeLike:
+        if len(shape) <= 1:
+            return NotImplemented
+
+        return [*shape[:-1], self.out_features]
 
 
 type ConvSize = int | tuple[int, ...]
@@ -86,7 +84,7 @@ class Conv1d(_ConvNd, Preview):
         self._validate_sizing(1)
 
     @typing.override
-    def _preview(self, attr: Attr) -> Attr:
+    def _preview_shape(self, shape: Shape, /) -> ShapeLike:
         raise NotImplementedError
 
 
@@ -100,7 +98,7 @@ class Conv2d(_ConvNd, Preview):
         self._validate_sizing(2)
 
     @typing.override
-    def _preview(self, attr: Attr) -> Attr:
+    def _preview_shape(self, shape: Shape, /) -> ShapeLike:
         raise NotImplementedError
 
 
@@ -114,7 +112,7 @@ class Conv3d(_ConvNd, Preview):
         self._validate_sizing(3)
 
     @typing.override
-    def _preview(self, attr: Attr) -> Attr:
+    def _preview_shape(self, shape: Shape, /) -> ShapeLike:
         raise NotImplementedError
 
 
@@ -125,7 +123,7 @@ class Transformer(Preview):
     """
 
     @typing.override
-    def _preview(self, attr: Attr) -> Attr:
+    def _preview_shape(self, shape: Shape, /) -> ShapeLike:
         raise NotImplementedError
 
 
@@ -138,5 +136,5 @@ class Identity(Preview):
     """
 
     @typing.override
-    def _preview(self, attr: Attr) -> Attr:
-        return attr
+    def _preview_shape(self, shape: Shape, /) -> ShapeLike:
+        return shape
