@@ -1,0 +1,24 @@
+# Copyright (c) AIoWay Authors - All Rights Reserved
+
+from collections.abc import Callable
+from typing import Any
+
+__all__ = ["format_function"]
+
+
+def format_function(func: Callable, *args: Any, **kwargs: Any) -> str:
+    "Format the function into readable string, mimicking signature in python."
+
+    args_builder: list[str] = []
+
+    # Add positional arguments.
+    if args:
+        args_builder.extend(f"{arg!r}" for arg in args)
+
+    # Add keyword arguments.
+    if kwargs:
+        args_builder.extend(f"{k!s}={v!r}" for k, v in kwargs.items())
+
+    args_str = ", ".join(args_builder)
+    func_str = func.__qualname__
+    return f"{func_str}({args_str})"
