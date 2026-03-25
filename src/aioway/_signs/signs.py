@@ -14,7 +14,7 @@ from aioway._tracking import logging
 from . import _common
 from .types import ParamListTransformer, TypeList
 
-__all__ = ["Signature", "OpSignExpr"]
+__all__ = ["Signature", "SignatureExpr"]
 
 LOGGER = logging.get_logger(__name__)
 
@@ -85,7 +85,7 @@ class Signature:
 
 
 @typing.final
-class OpSignExpr(Expr[Signature]):
+class SignatureExpr(Expr[Signature]):
     """
     The signature expression.
 
