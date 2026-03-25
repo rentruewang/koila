@@ -31,17 +31,9 @@ class Linear(Preview):
 
     @typing.override
     def _preview(self, attr: Attr) -> Attr:
-        # Right now using `NotImplemented` to describe whether or not this is OK.
-        # if attr.device != self._device:
-        #     return NotImplemented
-
-        # if attr.shape[-1] != self._in_features:
-        #     return NotImplemented
-
-        # shape = [*attr.shape[:-1], self._out_features]
-        # return Attr.parse(
-        #     device=attr.device,
-        #     dtype=(attr.dtype.term * self._dtype).unpack(),
-        #     shape=shape,
-        # )
-        raise NotImplementedError
+        shape = [*attr.shape[:-1], self.out_features]
+        return Attr.parse(
+            device=attr.device,
+            dtype=(attr.dtype.term * "float32").unpack(),
+            shape=shape,
+        )
