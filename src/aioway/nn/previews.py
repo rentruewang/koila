@@ -7,7 +7,7 @@ import dataclasses as dcls
 import functools
 import typing
 from abc import ABC
-from collections.abc import KeysView, Mapping
+from collections.abc import Iterator, KeysView, Mapping
 from typing import Any, ClassVar
 
 from torch import Tensor
@@ -34,6 +34,8 @@ class Preview(Mapping[str, Any], ABC):
     The constructor for the module.
     """
 
+    def __post_init__(self) -> None: ...
+
     @typing.override
     def keys(self) -> KeysView[str]:
         return self.__keys_view
@@ -41,6 +43,10 @@ class Preview(Mapping[str, Any], ABC):
     @typing.override
     def __len__(self) -> int:
         return len(self.__fields)
+
+    @typing.override
+    def __iter__(self) -> Iterator[str]:
+        yield from self.keys()
 
     @typing.override
     def __getitem__(self, key: str) -> Any:
@@ -58,7 +64,7 @@ class Preview(Mapping[str, Any], ABC):
             return self._preview(attr)
 
     @abc.abstractmethod
-    def _preview(self, attr: Attr) -> Attr: ...
+    def _preview(self, attr: Attr, /) -> Attr: ...
 
     def forward(self, tensor: Tensor) -> Tensor:
         """
@@ -66,10 +72,7 @@ class Preview(Mapping[str, Any], ABC):
         """
 
         with self._tracker()(name="forward", signature=OpSign(Tensor, Tensor)):
-            return self._forward(tensor)
-
-    @abc.abstractmethod
-    def _forward(self, tensor: Tensor) -> Tensor: ...
+            return self.module(tensor)
 
     @classmethod
     def _tracker(cls) -> ModuleApiTracker:

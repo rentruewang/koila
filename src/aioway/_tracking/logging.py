@@ -7,9 +7,11 @@ import dataclasses as dcls
 import logging
 from collections.abc import Callable
 from logging import Handler
-from typing import Any, Literal
+from typing import Literal
 
 from rich.logging import RichHandler
+
+from aioway import _common
 
 __all__ = ["enable_log", "enable_rich_log", "Logger", "get_logger"]
 
@@ -142,7 +144,7 @@ class _CallAndLog[**P, T]:
     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> T:
         "Call and log."
 
-        formatted = _format_function(self.func, *args, **kwargs)
+        formatted = _common.format_function(self.func, *args, **kwargs)
         self.log("%s", formatted)
         result = self.func(*args, **kwargs)
         self.log("%s -> %s", formatted, result)
@@ -165,21 +167,3 @@ def _get_level_int(level: LoggingLevel):
             return 50
 
     raise ValueError(level)
-
-
-def _format_function(func: Callable, *args: Any, **kwargs: Any) -> str:
-    "Format the function into readable string, mimicking signature in python."
-
-    args_builder: list[str] = []
-
-    # Add positional arguments.
-    if args:
-        args_builder.extend(f"{arg!r}" for arg in args)
-
-    # Add keyword arguments.
-    if kwargs:
-        args_builder.extend(f"{k!s}={v!r}" for k, v in kwargs.items())
-
-    args_str = ", ".join(args_builder)
-    func_str = func.__qualname__
-    return f"{func_str}({args_str})"
