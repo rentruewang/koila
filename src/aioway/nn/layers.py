@@ -68,17 +68,52 @@ class _ConvNd(ABC):
         Validate `ConvSize` to have `dims` as its length.
         """
 
-        def _check_tuple(t: ConvSize, name: str):
+        def _check_maybe_tuple(t: ConvSize, name: str):
             if not isinstance(t, tuple):
                 return
 
             if len(t) != self.NDIM:
                 raise ValueError(f"self.{name}={t}, expected ndim={self.NDIM}.")
 
-        _check_tuple(self.kernel_size, "kernel_size")
-        _check_tuple(self.stride, "stride")
-        _check_tuple(self.padding, "padding")
-        _check_tuple(self.dilation, "dilation")
+        _check_maybe_tuple(self.kernel_size, "kernel_size")
+        _check_maybe_tuple(self.stride, "stride")
+        _check_maybe_tuple(self.padding, "padding")
+        _check_maybe_tuple(self.dilation, "dilation")
+
+    def _dim_size_compute(self, at: int) -> _ConvDim:
+        if not 0 <= at < self.NDIM:
+            raise ValueError
+
+        return _ConvDim(
+            padding=_index_conv_dim(self.padding, dim=at),
+            stride=_index_conv_dim(self.stride, dim=at),
+            dilation=_index_conv_dim(self.dilation, dim=at),
+            kernel_size=_index_conv_dim(self.kernel_size, dim=at),
+        )
+
+
+def _index_conv_dim(item: ConvSize, dim: int) -> int:
+    match item:
+        case int():
+            return item
+        case tuple():
+            return item[dim]
+        case _:
+            raise ValueError("Impossible.")
+
+
+@dcls.dataclass(frozen=True)
+class _ConvDim:
+    padding: int
+    dilation: int
+    kernel_size: int
+    stride: int
+
+    def __call__(self, in_dim: int) -> int:
+        denominator = (
+            in_dim + 2 * self.padding - self.dilation * (self.kernel_size - 1) - 1
+        )
+        return math.floor(denominator / self.stride + 1)
 
 
 @dcls.dataclass(frozen=True)
@@ -95,7 +130,7 @@ class Conv1d(_ConvNd, Preview):
     @typing.override
     def _preview_shape(self, shape: Shape, /) -> ShapeLike:
         try:
-            n, c, l = shape
+            n, c, l_in = shape
         except ValueError, TypeError:
             return NotImplemented
 
@@ -103,30 +138,9 @@ class Conv1d(_ConvNd, Preview):
         if c != self.in_channels:
             return NotImplemented
 
-        def unpack(item: ConvSize) -> int:
-            match item:
-                case int():
-                    return item
-                case [item]:
-                    return item
-                case _:
-                    raise ValueError("Impossible.")
+        l_out = self._dim_size_compute(0)(l_in)
 
-        padding = unpack(self.padding)
-        stride = unpack(self.stride)
-        dilation = unpack(self.dilation)
-        kernel_size = unpack(self.kernel_size)
-
-        return [
-            n,
-            self.out_channels,
-            _ConvDim(
-                padding=padding,
-                dilation=dilation,
-                stride=stride,
-                kernel_size=kernel_size,
-            )(l),
-        ]
+        return [n, self.out_channels, l_out]
 
 
 @dcls.dataclass(frozen=True)
@@ -174,17 +188,3 @@ class Identity(Preview):
     @typing.override
     def _preview_shape(self, shape: Shape, /) -> ShapeLike:
         return shape
-
-
-@dcls.dataclass(frozen=True)
-class _ConvDim:
-    padding: int
-    dilation: int
-    kernel_size: int
-    stride: int
-
-    def __call__(self, in_dim: int) -> int:
-        denominator = (
-            in_dim + 2 * self.padding - self.dilation * (self.kernel_size - 1) - 1
-        )
-        return math.floor(denominator / self.stride + 1)
