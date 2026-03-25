@@ -5,8 +5,6 @@
 import dataclasses as dcls
 import typing
 
-from torch.nn import Linear as _Linear
-
 from aioway._tracking import logging
 from aioway.attrs import Shape, ShapeLike
 
@@ -22,6 +20,8 @@ class Linear(Preview):
     """
     The wrapper for `torch.nn.Linear`.
     """
+
+    from torch.nn import Linear as _Linear
 
     MODULE_TYPE = _Linear
 
@@ -80,6 +80,10 @@ class Conv1d(_ConvNd, Preview):
     The wrapper for `torch.nn.Conv1d`.
     """
 
+    from torch.nn import Conv1d as _Conv1d
+
+    MODULE_TYPE = _Conv1d
+
     def __post_init__(self) -> None:
         self._validate_sizing(1)
 
@@ -93,6 +97,10 @@ class Conv2d(_ConvNd, Preview):
     """
     The wrapper for `torch.nn.Conv2d`.
     """
+
+    from torch.nn import Conv2d as _Conv2d
+
+    MODULE_TYPE = _Conv2d
 
     def __post_init__(self) -> None:
         self._validate_sizing(2)
@@ -108,6 +116,10 @@ class Conv3d(_ConvNd, Preview):
     The wrapper for `torch.nn.Conv3d`.
     """
 
+    from torch.nn import Conv3d as _Conv3d
+
+    MODULE_TYPE = _Conv3d
+
     def __post_init__(self) -> None:
         self._validate_sizing(3)
 
@@ -122,6 +134,10 @@ class Transformer(Preview):
     The wrapper for `torch.nn.Transformer`.
     """
 
+    from torch.nn import Transformer as _Transformer
+
+    MODULE_TYPE = _Transformer
+
     @typing.override
     def _preview_shape(self, shape: Shape, /) -> ShapeLike:
         raise NotImplementedError
@@ -131,10 +147,12 @@ class Transformer(Preview):
 class Identity(Preview):
     """
     The wrapper for `torch.nn.Identity`.
-
-    This has no arguments.
     """
+
+    from torch.nn import Identity as _Identity
+
+    MODULE_TYPE = _Identity
 
     @typing.override
     def _preview_shape(self, shape: Shape, /) -> ShapeLike:
-        return shape
+        raise NotImplementedError
