@@ -18,7 +18,7 @@ from torch.nn import Module
 from aioway._ops import OpSign
 from aioway._tracking import ModuleApiTracker, logging
 from aioway._typing import SeqKeysView
-from aioway.attrs import Attr, Device, DType, Shape, ShapeLike
+from aioway.attrs import Attr, Device, DeviceLike, DType, DTypeLike, Shape, ShapeLike
 
 __all__ = ["Preview"]
 
@@ -36,8 +36,10 @@ class Preview(Mapping[str, Any], ABC):
     The constructor for the module.
     """
 
-    device: TorchDevice
-    dtype: TorchDType
+    _: dcls.KW_ONLY
+
+    device: TorchDevice | None = None
+    dtype: TorchDType | None = None
 
     def __post_init__(self) -> None: ...
 
@@ -60,32 +62,56 @@ class Preview(Mapping[str, Any], ABC):
 
         raise KeyError(key)
 
-    def preview(self, attr: Attr) -> Attr:
+    def preview(self, attr: Attr, /) -> Attr:
         """
         Transforms the input attribute into an attribute describing the output.
 
         Returns `NotImplemented` when the input `Attr` is incompatible (usually device and dtype).
         """
 
+        try:
+            return self._preview(attr)
+        except ValueError:
+            return NotImplemented
+
+    def _preview(self, attr: Attr) -> Attr:
         with self._tracker()(name="attr", signature=OpSign(Device, Device)):
-            if attr.device != self.device:
-                return NotImplemented
+            device = self._preview_device(attr.device)
 
         with self._tracker()(name="attr", signature=OpSign(DType, DType)):
-            dtype = attr.dtype.term * self.dtype
+            dtype = self._preview_dtype(attr.dtype)
 
         with self._tracker()(name="attr", signature=OpSign(Shape, Shape)):
-            if (shape := self._preview_shape(attr.shape)) is NotImplemented:
-                return NotImplemented
+            shape = self._preview_shape(attr.shape)
 
-        return Attr.parse(
-            device=attr.device,
-            dtype=dtype.unpack(),
-            shape=shape,
-        )
+        return Attr.parse(device=device, dtype=dtype, shape=shape)
+
+    def _preview_device(self, device: Device) -> DeviceLike:
+        "Only allow same device to be ok, or if `self.device is None`."
+
+        if self.device is None:
+            return device
+
+        if device == self.device:
+            return device
+
+        raise ValueError
+
+    def _preview_dtype(self, dtype: DType) -> DTypeLike:
+        if self.dtype is None:
+            return dtype
+
+        return (dtype.term * self.dtype).unpack()
 
     @abc.abstractmethod
-    def _preview_shape(self, shape: Shape, /) -> ShapeLike: ...
+    def _preview_shape(self, shape: Shape, /) -> ShapeLike:
+        """
+        Pre-compute the shape for the layer.
+
+        If not available, subclass should `raise ValueError`
+        """
+
+        ...
 
     def forward(self, tensor: Tensor) -> Tensor:
         """

@@ -35,10 +35,10 @@ class Linear(Preview):
     @typing.override
     def _preview_shape(self, shape: Shape, /) -> ShapeLike:
         if len(shape) <= 1:
-            return NotImplemented
+            raise ValueError
 
         if shape[-1] != self.in_features:
-            return NotImplemented
+            raise ValueError
 
         return [*shape[:-1], self.out_features]
 
@@ -73,7 +73,7 @@ class _ConvNd(Preview, ABC):
                 return
 
             if len(t) != self.NDIM:
-                raise ValueError(f"self.{name}={t}, expected ndim={self.NDIM}.")
+                raise AssertionError(f"self.{name}={t}, expected ndim={self.NDIM}.")
 
         _check_maybe_tuple(self.kernel_size, "kernel_size")
         _check_maybe_tuple(self.stride, "stride")
@@ -84,13 +84,13 @@ class _ConvNd(Preview, ABC):
     @typing.final
     def _preview_shape(self, shape: Shape, /) -> ShapeLike:
         if len(shape) != self.NDIM + 2:
-            return NotImplemented
+            raise ValueError
 
         batch, channels, *dim_ins = shape
 
         # Should match `in_channels` like `Linear`.
         if channels != self.in_channels:
-            return NotImplemented
+            raise ValueError
 
         dim_outs = [self._dim_size(i, dim_in) for i, dim_in in enumerate(dim_ins)]
 
@@ -114,8 +114,6 @@ def _index_conv_dim(item: ConvSize, dim: int) -> int:
             return item
         case tuple():
             return item[dim]
-        case _:
-            raise ValueError("Impossible.")
 
 
 @dcls.dataclass(frozen=True)

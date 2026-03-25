@@ -6,7 +6,7 @@ from torch import Tensor
 from torch._subclasses.fake_tensor import FakeTensorMode
 
 from aioway.attrs import Attr
-from aioway.nn import Linear
+from aioway.nn import Identity, Linear
 
 
 @pytest.fixture(autouse=True)
@@ -17,13 +17,12 @@ def fake_mode():
 
 @pytest.fixture
 def linear():
-    return Linear(
-        in_features=3,
-        out_features=5,
-        bias=True,
-        device=torch.device("cpu"),
-        dtype=torch.float32,
-    )
+    return Linear(in_features=3, out_features=5, bias=True)
+
+
+@pytest.fixture
+def identity():
+    return Identity()
 
 
 @pytest.fixture
