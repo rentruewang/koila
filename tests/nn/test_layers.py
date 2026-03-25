@@ -35,7 +35,7 @@ def linear_attr(linear_input: Tensor):
     return Attr.from_tensor(linear_input)
 
 
-def test_linear_forward(linear: Linear, linear_input: Tensor):
+def test_linear(linear: Linear, linear_input: Tensor):
     result = linear.forward(linear_input)
     assert isinstance(result, Tensor)
     assert result.shape == (7, 5)
@@ -45,3 +45,15 @@ def test_linear_preview(linear: Linear, linear_attr: Attr):
     result = linear.preview(linear_attr)
     assert isinstance(result, Attr)
     assert result.shape == (7, 5)
+
+
+def test_identity(identity: identity, linear_input: Tensor):
+    result = identity.forward(linear_input)
+    assert isinstance(result, Tensor)
+    assert result.shape == (7, 3)
+
+
+def test_identity_preview(identity: identity, linear_attr: Attr):
+    result = identity.preview(linear_attr)
+    assert isinstance(result, Attr)
+    assert result.shape == (7, 3)
