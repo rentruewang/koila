@@ -4,17 +4,19 @@ import dataclasses as dcls
 import functools
 import typing
 from abc import ABC
-from collections.abc import KeysView, Mapping, Callable
+from collections.abc import Callable, KeysView, Mapping
 from typing import Any
-from aioway.attrs import Attr
-from torch.nn import Module
-from aioway import _logging
+
 from torch import Tensor
+from torch.nn import Module
+
+from aioway._tracking import logging
 from aioway._typing import SeqKeysView
+from aioway.attrs import Attr
 
 __all__ = ["Preview"]
 
-LOGGER = _logging.get_logger(__name__)
+LOGGER = logging.get_logger(__name__)
 
 
 @dcls.dataclass(frozen=True)
@@ -63,3 +65,5 @@ class Preview(ABC):
     """
     Get the output attribute from the input attribute.
     """
+
+    compute: Callable[[Tensor], Tensor]
