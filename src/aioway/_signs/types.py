@@ -4,7 +4,7 @@
 
 import dataclasses as dcls
 import functools
-from collections.abc import Sequence
+from types import GenericAlias
 from typing import Self
 
 from lark import Lark, Transformer
@@ -24,13 +24,9 @@ class TypeList:
     This is useful to support type checking on `Tensor` related operations.
     """
 
-    def __init__(self, *types: type) -> None:
-        self._types: tuple[type, ...] = types
+    def __init__(self, *types: type | GenericAlias) -> None:
+        self._types = types
         "The types of the list of params."
-
-        for t in types:
-            if not isinstance(t, type):
-                raise TypeError(f"{types=} expect all types, but some are not types.")
 
         LOGGER.debug("Initialized type list %r", self)
 
@@ -56,30 +52,11 @@ class TypeList:
     def __len__(self) -> int:
         return len(self._types)
 
-    def __getitem__(self, idx: int) -> type:
+    def __getitem__(self, idx: int):
         return self._types[idx]
 
     def __iter__(self):
         return iter(self._types)
-
-    def check_types(self, types: Sequence[type], /) -> bool:
-        "Validate the given types."
-
-        # Should have the same length.
-        if len(self) != len(types):
-            return False
-
-        # Check if each item is instance of types.
-        for t, i in zip(self, types):
-            if not issubclass(i, t):
-                return False
-
-        return True
-
-    def check_values(self, items: Sequence, /) -> bool:
-        "Validate the given values."
-
-        return self.check_types([type(elem) for elem in items])
 
     @classmethod
     def parse(cls, text: str, /, **types: type) -> Self:

@@ -11,7 +11,7 @@ from numpy.typing import NDArray
 from torch import Size
 
 from aioway import _typing
-from aioway._ops import OpSign
+from aioway._signs import Signature
 from aioway._tracking import ModuleApiTracker, logging
 
 from ._terms import Term
@@ -275,11 +275,11 @@ class ShapeTerm(Term[Shape]):
         return self.__broadcast_shapes(other, name="__le__")
 
     def __identity(self, name: str):
-        with TRACKER(name=name, signature=OpSign(Shape, Shape)):
+        with TRACKER(name=name, signature=Signature(Shape, Shape)):
             return self
 
     def __broadcast_shapes(self, other: Self, name: str) -> Self:
-        with TRACKER(name=name, signature=OpSign(Shape, Shape, Shape)):
+        with TRACKER(name=name, signature=Signature(Shape, Shape, Shape)):
             return self.__broadcast_shapes_impl(other)
 
     def __broadcast_shapes_impl(self, other: Self) -> Self:

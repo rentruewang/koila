@@ -9,7 +9,7 @@ from typing import Self
 
 from torch import Tensor
 
-from aioway._ops import OpSign
+from aioway._signs import Signature
 from aioway._tracking import ModuleApiTracker, logging
 from aioway._typing import AnyUFunc2, IntArray, UFunc1
 
@@ -126,7 +126,7 @@ class AttrTerm(Term[Attr]):
     def __getitem__(
         self, key: int | slice | IntArray | Tensor | Attr | AttrTerm
     ) -> Self:
-        sign = OpSign(Attr, type(key), Attr)
+        sign = Signature(Attr, type(key), Attr)
         with TRACKER(name="__getitem__", signature=sign):
             return self.__getitem_impl(key)
 
@@ -176,7 +176,7 @@ class AttrTerm(Term[Attr]):
         return self.__ufunc_op2(other, operator.lt)
 
     def __ufunc_op1(self, op: UFunc1) -> Self:
-        signature = OpSign(Attr, Attr)
+        signature = Signature(Attr, Attr)
         with TRACKER(name=f"__{op.__qualname__}__", signature=signature):
             return self.__make_attr(
                 device=op(self.device.term).unpack(),
@@ -199,7 +199,7 @@ class AttrTerm(Term[Attr]):
 
     @typing.no_type_check
     def __ufunc_op2_attr(self, other: Attr, op: AnyUFunc2) -> Self:
-        signature = OpSign(Attr, Attr, Attr)
+        signature = Signature(Attr, Attr, Attr)
         with TRACKER(name=f"__{op.__qualname__}__", signature=signature):
             return self.__make_attr(
                 device=op(self.device.term, other.device.term).unpack(),
@@ -209,7 +209,7 @@ class AttrTerm(Term[Attr]):
 
     @typing.no_type_check
     def __ufunc_op2_primitive(self, other: int | float | bool, op: AnyUFunc2) -> Self:
-        signature = OpSign(Attr, type(other), Attr)
+        signature = Signature(Attr, type(other), Attr)
         with TRACKER(name=f"__{op.__qualname__}__", signature=signature):
             return self.__make_attr(
                 device=self.device,

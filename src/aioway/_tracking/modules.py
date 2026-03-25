@@ -7,12 +7,12 @@ import dataclasses as dcls
 import typing
 from collections.abc import Callable
 
-from aioway._ops.signs import OpSign
+from aioway._signs.signs import Signature
 
 from . import logging
 
 if typing.TYPE_CHECKING:
-    from aioway._ops import OpSign
+    from aioway._signs import Signature
 
 __all__ = ["ModuleApiTracker"]
 
@@ -46,7 +46,7 @@ class ModuleApiTracker:
     "The function to call before exiting."
 
     @ctxl.contextmanager
-    def __call__(self, name: str, signature: OpSign):
+    def __call__(self, name: str, signature: Signature):
         """
         Track the module's operator (name and signature of the operator).
 
@@ -63,7 +63,7 @@ class ModuleApiTracker:
         finally:
             self.exit(info)
 
-    def wrap[**P, T](self, name: str, signature: OpSign):
+    def wrap[**P, T](self, name: str, signature: Signature):
 
         def decorator(function: Callable[P, T]) -> Callable[P, T]:
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
@@ -83,4 +83,4 @@ class ModuleApiTracker:
 class ModuleMethodInfo:
     module: type
     name: str
-    signature: OpSign
+    signature: Signature

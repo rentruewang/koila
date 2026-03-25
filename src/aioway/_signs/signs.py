@@ -4,6 +4,7 @@
 
 import functools
 import typing
+from types import GenericAlias
 from typing import Self
 
 from lark import Lark
@@ -14,12 +15,12 @@ from aioway._tracking import logging
 from . import _common
 from .types import ParamListTransformer, TypeList
 
-__all__ = ["OpSign", "OpSignExpr"]
+__all__ = ["Signature", "SignatureExpr"]
 
 LOGGER = logging.get_logger(__name__)
 
 
-class OpSign:
+class Signature:
     """
     The signature type, used to describe the computation in a single expression node.
 
@@ -29,14 +30,20 @@ class OpSign:
 
     __match_args__ = "param_types", "return_type"
 
-    def __init__(self, *types: type) -> None:
+    def __init__(self, *types: type | GenericAlias) -> None:
         *param_types, ret = types
 
         self._param_types = TypeList(*param_types)
+
+        if not isinstance(ret, type):
+            raise TypeError(
+                f"The last argument to `Signature` must be a type. Got {ret}."
+            )
+
         self._return_type = ret
 
     def __eq__(self, other: object):
-        if isinstance(other, OpSign):
+        if isinstance(other, Signature):
             return (
                 True
                 and self._param_types == other._param_types
@@ -71,21 +78,9 @@ class OpSign:
             text=text,
         )(**types)
 
-    @classmethod
-    def ufunc0(cls, typ: type, /) -> Self:
-        return cls(typ)
-
-    @classmethod
-    def ufunc1(cls, typ: type, /) -> Self:
-        return cls(typ, typ)
-
-    @classmethod
-    def ufunc2(cls, typ: type, /) -> Self:
-        return cls(typ, typ, typ)
-
 
 @typing.final
-class OpSignExpr(Expr[OpSign]):
+class SignatureExpr(Expr[Signature]):
     """
     The signature expression.
 
@@ -110,12 +105,12 @@ class OpSignExpr(Expr[OpSign]):
         return f"({self.__sub_strs}) -> {self.return_type.__name__}"
 
     @typing.override
-    def _compute(self) -> OpSign:
+    def _compute(self) -> Signature:
         input_types = (i.return_type for i in self.inputs)
-        return OpSign(*input_types, self.return_type)
+        return Signature(*input_types, self.return_type)
 
     @typing.override
-    def _return_type(self) -> type[OpSign]:
+    def _return_type(self) -> type[Signature]:
         return self.__return_type
 
     @typing.override
@@ -139,7 +134,7 @@ signature: param_list "->" VAR_NAME
 @_common.lark_transformer_dcls
 class SignatureTransformer(ParamListTransformer):
     def signature(self, param_list: TypeList, result: str):
-        return OpSign(*param_list, self._mapping[result])
+        return Signature(*param_list, self._mapping[result])
 
 
 @functools.cache

@@ -6,7 +6,7 @@ import typing
 
 from torch import Tensor
 
-from aioway._ops import OpSign
+from aioway._signs import Signature
 
 from . import _common
 from .exprs import TensorExpr
@@ -14,7 +14,7 @@ from .exprs import TensorExpr
 __all__ = ["GatherTensorExpr"]
 
 
-_TENSOR_BINOP = OpSign(Tensor, Tensor, Tensor)
+_TENSOR_BINOP = Signature(Tensor, Tensor, Tensor)
 
 
 @typing.final

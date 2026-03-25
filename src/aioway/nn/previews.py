@@ -15,7 +15,7 @@ from torch import device as TorchDevice
 from torch import dtype as TorchDType
 from torch.nn import Module
 
-from aioway._ops import OpSign
+from aioway._signs import Signature
 from aioway._tracking import ModuleApiTracker, logging
 from aioway._typing import SeqKeysView
 from aioway.attrs import Attr, Device, DeviceLike, DType, DTypeLike, Shape, ShapeLike
@@ -75,13 +75,13 @@ class Preview(Mapping[str, Any], ABC):
             return NotImplemented
 
     def _preview(self, attr: Attr) -> Attr:
-        with self._tracker()(name="attr", signature=OpSign(Device, Device)):
+        with self._tracker()(name="attr", signature=Signature(Device, Device)):
             device = self._preview_device(attr.device)
 
-        with self._tracker()(name="attr", signature=OpSign(DType, DType)):
+        with self._tracker()(name="attr", signature=Signature(DType, DType)):
             dtype = self._preview_dtype(attr.dtype)
 
-        with self._tracker()(name="attr", signature=OpSign(Shape, Shape)):
+        with self._tracker()(name="attr", signature=Signature(Shape, Shape)):
             shape = self._preview_shape(attr.shape)
 
         return Attr.parse(device=device, dtype=dtype, shape=shape)
@@ -118,7 +118,7 @@ class Preview(Mapping[str, Any], ABC):
         Do a forward pass on the input `tensor`.
         """
 
-        with self._tracker()(name="forward", signature=OpSign(Tensor, Tensor)):
+        with self._tracker()(name="forward", signature=Signature(Tensor, Tensor)):
             return self.module(tensor)
 
     @classmethod

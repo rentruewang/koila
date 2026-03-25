@@ -14,7 +14,9 @@ from tensordict import TensorDict
 from torch import Tensor
 
 from aioway import _typing
+from aioway._signs import Signature
 from aioway._tables import Table
+from aioway._tracking import ModuleApiTracker, logging
 
 from .attrs import Attr
 from .devices import Device, DeviceLike
@@ -24,6 +26,9 @@ from .shapes import Shape, ShapeLike
 __all__ = ["AttrSet", "DTypeSet", "DeviceSet", "ShapeSet", "AttrSetLike", "attr_set"]
 
 type AttrSetLike = AttrSet | dict[str, Attr]
+
+LOGGER = logging.get_logger(__name__)
+TRACKER = ModuleApiTracker(lambda: AttrSet)
 
 
 class _AttrItem[T](NamedTuple):
@@ -152,10 +157,33 @@ class AttrSet(_AttrSetBase[Attr]):
     ) -> Self: ...
 
     def __getitem__(self, idx):
+        if isinstance(idx, str):
+            return self.__getitem_str(idx)
 
-        if isinstance(idx, str) or (
-            isinstance(idx, list) and all(isinstance(i, str) for i in idx)
+        if _typing.is_list_of(str)(idx):
+            return self.__getitem_list_str(idx)
+
+        return self.__getitem_batch(idx)
+
+    def __getitem_str(self, idx: str):
+        signature = Signature(AttrSet, str, Attr)
+        with TRACKER(name="__getitem__", signature=signature):
+            return super().__getitem__(idx)
+
+    def __getitem_list_str(self, idx: list[str]):
+        signature = Signature(AttrSet, list[str], AttrSet)
+        with TRACKER(name="__getitem__", signature=signature):
+            return super().__getitem__(idx)
+
+    def __getitem_batch(self, idx):
+        with TRACKER(
+            name="__getitem__", signature=Signature(AttrSet, type(idx), AttrSet)
         ):
+            return self.__getitem_batch_impl(idx)
+
+    def __getitem_batch_impl(self, idx):
+
+        if isinstance(idx, str) or _typing.is_list_of(str)(idx):
             return super().__getitem__(idx)
 
         names = self.names
@@ -164,19 +192,19 @@ class AttrSet(_AttrSetBase[Attr]):
         dtypes = self.dtypes
 
         if isinstance(idx, int):
-            modified = [shape[1:] for shape in shapes]
+            new_shape = [shape[1:] for shape in shapes]
 
         elif isinstance(idx, slice | NpArr | Tensor):
-            modified = shapes[:]
+            new_shape = shapes[:]
 
         elif isinstance(idx, list) and all(isinstance(i, int) for i in idx):
-            modified = shapes[:]
+            new_shape = shapes[:]
 
         else:
             raise TypeError(type(idx))
 
         return self.from_fields(
-            names=names, devices=devices, dtypes=dtypes, shapes=modified
+            names=names, devices=devices, dtypes=dtypes, shapes=new_shape
         )
 
     def rename(self, **renames: str):

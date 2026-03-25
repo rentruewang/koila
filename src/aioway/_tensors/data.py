@@ -11,7 +11,7 @@ from tensordict import TensorDict
 from torch import Tensor
 
 from aioway._exprs import Expr
-from aioway._ops import OpSign
+from aioway._signs import Signature
 from aioway._tracking import logging
 
 from . import _common
@@ -50,7 +50,7 @@ class _SourceExpr[T: Tensor | TensorDict]:
 
     def _compute(self) -> T:
         with _common.TRACKER(
-            name="source", signature=OpSign(self._DATA_TYPE, self._DATA_TYPE)
+            name="source", signature=Signature(self._DATA_TYPE, self._DATA_TYPE)
         ):
             return self.data
 
@@ -87,7 +87,7 @@ class _CacheExpr[T: Tensor | TensorDict]:
     def _compute(self) -> T:
         data_type = type(self.data)
 
-        with _common.TRACKER(name="cache", signature=OpSign(data_type, data_type)):
+        with _common.TRACKER(name="cache", signature=Signature(data_type, data_type)):
             return self.data
 
     def _inputs(self):
@@ -112,7 +112,7 @@ class ColumnTensorExpr(TensorExpr):
     def _compute(self) -> Tensor:
         pulled = self.source.compute()
 
-        with _common.TRACKER(name="column", signature=OpSign(TensorDict, Tensor)):
+        with _common.TRACKER(name="column", signature=Signature(TensorDict, Tensor)):
             return pulled[self.column]
 
     def _inputs(self):
@@ -133,7 +133,7 @@ class _GetItemTensorExpr[T](TensorDictExpr):
         pulled = self.source.compute()
 
         with _common.TRACKER(
-            name="__getitem__", signature=OpSign(TensorDict, type(self.index))
+            name="__getitem__", signature=Signature(TensorDict, type(self.index))
         ):
             return pulled[self.index]
 

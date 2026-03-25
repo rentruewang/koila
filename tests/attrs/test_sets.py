@@ -1,12 +1,13 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
+import numpy as np
 import pytest
 import torch
 from pytest import FixtureRequest
 from tensordict import TensorDict
 
 from aioway import attrs
-from aioway.attrs import AttrSet, _validation
+from aioway.attrs import Attr, AttrSet, _validation
 from aioway.chunks import Chunk
 
 
@@ -59,6 +60,14 @@ def _invalid_data():
 @pytest.fixture(params=_invalid_data())
 def invalid_data(request: FixtureRequest) -> TensorDict:
     return request.param
+
+
+def test_attrset_getitem(schema: AttrSet):
+    assert isinstance(schema["a"], Attr)
+    assert isinstance(schema[["a", "b"]], AttrSet)
+    assert schema == schema[["a", "b"]]
+    assert isinstance(schema[[1, 2, 3]], AttrSet)
+    assert isinstance(schema[np.array([1, 2, 3])], AttrSet)
 
 
 def test_validation_ok(schema: AttrSet, valid_data: TensorDict) -> None:
