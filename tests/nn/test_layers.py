@@ -4,17 +4,10 @@ import pytest
 import torch
 from pytest import FixtureRequest
 from torch import Tensor
-from torch._subclasses.fake_tensor import FakeTensorMode
 from torch.nn import Conv2d as _Conv2d
 
 from aioway.attrs import Attr
 from aioway.nn import Conv2d, Identity, Linear
-
-
-@pytest.fixture(autouse=True)
-def fake_mode():
-    with FakeTensorMode():
-        yield
 
 
 @pytest.fixture
