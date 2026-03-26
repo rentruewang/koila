@@ -17,6 +17,10 @@ LOGGER = logging.get_logger(__name__)
 TRACKER = ModuleApiTracker(lambda: Device)
 
 
+type DeviceLike = str | TorchDevice | Device
+"Types convertible to a `Device`."
+
+
 class Device:
     """
     The device that the tensor data resides on (and will be used for compute).
@@ -80,10 +84,6 @@ class Device:
             return Device(device)
 
         raise TypeError(f"Cannot handle {type(device)=}.")
-
-
-type DeviceLike = str | TorchDevice | Device
-"Types convertible to a `Device`."
 
 
 type DeviceTermRhs = DeviceTerm | DeviceLike
