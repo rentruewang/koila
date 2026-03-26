@@ -4,7 +4,7 @@ import pytest
 import torch
 from pytest import FixtureRequest
 from torch import Tensor
-from torch.nn import Conv2d, Identity, Linear
+from torch.nn import Conv2d, Embedding, Identity, Linear
 
 from aioway.attrs import Attr
 from aioway.modules import Module
@@ -68,6 +68,21 @@ def conv2d(dilation: int, padding: int, stride: int, kernel_size: int):
     )
 
 
+@pytest.fixture
+def emb():
+    return Module(Embedding, num_embeddings=3, embedding_dim=5)
+
+
+def _emb_inputs():
+    yield torch.randint(0, 3, size=[11, 7])
+    yield torch.randint(0, 3, size=[11, 3])
+
+
+@pytest.fixture(params=_emb_inputs())
+def emb_input(request: FixtureRequest):
+    return request.param
+
+
 def test_linear(linear: Module, linear_input: Tensor):
     result = linear.forward(linear_input)
     assert isinstance(result, Tensor)
@@ -104,3 +119,15 @@ def test_conv2d_preview(conv2d: Module, conv2d_input: Tensor):
     theirs = conv2d.real_module(conv2d_input)
 
     assert ours.shape == theirs.shape
+
+
+def test_emb_forward(emb_input: Tensor, emb: Module):
+    assert emb.forward(emb_input).shape == emb.real_module(emb_input).shape
+    assert emb.forward(emb_input).dtype == emb.real_module(emb_input).dtype
+
+
+def test_emb_preview(emb_input: Tensor, emb: Module):
+    preview = emb.preview(Attr.from_tensor(emb_input))
+    real = emb.real_module(emb_input)
+    assert preview.shape == real.shape
+    assert preview.dtype == real.dtype

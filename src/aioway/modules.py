@@ -36,7 +36,7 @@ class Module[**P, T: NnModule]:
         self._kwargs = kwargs
 
     @functools.cached_property
-    @fake.fake_mode_func
+    @fake.enable_func
     def fake_module(self) -> T:
         return self._module(*self._args, **self._kwargs)
 
@@ -54,7 +54,7 @@ class Module[**P, T: NnModule]:
         with self._tracker()("preview", Signature(Attr, Attr)):
             return self._preview(attr)
 
-    @fake.fake_mode_func
+    @fake.enable_func
     def _preview(self, attr: Attr) -> Attr:
         tensor = attr.to_tensor()
         result: Tensor = self.fake_module(tensor)
