@@ -1,6 +1,6 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-"The dense layers from `torch.nn`."
+"Dense layers and convolution layers from `torch.nn`."
 
 import dataclasses as dcls
 import math
@@ -9,7 +9,7 @@ from abc import ABC
 from typing import ClassVar
 
 from aioway._tracking import logging
-from aioway.attrs import Shape, ShapeLike
+from aioway.attrs import DType, DTypeLike, Shape, ShapeLike
 
 from .previews import Preview
 
@@ -19,7 +19,17 @@ LOGGER = logging.get_logger(__name__)
 
 
 @dcls.dataclass(frozen=True)
-class Linear(Preview):
+class _TransformPreview(Preview, ABC):
+    @typing.override
+    def _preview_dtype(self, dtype: DType) -> DTypeLike:
+        if self.dtype is None:
+            return dtype
+
+        return dtype.broadcast(self.dtype)
+
+
+@dcls.dataclass(frozen=True)
+class Linear(_TransformPreview):
     """
     The wrapper for `torch.nn.Linear`.
     """
@@ -51,7 +61,7 @@ or a `tuple[int, ...]` allowing per-dimension configuration.
 
 
 @dcls.dataclass(frozen=True)
-class _ConvNd(Preview, ABC):
+class _ConvNd(_TransformPreview, ABC):
     in_channels: int
     out_channels: int
     kernel_size: ConvSize
@@ -167,7 +177,7 @@ class Conv3d(_ConvNd, Preview):
 
 
 @dcls.dataclass(frozen=True)
-class Identity(Preview):
+class Identity(_TransformPreview):
     """
     The wrapper for `torch.nn.Identity`.
     """

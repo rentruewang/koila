@@ -97,6 +97,18 @@ class DType:
         "Convert this to a torch dtype."
         return getattr(torch, str(self))
 
+    def broadcast(self, other: DTypeLike) -> Self:
+        try:
+            rhs = DType.parse(other)
+        except ValueError:
+            return NotImplemented
+
+        np_lhs = self.numpy()
+        np_rhs = rhs.numpy()
+
+        promoted = np.result_type(np_lhs, np_rhs)
+        return self.parse(promoted)
+
     @property
     def term(self):
         return DTypeTerm.make(self)
@@ -309,16 +321,8 @@ class DTypeTerm(Term[DType]):
 
     @classmethod
     def __broadcast_impl(cls, left: DType, right: Self | DTypeLike) -> Self:
-        try:
-            rhs = DType.parse(_as_dtype(right))
-        except ValueError:
-            return NotImplemented
-
-        np_lhs = left.numpy()
-        np_rhs = rhs.numpy()
-
-        promoted = np.result_type(np_lhs, np_rhs)
-        return cls.make(DType.parse(promoted))
+        right_dtype = _as_dtype(right)
+        return cls.make(left.broadcast(right_dtype))
 
     @classmethod
     def __boolean(cls, right: Self | DTypeLike, name: str):
@@ -339,5 +343,5 @@ class DTypeTerm(Term[DType]):
         return cls(data)
 
 
-def _as_dtype(item: DTypeTerm | DTypeLike, /) -> DTypeLike:
-    return item.dtype if isinstance(item, DTypeTerm) else item
+def _as_dtype(item: DTypeTerm | DTypeLike, /) -> DType:
+    return item.dtype if isinstance(item, DTypeTerm) else DType.parse(item)

@@ -97,18 +97,22 @@ class Preview(Mapping[str, Any], ABC):
 
         raise ValueError
 
+    @abc.abstractmethod
     def _preview_dtype(self, dtype: DType) -> DTypeLike:
-        if self.dtype is None:
-            return dtype
+        """
+        Pre-compute the dtype of the output.
 
-        return (dtype.term * self.dtype).unpack()
+        If the input dtype is invalid, `raise ValueError`.
+        """
+
+        ...
 
     @abc.abstractmethod
     def _preview_shape(self, shape: Shape, /) -> ShapeLike:
         """
         Pre-compute the shape for the layer.
 
-        If not available, subclass should `raise ValueError`
+        If the input shape cannot be handled, `raise ValueError`
         """
 
         ...
