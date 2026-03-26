@@ -5,7 +5,6 @@ import torch
 from tensordict import TensorDict
 from torch import cuda
 
-from aioway import attrs
 from aioway.attrs import AttrSet
 from aioway.chunks import Chunk
 
@@ -42,22 +41,22 @@ def chunk_ok(*, size: int, device: str) -> Chunk:
         device=device,
     )
     schema = AttrSet.from_values(
-        f1d=attrs.attr(
+        f1d=Attr.parse(
             device="cpu",
             shape=[-1],
             dtype="float32",
         ),
-        f2d=attrs.attr(
+        f2d=Attr.parse(
             device="cpu",
             shape=[-1, 32],
             dtype="float32",
         ),
-        i1d=attrs.attr(
+        i1d=Attr.parse(
             device="cpu",
             shape=[-1],
             dtype="int64",
         ),
-        i2d=attrs.attr(
+        i2d=Attr.parse(
             device="cpu",
             shape=[-1, 32],
             dtype="int64",
