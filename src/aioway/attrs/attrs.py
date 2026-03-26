@@ -10,11 +10,11 @@ from typing import Self
 import torch
 from torch import Tensor
 
+from aioway import fake
 from aioway._signs import Signature
 from aioway._tracking import ModuleApiTracker, logging
 from aioway._typing import AnyUFunc2, IntArray, UFunc1
 
-from ._terms import Term
 from .devices import Device, DeviceLike
 from .dtypes import DType, DTypeLike
 from .shapes import Shape, ShapeLike
@@ -78,7 +78,11 @@ class Attr:
         This should be used under fake mode.
         """
 
-        return torch.randn(*self.shape).to(self.device.torch()).to(self.dtype.torch())
+        return (
+            torch.empty(self.shape.concrete())
+            .to(self.device.torch())
+            .to(self.dtype.torch())
+        )
 
     @classmethod
     def parse(cls, device: DeviceLike, dtype: DTypeLike, shape: ShapeLike) -> Self:
@@ -112,7 +116,7 @@ class Attr:
 
 
 @dcls.dataclass(frozen=True)
-class AttrTerm(Term[Attr]):
+class AttrTerm:
     attr: Attr
 
     def __post_init__(self):
@@ -181,72 +185,45 @@ class AttrTerm(Term[Attr]):
     def __lt__(self, other: AttrTermRhs) -> Self:
         return self.__ufunc_op2(other, operator.lt)
 
+    @fake.enable_func
     def __ufunc_op1(self, op: UFunc1) -> Self:
         signature = Signature(Attr, Attr)
         with TRACKER(name=f"__{op.__qualname__}__", signature=signature):
-            return self.__make_attr(
-                device=op(self.device.term).unpack(),
-                shape=op(self.shape.term).unpack(),
-                dtype=op(self.dtype.term).unpack(),
-            )
+            return self.make(Attr.from_tensor(op(self.attr.to_tensor())))
 
+    @fake.enable_func
     def __ufunc_op2(self, other: AttrTermRhs, op: AnyUFunc2):
         match other:
-            case AttrTerm():
-                return self.__ufunc_op2_attr(other=other, op=op)
-            case Attr():
-                return self.__ufunc_op2(other=other.term, op=op)
             case Tensor():
-                return self.__ufunc_op2(other=Attr.from_tensor(other).term, op=op)
+                return self.__ufunc_op2_tensor(other=other, op=op)
+            case AttrTerm():
+                return self.__ufunc_op2(other=other.attr, op=op)
+            case Attr():
+                return self.__ufunc_op2(other=other.to_tensor(), op=op)
             case int() | float() | bool():
-                return self.__ufunc_op2_primitive(other=other, op=op)
+                return self.__ufunc_op2(other=torch.tensor(other), op=op)
 
         raise TypeError(f"Do not know how to handle {type(other)=}.")
 
-    @typing.no_type_check
-    def __ufunc_op2_attr(self, other: Attr, op: AnyUFunc2) -> Self:
+    @fake.enable_func
+    def __ufunc_op2_tensor(self, other: Tensor, op: AnyUFunc2) -> Self:
         signature = Signature(Attr, Attr, Attr)
         with TRACKER(name=f"__{op.__qualname__}__", signature=signature):
-            return self.__make_attr(
-                device=op(self.device.term, other.device.term).unpack(),
-                shape=op(self.shape.term, other.shape.term).unpack(),
-                dtype=op(self.dtype.term, other.dtype.term).unpack(),
-            )
+            return self.make(Attr.from_tensor(op(self.attr.to_tensor(), other)))
 
-    @typing.no_type_check
-    def __ufunc_op2_primitive(self, other: int | float | bool, op: AnyUFunc2) -> Self:
-        signature = Signature(Attr, type(other), Attr)
-        with TRACKER(name=f"__{op.__qualname__}__", signature=signature):
-            return self.__make_attr(
-                device=self.device,
-                shape=self.shape,
-                dtype=op(self.dtype.term, DType.parse(type(other))).unpack(),
-            )
+    @fake.enable_func
+    def __getitem_impl(self, key: int | slice | IntArray | Tensor | Attr | AttrTerm, /):
+        if isinstance(key, Attr):
+            return self.__getitem_impl(key.to_tensor())
 
-    def __getitem_impl(self, key: int | slice | IntArray | Tensor | Attr | AttrTerm):
-        match key:
-            case int():
-                return self.__make_attr(
-                    device=self.device,
-                    dtype=self.dtype,
-                    shape=self.shape[1:],
-                )
+        if isinstance(key, AttrTerm):
+            return self.__getitem_impl(key.attr)
 
-            case slice():
-                batch, *rest = self.shape
+        # Fake tensors will not work with real ones.
+        if fake.is_real_tensor(key):
+            key = fake.to_fake_tensor(key)
 
-                return self.__make_attr(
-                    device=self.device,
-                    dtype=self.dtype,
-                    shape=Shape.parse(len(range(batch)[key]), *rest),
-                )
-
-            case _:
-                return self.__make_attr(
-                    device=self.device,
-                    dtype=self.dtype,
-                    shape=Shape.parse(*key.shape, *self.shape[1:]),
-                )
+        return self.make(Attr.from_tensor(self.attr.to_tensor()[key]))
 
     @property
     def device(self):
@@ -266,9 +243,3 @@ class AttrTerm(Term[Attr]):
     @classmethod
     def make(cls, data: Attr, /) -> Self:
         return cls(data)
-
-    @classmethod
-    def __make_attr(
-        cls, device: DeviceLike, shape: ShapeLike, dtype: DTypeLike
-    ) -> Self:
-        return cls.make(Attr.parse(device=device, shape=shape, dtype=dtype))

@@ -17,12 +17,12 @@ def schema() -> AttrSet:
         a=Attr.parse(
             device="cpu",
             dtype="int32",
-            shape=[-1, 2, 3],
+            shape=[1, 2, 3],
         ),
         b=Attr.parse(
             device="cpu",
             dtype="float32",
-            shape=[-1, 6],
+            shape=[1, 6],
         ),
     )
 
