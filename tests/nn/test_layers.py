@@ -4,7 +4,7 @@ import pytest
 import torch
 from pytest import FixtureRequest
 from torch import Tensor
-from torch.nn import Conv2d as _Conv2d
+from torch.nn import Conv2d as TorchConv2d
 
 from aioway.attrs import Attr
 from aioway.nn import Conv2d, Identity, Linear
@@ -68,8 +68,10 @@ def conv2d(dilation: int, padding: int, stride: int, kernel_size: int):
 
 
 @pytest.fixture
-def nn_conv2d(dilation: int, padding: int, stride: int, kernel_size: int):
-    return _Conv2d(
+def nn_conv2d(
+    conv2d: Conv2d, dilation: int, padding: int, stride: int, kernel_size: int
+):
+    return conv2d.MODULE_TYPE(
         in_channels=5,
         out_channels=13,
         kernel_size=kernel_size,
@@ -103,14 +105,14 @@ def test_identity_preview(identity: identity, linear_attr: Attr):
     assert result.shape == (7, 3)
 
 
-def test_conv2d_forward(conv2d: Conv2d, nn_conv2d: _Conv2d, conv2d_input: Tensor):
+def test_conv2d_forward(conv2d: Conv2d, nn_conv2d: TorchConv2d, conv2d_input: Tensor):
     ours = conv2d.forward(conv2d_input)
     theirs = nn_conv2d.forward(conv2d_input)
 
     assert ours.shape == theirs.shape
 
 
-def test_conv2d_preview(conv2d: Conv2d, nn_conv2d: _Conv2d, conv2d_input: Tensor):
+def test_conv2d_preview(conv2d: Conv2d, nn_conv2d: TorchConv2d, conv2d_input: Tensor):
     ours = conv2d.preview(conv2d_input)
     theirs = nn_conv2d.forward(conv2d_input)
 

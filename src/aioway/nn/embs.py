@@ -3,16 +3,18 @@
 import dataclasses as dcls
 import typing
 
-from torch.nn import Embedding as _Embedding
-
 from aioway.attrs import DType, DTypeLike, Shape, ShapeLike
 
 from .previews import Preview
 
+__all__ = ["Embedding"]
+
 
 @dcls.dataclass(frozen=True)
 class Embedding(Preview):
-    MODULE_TYPE = _Embedding
+    from torch.nn import Embedding as TorchEmbedding
+
+    MODULE_TYPE = TorchEmbedding
 
     num_embeddings: int
     embedding_dim: int

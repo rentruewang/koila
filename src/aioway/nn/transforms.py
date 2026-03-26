@@ -34,9 +34,9 @@ class Linear(_TransformPreview):
     The wrapper for `torch.nn.Linear`.
     """
 
-    from torch.nn import Linear as _Linear
+    from torch.nn import Linear as TorchLinear
 
-    MODULE_TYPE = _Linear
+    MODULE_TYPE = TorchLinear
 
     in_features: int
     out_features: int
@@ -146,9 +146,9 @@ class Conv1d(_ConvNd, Preview):
     The wrapper for `torch.nn.Conv1d`.
     """
 
-    from torch.nn import Conv1d as _Conv1d
+    from torch.nn import Conv1d as TorchConv1d
 
-    MODULE_TYPE = _Conv1d
+    MODULE_TYPE = TorchConv1d
     NDIM = 1
 
 
@@ -158,9 +158,9 @@ class Conv2d(_ConvNd, Preview):
     The wrapper for `torch.nn.Conv2d`.
     """
 
-    from torch.nn import Conv2d as _Conv2d
+    from torch.nn import Conv2d as TorchConv2d
 
-    MODULE_TYPE = _Conv2d
+    MODULE_TYPE = TorchConv2d
     NDIM = 2
 
 
@@ -170,9 +170,9 @@ class Conv3d(_ConvNd, Preview):
     The wrapper for `torch.nn.Conv3d`.
     """
 
-    from torch.nn import Conv3d as _Conv3d
+    from torch.nn import Conv3d as TorchConv3d
 
-    MODULE_TYPE = _Conv3d
+    MODULE_TYPE = TorchConv3d
     NDIM = 3
 
 
@@ -182,9 +182,9 @@ class Identity(_TransformPreview):
     The wrapper for `torch.nn.Identity`.
     """
 
-    from torch.nn import Identity as _Identity
+    from torch.nn import Identity as TorchIdentity
 
-    MODULE_TYPE = _Identity
+    MODULE_TYPE = TorchIdentity
 
     @typing.override
     def _preview_shape(self, shape: Shape, /) -> ShapeLike:
