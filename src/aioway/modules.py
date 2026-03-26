@@ -2,36 +2,47 @@
 
 "The preview module protocol definition."
 
-import abc
-import dataclasses as dcls
 import functools
-from abc import ABC
-from collections.abc import Callable, Mapping
-from typing import Any
+from collections.abc import Callable
 
 from torch import Tensor
-from torch.nn import Module
 from torch.nn import Module as NnModule
 
+from aioway import fake
 from aioway._signs import Signature
 from aioway._tracking import ModuleApiTracker, logging
-from aioway._typing import SeqKeysView
-from aioway.attrs import Attr, Device, DeviceLike, DType, DTypeLike, Shape, ShapeLike
+from aioway.attrs import Attr
 
 __all__ = ["Module"]
 
 LOGGER = logging.get_logger(__name__)
 
 
-class Module[**P, T: NnModule](Mapping[str, Any], ABC):
+class Module[**P, T: NnModule]:
     """
     Preview informs us how an `nn.Module` would be behave without initializing it.
+
+    Example:
+        `Module(torch.nn.Linear, in_features=1, out_features=2)`.
+        Note that the arguments following the first type argument will be passed into the `nn.Module` type,
+        so they are exactly as those on the `torch` documentation.
     """
 
-    def __init__(self, module: Callable[P, T], *args: P.args, **kwargs: P.kwargs):
-        self._module = module
+    def __init__(
+        self, nn: Callable[P, T], /, *args: P.args, **kwargs: P.kwargs
+    ) -> None:
+        self._module = nn
         self._args = args
         self._kwargs = kwargs
+
+    @functools.cached_property
+    @fake.fake_mode_func
+    def fake_module(self) -> T:
+        return self._module(*self._args, **self._kwargs)
+
+    @functools.cached_property
+    def real_module(self) -> T:
+        return self._module(*self._args, **self._kwargs)
 
     def preview(self, attr: Attr, /) -> Attr:
         """
@@ -40,76 +51,24 @@ class Module[**P, T: NnModule](Mapping[str, Any], ABC):
         Returns `NotImplemented` when the input `Attr` is incompatible (usually device and dtype).
         """
 
-        try:
+        with self._tracker()("preview", Signature(Attr, Attr)):
             return self._preview(attr)
-        except ValueError:
-            return NotImplemented
 
+    @fake.fake_mode_func
     def _preview(self, attr: Attr) -> Attr:
-        with self._tracker()(name="attr", signature=Signature(Device, Device)):
-            device = self._preview_device(attr.device)
-
-        with self._tracker()(name="attr", signature=Signature(DType, DType)):
-            dtype = self._preview_dtype(attr.dtype)
-
-        with self._tracker()(name="attr", signature=Signature(Shape, Shape)):
-            shape = self._preview_shape(attr.shape)
-
-        return Attr.parse(device=device, dtype=dtype, shape=shape)
-
-    def _preview_device(self, device: Device) -> DeviceLike:
-        "Only allow same device to be ok, or if `self.device is None`."
-
-        if self.device is None:
-            return device
-
-        if device == self.device:
-            return device
-
-        raise ValueError
-
-    @abc.abstractmethod
-    def _preview_dtype(self, dtype: DType) -> DTypeLike:
-        """
-        Pre-compute the dtype of the output.
-
-        If the input dtype is invalid, `raise ValueError`.
-        """
-
-        ...
-
-    @abc.abstractmethod
-    def _preview_shape(self, shape: Shape, /) -> ShapeLike:
-        """
-        Pre-compute the shape for the layer.
-
-        If the input shape cannot be handled, `raise ValueError`
-        """
-
-        ...
+        tensor = attr.to_tensor()
+        result: Tensor = self.fake_module(tensor)
+        assert fake.is_fake_tensor(result), "Function is running under fake mode."
+        return Attr.from_tensor(result)
 
     def forward(self, tensor: Tensor) -> Tensor:
         """
         Do a forward pass on the input `tensor`.
         """
 
-        with self._tracker()(name="forward", signature=Signature(Tensor, Tensor)):
-            return self.module(tensor)
+        with self._tracker()("forward", Signature(Tensor, Tensor)):
+            return self.real_module(tensor)
 
     @classmethod
     def _tracker(cls) -> ModuleApiTracker:
         return ModuleApiTracker(lambda: cls)
-
-    @functools.cached_property
-    def module(self) -> Module:
-        "The lazy `module` property constructing the `nn.Module`."
-
-        return self.MODULE_TYPE(**self)
-
-    @functools.cached_property
-    def __keys_view(self):
-        return SeqKeysView([f.name for f in self.__fields])
-
-    @functools.cached_property
-    def __fields(self):
-        return dcls.fields(self)
