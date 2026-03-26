@@ -8,7 +8,6 @@ import pytest
 import torch
 from pytest import FixtureRequest
 
-from aioway import attrs
 from aioway.attrs import DType
 
 
@@ -20,7 +19,7 @@ class _CaseChecker:
 
     @property
     def dtype(self):
-        return attrs.dtype(self.original)
+        return DType.parse(self.original)
 
     def check(self):
         assert isinstance(self.dtype, DType)

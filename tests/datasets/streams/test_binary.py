@@ -7,7 +7,7 @@ import pytest
 import torch
 from pytest import FixtureRequest
 
-from aioway import attrs
+from aioway.attrs import Attr
 from aioway.chunks import Chunk
 from aioway.datasets import (
     CacheStream,
@@ -97,12 +97,12 @@ def test_simple_nested_loop_join(to_slice: Callable[[Chunk], list[Chunk]]):
     left = Chunk.from_data_schema(
         data={"a": torch.tensor([1, 3, 2, 2]), "b": torch.tensor([4, 10, 5, 6])},
         schema=dict(
-            a=attrs.attr(
+            a=Attr.parse(
                 device="cpu",
                 dtype="int64",
                 shape=[-1],
             ),
-            b=attrs.attr(
+            b=Attr.parse(
                 device="cpu",
                 dtype="int64",
                 shape=[-1],
@@ -112,12 +112,12 @@ def test_simple_nested_loop_join(to_slice: Callable[[Chunk], list[Chunk]]):
     right = Chunk.from_data_schema(
         data={"a": torch.tensor([1, 3, 2, 2]), "c": torch.tensor([7, 11, 8, 9])},
         schema=dict(
-            a=attrs.attr(
+            a=Attr.parse(
                 device="cpu",
                 dtype="int64",
                 shape=[-1],
             ),
-            c=attrs.attr(
+            c=Attr.parse(
                 device="cpu",
                 dtype="int64",
                 shape=[-1],

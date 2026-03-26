@@ -1,6 +1,6 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-"The dense layers from `torch.nn`."
+"Dense layers and convolution layers from `torch.nn`."
 
 import dataclasses as dcls
 import math
@@ -9,7 +9,7 @@ from abc import ABC
 from typing import ClassVar
 
 from aioway._tracking import logging
-from aioway.attrs import Shape, ShapeLike
+from aioway.attrs import DType, DTypeLike, Shape, ShapeLike
 
 from .previews import Preview
 
@@ -19,14 +19,24 @@ LOGGER = logging.get_logger(__name__)
 
 
 @dcls.dataclass(frozen=True)
-class Linear(Preview):
+class _TransformPreview(Preview, ABC):
+    @typing.override
+    def _preview_dtype(self, dtype: DType) -> DTypeLike:
+        if self.dtype is None:
+            return dtype
+
+        return dtype.broadcast(self.dtype)
+
+
+@dcls.dataclass(frozen=True)
+class Linear(_TransformPreview):
     """
     The wrapper for `torch.nn.Linear`.
     """
 
-    from torch.nn import Linear as _Linear
+    from torch.nn import Linear as TorchLinear
 
-    MODULE_TYPE = _Linear
+    MODULE_TYPE = TorchLinear
 
     in_features: int
     out_features: int
@@ -51,7 +61,7 @@ or a `tuple[int, ...]` allowing per-dimension configuration.
 
 
 @dcls.dataclass(frozen=True)
-class _ConvNd(Preview, ABC):
+class _ConvNd(_TransformPreview, ABC):
     in_channels: int
     out_channels: int
     kernel_size: ConvSize
@@ -136,9 +146,9 @@ class Conv1d(_ConvNd, Preview):
     The wrapper for `torch.nn.Conv1d`.
     """
 
-    from torch.nn import Conv1d as _Conv1d
+    from torch.nn import Conv1d as TorchConv1d
 
-    MODULE_TYPE = _Conv1d
+    MODULE_TYPE = TorchConv1d
     NDIM = 1
 
 
@@ -148,9 +158,9 @@ class Conv2d(_ConvNd, Preview):
     The wrapper for `torch.nn.Conv2d`.
     """
 
-    from torch.nn import Conv2d as _Conv2d
+    from torch.nn import Conv2d as TorchConv2d
 
-    MODULE_TYPE = _Conv2d
+    MODULE_TYPE = TorchConv2d
     NDIM = 2
 
 
@@ -160,21 +170,21 @@ class Conv3d(_ConvNd, Preview):
     The wrapper for `torch.nn.Conv3d`.
     """
 
-    from torch.nn import Conv3d as _Conv3d
+    from torch.nn import Conv3d as TorchConv3d
 
-    MODULE_TYPE = _Conv3d
+    MODULE_TYPE = TorchConv3d
     NDIM = 3
 
 
 @dcls.dataclass(frozen=True)
-class Identity(Preview):
+class Identity(_TransformPreview):
     """
     The wrapper for `torch.nn.Identity`.
     """
 
-    from torch.nn import Identity as _Identity
+    from torch.nn import Identity as TorchIdentity
 
-    MODULE_TYPE = _Identity
+    MODULE_TYPE = TorchIdentity
 
     @typing.override
     def _preview_shape(self, shape: Shape, /) -> ShapeLike:

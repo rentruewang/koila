@@ -16,7 +16,7 @@ from aioway._tracking import ModuleApiTracker, logging
 
 from ._terms import Term
 
-__all__ = ["ShapeLike", "Shape", "shape"]
+__all__ = ["ShapeLike", "Shape"]
 
 LOGGER = logging.get_logger(__name__)
 TRACKER = ModuleApiTracker(lambda: Shape)
@@ -24,6 +24,9 @@ TRACKER = ModuleApiTracker(lambda: Shape)
 type _PrimitiveNumber = float | int | bool
 type _IntArrayLike = tuple[int, ...] | list[int] | NDArray[np.int_]
 type ShapeCmpType = Shape | Size | _IntArrayLike | _PrimitiveNumber
+
+type ShapeLike = int | Iterable[int] | Shape
+"Types convertible to `Shape`s. Note that `int` can be converted as well."
 
 
 _is_tuple_of_int = _typing.is_tuple_of(int)
@@ -156,68 +159,52 @@ class Shape(Sequence[int]):
         return ShapeTerm.make(self)
 
     @typing.overload
-    @staticmethod
-    def parse(*dims: int) -> Shape: ...
+    @classmethod
+    def parse(cls, *dims: int) -> Self: ...
 
     @typing.overload
-    @staticmethod
-    def parse(dim: ShapeLike, /) -> Shape: ...
+    @classmethod
+    def parse(cls, dim: ShapeLike, /) -> Self: ...
 
-    @staticmethod
-    def parse(*dims):
-        "Alias to the `shape` function so you won't need to import it."
-        return shape(*dims)
+    @classmethod
+    def parse(cls, *dims) -> Self:
+        """
+        Convenience constructor for `Shape`.
 
+        Takes either of the following signature:
 
-type ShapeLike = int | Iterable[int] | Shape
-"Types convertible to `Shape`s. Note that `int` can be converted as well."
+        1. `Shape.parse(*dims)`. Here dims must be integers.
+        2. `Shape.parse(iterable)`. Here dims must be iterable. No additional args.
+        3. `Shape.parse(Shape)`. Returns it by reference.
+        """
 
+        try:
+            # `Shape.parse(*int)`.
+            if _is_tuple_of_int(dims):
+                return cls._shape(dims)
 
-@typing.overload
-def shape(*dims: int) -> Shape: ...
+            # `shape(iterable)`.
+            elif len(dims) == 1:
+                return cls._shape(dims[0])
 
+            raise ValueError
+        except ValueError:
+            raise ValueError(*dims)
 
-@typing.overload
-def shape(dim: ShapeLike, /) -> Shape: ...
+    @classmethod
+    def _shape(cls, dims) -> Self:
+        "Try converting dims to `Shape`, raise `ValueError` on failure."
 
+        if isinstance(dims, cls):
+            return dims
 
-def shape(*dims) -> Shape:
-    """
-    Convenience constructor for `Shape`.
+        if isinstance(dims, Iterable):
+            dims_tuple = tuple(dims)
 
-    Takes either of the following signature:
-
-    1. `shape(*dims)`. Here dims must be integers.
-    2. `shape(iterable)`. Here dims must be iterable. No additional args.
-    3. `shape(Shape)`. Returns it by reference.
-    """
-
-    try:
-        # `shape(*int)`.
-        if _is_tuple_of_int(dims):
-            return _shape(dims)
-
-        # `shape(iterable)`.
-        elif len(dims) == 1:
-            return _shape(dims[0])
+            if _is_tuple_of_int(dims_tuple):
+                return cls(dims_tuple)
 
         raise ValueError
-    except ValueError:
-        raise ValueError(*dims)
-
-
-def _shape(dims) -> Shape:
-    "Try converting dims to `Shape`, raise `ValueError` on failure."
-    if isinstance(dims, Shape):
-        return dims
-
-    if isinstance(dims, Iterable):
-        dims_tuple = tuple(dims)
-
-        if _is_tuple_of_int(dims_tuple):
-            return Shape(dims_tuple)
-
-    raise ValueError
 
 
 @dcls.dataclass(frozen=True)

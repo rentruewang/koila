@@ -11,10 +11,14 @@ from aioway._tracking import ModuleApiTracker, logging
 
 from ._terms import Term
 
-__all__ = ["Device", "device", "DeviceLike"]
+__all__ = ["Device", "DeviceLike"]
 
 LOGGER = logging.get_logger(__name__)
 TRACKER = ModuleApiTracker(lambda: Device)
+
+
+type DeviceLike = str | TorchDevice | Device
+"Types convertible to a `Device`."
 
 
 class Device:
@@ -69,26 +73,17 @@ class Device:
     def term(self):
         return DeviceTerm.make(self)
 
-    @staticmethod
-    def parse(item: DeviceLike) -> Device:
-        "Alias to the `device` function so you don't need to import."
-        return device(item)
+    @classmethod
+    def parse(cls, device: DeviceLike) -> Device:
+        "The convenient wrapper to create a `Device` from compatible types."
 
-
-type DeviceLike = str | TorchDevice | Device
-"Types convertible to a `Device`."
-
-
-def device(device: DeviceLike, /) -> Device:
-    "The convenient wrapper to create a `Device` from compatible types."
-
-    match device:
-        case Device():
+        if isinstance(device, cls):
             return device
-        case str() | TorchDevice():
+
+        if isinstance(device, str | TorchDevice):
             return Device(device)
-        case _:
-            raise TypeError(device)
+
+        raise TypeError(f"Cannot handle {type(device)=}.")
 
 
 type DeviceTermRhs = DeviceTerm | DeviceLike

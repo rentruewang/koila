@@ -14,12 +14,12 @@ from aioway.chunks import Chunk
 @pytest.fixture
 def schema() -> AttrSet:
     return AttrSet.from_values(
-        a=attrs.attr(
+        a=Attr.parse(
             device="cpu",
             dtype="int32",
             shape=[-1, 2, 3],
         ),
-        b=attrs.attr(
+        b=Attr.parse(
             device="cpu",
             dtype="float32",
             shape=[-1, 6],
@@ -78,8 +78,8 @@ def test_construction_of_attrset(valid_data: TensorDict):
     parsed = AttrSet.from_tensordict(valid_data)
     assert parsed == attrs.attr_set(
         {
-            "a": attrs.attr(device="cpu", shape=[11, 2, 3], dtype="int32"),
-            "b": attrs.attr(device="cpu", shape=[11, 6], dtype="float32"),
+            "a": Attr.parse(device="cpu", shape=[11, 2, 3], dtype="int32"),
+            "b": Attr.parse(device="cpu", shape=[11, 6], dtype="float32"),
         }
     )
 

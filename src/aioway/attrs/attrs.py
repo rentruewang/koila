@@ -18,7 +18,7 @@ from .devices import Device, DeviceLike
 from .dtypes import DType, DTypeLike
 from .shapes import Shape, ShapeLike
 
-__all__ = ["Attr", "attr", "AttrTerm", "AttrTermRhs"]
+__all__ = ["Attr", "AttrTerm", "AttrTermRhs"]
 
 
 LOGGER = logging.get_logger(__name__)
@@ -71,38 +71,35 @@ class Attr:
     def term(self):
         return AttrTerm(self)
 
-    @staticmethod
-    def parse(device: DeviceLike, dtype: DTypeLike, shape: ShapeLike) -> Attr:
-        "Alias for `attr` s.t. you don't need to import it."
-        return attr(device=device, dtype=dtype, shape=shape)
+    @classmethod
+    def parse(cls, device: DeviceLike, dtype: DTypeLike, shape: ShapeLike) -> Self:
+        """
+        The convenient constructor for `Attr`.
 
-    @staticmethod
-    def from_tensor(tensor: Tensor, /) -> Attr:
-        return attr(
+        Args:
+            device: Things that can be converted to `Device`.
+            dtype: Things that can be converted to `DType`.
+            shape: Things that can be converted to `Shape`.
+
+        Returns:
+            An attribute instance.
+        """
+
+        return cls(
+            device=Device.parse(device),
+            dtype=DType.parse(dtype),
+            shape=Shape.parse(shape),
+        )
+
+    @classmethod
+    def from_tensor(cls, tensor: Tensor, /) -> Self:
+        "Parse the `Tensor`'s `Attr` representation"
+
+        return cls.parse(
             device=tensor.device,
             shape=tensor.shape,
             dtype=tensor.dtype,
         )
-
-
-def attr(device: DeviceLike, dtype: DTypeLike, shape: ShapeLike) -> Attr:
-    """
-    The convenient constructor for `Attr`.
-
-    Args:
-        device: Things that can be converted to `Device`.
-        dtype: Things that can be converted to `DType`.
-        shape: Things that can be converted to `Shape`.
-
-    Returns:
-        An attribute instance.
-    """
-
-    return Attr(
-        device=Device.parse(device),
-        dtype=DType.parse(dtype),
-        shape=Shape.parse(shape),
-    )
 
 
 @dcls.dataclass(frozen=True)
