@@ -1,6 +1,6 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-from . import _terms, _validation
+from . import _validation
 from .attrs import *
 from .devices import *
 from .dtypes import *

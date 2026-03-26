@@ -10,6 +10,19 @@ from torch._subclasses import FakeTensor, FakeTensorMode
 __all__ = ["enable", "enable_func", "is_fake_tensor", "is_real_tensor"]
 
 
+def to_fake_tensor(tensor: Tensor) -> FakeTensor:
+    """
+    Move a possibly real tensor to a fake Tensor
+    """
+
+    if is_fake_tensor(tensor):
+        return tensor
+
+    with enable() as mode:
+        converter = mode.fake_tensor_converter
+        return converter.from_real_tensor(mode, tensor)
+
+
 def is_real_tensor(tensor: object) -> TypeIs[Tensor]:
     """
     Detect if a tensor is a normal tensor.

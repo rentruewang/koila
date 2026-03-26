@@ -72,8 +72,8 @@ def _validate_shape_matches(shape: Shape, tensor: Tensor) -> None:
     if len(left) != len(right):
         raise ValueError
 
-    # If < 0, matches anything, if >= 0, matches `tensor.shape`.
-    if np.any((left != right) & (left >= 0)):
+    # If == 1, matches anything, if >= 0, matches `tensor.shape`.
+    if np.any((left != right) & (left != 1)):
         raise ValueError
 
 
