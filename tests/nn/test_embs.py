@@ -6,7 +6,7 @@ from torch import Tensor
 from torch.nn import Embedding as TorchEmbedding
 
 from aioway.attrs import Attr
-from aioway.nn import Embedding
+from aioway.modules import Embedding
 
 
 @pytest.fixture

@@ -73,6 +73,13 @@ class Device:
     def term(self):
         return DeviceTerm.make(self)
 
+    def torch(self):
+        """
+        Convert to `torch.device`.
+        """
+
+        return self._device
+
     @classmethod
     def parse(cls, device: DeviceLike) -> Device:
         "The convenient wrapper to create a `Device` from compatible types."

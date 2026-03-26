@@ -7,6 +7,7 @@ import operator
 import typing
 from typing import Self
 
+import torch
 from torch import Tensor
 
 from aioway._signs import Signature
@@ -70,6 +71,14 @@ class Attr:
     @property
     def term(self):
         return AttrTerm(self)
+
+    def to_tensor(self):
+        """
+        Generate a random tensor.
+        This should be used under fake mode.
+        """
+
+        return torch.randn(*self.shape).to(self.device.torch()).to(self.dtype.torch())
 
     @classmethod
     def parse(cls, device: DeviceLike, dtype: DTypeLike, shape: ShapeLike) -> Self:

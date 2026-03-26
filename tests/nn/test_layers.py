@@ -7,7 +7,7 @@ from torch import Tensor
 from torch.nn import Conv2d as TorchConv2d
 
 from aioway.attrs import Attr
-from aioway.nn import Conv2d, Identity, Linear
+from aioway.modules import Conv2d, Identity, Linear
 
 
 @pytest.fixture

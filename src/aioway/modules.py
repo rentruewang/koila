@@ -5,62 +5,33 @@
 import abc
 import dataclasses as dcls
 import functools
-import typing
 from abc import ABC
-from collections.abc import Iterator, KeysView, Mapping
-from typing import Any, ClassVar
+from collections.abc import Callable, Mapping
+from typing import Any
 
 from torch import Tensor
-from torch import device as TorchDevice
-from torch import dtype as TorchDType
 from torch.nn import Module
+from torch.nn import Module as NnModule
 
 from aioway._signs import Signature
 from aioway._tracking import ModuleApiTracker, logging
 from aioway._typing import SeqKeysView
 from aioway.attrs import Attr, Device, DeviceLike, DType, DTypeLike, Shape, ShapeLike
 
-__all__ = ["Preview"]
+__all__ = ["Module"]
 
 LOGGER = logging.get_logger(__name__)
 
 
-@dcls.dataclass(frozen=True)
-class Preview(Mapping[str, Any], ABC):
+class Module[**P, T: NnModule](Mapping[str, Any], ABC):
     """
     Preview informs us how an `nn.Module` would be behave without initializing it.
     """
 
-    MODULE_TYPE: ClassVar[type[Module]]
-    """
-    The constructor for the module.
-    """
-
-    _: dcls.KW_ONLY
-
-    device: TorchDevice | None = None
-    dtype: TorchDType | None = None
-
-    def __post_init__(self) -> None: ...
-
-    @typing.override
-    def keys(self) -> KeysView[str]:
-        return self.__keys_view
-
-    @typing.override
-    def __len__(self) -> int:
-        return len(self.__fields)
-
-    @typing.override
-    def __iter__(self) -> Iterator[str]:
-        yield from self.keys()
-
-    @typing.override
-    def __getitem__(self, key: str) -> Any:
-        if key in self.keys():
-            return getattr(self, key)
-
-        raise KeyError(key)
+    def __init__(self, module: Callable[P, T], *args: P.args, **kwargs: P.kwargs):
+        self._module = module
+        self._args = args
+        self._kwargs = kwargs
 
     def preview(self, attr: Attr, /) -> Attr:
         """
