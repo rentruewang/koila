@@ -19,7 +19,7 @@ class Embedding(Preview):
 
     @typing.override
     def _preview_shape(self, shape: Shape, /) -> ShapeLike:
-        raise NotImplementedError
+        return [*shape, self.embedding_dim]
 
     @typing.override
     def _preview_dtype(self, dtype: DType) -> DTypeLike:

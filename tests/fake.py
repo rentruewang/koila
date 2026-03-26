@@ -5,7 +5,7 @@ import torch
 from tensordict import TensorDict
 from torch import cuda
 
-from aioway.attrs import AttrSet, Attr
+from aioway.attrs import Attr, AttrSet
 from aioway.chunks import Chunk
 
 
