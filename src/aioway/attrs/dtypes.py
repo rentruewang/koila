@@ -18,7 +18,7 @@ from aioway._tracking import ModuleApiTracker, logging
 
 from ._terms import Term
 
-__all__ = ["DType", "dtype", "DTypeLike"]
+__all__ = ["DType", "DTypeLike"]
 
 LOGGER = logging.get_logger(__name__)
 TRACKER = ModuleApiTracker(lambda: DType)
@@ -27,6 +27,11 @@ type DTypeFamily = Literal["int", "float", "bool"]
 """
 The DType strings family type.
 """
+
+
+type _PrimitiveType = type[int] | type[float] | type[bool]
+type DTypeLike = str | DType | _PrimitiveType | TorchDType | NumpyDType
+"Types that can be converted to `Dtype` with the public `dtype` function (or `DType.parse`)."
 
 
 class DType:
@@ -67,7 +72,7 @@ class DType:
 
     def __eq__(self, other: Any) -> bool:
         try:
-            parsed = dtype(other)
+            parsed = self.parse(other)
         except ValueError:
             return NotImplemented
 
@@ -117,102 +122,92 @@ class DType:
     def boolean(cls) -> Self:
         return cls(family="bool", bits=8)
 
-    @staticmethod
-    def parse(item: DTypeLike):
-        "Alias to the `dtype` function so you don't need to import it."
-        return dtype(item)
+    @classmethod
+    def parse(cls, dtype: DTypeLike) -> Self:
+        """
+        The convenient wrapper to create a `DType` from compatible types.
 
+        Raises:
+            ValueError: If we don't know how to handle the dtype.
+        """
 
-type _PrimitiveType = type[int] | type[float] | type[bool]
-type DTypeLike = str | DType | _PrimitiveType | TorchDType | NumpyDType
-"Types that can be converted to `Dtype` with the public `dtype` function (or `DType.parse`)."
+        if isinstance(dtype, cls):
+            return dtype
 
+        # Handling the basic types.
+        if isinstance(dtype, type):
+            return cls._parse_primitive_type(dtype)
 
-def dtype(dtype: DTypeLike, /) -> DType:
-    """
-    The convenient wrapper to create a `DType` from compatible types.
+        # Convert with regex.
+        if isinstance(dtype, str):
+            return cls._parse_regex(dtype)
 
-    Raises:
-        ValueError: If we don't know how to handle the dtype.
-    """
+        if isinstance(dtype, TorchDType):
+            return cls._parse_torch(dtype)
 
-    if isinstance(dtype, DType):
-        return dtype
+        if isinstance(dtype, NumpyDType):
+            return cls._parse_numpy(dtype)
 
-    # Handling the basic types.
-    if isinstance(dtype, type):
-        return _parse_primitive_type(dtype)
+        raise ValueError(f"Not sure how to handle {dtype=}.")
 
-    # Convert with regex.
-    if isinstance(dtype, str):
-        return _parse_regex(dtype)
+    @classmethod
+    def _parse_primitive_type(cls, dtype: type) -> Self:
+        if dtype == int:
+            return cls("int", 64)
 
-    if isinstance(dtype, TorchDType):
-        return _parse_torch(dtype)
+        if dtype == float:
+            return cls("float", 32)
 
-    if isinstance(dtype, NumpyDType):
-        return _parse_numpy(dtype)
+        if dtype == bool:
+            return cls("bool", 8)
 
-    raise ValueError(f"Not sure how to handle {dtype=}.")
+        raise ValueError(dtype)
 
+    @classmethod
+    def _parse_regex(cls, dtype: str, /) -> Self:
+        """
+        Create the `DType` instance from the `info` object.
 
-def _parse_primitive_type(dtype: type):
-    if dtype == int:
-        return DType("int", 64)
+        Raises:
+            ValueError: If the dtyep cannot be parsed.
+        """
 
-    if dtype == float:
-        return DType("float", 32)
+        if m := _int_dtype().match(dtype):
+            _, bits = m.groups()
+            return cls(family="int", bits=int(bits) if bits else 64)
 
-    if dtype == bool:
-        return DType("bool", 8)
+        if m := _float_dtype().match(dtype):
+            _, bits = m.groups()
+            return cls(family="float", bits=int(bits) if bits else 32)
 
-    raise ValueError(dtype)
+        if m := _bool_dtype().match(dtype):
+            return cls(family="bool", bits=8)
 
+        raise ValueError(dtype)
 
-def _parse_regex(dtype: str, /) -> DType:
-    """
-    Create the `DType` instance from the `info` object.
+    @classmethod
+    def _parse_torch(cls, dtype: TorchDType, /) -> Self:
+        "Create a `Dtype` from a `torch.dtype`."
+        if dtype == torch.bool:
+            return cls.boolean()
 
-    Raises:
-        ValueError: If the dtyep cannot be parsed.
-    """
+        if dtype.is_complex:
+            raise ValueError("We do not handle complex types yet!")
 
-    if m := _int_dtype().match(dtype):
-        _, bits = m.groups()
-        return DType(family="int", bits=int(bits) if bits else 64)
+        # Itemsize correspond to bytes.
+        bits = dtype.itemsize * 8
 
-    if m := _float_dtype().match(dtype):
-        _, bits = m.groups()
-        return DType(family="float", bits=int(bits) if bits else 32)
+        # Both complex and bool are handled above.
+        family: DTypeFamily = "float" if dtype.is_floating_point else "int"
 
-    if m := _bool_dtype().match(dtype):
-        return DType(family="bool", bits=8)
+        return cls(family=family, bits=bits)
 
-    raise ValueError(dtype)
+    @classmethod
+    def _parse_numpy(cls, dtype: NumpyDType, /) -> Self:
+        family = _parse_numpy_family(dtype)
+        bits = _parse_numpy_bits(dtype, family)
 
-
-def _parse_torch(dtype: TorchDType, /) -> DType:
-    "Create a `Dtype` from a `torch.dtype`."
-    if dtype == torch.bool:
-        return DType.boolean()
-
-    if dtype.is_complex:
-        raise ValueError("We do not handle complex types yet!")
-
-    # Itemsize correspond to bytes.
-    bits = dtype.itemsize * 8
-
-    # Both complex and bool are handled above.
-    family: DTypeFamily = "float" if dtype.is_floating_point else "int"
-
-    return DType(family=family, bits=bits)
-
-
-def _parse_numpy(dtype: NumpyDType, /) -> DType:
-    family = _parse_numpy_family(dtype)
-    bits = _parse_numpy_bits(dtype, family)
-
-    return DType(family=family, bits=bits)
+        return cls(family=family, bits=bits)
 
 
 def _parse_numpy_family(dtype: NumpyDType, /) -> DTypeFamily:
