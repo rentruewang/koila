@@ -105,7 +105,7 @@ class CacheStream(BoundedStream):
 
         # Try to get from `self.saved` first.
         if self.idx < len(self):
-            return self[self.idx]
+            return self._getitem_int(self.idx)
 
         # Now all the previous ones still must all have been saved.
         assert self.idx == len(self), f"{self.idx=} for {len(self)=}"
