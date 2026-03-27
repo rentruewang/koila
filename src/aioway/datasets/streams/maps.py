@@ -79,7 +79,7 @@ class MapStream(Stream, ABC):
 
     @typing.override
     @typing.final
-    def _compute(self) -> Chunk:
+    def _next(self) -> Chunk:
         # A `map` kind of `Stream` always calls `next` once on its source.
         # May raise `StopIteration` here.
         next_batch = next(self.source)

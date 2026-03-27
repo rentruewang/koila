@@ -91,7 +91,7 @@ class CacheStream(BoundedStream):
         return self.saved[idx]
 
     @typing.override
-    def _compute(self) -> Chunk:
+    def _next(self) -> Chunk:
         LOGGER.debug(
             "Executing `__iter__` for `CacheStream`. self.idx=%s, stream.idx=%s",
             self.idx,
@@ -167,7 +167,7 @@ class ListStream(BoundedStream):
         raise ValueError("Chunks should have the same schema.")
 
     @typing.override
-    def _compute(self) -> Chunk:
+    def _next(self) -> Chunk:
         if self.idx < self.size:
             return self[self.idx]
         else:
@@ -212,7 +212,7 @@ class FrameStream(Stream):
     """
 
     @typing.override
-    def _compute(self) -> Chunk:
+    def _next(self) -> Chunk:
         try:
             return self._get_batch(self.idx)
         except IndexError as ie:

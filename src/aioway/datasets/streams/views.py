@@ -46,7 +46,7 @@ class StreamSelectView(DatasetSelectView[Stream], Stream):
         return self
 
     @typing.override
-    def _compute(self) -> Chunk:
+    def _next(self) -> Chunk:
         batch = next(self.dset)
         return batch.select(*self.cols)
 
