@@ -11,10 +11,10 @@ from typing import Any, ClassVar
 
 from aioway import _common
 
-__all__ = ["ComputeStatus", "Compute", "DataThunk", "ComputeThunk"]
+__all__ = ["ExecState", "Exec", "DataExec", "FuncExec"]
 
 
-class ComputeStatus(Enum):
+class ExecState(Enum):
     "The status of a thunk."
 
     PENDING = Auto()
@@ -24,9 +24,9 @@ class ComputeStatus(Enum):
     "The thunk is evaluated."
 
 
-class Compute[T](ABC):
+class Exec[T](ABC):
     """
-    `Thunk`s represent computation that shall be done later.
+    `Exec`s represent computation that shall be done later.
 
     Like Haskell, once evaluated,
     the value is stored in the `Thunk` itself and never re-evaluated.
@@ -36,7 +36,7 @@ class Compute[T](ABC):
     __match_args__: ClassVar[tuple[str, ...]]
 
     def __init__(self) -> None:
-        self.__status = ComputeStatus.PENDING
+        self.__state = ExecState.PENDING
 
     def do(self) -> T:
         """
@@ -45,7 +45,7 @@ class Compute[T](ABC):
         """
 
         result = self.__result
-        self.__status = ComputeStatus.READY
+        self.__state = ExecState.READY
         return result
 
     @abc.abstractmethod
@@ -76,21 +76,21 @@ class Compute[T](ABC):
         return not self.deps
 
     @abc.abstractmethod
-    def _deps(self) -> Iterator[Compute[Any]]:
+    def _deps(self) -> Iterator[Exec[Any]]:
         """
         Return the depedent thunks.
         """
 
     @property
-    def status(self) -> ComputeStatus:
+    def state(self) -> ExecState:
         """
         The current status of the `Thunk`.
         """
 
-        return self.__status
+        return self.__state
 
 
-class DataThunk[T](Compute[T]):
+class DataExec[T](Exec[T]):
     "Represents some static data. Mainly used in storing primitives."
 
     __match_args__ = ("data",)
@@ -100,7 +100,7 @@ class DataThunk[T](Compute[T]):
 
         self._data = data
         _ = self.do()
-        assert self.status == ComputeStatus.READY
+        assert self.state == ExecState.READY
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.data!r})"
@@ -114,29 +114,29 @@ class DataThunk[T](Compute[T]):
         return self.data
 
     @typing.override
-    def _deps(self) -> Iterator[Compute[object]]:
+    def _deps(self) -> Iterator[Exec[object]]:
         return
         yield
 
 
-class ComputeThunk[T](Compute[T]):
+class FuncExec[T](Exec[T]):
     "Represents some computation that is deferred."
 
     __match_args__ = "func", "args", "kwargs"
 
     def __init__(
-        self, func: Callable[..., T], *args: Compute[Any], **kwargs: Compute[Any]
+        self, func: Callable[..., T], *args: Exec[Any], **kwargs: Exec[Any]
     ) -> None:
         super().__init__()
 
         self._func = func
 
         for arg in self.args:
-            if not isinstance(arg, Compute):
+            if not isinstance(arg, Exec):
                 raise TypeError(f"{arg} is not a `Thunk`.")
 
         for key, value in self.kwargs.items():
-            if not isinstance(value, Compute):
+            if not isinstance(value, Exec):
                 raise TypeError(f"{key}={value} is not a `Thunk`")
 
         self._args = args
@@ -152,7 +152,7 @@ class ComputeThunk[T](Compute[T]):
         return self.func(*args, **kwargs)
 
     @typing.override
-    def _deps(self) -> Iterator[Compute[object]]:
+    def _deps(self) -> Iterator[Exec[object]]:
         yield from self.args
         yield from self.kwargs.values()
 
@@ -161,9 +161,9 @@ class ComputeThunk[T](Compute[T]):
         return self._func
 
     @property
-    def args(self) -> tuple[Compute[Any], ...]:
+    def args(self) -> tuple[Exec[Any], ...]:
         return self._args
 
     @property
-    def kwargs(self) -> dict[str, Compute[Any]]:
+    def kwargs(self) -> dict[str, Exec[Any]]:
         return self._kwargs
