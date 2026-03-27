@@ -13,7 +13,7 @@ from aioway.attrs import Attr
 
 class TensorThunk(ABC):
     @functools.cached_property
-    def preview(self) -> FakeTensor:
+    def preview(self) -> Attr:
         preview = self._preview()
         if not fake.is_fake_tensor(preview):
             raise AssertionError("Does not return a fake tensor")
