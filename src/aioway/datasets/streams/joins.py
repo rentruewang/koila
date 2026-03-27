@@ -7,7 +7,7 @@ import typing
 
 import torch
 
-from aioway.attrs import AttrSet
+from aioway._previews import AttrSet
 from aioway.chunks import Chunk
 
 from .sources import CacheStream

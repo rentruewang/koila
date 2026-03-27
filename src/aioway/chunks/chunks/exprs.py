@@ -11,6 +11,7 @@ from torch import Tensor
 
 from aioway import _typing
 from aioway._errors import GitHubTicketFiled
+from aioway._previews import AttrSet
 from aioway._tables import Table
 from aioway._tensors import (
     BatchTensorDictExpr,
@@ -18,7 +19,6 @@ from aioway._tensors import (
     RenameTensorDictExpr,
     TensorDictExpr,
 )
-from aioway.attrs import AttrSet
 
 from ..vectors import Vector, VectorExpr
 from .chunks import Chunk

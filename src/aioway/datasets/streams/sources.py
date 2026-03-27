@@ -14,8 +14,8 @@ from typing import Self
 from torch.utils.data import DataLoader, Sampler
 
 from aioway import _typing
+from aioway._previews import AttrSet
 from aioway._tracking import logging
-from aioway.attrs import AttrSet
 from aioway.chunks import Chunk
 
 from ..frames import Frame

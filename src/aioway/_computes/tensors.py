@@ -8,7 +8,7 @@ from torch import Tensor
 from torch._subclasses import FakeTensor
 
 from aioway import fake
-from aioway.attrs import Attr
+from aioway._previews import Attr
 
 
 class TensorThunk(ABC):

@@ -9,7 +9,7 @@ import typing
 import numpy as np
 
 from aioway import _typing
-from aioway.attrs import AttrSet
+from aioway._previews import AttrSet
 from aioway.chunks import Chunk
 
 from .frames import Frame, IntArray

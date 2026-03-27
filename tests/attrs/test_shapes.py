@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from pytest import FixtureRequest
 
-from aioway.attrs import Shape
+from aioway._previews import Shape
 
 
 def _shapes():

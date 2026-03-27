@@ -10,7 +10,7 @@ from abc import ABC
 from collections.abc import Iterator
 from typing import ClassVar, Self
 
-from aioway.attrs import AttrSet
+from aioway._previews import AttrSet
 from aioway.chunks import Chunk
 
 from ..datasets import Dataset, DatasetViewTypes

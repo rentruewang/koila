@@ -7,7 +7,7 @@ import pytest
 import torch
 from pytest import FixtureRequest
 
-from aioway.attrs import Attr
+from aioway._previews import Attr
 from aioway.chunks import Chunk
 from aioway.datasets import (
     CacheStream,

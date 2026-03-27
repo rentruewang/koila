@@ -6,8 +6,8 @@ import torch
 from pytest import FixtureRequest
 from tensordict import TensorDict
 
-from aioway import attrs
-from aioway.attrs import Attr, AttrSet, _validation
+from aioway import _previews
+from aioway._previews import Attr, AttrSet, _validation
 from aioway.chunks import Chunk
 
 
@@ -76,7 +76,7 @@ def test_validation_ok(schema: AttrSet, valid_data: TensorDict) -> None:
 
 def test_construction_of_attrset(valid_data: TensorDict):
     parsed = AttrSet.from_tensordict(valid_data)
-    assert parsed == attrs.attr_set(
+    assert parsed == _previews.attr_set(
         {
             "a": Attr.parse(device="cpu", shape=[11, 2, 3], dtype="int32"),
             "b": Attr.parse(device="cpu", shape=[11, 6], dtype="float32"),
