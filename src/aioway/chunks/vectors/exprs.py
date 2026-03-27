@@ -7,7 +7,6 @@ from typing import Self
 
 from torch import Tensor
 
-from aioway._exprs import Expr
 from aioway._tensors import SourceTensorExpr, TensorExpr
 from aioway._tracking import logging
 from aioway._typing import AnyUFunc1, AnyUFunc2
@@ -24,7 +23,7 @@ type VectorExprRhs = VectorExpr | VectorRhs
 
 
 @dcls.dataclass(frozen=True)
-class VectorExpr(Expr[Vector]):
+class VectorExpr:
     """
     The expression type for `Vector`.
     """
@@ -102,14 +101,15 @@ class VectorExpr(Expr[Vector]):
     def __lt__(self, other: VectorExprRhs) -> Self:
         return self.__cmp(other, operator.lt)
 
-    @typing.override
-    def _inputs(self) -> tuple[Expr, ...]:
+    def _inputs(self):
         return (self.tensor,)
 
     def _return_type(self):
         return Vector
 
-    @typing.override
+    def compute(self) -> Vector:
+        return self._compute()
+
     def _compute(self) -> Vector:
         data = self.tensor.compute()
 

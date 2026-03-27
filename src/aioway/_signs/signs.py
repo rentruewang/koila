@@ -3,19 +3,17 @@
 "The signature types."
 
 import functools
-import typing
 from types import GenericAlias
 from typing import Self
 
 from lark import Lark
 
-from aioway._exprs import Expr
 from aioway._tracking import logging
 
 from . import _common
 from .types import ParamListTransformer, TypeList
 
-__all__ = ["Signature", "SignatureExpr"]
+__all__ = ["Signature"]
 
 LOGGER = logging.get_logger(__name__)
 
@@ -77,53 +75,6 @@ class Signature:
             transformer=SignatureTransformer,
             text=text,
         )(**types)
-
-
-@typing.final
-class SignatureExpr(Expr[Signature]):
-    """
-    The signature expression.
-
-    The expression contains the full typing, when evaluated (`.compute()`),
-    it would create signatures.
-    """
-
-    def __init__(self, return_type: type, *inputs: Self) -> None:
-        """
-        Args:
-            return_type: The return type of the current signature.
-            *inputs: The children of the current expression.
-        """
-
-        self.__inputs = inputs
-        self.__return_type = return_type
-
-    def __repr__(self) -> str:
-        return f"{type(self).__name__}({self.__sub_strs} -> {self.return_type})"
-
-    def __str__(self) -> str:
-        return f"({self.__sub_strs}) -> {self.return_type.__name__}"
-
-    @typing.override
-    def _compute(self) -> Signature:
-        input_types = (i.return_type for i in self.inputs)
-        return Signature(*input_types, self.return_type)
-
-    @typing.override
-    def _return_type(self) -> type[Signature]:
-        return self.__return_type
-
-    @typing.override
-    def _inputs(self):
-        return self.__inputs
-
-    @property
-    def __sub_strs(self):
-        return ", ".join(map(str, self.inputs))
-
-    @staticmethod
-    def parsing_grammar():
-        return _SIGNATURE_LIST_GRAMMAR
 
 
 _SIGNATURE_LIST_GRAMMAR = r"""

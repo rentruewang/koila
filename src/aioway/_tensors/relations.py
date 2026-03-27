@@ -40,10 +40,6 @@ class SelectTensorDictExpr(TensorDictExpr):
         ):
             return pulled.select(*self.columns)
 
-    @typing.override
-    def _inputs(self):
-        return (self.source,)
-
 
 @_common.expr_dcls
 class RenameTensorDictExpr(TensorDictExpr):
@@ -63,10 +59,6 @@ class RenameTensorDictExpr(TensorDictExpr):
             signature=Signature(TensorDict, TensorDict),
         ):
             return _rename(td, **self.renames)
-
-    @typing.override
-    def _inputs(self):
-        return (self.source,)
 
 
 @_common.expr_dcls
@@ -88,10 +80,6 @@ class ZipTensorDictExpr(TensorDictExpr):
             signature=Signature(TensorDict, TensorDict, TensorDict),
         ):
             return td.merge_tensordicts(left, right)
-
-    @typing.override
-    def _inputs(self):
-        return self.left, self.right
 
 
 def _rename(td: TensorDict, **names: str) -> TensorDict:

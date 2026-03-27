@@ -9,7 +9,6 @@ from typing import ClassVar
 from tensordict import TensorDict
 from torch import Tensor
 
-from aioway._exprs import Expr
 from aioway._tables import Table
 
 __all__ = ["TensorDictExpr", "TensorExpr", "TensorExprRhs"]
@@ -18,7 +17,7 @@ __all__ = ["TensorDictExpr", "TensorExpr", "TensorExprRhs"]
 type TensorExprRhs = TensorExpr | Tensor | int | float | bool
 
 
-class TensorExpr(Expr[Tensor], ABC):
+class TensorExpr(ABC):
     __match_args__: ClassVar[tuple[str, ...]]
 
     def __invert__(self):
@@ -109,6 +108,9 @@ class TensorExpr(Expr[Tensor], ABC):
 
         return UFuncTensorExpr2.lt(self, other)
 
+    def compute(self):
+        return self._compute()
+
     @abc.abstractmethod
     def _compute(self) -> Tensor: ...
 
@@ -119,7 +121,10 @@ class TensorExpr(Expr[Tensor], ABC):
         return Tensor
 
 
-class TensorDictExpr(Expr[TensorDict], Table[TensorExpr], ABC):
+class TensorDictExpr(Table[TensorExpr], ABC):
+
+    def compute(self):
+        return self._compute()
 
     @abc.abstractmethod
     def _compute(self) -> TensorDict: ...

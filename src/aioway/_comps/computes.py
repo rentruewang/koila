@@ -11,10 +11,10 @@ from typing import Any, ClassVar
 
 from aioway import _common
 
-__all__ = ["ThunkStatus", "Thunk", "DataThunk", "ComputeThunk"]
+__all__ = ["ComputeStatus", "Compute", "DataThunk", "ComputeThunk"]
 
 
-class ThunkStatus(Enum):
+class ComputeStatus(Enum):
     "The status of a thunk."
 
     PENDING = Auto()
@@ -24,7 +24,7 @@ class ThunkStatus(Enum):
     "The thunk is evaluated."
 
 
-class Thunk[T](ABC):
+class Compute[T](ABC):
     """
     `Thunk`s represent computation that shall be done later.
 
@@ -36,20 +36,20 @@ class Thunk[T](ABC):
     __match_args__: ClassVar[tuple[str, ...]]
 
     def __init__(self) -> None:
-        self.__status = ThunkStatus.PENDING
+        self.__status = ComputeStatus.PENDING
 
-    def force(self) -> T:
+    def do(self) -> T:
         """
         Force a `Thunk` to be evaluated. Return the result.
         Once evaluated, this would not cause evaluation again.
         """
 
         result = self.__result
-        self.__status = ThunkStatus.READY
+        self.__status = ComputeStatus.READY
         return result
 
     @abc.abstractmethod
-    def _evaluate(self) -> T:
+    def _do(self) -> T:
         """
         Do the computation. The result of this function would be stored into `__result`.
         """
@@ -62,7 +62,7 @@ class Thunk[T](ABC):
         Store the result onto `self`.
         """
 
-        return self._evaluate()
+        return self._do()
 
     @functools.cached_property
     def deps(self):
@@ -76,13 +76,13 @@ class Thunk[T](ABC):
         return not self.deps
 
     @abc.abstractmethod
-    def _deps(self) -> Iterator[Thunk[Any]]:
+    def _deps(self) -> Iterator[Compute[Any]]:
         """
         Return the depedent thunks.
         """
 
     @property
-    def status(self) -> ThunkStatus:
+    def status(self) -> ComputeStatus:
         """
         The current status of the `Thunk`.
         """
@@ -90,7 +90,7 @@ class Thunk[T](ABC):
         return self.__status
 
 
-class DataThunk[T](Thunk[T]):
+class DataThunk[T](Compute[T]):
     "Represents some static data. Mainly used in storing primitives."
 
     __match_args__ = ("data",)
@@ -99,8 +99,8 @@ class DataThunk[T](Thunk[T]):
         super().__init__()
 
         self._data = data
-        _ = self.force()
-        assert self.status == ThunkStatus.READY
+        _ = self.do()
+        assert self.status == ComputeStatus.READY
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.data!r})"
@@ -110,33 +110,33 @@ class DataThunk[T](Thunk[T]):
         return self._data
 
     @typing.override
-    def _evaluate(self) -> T:
+    def _do(self) -> T:
         return self.data
 
     @typing.override
-    def _deps(self) -> Iterator[Thunk[object]]:
+    def _deps(self) -> Iterator[Compute[object]]:
         return
         yield
 
 
-class ComputeThunk[T](Thunk[T]):
+class ComputeThunk[T](Compute[T]):
     "Represents some computation that is deferred."
 
     __match_args__ = "func", "args", "kwargs"
 
     def __init__(
-        self, func: Callable[..., T], *args: Thunk[Any], **kwargs: Thunk[Any]
+        self, func: Callable[..., T], *args: Compute[Any], **kwargs: Compute[Any]
     ) -> None:
         super().__init__()
 
         self._func = func
 
         for arg in self.args:
-            if not isinstance(arg, Thunk):
+            if not isinstance(arg, Compute):
                 raise TypeError(f"{arg} is not a `Thunk`.")
 
         for key, value in self.kwargs.items():
-            if not isinstance(value, Thunk):
+            if not isinstance(value, Compute):
                 raise TypeError(f"{key}={value} is not a `Thunk`")
 
         self._args = args
@@ -146,13 +146,13 @@ class ComputeThunk[T](Thunk[T]):
         return _common.format_function(self.func, *self.args, **self.kwargs)
 
     @typing.override
-    def _evaluate(self) -> T:
-        args = [arg.force() for arg in self.args]
-        kwargs = {key: val.force() for key, val in self.kwargs.items()}
+    def _do(self) -> T:
+        args = [arg.do() for arg in self.args]
+        kwargs = {key: val.do() for key, val in self.kwargs.items()}
         return self.func(*args, **kwargs)
 
     @typing.override
-    def _deps(self) -> Iterator[Thunk[object]]:
+    def _deps(self) -> Iterator[Compute[object]]:
         yield from self.args
         yield from self.kwargs.values()
 
@@ -161,9 +161,9 @@ class ComputeThunk[T](Thunk[T]):
         return self._func
 
     @property
-    def args(self) -> tuple[Thunk[Any], ...]:
+    def args(self) -> tuple[Compute[Any], ...]:
         return self._args
 
     @property
-    def kwargs(self) -> dict[str, Thunk[Any]]:
+    def kwargs(self) -> dict[str, Compute[Any]]:
         return self._kwargs

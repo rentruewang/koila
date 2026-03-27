@@ -5,153 +5,147 @@ import typing
 from abc import ABC
 from collections.abc import KeysView
 
-from aioway._exprs import Expr
 from aioway._tables import Table
 from aioway._tracking import logging
 
-__all__ = ["SymbolExpr", "ColSymExpr", "TableSymExpr"]
+__all__ = ["Symbol", "ColSymbol", "TableSymbol"]
 
 LOGGER = logging.get_logger(__name__)
 
 
-class SymbolExpr(Expr[str], ABC):
+class Symbol(ABC):
     """
     An (extended) projection operator that can be reprsented as an expression.
     """
 
-    @typing.final
-    def __str__(self) -> str:
-        return super().compute()
-
-    @typing.override
     @abc.abstractmethod
-    def _compute(self) -> str: ...
+    def __str__(self) -> str: ...
 
     @typing.final
     def _return_type(self):
         return str
 
 
-class ColSymExpr(SymbolExpr, ABC):
+class ColSymbol(Symbol, ABC):
     @abc.abstractmethod
-    def _compute(self) -> str: ...
+    def __str__(self) -> str: ...
 
     @typing.final
     def __invert__(self):
-        from .ufuncs import InvColExpr
+        from .ufuncs import InvColSymbol
 
-        return InvColExpr(self)
+        return InvColSymbol(self)
 
     @typing.final
     def __neg__(self):
-        from .ufuncs import NegColExpr
+        from .ufuncs import NegColSymbol
 
-        return NegColExpr(self)
-
-    @typing.final
-    def __add__(self, other: ColSymExpr):
-        from .ufuncs import AddColExpr
-
-        return AddColExpr(self, other)
+        return NegColSymbol(self)
 
     @typing.final
-    def __sub__(self, other: ColSymExpr):
-        from .ufuncs import SubColExpr
+    def __add__(self, other: ColSymbol):
+        from .ufuncs import AddColSymbol
 
-        return SubColExpr(self, other)
-
-    @typing.final
-    def __mul__(self, other: ColSymExpr):
-        from .ufuncs import MultColExpr
-
-        return MultColExpr(self, other)
+        return AddColSymbol(self, other)
 
     @typing.final
-    def __truediv__(self, other: ColSymExpr):
-        from .ufuncs import TrueDivColExpr
+    def __sub__(self, other: ColSymbol):
+        from .ufuncs import SubColSymbol
 
-        return TrueDivColExpr(self, other)
-
-    @typing.final
-    def __floordiv__(self, other: ColSymExpr):
-        from .ufuncs import FloorDivColExpr
-
-        return FloorDivColExpr(self, other)
+        return SubColSymbol(self, other)
 
     @typing.final
-    def __pow__(self, other: ColSymExpr):
-        from .ufuncs import ExpColExpr
+    def __mul__(self, other: ColSymbol):
+        from .ufuncs import MultColSymbol
 
-        return ExpColExpr(self, other)
+        return MultColSymbol(self, other)
+
+    @typing.final
+    def __truediv__(self, other: ColSymbol):
+        from .ufuncs import TrueDivColSymbol
+
+        return TrueDivColSymbol(self, other)
+
+    @typing.final
+    def __floordiv__(self, other: ColSymbol):
+        from .ufuncs import FloorDivColSymbol
+
+        return FloorDivColSymbol(self, other)
+
+    @typing.final
+    def __pow__(self, other: ColSymbol):
+        from .ufuncs import ExpColSymbol
+
+        return ExpColSymbol(self, other)
 
     @typing.final
     def __eq__(self, other: object):
-        if isinstance(other, ColSymExpr):
-            from .ufuncs import EqColExpr
+        if isinstance(other, ColSymbol):
+            from .ufuncs import EqColSymbol
 
-            return EqColExpr(self, other)
+            return EqColSymbol(self, other)
 
         return NotImplemented
 
     @typing.final
     def __ne__(self, other: object):
-        if isinstance(other, ColSymExpr):
-            from .ufuncs import NeColExpr
+        if isinstance(other, ColSymbol):
+            from .ufuncs import NeColSymbol
 
-            return NeColExpr(self, other)
+            return NeColSymbol(self, other)
 
         return NotImplemented
 
     @typing.final
-    def __gt__(self, other: ColSymExpr):
-        from .ufuncs import GtColExpr
+    def __gt__(self, other: ColSymbol):
+        from .ufuncs import GtColSymbol
 
-        return GtColExpr(self, other)
-
-    @typing.final
-    def __ge__(self, other: ColSymExpr):
-        from .ufuncs import GeColExpr
-
-        return GeColExpr(self, other)
+        return GtColSymbol(self, other)
 
     @typing.final
-    def __lt__(self, other: ColSymExpr):
-        from .ufuncs import LtColExpr
+    def __ge__(self, other: ColSymbol):
+        from .ufuncs import GeColSymbol
 
-        return LtColExpr(self, other)
+        return GeColSymbol(self, other)
 
     @typing.final
-    def __le__(self, other: ColSymExpr):
-        from .ufuncs import LeColExpr
+    def __lt__(self, other: ColSymbol):
+        from .ufuncs import LtColSymbol
 
-        return LeColExpr(self, other)
+        return LtColSymbol(self, other)
+
+    @typing.final
+    def __le__(self, other: ColSymbol):
+        from .ufuncs import LeColSymbol
+
+        return LeColSymbol(self, other)
 
 
-class TableSymExpr(SymbolExpr, Table[ColSymExpr], ABC):
+class TableSymbol(Symbol, Table[ColSymbol], ABC):
     @typing.overload
-    def __getitem__(self, key: str) -> ColSymExpr: ...
+    def __getitem__(self, key: str) -> ColSymbol: ...
 
     @typing.overload
-    def __getitem__(self, key: list[str]) -> TableSymExpr: ...
+    def __getitem__(self, key: list[str]) -> TableSymbol: ...
 
     @typing.no_type_check
     def __getitem__(self, key):
         return Table.__getitem__(self, key)
 
     @abc.abstractmethod
-    def _compute(self) -> str: ...
+    def __str__(self) -> str: ...
 
     @abc.abstractmethod
     def keys(self) -> KeysView[str]: ...
 
     @typing.override
-    def column(self, key: str) -> ColSymExpr:
-        from .getters import GetItemExpr
+    def column(self, key: str) -> ColSymbol:
+        from .getters import GetItemSymbol
 
-        return GetItemExpr(table=self, column=key)
+        return GetItemSymbol(table=self, column=key)
 
     @typing.override
-    def select(self, *keys: str) -> TableSymExpr:
-        from .getters import SelectExpr
+    def select(self, *keys: str) -> TableSymbol:
+        from .getters import SelectSymbol
 
-        return SelectExpr(table=self, columns=keys)
+        return SelectSymbol(table=self, columns=keys)

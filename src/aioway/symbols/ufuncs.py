@@ -5,40 +5,36 @@ import typing
 from abc import ABC
 
 from . import _common
-from .exprs import ColSymExpr
+from .exprs import ColSymbol
 
 __all__ = [
-    "UFuncSymColExpr1",
-    "NegColExpr",
-    "InvColExpr",
-    "UFuncSymColExpr2",
-    "AddColExpr",
-    "SubColExpr",
-    "MultColExpr",
-    "TrueDivColExpr",
-    "FloorDivColExpr",
-    "ExpColExpr",
-    "EqColExpr",
-    "NeColExpr",
-    "GeColExpr",
-    "LeColExpr",
-    "GtColExpr",
-    "LtColExpr",
+    "UFuncSymColSymbol1",
+    "NegColSymbol",
+    "InvColSymbol",
+    "UFuncSymColSymbol2",
+    "AddColSymbol",
+    "SubColSymbol",
+    "MultColSymbol",
+    "TrueDivColSymbol",
+    "FloorDivColSymbol",
+    "ExpColSymbol",
+    "EqColSymbol",
+    "NeColSymbol",
+    "GeColSymbol",
+    "LeColSymbol",
+    "GtColSymbol",
+    "LtColSymbol",
 ]
 
 
 @_common.symbol_dataclass
-class UFuncSymColExpr1(ColSymExpr, ABC):
-    source: ColSymExpr
+class UFuncSymColSymbol1(ColSymbol, ABC):
+    source: ColSymbol
 
     @typing.override
-    def _compute(self) -> str:
+    def __str__(self) -> str:
         return f"{self.token()}{self.source!s}"
 
-    @typing.override
-    def _inputs(self):
-        return (self.source,)
-
     @abc.abstractmethod
     def token(self) -> str:
         "The token representing the current operator."
@@ -47,21 +43,17 @@ class UFuncSymColExpr1(ColSymExpr, ABC):
 
 
 @_common.symbol_dataclass
-class UFuncSymColExpr2(ColSymExpr, ABC):
-    left: ColSymExpr
-    "The lhs of the expression. Must be `ColSymExpr` because it corresponds to `self`."
+class UFuncSymColSymbol2(ColSymbol, ABC):
+    left: ColSymbol
+    "The lhs of the expression. Must be `ColSymSymbol` because it corresponds to `self`."
 
-    right: ColSymExpr | int | float | bool
-    "The rhs of the expression. Can be either `ColSymExpr` or primitive types."
+    right: ColSymbol | int | float | bool
+    "The rhs of the expression. Can be either `ColSymSymbol` or primitive types."
 
     @typing.override
-    def _compute(self) -> str:
+    def __str__(self) -> str:
         return f"{self.left!s} {self.token()} {self.right!s}"
 
-    @typing.override
-    def _inputs(self):
-        return self.left, self.right
-
     @abc.abstractmethod
     def token(self) -> str:
         "The token representing the current operator."
@@ -70,7 +62,7 @@ class UFuncSymColExpr2(ColSymExpr, ABC):
 
 
 @_common.symbol_dataclass
-class InvColExpr(UFuncSymColExpr1):
+class InvColSymbol(UFuncSymColSymbol1):
 
     @typing.override
     def token(self) -> str:
@@ -78,7 +70,7 @@ class InvColExpr(UFuncSymColExpr1):
 
 
 @_common.symbol_dataclass
-class NegColExpr(UFuncSymColExpr1):
+class NegColSymbol(UFuncSymColSymbol1):
 
     @typing.override
     def token(self) -> str:
@@ -86,7 +78,7 @@ class NegColExpr(UFuncSymColExpr1):
 
 
 @_common.symbol_dataclass
-class AddColExpr(UFuncSymColExpr2):
+class AddColSymbol(UFuncSymColSymbol2):
 
     @typing.override
     def token(self) -> str:
@@ -94,7 +86,7 @@ class AddColExpr(UFuncSymColExpr2):
 
 
 @_common.symbol_dataclass
-class SubColExpr(UFuncSymColExpr2):
+class SubColSymbol(UFuncSymColSymbol2):
 
     @typing.override
     def token(self) -> str:
@@ -102,7 +94,7 @@ class SubColExpr(UFuncSymColExpr2):
 
 
 @_common.symbol_dataclass
-class MultColExpr(UFuncSymColExpr2):
+class MultColSymbol(UFuncSymColSymbol2):
 
     @typing.override
     def token(self) -> str:
@@ -110,7 +102,7 @@ class MultColExpr(UFuncSymColExpr2):
 
 
 @_common.symbol_dataclass
-class TrueDivColExpr(UFuncSymColExpr2):
+class TrueDivColSymbol(UFuncSymColSymbol2):
 
     @typing.override
     def token(self) -> str:
@@ -118,7 +110,7 @@ class TrueDivColExpr(UFuncSymColExpr2):
 
 
 @_common.symbol_dataclass
-class FloorDivColExpr(UFuncSymColExpr2):
+class FloorDivColSymbol(UFuncSymColSymbol2):
 
     @typing.override
     def token(self) -> str:
@@ -126,7 +118,7 @@ class FloorDivColExpr(UFuncSymColExpr2):
 
 
 @_common.symbol_dataclass
-class ExpColExpr(UFuncSymColExpr2):
+class ExpColSymbol(UFuncSymColSymbol2):
 
     @typing.override
     def token(self) -> str:
@@ -134,7 +126,7 @@ class ExpColExpr(UFuncSymColExpr2):
 
 
 @_common.symbol_dataclass
-class EqColExpr(UFuncSymColExpr2):
+class EqColSymbol(UFuncSymColSymbol2):
 
     @typing.override
     def token(self) -> str:
@@ -142,7 +134,7 @@ class EqColExpr(UFuncSymColExpr2):
 
 
 @_common.symbol_dataclass
-class NeColExpr(UFuncSymColExpr2):
+class NeColSymbol(UFuncSymColSymbol2):
 
     @typing.override
     def token(self) -> str:
@@ -150,7 +142,7 @@ class NeColExpr(UFuncSymColExpr2):
 
 
 @_common.symbol_dataclass
-class GeColExpr(UFuncSymColExpr2):
+class GeColSymbol(UFuncSymColSymbol2):
 
     @typing.override
     def token(self) -> str:
@@ -158,7 +150,7 @@ class GeColExpr(UFuncSymColExpr2):
 
 
 @_common.symbol_dataclass
-class LeColExpr(UFuncSymColExpr2):
+class LeColSymbol(UFuncSymColSymbol2):
 
     @typing.override
     def token(self) -> str:
@@ -166,7 +158,7 @@ class LeColExpr(UFuncSymColExpr2):
 
 
 @_common.symbol_dataclass
-class GtColExpr(UFuncSymColExpr2):
+class GtColSymbol(UFuncSymColSymbol2):
 
     @typing.override
     def token(self) -> str:
@@ -174,7 +166,7 @@ class GtColExpr(UFuncSymColExpr2):
 
 
 @_common.symbol_dataclass
-class LtColExpr(UFuncSymColExpr2):
+class LtColSymbol(UFuncSymColSymbol2):
 
     @typing.override
     def token(self) -> str:
