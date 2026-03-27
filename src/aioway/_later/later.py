@@ -11,22 +11,22 @@ from typing import Any, ClassVar
 
 from aioway import _common
 
-__all__ = ["ComputeState", "Compute", "DataCompute", "FuncCompute"]
+__all__ = ["LaterStatus", "Later", "LaterData", "LaterCompute"]
 
 
-class ComputeState(Enum):
-    "The status of a thunk."
+class LaterStatus(Enum):
+    "The status of a `Later` object."
 
     PENDING = Auto()
-    "The thunk is pending evaluation."
+    "The object is pending evaluation."
 
-    READY = Auto()
-    "The thunk is evaluated."
+    EVALUATED = Auto()
+    "The object is evaluated."
 
 
-class Compute[T](ABC):
+class Later[T](ABC):
     """
-    `Compute`s represent computation that shall be done later.
+    `Later`s represent computation that shall be done later.
 
     Like Haskell, once evaluated,
     the value is stored in the `Thunk` itself and never re-evaluated.
@@ -36,16 +36,16 @@ class Compute[T](ABC):
     __match_args__: ClassVar[tuple[str, ...]]
 
     def __init__(self) -> None:
-        self.__state = ComputeState.PENDING
+        self.__state = LaterStatus.PENDING
 
     def do(self) -> T:
         """
-        Force a `Thunk` to be evaluated. Return the result.
+        Force a `Defer` to be evaluated. Return the result.
         Once evaluated, this would not cause evaluation again.
         """
 
         result = self.__result
-        self.__state = ComputeState.READY
+        self.__state = LaterStatus.EVALUATED
         return result
 
     @abc.abstractmethod
@@ -76,13 +76,13 @@ class Compute[T](ABC):
         return not self.deps
 
     @abc.abstractmethod
-    def _deps(self) -> Iterator[Compute[Any]]:
+    def _deps(self) -> Iterator[Later[Any]]:
         """
         Return the depedent thunks.
         """
 
     @property
-    def state(self) -> ComputeState:
+    def state(self) -> LaterStatus:
         """
         The current status of the `Thunk`.
         """
@@ -90,7 +90,7 @@ class Compute[T](ABC):
         return self.__state
 
 
-class DataCompute[T](Compute[T]):
+class LaterData[T](Later[T]):
     "Represents some static data. Mainly used in storing primitives."
 
     __match_args__ = ("data",)
@@ -100,7 +100,7 @@ class DataCompute[T](Compute[T]):
 
         self._data = data
         _ = self.do()
-        assert self.state == ComputeState.READY
+        assert self.state == LaterStatus.EVALUATED
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.data!r})"
@@ -114,29 +114,29 @@ class DataCompute[T](Compute[T]):
         return self.data
 
     @typing.override
-    def _deps(self) -> Iterator[Compute[object]]:
+    def _deps(self) -> Iterator[Later[object]]:
         return
         yield
 
 
-class FuncCompute[T](Compute[T]):
+class LaterCompute[T](Later[T]):
     "Represents some computation that is deferred."
 
     __match_args__ = "func", "args", "kwargs"
 
     def __init__(
-        self, func: Callable[..., T], *args: Compute[Any], **kwargs: Compute[Any]
+        self, func: Callable[..., T], *args: Later[Any], **kwargs: Later[Any]
     ) -> None:
         super().__init__()
 
         self._func = func
 
         for arg in self.args:
-            if not isinstance(arg, Compute):
+            if not isinstance(arg, Later):
                 raise TypeError(f"{arg} is not a `Thunk`.")
 
         for key, value in self.kwargs.items():
-            if not isinstance(value, Compute):
+            if not isinstance(value, Later):
                 raise TypeError(f"{key}={value} is not a `Thunk`")
 
         self._args = args
@@ -152,7 +152,7 @@ class FuncCompute[T](Compute[T]):
         return self.func(*args, **kwargs)
 
     @typing.override
-    def _deps(self) -> Iterator[Compute[object]]:
+    def _deps(self) -> Iterator[Later[object]]:
         yield from self.args
         yield from self.kwargs.values()
 
@@ -161,9 +161,9 @@ class FuncCompute[T](Compute[T]):
         return self._func
 
     @property
-    def args(self) -> tuple[Compute[Any], ...]:
+    def args(self) -> tuple[Later[Any], ...]:
         return self._args
 
     @property
-    def kwargs(self) -> dict[str, Compute[Any]]:
+    def kwargs(self) -> dict[str, Later[Any]]:
         return self._kwargs
