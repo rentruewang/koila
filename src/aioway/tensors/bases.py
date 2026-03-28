@@ -13,7 +13,7 @@ from torch._tensor import Tensor
 
 from aioway import fake
 from aioway._previews import Attr
-from aioway.fns import Fn
+from aioway.fn import Fn
 
 __all__ = ["TensorFnState", "TensorFnState"]
 

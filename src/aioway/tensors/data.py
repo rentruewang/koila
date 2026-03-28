@@ -7,7 +7,7 @@ from torch import Tensor
 from torch._tensor import Tensor
 
 from aioway import fake
-from aioway.fns import Fn
+from aioway.fn import Fn
 
 from .bases import TensorFn
 

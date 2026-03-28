@@ -7,7 +7,7 @@ from typing import Any
 from torch import Tensor
 
 from aioway import _common
-from aioway.fns import Fn
+from aioway.fn import Fn
 
 from .bases import TensorFn
 
