@@ -1,12 +1,15 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
+import operator
+from collections.abc import Callable
+
 import pytest
 import torch
 from torch import Tensor
 
 from aioway import fake
 from aioway._previews import Attr
-from aioway.tensors import TensorFn
+from aioway.torch import TensorFn
 
 
 @pytest.fixture
@@ -22,6 +25,32 @@ def right():
 @pytest.fixture
 def left_fn(left: Tensor):
     return TensorFn.from_tensor(left)
+
+
+@pytest.fixture
+def right_fn(right: Tensor):
+    return TensorFn.from_tensor(right)
+
+
+@pytest.fixture(
+    params=[
+        operator.add,
+        operator.sub,
+        operator.mul,
+        operator.truediv,
+        operator.floordiv,
+        operator.mod,
+        operator.pow,
+        operator.eq,
+        operator.ne,
+        operator.gt,
+        operator.ge,
+        operator.lt,
+        operator.le,
+    ]
+)
+def binop(request):
+    return request.param
 
 
 @pytest.fixture
@@ -50,3 +79,14 @@ def test_left_attr(left_fn: TensorFn):
     assert attr.shape == [3, 5]
     assert attr.device == "cpu"
     assert attr.dtype == "float"
+
+
+def test_binary_ufunc(
+    left_fn: TensorFn,
+    right_fn: TensorFn,
+    binop: Callable[[TensorFn, TensorFn], TensorFn],
+):
+    result = binop(left_fn, right_fn)
+
+    assert isinstance(result, TensorFn)
+    assert isinstance(result.do(), Tensor)

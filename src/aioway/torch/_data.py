@@ -1,6 +1,5 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-import dataclasses as dcls
 import typing
 from collections.abc import Iterator
 
@@ -10,12 +9,13 @@ from torch._tensor import Tensor
 from aioway import fake
 from aioway.fn import Fn
 
+from . import _common
 from .fn import TensorFn
 
 __all__ = ["TensorDataFn"]
 
 
-@dcls.dataclass
+@_common.fn_dcls
 class TensorDataFn(TensorFn):
     "The `Fn` representing a plain `Tensor`."
 

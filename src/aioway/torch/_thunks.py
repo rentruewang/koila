@@ -1,6 +1,5 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-import dataclasses as dcls
 import typing
 from collections.abc import Callable, Iterator
 from types import NotImplementedType
@@ -9,9 +8,10 @@ from typing import Any, override
 from torch import Tensor
 from torch._tensor import Tensor
 
-from aioway import _common
+from aioway import _common as _aioway_common
 from aioway.fn import Fn
 
+from . import _common
 from .fn import TensorFn
 
 __all__ = ["thunk"]
@@ -45,7 +45,7 @@ def thunk(func, *args):
     return NotImplemented
 
 
-@dcls.dataclass
+@_common.fn_dcls
 class AnyThunk(TensorFn):
     "Represents some computation that is deferred."
 
@@ -67,7 +67,7 @@ class AnyThunk(TensorFn):
                 raise TypeError(f"{key}={value} is not a `Thunk`")
 
     def __repr__(self) -> str:
-        return _common.format_function(self.func, *self.args, **self.kwargs)
+        return _aioway_common.format_function(self.func, *self.args, **self.kwargs)
 
     @typing.override
     def forward(self) -> Tensor:
@@ -81,7 +81,7 @@ class AnyThunk(TensorFn):
         yield from self.kwargs.values()
 
 
-@dcls.dataclass
+@_common.fn_dcls
 class UFunc1Thunk(TensorFn):
     """
     Thunk for unary function.
@@ -112,7 +112,7 @@ class UFunc1Thunk(TensorFn):
 type BinaryTensorFnRhs = TensorFn | Tensor | int | float | bool
 
 
-@dcls.dataclass
+@_common.fn_dcls
 class UFunc2Thunk(TensorFn):
     """
     Thunk for binary function.

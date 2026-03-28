@@ -9,6 +9,8 @@ from torch._subclasses import FakeTensor, FakeTensorMode
 
 __all__ = ["enable", "enable_func", "is_fake_tensor", "is_real_tensor"]
 
+_FAKE_MODE: FakeTensorMode = FakeTensorMode()
+
 
 def to_fake_tensor(tensor: Tensor) -> FakeTensor:
     """
@@ -56,13 +58,8 @@ def enable():
 
     Since fake mode doesn't nest (it seems), if fake mode is already on, yield that.
     """
-
-    if fake := detect_fake_mode():
-        yield fake
-
-    else:
-        with FakeTensorMode() as fake:
-            yield fake
+    with _FAKE_MODE:
+        yield _FAKE_MODE
 
 
 def enable_func[**P, T](func: Callable[P, T]) -> Callable[P, T]:
