@@ -8,10 +8,9 @@ from typing import Any, override
 from torch import Tensor
 from torch._tensor import Tensor
 
-from aioway import _common as _aioway_common
+from aioway import _common as _common
 from aioway.fn import Fn
 
-from . import _common
 from .fn import TensorFn
 
 __all__ = ["thunk"]
@@ -45,7 +44,7 @@ def thunk(func, *args):
     return NotImplemented
 
 
-@_common.fn_dcls
+@_common.dcls_no_eq
 class AnyThunk(TensorFn):
     "Represents some computation that is deferred."
 
@@ -67,7 +66,7 @@ class AnyThunk(TensorFn):
                 raise TypeError(f"{key}={value} is not a `Thunk`")
 
     def __repr__(self) -> str:
-        return _aioway_common.format_function(self.func, *self.args, **self.kwargs)
+        return _common.format_function(self.func, *self.args, **self.kwargs)
 
     @typing.override
     def forward(self) -> Tensor:
@@ -81,7 +80,7 @@ class AnyThunk(TensorFn):
         yield from self.kwargs.values()
 
 
-@_common.fn_dcls
+@_common.dcls_no_eq
 class UFunc1Thunk(TensorFn):
     """
     Thunk for unary function.
@@ -112,7 +111,7 @@ class UFunc1Thunk(TensorFn):
 type BinaryTensorFnRhs = TensorFn | Tensor | int | float | bool
 
 
-@_common.fn_dcls
+@_common.dcls_no_eq
 class UFunc2Thunk(TensorFn):
     """
     Thunk for binary function.

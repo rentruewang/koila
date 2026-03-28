@@ -6,16 +6,15 @@ from collections.abc import Iterator
 from torch import Tensor
 from torch._tensor import Tensor
 
-from aioway import fake
+from aioway import _common, fake
 from aioway.fn import Fn
 
-from . import _common
 from .fn import TensorFn
 
 __all__ = ["TensorDataFn"]
 
 
-@_common.fn_dcls
+@_common.dcls_no_eq
 class TensorDataFn(TensorFn):
     "The `Fn` representing a plain `Tensor`."
 

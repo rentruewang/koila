@@ -9,7 +9,7 @@ from torch import Tensor
 
 from aioway import fake
 from aioway._previews import Attr
-from aioway.fn import TensorFn
+from aioway.tensors import TensorFn
 
 
 @pytest.fixture
