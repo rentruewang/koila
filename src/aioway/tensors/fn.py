@@ -23,6 +23,14 @@ class TensorFn(Fn[Tensor], ABC):
         assert fake.is_fake_tensor(self._fake_result)
         self.__attr = Attr.from_tensor(self._fake_result)
 
+    def __len__(self) -> int:
+        return self.attr().shape[0]
+
+    def __getitem__(self, key: Any) -> TensorFn:
+        from ._thunks import GatherThunk
+
+        return GatherThunk(self, key)
+
     def __invert__(self) -> TensorFn:
         from ._thunks import UFunc1Thunk
 

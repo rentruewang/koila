@@ -123,6 +123,7 @@ class UFunc2Thunk(TensorFn):
             yield right
 
 
+@_common.dcls_no_eq
 class GatherThunk(TensorFn):
     tensor: TensorFn | Tensor
     index: TensorFn | Tensor
