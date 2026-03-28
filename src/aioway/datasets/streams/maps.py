@@ -75,7 +75,7 @@ class MapStream(Stream, ABC):
             See class docstring for more details.
         """
 
-        ...
+        raise NotImplementedError
 
     @typing.override
     @typing.final

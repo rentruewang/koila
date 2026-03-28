@@ -58,6 +58,7 @@ def enable():
 
     Since fake mode doesn't nest (it seems), if fake mode is already on, yield that.
     """
+
     with _FAKE_MODE:
         yield _FAKE_MODE
 

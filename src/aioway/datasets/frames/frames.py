@@ -110,7 +110,7 @@ class Frame(Dataset, ABC):
     def attrs(self) -> AttrSet:
         "The schema of the current frame."
 
-        ...
+        raise NotImplementedError
 
     @abc.abstractmethod
     def _getitem(self, idx: IntArray, /) -> Chunk:
@@ -124,7 +124,7 @@ class Frame(Dataset, ABC):
             A couple of rows i nthe dataset.
         """
 
-        ...
+        raise NotImplementedError
 
     @classmethod
     @typing.override

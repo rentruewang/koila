@@ -1,25 +1,26 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import abc
+import functools
 import operator
 import typing
 from abc import ABC
 from collections.abc import Iterator
 from enum import Enum
 from enum import auto as Auto
-from typing import Any
+from typing import Any, ClassVar
 
 from torch import Tensor
 from torch._tensor import Tensor
 
 from aioway import fake
 from aioway._previews import Attr
-from aioway.fn import Fn
+from aioway.fn import Fn, FnState
 
-__all__ = ["TensorFnState", "TensorFn"]
+__all__ = ["Fn", "FnState", "TensorFn"]
 
 
-class TensorFnState(Enum):
+class FnState(Enum):
     "The status of a `Later` object."
 
     PENDING = Auto()
@@ -29,17 +30,74 @@ class TensorFnState(Enum):
     "The object is evaluated."
 
 
+class Fn[T](ABC):
+    """
+    `Fn`s represent computation that shall be done later.
+
+    Like Haskell's thunks, once evaluated,
+    the value is stored in the `Fn` itself and never re-evaluated.
+    The value shall be gone during GC.
+
+    I was going to go for `Op` but it's used a lot in `torch`.
+    """
+
+    __match_args__: ClassVar[tuple[str, ...]]
+
+    def __init__(self) -> None:
+        super().__init__()
+
+        self._real_result: T | None = None
+
+        with fake.enable():
+            self._fake_result: T = self.forward()
+
+        assert fake.is_fake_tensor(self._fake_result)
+
+    @abc.abstractmethod
+    def do(self) -> T:
+        """
+        Do the computation.
+        """
+
+        raise NotImplementedError
+
+    @functools.cached_property
+    def deps(self):
+        "The depedent `Exec`s."
+
+        return tuple(self._deps())
+
+    @property
+    def is_leaf(self) -> bool:
+        "Whether or not the thunk is dependent on other thunks. If not, it's a leaf."
+        return not self.deps
+
+    @abc.abstractmethod
+    def _deps(self) -> Iterator[Fn[Any]]:
+        """
+        Return the depedent thunks.
+        """
+
+    @abc.abstractmethod
+    def forward(self) -> T:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def state(self) -> FnState:
+        raise NotImplementedError
+
+
 class TensorFn(Fn[Tensor], ABC):
     def __init__(self) -> None:
         super().__init__()
 
-        self.__real_result: Tensor | None = None
+        self._real_result: Tensor | None = None
 
         with fake.enable():
-            self.__fake_result: Tensor = self.forward()
+            self._fake_result: Tensor = self.forward()
 
-        assert fake.is_fake_tensor(self.__fake_result)
-        self.__attr = Attr.from_tensor(self.__fake_result)
+        assert fake.is_fake_tensor(self._fake_result)
+        self.__attr = Attr.from_tensor(self._fake_result)
 
     def __invert__(self) -> TensorFn:
         from . import _thunks
@@ -134,13 +192,13 @@ class TensorFn(Fn[Tensor], ABC):
         """
 
         if fake.detect_fake_mode():
-            return self.__fake_result
+            return self._fake_result
 
-        if self.__real_result is None:
-            self.__real_result = self.forward()
+        if self._real_result is None:
+            self._real_result = self.forward()
 
-        assert fake.is_real_tensor(self.__real_result)
-        return self.__real_result
+        assert fake.is_real_tensor(self._real_result)
+        return self._real_result
 
     @abc.abstractmethod
     def forward(self) -> Tensor:
@@ -156,11 +214,11 @@ class TensorFn(Fn[Tensor], ABC):
         raise NotImplementedError
 
     @property
-    def state(self) -> TensorFnState:
-        if self.__real_result is None:
-            return TensorFnState.PENDING
+    def state(self) -> FnState:
+        if self._real_result is None:
+            return FnState.PENDING
         else:
-            return TensorFnState.EVALUATED
+            return FnState.EVALUATED
 
     @classmethod
     def from_tensor(cls, data: Tensor, /) -> TensorFn:

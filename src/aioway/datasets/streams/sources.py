@@ -42,7 +42,7 @@ class BoundedStream(Stream, ABC):
     def __len__(self) -> int:
         "The number of batches saved in the current `Stream`."
 
-        ...
+        raise NotImplementedError
 
     def __getitem__(self, key):
         if isinstance(key, int):

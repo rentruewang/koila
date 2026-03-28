@@ -95,5 +95,3 @@ class UserDefinedFunctionError(AiowayError, ValueError):
     """
     The user provided function is not valid.
     """
-
-    ...

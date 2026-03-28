@@ -53,7 +53,7 @@ class Dataset(ABC):
     def attrs(self) -> AttrSet:
         "All datasets have the metadta `attrs` present."
 
-        ...
+        raise NotImplementedError
 
     @typing.final
     def keys(self) -> KeysView[str]:
@@ -107,7 +107,7 @@ class Dataset(ABC):
         making it a circular dependency if it were a `ClassVar`.
         """
 
-        ...
+        raise NotImplementedError
 
 
 @dcls.dataclass(frozen=True)
