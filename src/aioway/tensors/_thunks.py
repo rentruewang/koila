@@ -137,7 +137,9 @@ class GatherThunk(TensorFn):
 
     @typing.override
     def forward(self) -> Tensor:
-        raise NotImplementedError
+        tensor = self.tensor.do() if isinstance(self.tensor, TensorFn) else self.tensor
+        index = self.index.do() if isinstance(self.index, TensorFn) else self.index
+        return tensor[index]
 
     @typing.override
     def _deps(self) -> Iterator[TensorFn]:

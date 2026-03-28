@@ -24,7 +24,7 @@ class TensorFn(Fn[Tensor], ABC):
         self.__attr = Attr.from_tensor(self._fake_result)
 
     def __len__(self) -> int:
-        return self.attr().shape[0]
+        return self.attr.shape[0]
 
     def __getitem__(self, key: Any) -> TensorFn:
         from ._thunks import GatherThunk
@@ -108,6 +108,7 @@ class TensorFn(Fn[Tensor], ABC):
 
         return UFunc2Thunk(operator.le, self, other)
 
+    @property
     def attr(self) -> Attr:
         return self.__attr
 
