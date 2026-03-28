@@ -14,7 +14,7 @@ from aioway.tensors.fn import TensorFn
 
 from .attrs import AttrSet
 
-__all__ = ["TensorDictFn"]
+__all__ = ["TensorDictFn", "tdict"]
 
 
 class TensorDictFn(Fn[TensorDict], Mapping[str, TensorFn], ABC):
@@ -70,3 +70,19 @@ class TensorDictFn(Fn[TensorDict], Mapping[str, TensorFn], ABC):
     @property
     def attrs(self):
         return self.__attrs
+
+    @classmethod
+    def from_tensordict(cls, data: TensorDict) -> TensorDictFn:
+        from ._data import TensorDictDataFn
+
+        return TensorDictDataFn(data)
+
+
+def tdict(item: TensorDictFn | TensorDict) -> TensorDictFn:
+    if isinstance(item, TensorDictFn):
+        return item
+
+    if isinstance(item, TensorDict):
+        return TensorDictFn.from_tensordict(item)
+
+    raise TypeError(f"Do not know how to handle {type(item)=}.")

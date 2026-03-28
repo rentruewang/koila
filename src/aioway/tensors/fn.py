@@ -21,7 +21,7 @@ __all__ = ["TensorFn", "tensor"]
 class TensorFn(Fn[Tensor], ABC):
     def __init__(self) -> None:
         super().__init__()
-        assert fake.is_fake_tensor(self._fake_result)
+        assert fake.is_fake_tensor(self._fake_result), type(self._fake_result)
         self.__attr = Attr.from_tensor(self._fake_result)
 
     def __len__(self) -> int:

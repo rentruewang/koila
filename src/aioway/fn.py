@@ -63,7 +63,6 @@ class Fn[T](ABC):
         if self._real_result is None:
             self._real_result = self.forward()
 
-        assert fake.is_real_tensor(self._real_result)
         return self._real_result
 
     @abc.abstractmethod
