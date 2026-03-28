@@ -43,7 +43,7 @@ class Dataset(ABC):
                 return self.select(*key)
 
         raise TypeError(
-            "The default implemenetation of `Table.__getitem__` "
+            "The default implemenetation of `Dataset.__getitem__` "
             f"does not know how to handle {key=}. "
             "It only supports `key` of type `str` and `list[str]`."
         )
