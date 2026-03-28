@@ -9,8 +9,8 @@ from abc import ABC
 from collections.abc import KeysView, Sequence
 from typing import ClassVar, NamedTuple, Self
 
-from aioway._previews import AttrSet
-from aioway._previews.attrs import Attr
+from aioway.tds import AttrSet
+from aioway.tensors import Attr
 
 __all__ = ["Dataset", "DatasetColumnView", "DatasetSelectView", "DatasetViewTypes"]
 

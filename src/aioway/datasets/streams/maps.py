@@ -11,8 +11,8 @@ from collections.abc import Callable
 import torch
 from torch import Tensor
 
-from aioway._previews import AttrSet
 from aioway.chunks import Chunk
+from aioway.tds import AttrSet
 
 from .streams import Stream
 

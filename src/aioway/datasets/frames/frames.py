@@ -12,9 +12,9 @@ import numpy as np
 from numpy import ndarray as NpArr
 
 from aioway import _typing
-from aioway._previews import AttrSet
 from aioway._typing import BatchIndex, IntArray
 from aioway.chunks import Chunk
+from aioway.tds import AttrSet
 
 from ..datasets import Dataset, DatasetViewTypes
 

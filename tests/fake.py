@@ -5,8 +5,9 @@ import torch
 from tensordict import TensorDict
 from torch import cuda
 
-from aioway._previews import Attr, AttrSet
 from aioway.chunks import Chunk
+from aioway.tds import AttrSet
+from aioway.tensors import Attr
 
 
 def cpu_and_maybe_cuda() -> list[str]:

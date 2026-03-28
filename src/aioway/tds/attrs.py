@@ -16,11 +16,7 @@ from torch import Tensor
 from aioway import _typing
 from aioway._signs import Signature
 from aioway._tracking import ModuleApiTracker, logging
-
-from .attrs import Attr
-from .devices import Device, DeviceLike
-from .dtypes import DType, DTypeLike
-from .shapes import Shape, ShapeLike
+from aioway.tensors import Attr, Device, DeviceLike, DType, DTypeLike, Shape, ShapeLike
 
 __all__ = ["AttrSet", "DTypeSet", "DeviceSet", "ShapeSet", "AttrSetLike", "attr_set"]
 
@@ -285,6 +281,10 @@ class AttrSet(_AttrSetBase[Attr]):
     @classmethod
     def from_tensordict(cls, data: TensorDict, /) -> Self:
         return cls.from_dict({key: Attr.from_tensor(val) for key, val in data.items()})
+
+    @staticmethod
+    def parse(schema: AttrSetLike):
+        return attr_set(schema)
 
 
 @dcls.dataclass(frozen=True)

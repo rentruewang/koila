@@ -9,9 +9,9 @@ from torch import Tensor
 from torch.nn import Module as NnModule
 
 from aioway import fake
-from aioway._previews import Attr
 from aioway._signs import Signature
 from aioway._tracking import ModuleApiTracker, logging
+from aioway.tensors import Attr
 
 __all__ = ["Module"]
 

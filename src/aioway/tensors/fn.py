@@ -11,8 +11,9 @@ from torch import Tensor
 from torch._tensor import Tensor
 
 from aioway import fake
-from aioway._previews import Attr
 from aioway.fn import Fn
+
+from .attrs import Attr
 
 __all__ = ["TensorFn"]
 

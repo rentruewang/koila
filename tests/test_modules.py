@@ -6,8 +6,8 @@ from pytest import FixtureRequest
 from torch import Tensor
 from torch.nn import Conv2d, Embedding, Identity, Linear
 
-from aioway._previews import Attr
 from aioway.modules import Module
+from aioway.tensors import Attr
 
 
 @pytest.fixture

@@ -2,8 +2,8 @@
 
 import pytest
 
-from aioway._previews import Attr
 from aioway._tracking import logging
+from aioway.tensors import Attr
 
 
 @pytest.fixture(scope="module", autouse=True)

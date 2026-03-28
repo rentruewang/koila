@@ -8,8 +8,7 @@ import torch
 from torch import Tensor
 
 from aioway import fake
-from aioway._previews import Attr
-from aioway.tensors import TensorFn
+from aioway.tensors import Attr, TensorFn
 
 
 @pytest.fixture

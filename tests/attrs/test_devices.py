@@ -4,7 +4,7 @@ import pytest
 import torch
 from pytest import FixtureRequest
 
-from aioway._previews import Device
+from aioway.tensors import Device
 
 
 def _cpus():

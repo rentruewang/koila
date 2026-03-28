@@ -8,10 +8,10 @@ from typing import Self
 
 from torch import Tensor
 
-from aioway._previews import Attr, _validation
 from aioway._tensor_exprs import SourceTensorExpr
 from aioway._tracking import logging
 from aioway._typing import AnyUFunc1, AnyUFunc2
+from aioway.tensors import Attr
 
 if typing.TYPE_CHECKING:
     from .exprs import VectorExpr, VectorExprRhs
@@ -32,9 +32,6 @@ class Vector:
     __match_args__ = "data", "attr"
 
     def __init__(self, data: Tensor, attr: Attr) -> None:
-        # Validate the attribute.
-        _validation.validate_attr(attr=attr, tensor=data)
-
         self._attr = attr
         "The attribute that the `Tensor` must satisfy."
 
