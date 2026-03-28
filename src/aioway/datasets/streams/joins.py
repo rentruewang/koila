@@ -8,7 +8,7 @@ import typing
 import torch
 
 from aioway.chunks import Chunk
-from aioway.tds import AttrSet
+from aioway.tdicts import AttrSet
 
 from .sources import CacheStream
 from .streams import Stream, StreamState

@@ -12,7 +12,7 @@ import torch
 from torch import Tensor
 
 from aioway.chunks import Chunk
-from aioway.tds import AttrSet
+from aioway.tdicts import AttrSet
 
 from .streams import Stream
 

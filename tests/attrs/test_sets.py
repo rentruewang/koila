@@ -7,7 +7,7 @@ from pytest import FixtureRequest
 from tensordict import TensorDict
 
 from aioway.chunks import Chunk
-from aioway.tds import AttrSet, _validation
+from aioway.tdicts import AttrSet, _validation
 from aioway.tensors import Attr
 
 

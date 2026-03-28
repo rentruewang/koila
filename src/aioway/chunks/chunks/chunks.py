@@ -14,7 +14,7 @@ from torch import Size, Tensor
 from aioway import _typing
 from aioway._tensor_exprs import SourceTensorDictExpr
 from aioway._tracking import logging
-from aioway.tds import AttrSet, AttrSetLike, _validation
+from aioway.tdicts import AttrSet, AttrSetLike, _validation
 
 from ..vectors import Vector
 

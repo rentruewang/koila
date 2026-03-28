@@ -15,7 +15,7 @@ from aioway.fn import Fn
 
 from .attrs import Attr
 
-__all__ = ["TensorFn"]
+__all__ = ["TensorFn", "tensor"]
 
 
 class TensorFn(Fn[Tensor], ABC):
@@ -132,3 +132,14 @@ class TensorFn(Fn[Tensor], ABC):
         from ._data import TensorDataFn
 
         return TensorDataFn(data)
+
+
+def tensor(data: TensorFn | Tensor) -> TensorFn:
+
+    if isinstance(data, TensorFn):
+        return data
+
+    if isinstance(data, Tensor):
+        return TensorFn.from_tensor(data)
+
+    raise TypeError(f"Do not know how to handle {type(data)=}.")

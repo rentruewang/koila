@@ -16,7 +16,7 @@ from torch.utils.data import DataLoader, Sampler
 from aioway import _typing
 from aioway._tracking import logging
 from aioway.chunks import Chunk
-from aioway.tds import AttrSet
+from aioway.tdicts import AttrSet
 
 from ..frames import Frame
 from .streams import Stream

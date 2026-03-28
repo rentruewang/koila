@@ -11,6 +11,8 @@ from tensordict import TensorDict
 from aioway import fake
 from aioway.fn import Fn
 
+from .attrs import AttrSet
+
 __all__ = ["TensorDictFn"]
 
 
@@ -18,8 +20,13 @@ class TensorDictFn(Fn[TensorDict], ABC):
     def __init__(self) -> None:
         super().__init__()
         assert all(fake.is_fake_tensor(tensor) for tensor in self._fake_result.values())
+        self.__attrs = AttrSet.from_tensordict(self._fake_result)
 
     @abc.abstractmethod
     @typing.override
     def _deps(self) -> Iterator[Fn[Any]]:
         raise NotImplementedError
+
+    @property
+    def attrs(self):
+        return self.__attrs

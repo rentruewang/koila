@@ -10,7 +10,7 @@ import numpy as np
 
 from aioway import _typing
 from aioway.chunks import Chunk
-from aioway.tds import AttrSet
+from aioway.tdicts import AttrSet
 
 from .frames import Frame, IntArray
 

@@ -17,7 +17,7 @@ from aioway._tensor_exprs import (
     RenameTensorDictExpr,
     TensorDictExpr,
 )
-from aioway.tds import AttrSet
+from aioway.tdicts import AttrSet
 
 from ..vectors import Vector, VectorExpr
 from .chunks import Chunk

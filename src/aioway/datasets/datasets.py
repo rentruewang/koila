@@ -9,7 +9,7 @@ from abc import ABC
 from collections.abc import KeysView, Sequence
 from typing import ClassVar, NamedTuple, Self
 
-from aioway.tds import AttrSet
+from aioway.tdicts import AttrSet
 from aioway.tensors import Attr
 
 __all__ = ["Dataset", "DatasetColumnView", "DatasetSelectView", "DatasetViewTypes"]

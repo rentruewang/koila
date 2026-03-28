@@ -18,7 +18,7 @@ from aioway._signs import Signature
 from aioway._tracking import ModuleApiTracker, logging
 from aioway.tensors import Attr, Device, DeviceLike, DType, DTypeLike, Shape, ShapeLike
 
-__all__ = ["AttrSet", "DTypeSet", "DeviceSet", "ShapeSet", "AttrSetLike", "attr_set"]
+__all__ = ["AttrSet", "DTypeSet", "DeviceSet", "ShapeSet", "AttrSetLike"]
 
 type AttrSetLike = AttrSet | dict[str, Attr]
 
@@ -284,7 +284,7 @@ class AttrSet(_AttrSetBase[Attr]):
 
     @staticmethod
     def parse(schema: AttrSetLike):
-        return attr_set(schema)
+        return _attr_set(schema)
 
 
 @dcls.dataclass(frozen=True)
@@ -338,7 +338,7 @@ class _AttrKeysView(KeysView[str]):
         return self.attrset.names
 
 
-def attr_set(schema: AttrSetLike, /) -> AttrSet:
+def _attr_set(schema: AttrSetLike, /) -> AttrSet:
     if isinstance(schema, AttrSet):
         return schema
 
