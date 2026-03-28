@@ -9,7 +9,7 @@ from aioway.tensors import TensorFn
 
 from .fn import TensorDictFn
 
-__all__ = ["GetItemFn"]
+__all__ = ["GetItemFn", "SelectFn"]
 
 
 @_common.dcls_no_eq
