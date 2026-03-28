@@ -39,6 +39,16 @@ def is_fake_tensor(tensor: object) -> TypeIs[FakeTensor]:
     return isinstance(tensor, FakeTensor)
 
 
+def detect_fake_mode():
+    """
+    Get the current fake mode, is available.
+
+    This can be used in an `if` or a `with`.
+    """
+
+    return _guards.detect_fake_mode()
+
+
 @ctxl.contextmanager
 def enable():
     """
@@ -47,7 +57,7 @@ def enable():
     Since fake mode doesn't nest (it seems), if fake mode is already on, yield that.
     """
 
-    if fake := _guards.detect_fake_mode():
+    if fake := detect_fake_mode():
         yield fake
 
     else:
