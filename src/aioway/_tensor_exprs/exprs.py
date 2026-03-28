@@ -4,12 +4,10 @@ import abc
 import typing
 from abc import ABC
 from collections.abc import KeysView
-from typing import ClassVar
+from typing import ClassVar, Self
 
 from tensordict import TensorDict
 from torch import Tensor
-
-from aioway._tables import Table
 
 __all__ = ["TensorDictExpr", "TensorExpr", "TensorExprRhs"]
 
@@ -121,7 +119,26 @@ class TensorExpr(ABC):
         return Tensor
 
 
-class TensorDictExpr(Table[TensorExpr], ABC):
+class TensorDictExpr(ABC):
+
+    @typing.overload
+    def __getitem__(self, key: str, /) -> TensorExpr: ...
+
+    @typing.overload
+    def __getitem__(self, key: list[str], /) -> Self: ...
+
+    def __getitem__(self, key, /):
+        match key:
+            case str():
+                return self.column(key)
+            case list() if all(isinstance(i, str) for i in key):
+                return self.select(*key)
+
+        raise TypeError(
+            "The default implemenetation of `Table.__getitem__` "
+            f"does not know how to handle {key=}. "
+            "It only supports `key` of type `str` and `list[str]`."
+        )
 
     def compute(self):
         return self._compute()

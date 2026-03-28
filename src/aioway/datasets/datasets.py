@@ -11,15 +11,42 @@ from typing import ClassVar, NamedTuple, Self
 
 from aioway._previews import AttrSet
 from aioway._previews.attrs import Attr
-from aioway._tables import Table
 
 __all__ = ["Dataset", "DatasetColumnView", "DatasetSelectView", "DatasetViewTypes"]
 
 
-class Dataset(Table, ABC):
+class Dataset(ABC):
     """
-    `Dataset` is a shared base class for dataset classes, `Frame`s and `Stream`s.
+    A tabular type that acts like a table, and is the shared base class for `Frame` and `Stream`.
+
+    A `Table` should support the following functions:
+
+    1. `column(key: str, /) -> `.
+        Getting the individual column.
+    2. `select(*keys: str) -> Self`.
+        Getting a couple of columns should return the same `Table`.
+    3. `keys() -> KeysView[str]`
+
     """
+
+    @typing.overload
+    def __getitem__(self, key: str, /) -> DatasetColumnView[Self]: ...
+
+    @typing.overload
+    def __getitem__(self, key: list[str], /) -> DatasetSelectView[Self]: ...
+
+    def __getitem__(self, key, /):
+        match key:
+            case str():
+                return self.column(key)
+            case list() if all(isinstance(i, str) for i in key):
+                return self.select(*key)
+
+        raise TypeError(
+            "The default implemenetation of `Table.__getitem__` "
+            f"does not know how to handle {key=}. "
+            "It only supports `key` of type `str` and `list[str]`."
+        )
 
     @property
     @abc.abstractmethod
@@ -29,17 +56,43 @@ class Dataset(Table, ABC):
         ...
 
     @typing.final
-    @typing.override
     def keys(self) -> KeysView[str]:
+        """
+        A `KeysView` object.
+        """
         return self.attrs.keys()
 
-    @typing.override
     def column(self, key: str) -> DatasetColumnView[Self]:
+        """
+        Get the column from the `Tabular` object.
+        A `KeyError` is raised if the column is not present.
+
+        Essentially this is the `Mapping.__getitem__` method,
+        but a normal method to simplify implementation.
+
+        Args:
+            key: The column name.
+
+        Returns:
+            The column instance.
+
+        Raises:
+            KeyError: If the column is not present.
+        """
+
         col_type, _ = self.view_types()
         return col_type.from_column(self, key)
 
-    @typing.override
     def select(self, *keys: str) -> DatasetSelectView[Self]:
+        """
+        Select multiple columns from the `Tabular` object.
+
+        If a key is missing, a `KeyError` is raised.
+
+        Returns:
+            A `Tabular` that wraps the result.
+        """
+
         _, select_type = self.view_types()
         return select_type.from_columns(self, *keys)
 

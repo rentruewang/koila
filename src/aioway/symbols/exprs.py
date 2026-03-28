@@ -4,8 +4,8 @@ import abc
 import typing
 from abc import ABC
 from collections.abc import KeysView
+from typing import Self
 
-from aioway._tables import Table
 from aioway._tracking import logging
 
 __all__ = ["Symbol", "ColSymbol", "TableSymbol"]
@@ -121,16 +121,26 @@ class ColSymbol(Symbol, ABC):
         return LeColSymbol(self, other)
 
 
-class TableSymbol(Symbol, Table[ColSymbol], ABC):
-    @typing.overload
-    def __getitem__(self, key: str) -> ColSymbol: ...
+class TableSymbol(Symbol, ABC):
 
     @typing.overload
-    def __getitem__(self, key: list[str]) -> TableSymbol: ...
+    def __getitem__(self, key: str, /) -> ColSymbol: ...
 
-    @typing.no_type_check
-    def __getitem__(self, key):
-        return Table.__getitem__(self, key)
+    @typing.overload
+    def __getitem__(self, key: list[str], /) -> Self: ...
+
+    def __getitem__(self, key, /):
+        match key:
+            case str():
+                return self.column(key)
+            case list() if all(isinstance(i, str) for i in key):
+                return self.select(*key)
+
+        raise TypeError(
+            "The default implemenetation of `Table.__getitem__` "
+            f"does not know how to handle {key=}. "
+            "It only supports `key` of type `str` and `list[str]`."
+        )
 
     @abc.abstractmethod
     def __str__(self) -> str: ...
@@ -138,13 +148,11 @@ class TableSymbol(Symbol, Table[ColSymbol], ABC):
     @abc.abstractmethod
     def keys(self) -> KeysView[str]: ...
 
-    @typing.override
     def column(self, key: str) -> ColSymbol:
         from .getters import GetItemSymbol
 
         return GetItemSymbol(table=self, column=key)
 
-    @typing.override
     def select(self, *keys: str) -> TableSymbol:
         from .getters import SelectSymbol
 
