@@ -18,7 +18,10 @@ class FakeModeRc:
     """
 
     mode: FakeTensorMode = dcls.field(default_factory=FakeTensorMode)
+    "The fake mode instance that shall be entered."
+
     count: int = 0
+    "The enter count."
 
     @ctxl.contextmanager
     def __call__(self):
