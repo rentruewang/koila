@@ -9,7 +9,7 @@ from torch._tensor import Tensor
 from aioway import fake
 from aioway.fn import Fn
 
-from .bases import TensorFn
+from .fn import TensorFn
 
 __all__ = ["TensorDataFn"]
 

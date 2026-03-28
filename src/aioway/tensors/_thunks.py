@@ -2,19 +2,24 @@
 
 import typing
 from collections.abc import Callable, Iterator
-from typing import Any
+from typing import Any, override
 
 from torch import Tensor
+from torch._tensor import Tensor
 
 from aioway import _common
 from aioway.fn import Fn
 
-from .bases import TensorFn
+from .fn import TensorFn
 
-__all__ = ["AnyThunkTensorFn"]
+__all__ = ["thunk1"]
 
 
-class AnyThunkTensorFn(TensorFn):
+def thunk1(func: Callable[[Tensor], Tensor], fn: TensorFn):
+    return UFunc1Thunk(func=func, arg=fn)
+
+
+class AnyThunk(TensorFn):
     "Represents some computation that is deferred."
 
     __match_args__ = "func", "args", "kwargs"
@@ -62,3 +67,41 @@ class AnyThunkTensorFn(TensorFn):
     @property
     def kwargs(self) -> dict[str, Fn[Any]]:
         return self._kwargs
+
+
+class UFunc1Thunk(TensorFn):
+    """
+    Thunk for unary function.
+    """
+
+    __match_args__ = "func", "arg"
+
+    def __init__(self, func: Callable[[Tensor], Tensor], arg: TensorFn) -> None:
+        super().__init__()
+        self._func = func
+        self._arg = arg
+
+    @typing.override
+    def forward(self) -> Tensor:
+        return self.func(self.arg.do())
+
+    @property
+    def func(self):
+        return self._func
+
+    @property
+    def arg(self):
+        return self._arg
+
+    @override
+    def _deps(self) -> Iterator[TensorFn]:
+        # If it's a primitive or `Tensor`, do not recurse.
+        if isinstance(self.arg, TensorFn):
+            yield self.arg
+
+
+type BinaryTensorFnRhs = TensorFn | Tensor | int | float | bool
+
+
+class UFunc2Thunk(TensorFn):
+    pass
