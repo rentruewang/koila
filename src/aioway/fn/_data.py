@@ -29,7 +29,7 @@ class TensorDataFn(TensorFn):
 
     @typing.override
     def forward(self):
-        if mode := fake.detect_fake_mode():
+        if mode := fake.is_enabled():
             converter = mode.fake_tensor_converter
             return converter.from_real_tensor(mode, self.data)
 

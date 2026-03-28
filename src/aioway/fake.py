@@ -41,7 +41,7 @@ def is_fake_tensor(tensor: object) -> TypeIs[FakeTensor]:
     return isinstance(tensor, FakeTensor)
 
 
-def detect_fake_mode():
+def is_enabled():
     """
     Get the current fake mode, is available.
 

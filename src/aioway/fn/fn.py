@@ -15,7 +15,6 @@ from torch._tensor import Tensor
 
 from aioway import fake
 from aioway._previews import Attr
-from aioway.fn import Fn, FnState
 
 __all__ = ["Fn", "FnState", "TensorFn"]
 
@@ -51,12 +50,32 @@ class Fn[T](ABC):
         with fake.enable():
             self._fake_result: T = self.forward()
 
-        assert fake.is_fake_tensor(self._fake_result)
-
-    @abc.abstractmethod
+    @typing.final
     def do(self) -> T:
         """
-        Do the computation.
+        Perform the computation.
+
+        If the result is previously stored, use the stored result.
+        If we are in fake mode, return the `FakeTensor` version.
+
+        Returns:
+            A `FakeTensor` if in fake mode, a `Tensor` otherwise.
+        """
+
+        if fake.is_enabled():
+            return self._fake_result
+
+        if self._real_result is None:
+            self._real_result = self.forward()
+
+        assert fake.is_real_tensor(self._real_result)
+        return self._real_result
+
+    @abc.abstractmethod
+    def forward(self) -> T:
+        """
+        Do the `torch` related operations.
+        This would yield `Fake*` in fake mode, but real tensor in real mode.
         """
 
         raise NotImplementedError
@@ -78,24 +97,22 @@ class Fn[T](ABC):
         Return the depedent thunks.
         """
 
-    @abc.abstractmethod
-    def forward(self) -> T:
-        raise NotImplementedError
-
-    @abc.abstractmethod
+    @property
     def state(self) -> FnState:
-        raise NotImplementedError
+        """
+        If `do` has been called, return `EVALUATED`.
+        Else return `PENDING`.
+        """
+
+        if self._real_result is None:
+            return FnState.PENDING
+        else:
+            return FnState.EVALUATED
 
 
 class TensorFn(Fn[Tensor], ABC):
     def __init__(self) -> None:
         super().__init__()
-
-        self._real_result: Tensor | None = None
-
-        with fake.enable():
-            self._fake_result: Tensor = self.forward()
-
         assert fake.is_fake_tensor(self._fake_result)
         self.__attr = Attr.from_tensor(self._fake_result)
 
@@ -179,28 +196,8 @@ class TensorFn(Fn[Tensor], ABC):
     def attr(self) -> Attr:
         return self.__attr
 
-    @typing.override
-    def do(self) -> Tensor:
-        """
-        Perform the computation.
-
-        If the result is previously stored, use the stored result.
-        If we are in fake mode, return the `FakeTensor` version.
-
-        Returns:
-            A `FakeTensor` if in fake mode, a `Tensor` otherwise.
-        """
-
-        if fake.detect_fake_mode():
-            return self._fake_result
-
-        if self._real_result is None:
-            self._real_result = self.forward()
-
-        assert fake.is_real_tensor(self._real_result)
-        return self._real_result
-
     @abc.abstractmethod
+    @typing.override
     def forward(self) -> Tensor:
         raise NotImplementedError
 
@@ -212,13 +209,6 @@ class TensorFn(Fn[Tensor], ABC):
         """
 
         raise NotImplementedError
-
-    @property
-    def state(self) -> FnState:
-        if self._real_result is None:
-            return FnState.PENDING
-        else:
-            return FnState.EVALUATED
 
     @classmethod
     def from_tensor(cls, data: Tensor, /) -> TensorFn:
