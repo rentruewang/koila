@@ -3,7 +3,7 @@
 import abc
 import typing
 from abc import ABC
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 from typing import Any
 
 from tensordict import TensorDict
@@ -17,7 +17,7 @@ from .attrs import AttrSet
 __all__ = ["TensorDictFn"]
 
 
-class TensorDictFn(Fn[TensorDict], ABC):
+class TensorDictFn(Fn[TensorDict], Mapping[str, TensorFn], ABC):
     def __init__(self) -> None:
         super().__init__()
         assert all(fake.is_fake_tensor(tensor) for tensor in self._fake_result.values())
@@ -42,6 +42,25 @@ class TensorDictFn(Fn[TensorDict], ABC):
             return SelectFn(self, key)
 
         raise TypeError(f"Does not handle {type(key)=}.")
+
+    @typing.override
+    def __len__(self) -> int:
+        return len(self.attrs)
+
+    @typing.override
+    def __contains__(self, key: object, /) -> bool:
+        if isinstance(key, str):
+            return key in self.keys()
+
+        return False
+
+    @typing.override
+    def __iter__(self):
+        yield from self.keys()
+
+    @typing.override
+    def keys(self):
+        return self.attrs.keys()
 
     @abc.abstractmethod
     @typing.override
