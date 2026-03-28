@@ -13,7 +13,7 @@ from torch import Size, Tensor
 
 from aioway import _previews, _typing
 from aioway._previews import AttrSet, AttrSetLike, _validation
-from aioway._tensors import SourceTensorDictExpr
+from aioway._tensor_exprs import SourceTensorDictExpr
 from aioway._tracking import logging
 
 from ..vectors import Vector

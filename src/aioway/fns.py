@@ -11,10 +11,10 @@ from typing import Any, ClassVar
 
 from aioway import _common
 
-__all__ = ["LaterStatus", "Later", "LaterData", "LaterCompute"]
+__all__ = ["FnState", "Fn", "DataFn", "ThunkFn"]
 
 
-class LaterStatus(Enum):
+class FnState(Enum):
     "The status of a `Later` object."
 
     PENDING = Auto()
@@ -24,32 +24,32 @@ class LaterStatus(Enum):
     "The object is evaluated."
 
 
-class Later[T](ABC):
+class Fn[T](ABC):
     """
-    `Later`s represent computation that shall be done later.
+    `Fn`s represent computation that shall be done later.
 
-    Like Haskell, once evaluated,
-    the value is stored in the `Thunk` itself and never re-evaluated.
+    Like Haskell's thunks, once evaluated,
+    the value is stored in the `Fn` itself and never re-evaluated.
     The value shall be gone during GC.
     """
 
     __match_args__: ClassVar[tuple[str, ...]]
 
     def __init__(self) -> None:
-        self.__state = LaterStatus.PENDING
+        self.__state = FnState.PENDING
 
-    def do(self) -> T:
+    def result(self) -> T:
         """
         Force a `Defer` to be evaluated. Return the result.
         Once evaluated, this would not cause evaluation again.
         """
 
         result = self.__result
-        self.__state = LaterStatus.EVALUATED
+        self.__state = FnState.EVALUATED
         return result
 
     @abc.abstractmethod
-    def _do(self) -> T:
+    def do(self) -> T:
         """
         Do the computation. The result of this function would be stored into `__result`.
         """
@@ -62,7 +62,7 @@ class Later[T](ABC):
         Store the result onto `self`.
         """
 
-        return self._do()
+        return self.do()
 
     @functools.cached_property
     def deps(self):
@@ -76,13 +76,13 @@ class Later[T](ABC):
         return not self.deps
 
     @abc.abstractmethod
-    def _deps(self) -> Iterator[Later[Any]]:
+    def _deps(self) -> Iterator[Fn[Any]]:
         """
         Return the depedent thunks.
         """
 
     @property
-    def state(self) -> LaterStatus:
+    def state(self) -> FnState:
         """
         The current status of the `Thunk`.
         """
@@ -90,7 +90,7 @@ class Later[T](ABC):
         return self.__state
 
 
-class LaterData[T](Later[T]):
+class DataFn[T](Fn[T]):
     "Represents some static data. Mainly used in storing primitives."
 
     __match_args__ = ("data",)
@@ -99,8 +99,8 @@ class LaterData[T](Later[T]):
         super().__init__()
 
         self._data = data
-        _ = self.do()
-        assert self.state == LaterStatus.EVALUATED
+        _ = self.result()
+        assert self.state == FnState.EVALUATED
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.data!r})"
@@ -110,33 +110,33 @@ class LaterData[T](Later[T]):
         return self._data
 
     @typing.override
-    def _do(self) -> T:
+    def do(self) -> T:
         return self.data
 
     @typing.override
-    def _deps(self) -> Iterator[Later[object]]:
+    def _deps(self) -> Iterator[Fn[object]]:
         return
         yield
 
 
-class LaterCompute[T](Later[T]):
+class ThunkFn[T](Fn[T]):
     "Represents some computation that is deferred."
 
     __match_args__ = "func", "args", "kwargs"
 
     def __init__(
-        self, func: Callable[..., T], *args: Later[Any], **kwargs: Later[Any]
+        self, func: Callable[..., T], *args: Fn[Any], **kwargs: Fn[Any]
     ) -> None:
         super().__init__()
 
         self._func = func
 
         for arg in self.args:
-            if not isinstance(arg, Later):
+            if not isinstance(arg, Fn):
                 raise TypeError(f"{arg} is not a `Thunk`.")
 
         for key, value in self.kwargs.items():
-            if not isinstance(value, Later):
+            if not isinstance(value, Fn):
                 raise TypeError(f"{key}={value} is not a `Thunk`")
 
         self._args = args
@@ -146,13 +146,13 @@ class LaterCompute[T](Later[T]):
         return _common.format_function(self.func, *self.args, **self.kwargs)
 
     @typing.override
-    def _do(self) -> T:
-        args = [arg.do() for arg in self.args]
-        kwargs = {key: val.do() for key, val in self.kwargs.items()}
+    def do(self) -> T:
+        args = [arg.result() for arg in self.args]
+        kwargs = {key: val.result() for key, val in self.kwargs.items()}
         return self.func(*args, **kwargs)
 
     @typing.override
-    def _deps(self) -> Iterator[Later[object]]:
+    def _deps(self) -> Iterator[Fn[object]]:
         yield from self.args
         yield from self.kwargs.values()
 
@@ -161,9 +161,9 @@ class LaterCompute[T](Later[T]):
         return self._func
 
     @property
-    def args(self) -> tuple[Later[Any], ...]:
+    def args(self) -> tuple[Fn[Any], ...]:
         return self._args
 
     @property
-    def kwargs(self) -> dict[str, Later[Any]]:
+    def kwargs(self) -> dict[str, Fn[Any]]:
         return self._kwargs

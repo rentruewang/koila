@@ -9,7 +9,7 @@ from typing import Self
 from torch import Tensor
 
 from aioway._previews import Attr, _validation
-from aioway._tensors import SourceTensorExpr
+from aioway._tensor_exprs import SourceTensorExpr
 from aioway._tracking import logging
 from aioway._typing import AnyUFunc1, AnyUFunc2
 
