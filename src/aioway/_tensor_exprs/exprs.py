@@ -4,13 +4,10 @@ import abc
 import typing
 from abc import ABC
 from collections.abc import KeysView
-from typing import ClassVar
+from typing import ClassVar, Self
 
 from tensordict import TensorDict
 from torch import Tensor
-
-from aioway._exprs import Expr
-from aioway._tables import Table
 
 __all__ = ["TensorDictExpr", "TensorExpr", "TensorExprRhs"]
 
@@ -18,7 +15,7 @@ __all__ = ["TensorDictExpr", "TensorExpr", "TensorExprRhs"]
 type TensorExprRhs = TensorExpr | Tensor | int | float | bool
 
 
-class TensorExpr(Expr[Tensor], ABC):
+class TensorExpr(ABC):
     __match_args__: ClassVar[tuple[str, ...]]
 
     def __invert__(self):
@@ -109,6 +106,9 @@ class TensorExpr(Expr[Tensor], ABC):
 
         return UFuncTensorExpr2.lt(self, other)
 
+    def compute(self):
+        return self._compute()
+
     @abc.abstractmethod
     def _compute(self) -> Tensor: ...
 
@@ -119,7 +119,29 @@ class TensorExpr(Expr[Tensor], ABC):
         return Tensor
 
 
-class TensorDictExpr(Expr[TensorDict], Table[TensorExpr], ABC):
+class TensorDictExpr(ABC):
+
+    @typing.overload
+    def __getitem__(self, key: str, /) -> TensorExpr: ...
+
+    @typing.overload
+    def __getitem__(self, key: list[str], /) -> Self: ...
+
+    def __getitem__(self, key, /):
+        match key:
+            case str():
+                return self.column(key)
+            case list() if all(isinstance(i, str) for i in key):
+                return self.select(*key)
+
+        raise TypeError(
+            "The default implemenetation of `Table.__getitem__` "
+            f"does not know how to handle {key=}. "
+            "It only supports `key` of type `str` and `list[str]`."
+        )
+
+    def compute(self):
+        return self._compute()
 
     @abc.abstractmethod
     def _compute(self) -> TensorDict: ...

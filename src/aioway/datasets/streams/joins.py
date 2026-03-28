@@ -7,7 +7,7 @@ import typing
 
 import torch
 
-from aioway.attrs import AttrSet
+from aioway._previews import AttrSet
 from aioway.chunks import Chunk
 
 from .sources import CacheStream
@@ -43,7 +43,7 @@ class ZipStream(Stream):
         return self.left.attrs | self.right.attrs
 
     @typing.override
-    def _compute(self) -> Chunk:
+    def _next(self) -> Chunk:
         # Either one of those may raise `StopIteration`, at which point it is done.
         left_batch = next(self.left)
         right_batch = next(self.right)
@@ -104,7 +104,7 @@ class NestedLoopJoinStream(Stream):
         return self.left, self.right
 
     @typing.override
-    def _compute(self) -> Chunk:
+    def _next(self) -> Chunk:
         lhs_batch = self._get_lhs()
         rhs_batch = self._get_rhs()
 

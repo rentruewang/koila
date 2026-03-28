@@ -14,8 +14,8 @@ from typing import Self
 from torch.utils.data import DataLoader, Sampler
 
 from aioway import _typing
+from aioway._previews import AttrSet
 from aioway._tracking import logging
-from aioway.attrs import AttrSet
 from aioway.chunks import Chunk
 
 from ..frames import Frame
@@ -91,7 +91,7 @@ class CacheStream(BoundedStream):
         return self.saved[idx]
 
     @typing.override
-    def _compute(self) -> Chunk:
+    def _next(self) -> Chunk:
         LOGGER.debug(
             "Executing `__iter__` for `CacheStream`. self.idx=%s, stream.idx=%s",
             self.idx,
@@ -105,7 +105,7 @@ class CacheStream(BoundedStream):
 
         # Try to get from `self.saved` first.
         if self.idx < len(self):
-            return self[self.idx]
+            return self._getitem_int(self.idx)
 
         # Now all the previous ones still must all have been saved.
         assert self.idx == len(self), f"{self.idx=} for {len(self)=}"
@@ -167,7 +167,7 @@ class ListStream(BoundedStream):
         raise ValueError("Chunks should have the same schema.")
 
     @typing.override
-    def _compute(self) -> Chunk:
+    def _next(self) -> Chunk:
         if self.idx < self.size:
             return self[self.idx]
         else:
@@ -212,7 +212,7 @@ class FrameStream(Stream):
     """
 
     @typing.override
-    def _compute(self) -> Chunk:
+    def _next(self) -> Chunk:
         try:
             return self._get_batch(self.idx)
         except IndexError as ie:

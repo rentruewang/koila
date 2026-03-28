@@ -15,7 +15,6 @@ from torch import Tensor
 
 from aioway import _typing
 from aioway._signs import Signature
-from aioway._tables import Table
 from aioway._tracking import ModuleApiTracker, logging
 
 from .attrs import Attr
@@ -44,7 +43,7 @@ class _AttrItem[T](NamedTuple):
 
 
 @dcls.dataclass(frozen=True, repr=False)
-class _AttrSetBase[T](Table[T], Mapping[str, T]):
+class _AttrSetBase[T](Mapping[str, T]):
     """
     A set of attributes. Representing the schema in a `TensorDict`.
 
@@ -76,11 +75,19 @@ class _AttrSetBase[T](Table[T], Mapping[str, T]):
     def __iter__(self) -> Iterator[str]:
         return (attr.name for attr in self.attrs)
 
+    def __getitem__(self, key):
+        if isinstance(key, str):
+            return self.column(key)
+
+        if _typing.is_list_of(str)(key):
+            return self.select(*key)
+
+        raise KeyError
+
     @typing.override
     def keys(self):
         return self._keys_view
 
-    @typing.override
     def column(self, key: str, /) -> T:
         # Using the `find` function from `AttrSetKeysView`, to be DRY.
         if (idx := self.keys().find(key)) is None:
@@ -89,7 +96,6 @@ class _AttrSetBase[T](Table[T], Mapping[str, T]):
         assert 0 <= idx < len(self)
         return self.attrs[idx].attr
 
-    @typing.override
     def select(self, *keys: str) -> Self:
         return type(self).from_dict({key: self[key] for key in keys})
 

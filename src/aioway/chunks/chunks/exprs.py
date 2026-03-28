@@ -11,15 +11,13 @@ from torch import Tensor
 
 from aioway import _typing
 from aioway._errors import GitHubTicketFiled
-from aioway._exprs import Expr
-from aioway._tables import Table
-from aioway._tensors import (
+from aioway._previews import AttrSet
+from aioway._tensor_exprs import (
     BatchTensorDictExpr,
     ItemTensorDictExpr,
     RenameTensorDictExpr,
     TensorDictExpr,
 )
-from aioway.attrs import AttrSet
 
 from ..vectors import Vector, VectorExpr
 from .chunks import Chunk
@@ -28,7 +26,7 @@ __all__ = ["ChunkExpr"]
 
 
 @dcls.dataclass(frozen=True)
-class ChunkExpr(Expr[Chunk], Table[VectorExpr]):
+class ChunkExpr:
     """
     The expression type for `Chunk`.
     """
@@ -39,7 +37,9 @@ class ChunkExpr(Expr[Chunk], Table[VectorExpr]):
     def keys(self):
         return self.tensordict.keys()
 
-    @typing.override
+    def compute(self):
+        return self._compute()
+
     def _compute(self) -> Chunk:
         data = self.tensordict.compute()
         return Chunk(data=data, attrs=self.attrs)
@@ -86,13 +86,11 @@ class ChunkExpr(Expr[Chunk], Table[VectorExpr]):
 
         raise TypeError(type(idx))
 
-    @typing.override
     def column(self, key: str) -> VectorExpr:
         tensor = self.tensordict[key]
         attr = self.attrs[key]
         return VectorExpr(tensor=tensor, attr=attr)
 
-    @typing.override
     def select(self, *keys: str) -> Self:
         td = self.tensordict.select(*keys)
         schema = self.attrs.select(*keys)
@@ -109,7 +107,7 @@ class ChunkExpr(Expr[Chunk], Table[VectorExpr]):
             tensordict=td, attrs=AttrSet.from_dict({**self.attrs, **rhs.attrs})
         )
 
-    def _inputs(self) -> tuple[Expr, ...]:
+    def _inputs(self):
         return (self.tensordict,)
 
     def _return_type(self) -> type[Chunk]:

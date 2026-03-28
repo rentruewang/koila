@@ -10,8 +10,7 @@ from abc import ABC
 from collections.abc import Iterator
 from typing import ClassVar, Self
 
-from aioway._exprs import Expr
-from aioway.attrs import AttrSet
+from aioway._previews import AttrSet
 from aioway.chunks import Chunk
 
 from ..datasets import Dataset, DatasetViewTypes
@@ -46,7 +45,7 @@ class StreamState:
 
 
 @dcls.dataclass(frozen=True)
-class Stream(Expr[Chunk], Iterator[Chunk], Dataset, ABC):
+class Stream(Iterator[Chunk], Dataset, ABC):
     """
     `Stream` produces a stream of batches of data, in the form of `TensorDict`s,
     everytime `__next__` is called on it, a `TensorDict` is yielded.
@@ -77,7 +76,7 @@ class Stream(Expr[Chunk], Iterator[Chunk], Dataset, ABC):
         `__next__` allows `Stream`s to be used in `for` loops.
         """
 
-        if (result := self.compute()).attrs != self.attrs:
+        if (result := self._next()).attrs != self.attrs:
             raise TypeError(f"Schema mismatch: {result.attrs=}, {self.attrs=}.")
 
         self.state.step()
@@ -103,7 +102,7 @@ class Stream(Expr[Chunk], Iterator[Chunk], Dataset, ABC):
         ...
 
     @abc.abstractmethod
-    def _compute(self) -> Chunk:
+    def _next(self) -> Chunk:
         """
         Compute the next batch (a `Chunk`).
 
@@ -158,6 +157,3 @@ class Stream(Expr[Chunk], Iterator[Chunk], Dataset, ABC):
         from .views import StreamColumnView, StreamSelectView
 
         return DatasetViewTypes(column=StreamColumnView, select=StreamSelectView)
-
-    def _return_type(self):
-        return Chunk

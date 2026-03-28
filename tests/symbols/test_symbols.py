@@ -7,36 +7,36 @@ from typing import Any, NamedTuple
 import pytest
 from pytest import FixtureRequest
 
-from aioway.symbols import ColSymExpr, SourceExpr
+from aioway.symbols import ColSymbol, SourceSymbol
 
 
 @pytest.fixture
-def a() -> SourceExpr:
-    return SourceExpr("a", "cde")
+def a() -> SourceSymbol:
+    return SourceSymbol("a", "cde")
 
 
 @pytest.fixture
-def b() -> SourceExpr:
-    return SourceExpr("b", "cde")
+def b() -> SourceSymbol:
+    return SourceSymbol("b", "cde")
 
 
 @pytest.fixture
-def c(a: SourceExpr):
+def c(a: SourceSymbol):
     return a["c"]
 
 
 @pytest.fixture
-def d(a: SourceExpr):
+def d(a: SourceSymbol):
     return a["d"]
 
 
 @pytest.fixture
-def e(b: SourceExpr):
+def e(b: SourceSymbol):
     return b["e"]
 
 
 @pytest.fixture(params="cde")
-def col_expr(request: FixtureRequest) -> ColSymExpr:
+def col_expr(request: FixtureRequest) -> ColSymbol:
     return request.getfixturevalue(request.param)
 
 
@@ -110,8 +110,8 @@ def test_binray_ufunc_repr(
     ],
 )
 def test_binary_ufunc_type(c: str, e: str, op: Callable[[Any, Any], Any]) -> None:
-    assert isinstance(expr := op(c, e), ColSymExpr), type(expr)
-    assert isinstance(expr := op(e, c), ColSymExpr), type(expr)
+    assert isinstance(expr := op(c, e), ColSymbol), type(expr)
+    assert isinstance(expr := op(e, c), ColSymbol), type(expr)
 
 
 @pytest.mark.parametrize(
@@ -121,5 +121,5 @@ def test_binary_ufunc_type(c: str, e: str, op: Callable[[Any, Any], Any]) -> Non
         _OpFunc("~", operator.inv),
     ],
 )
-def test_prefix_op_repr(col_expr: ColSymExpr, op: str, func: Callable[[Any, Any], Any]):
+def test_prefix_op_repr(col_expr: ColSymbol, op: str, func: Callable[[Any, Any], Any]):
     assert str(func(col_expr)) == f"{op}{col_expr!s}"

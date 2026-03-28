@@ -11,7 +11,7 @@ from collections.abc import Callable
 import torch
 from torch import Tensor
 
-from aioway.attrs import AttrSet
+from aioway._previews import AttrSet
 from aioway.chunks import Chunk
 
 from .streams import Stream
@@ -79,7 +79,7 @@ class MapStream(Stream, ABC):
 
     @typing.override
     @typing.final
-    def _compute(self) -> Chunk:
+    def _next(self) -> Chunk:
         # A `map` kind of `Stream` always calls `next` once on its source.
         # May raise `StopIteration` here.
         next_batch = next(self.source)

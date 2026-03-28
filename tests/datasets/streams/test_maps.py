@@ -7,7 +7,7 @@ from collections.abc import Callable
 import pytest
 from pytest import FixtureRequest
 
-from aioway.attrs import AttrSet
+from aioway._previews import AttrSet
 from aioway.chunks import Chunk
 from aioway.datasets import (
     ApplyStream,

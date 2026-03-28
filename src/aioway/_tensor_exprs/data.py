@@ -10,7 +10,6 @@ from numpy.typing import NDArray
 from tensordict import TensorDict
 from torch import Tensor
 
-from aioway._exprs import Expr
 from aioway._signs import Signature
 from aioway._tracking import logging
 
@@ -20,8 +19,6 @@ from .exprs import TensorDictExpr, TensorExpr
 __all__ = [
     "SourceTensorDictExpr",
     "SourceTensorExpr",
-    "CacheTensorDictExpr",
-    "CacheTensorExpr",
     "ColumnTensorExpr",
     "BatchTensorDictExpr",
     "ItemTensorDictExpr",
@@ -76,33 +73,6 @@ class SourceTensorExpr(_SourceExpr[Tensor], TensorExpr):
 
 
 @_common.expr_dcls
-class _CacheExpr[T: Tensor | TensorDict]:
-    __match_args__ = ()
-
-    data: T
-
-    def __init__(self, expr: Expr[T]) -> None:
-        self.data = expr.compute()
-
-    def _compute(self) -> T:
-        data_type = type(self.data)
-
-        with _common.TRACKER(name="cache", signature=Signature(data_type, data_type)):
-            return self.data
-
-    def _inputs(self):
-        return ()
-
-
-@_common.expr_dcls
-class CacheTensorDictExpr(_CacheExpr[TensorDict], TensorDictExpr): ...
-
-
-@_common.expr_dcls
-class CacheTensorExpr(_CacheExpr[Tensor], TensorExpr): ...
-
-
-@_common.expr_dcls
 class ColumnTensorExpr(TensorExpr):
     source: TensorDictExpr
 
@@ -137,7 +107,7 @@ class _GetItemTensorExpr[T](TensorDictExpr):
         ):
             return pulled[self.index]
 
-    def _inputs(self) -> tuple[Expr[TensorDict], ...]:
+    def _inputs(self):
         return (self.source,)
 
 
