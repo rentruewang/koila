@@ -1,5 +1,6 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
+import dataclasses as dcls
 import typing
 from collections.abc import Iterator
 
@@ -14,18 +15,17 @@ from .fn import TensorFn
 __all__ = ["TensorDataFn"]
 
 
+@dcls.dataclass
 class TensorDataFn(TensorFn):
     "The `Fn` representing a plain `Tensor`."
 
-    __match_args__ = ("data",)
+    data: Tensor
 
-    def __init__(self, data: Tensor) -> None:
+    def __post_init__(self) -> None:
         super().__init__()
-        self._data = data
-        self.do()
 
-    def __repr__(self):
-        return f"{self.__class__.__name__}({self.data!r})"
+        # Mark as `EVALUATED`.
+        _ = self.do()
 
     @typing.override
     def forward(self):
@@ -40,7 +40,3 @@ class TensorDataFn(TensorFn):
     def _deps(self) -> Iterator[Fn[Tensor]]:
         return
         yield
-
-    @property
-    def data(self) -> Tensor:
-        return self._data

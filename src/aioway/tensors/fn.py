@@ -7,6 +7,7 @@ from abc import ABC
 from collections.abc import Iterator
 from enum import Enum
 from enum import auto as Auto
+from typing import Any
 
 from torch import Tensor
 from torch._tensor import Tensor
@@ -15,7 +16,7 @@ from aioway import fake
 from aioway._previews import Attr
 from aioway.fn import Fn
 
-__all__ = ["TensorFnState", "TensorFnState"]
+__all__ = ["TensorFnState", "TensorFn"]
 
 
 class TensorFnState(Enum):
@@ -31,105 +32,91 @@ class TensorFnState(Enum):
 class TensorFn(Fn[Tensor], ABC):
     def __init__(self) -> None:
         super().__init__()
-        self.__state = TensorFnState.PENDING
 
-        self.__result: Tensor | None = None
+        self.__real_result: Tensor | None = None
 
         with fake.enable():
-            tensor = self.do()
+            self.__fake_result: Tensor = self.forward()
 
-        assert fake.is_fake_tensor(tensor)
-        self.__attr = Attr.from_tensor(tensor)
+        assert fake.is_fake_tensor(self.__fake_result)
+        self.__attr = Attr.from_tensor(self.__fake_result)
 
     def __invert__(self) -> TensorFn:
         from . import _thunks
 
-        return _thunks.thunk1(operator.invert, self)
+        return _thunks.thunk(operator.invert, self)
 
     def __neg__(self) -> TensorFn:
         from . import _thunks
 
-        return _thunks.thunk1(operator.neg, self)
+        return _thunks.thunk(operator.neg, self)
 
-    def __add__(self, other: TensorFn) -> TensorFn:
+    def __add__(self, other: Any) -> TensorFn:
+        from . import _thunks
 
-        from ._thunks import AnyThunk
+        return _thunks.thunk(operator.add, self, other)
 
-        return AnyThunk(operator.add, self, other)
+    def __sub__(self, other: Any) -> TensorFn:
+        from . import _thunks
 
-    def __sub__(self, other: TensorFn) -> TensorFn:
+        return _thunks.thunk(operator.sub, self, other)
 
-        from ._thunks import AnyThunk
+    def __mul__(self, other: Any) -> TensorFn:
+        from . import _thunks
 
-        return AnyThunk(operator.sub, self, other)
+        return _thunks.thunk(operator.mul, self, other)
 
-    def __mul__(self, other: TensorFn) -> TensorFn:
+    def __truediv__(self, other: Any) -> TensorFn:
+        from . import _thunks
 
-        from ._thunks import AnyThunk
+        return _thunks.thunk(operator.truediv, self, other)
 
-        return AnyThunk(operator.mul, self, other)
+    def __floordiv__(self, other: Any) -> TensorFn:
+        from . import _thunks
 
-    def __truediv__(self, other: TensorFn) -> TensorFn:
+        return _thunks.thunk(operator.floordiv, self, other)
 
-        from ._thunks import AnyThunk
+    def __mod__(self, other: Any) -> TensorFn:
+        from . import _thunks
 
-        return AnyThunk(operator.truediv, self, other)
+        return _thunks.thunk(operator.mod, self, other)
 
-    def __floordiv__(self, other: TensorFn) -> TensorFn:
+    def __pow__(self, other: Any) -> TensorFn:
+        from . import _thunks
 
-        from ._thunks import AnyThunk
-
-        return AnyThunk(operator.floordiv, self, other)
-
-    def __mod__(self, other: TensorFn) -> TensorFn:
-
-        from ._thunks import AnyThunk
-
-        return AnyThunk(operator.mod, self, other)
-
-    def __pow__(self, other: TensorFn) -> TensorFn:
-
-        from ._thunks import AnyThunk
-
-        return AnyThunk(operator.pow, self, other)
+        return _thunks.thunk(operator.pow, self, other)
 
     @typing.no_type_check
-    def __eq__(self, other: TensorFn) -> TensorFn:
+    def __eq__(self, other: Any) -> TensorFn:
+        from . import _thunks
 
-        from ._thunks import AnyThunk
-
-        return AnyThunk(operator.eq, self, other)
+        return _thunks.thunk(operator.eq, self, other)
 
     @typing.no_type_check
-    def __ne__(self, other: TensorFn) -> TensorFn:
+    def __ne__(self, other: Any) -> TensorFn:
+        from . import _thunks
 
-        from ._thunks import AnyThunk
+        return _thunks.thunk(operator.ne, self, other)
 
-        return AnyThunk(operator.ne, self, other)
+    def __gt__(self, other: Any) -> TensorFn:
+        from . import _thunks
 
-    def __gt__(self, other: TensorFn) -> TensorFn:
+        return _thunks.thunk(operator.gt, self, other)
 
-        from ._thunks import AnyThunk
+    def __ge__(self, other: Any) -> TensorFn:
+        from . import _thunks
 
-        return AnyThunk(operator.gt, self, other)
+        return _thunks.thunk(operator.ge, self, other)
 
-    def __ge__(self, other: TensorFn) -> TensorFn:
+    def __lt__(self, other: Any) -> TensorFn:
+        from . import _thunks
 
-        from ._thunks import AnyThunk
+        return _thunks.thunk(operator.lt, self, other)
 
-        return AnyThunk(operator.ge, self, other)
+    def __le__(self, other: Any) -> TensorFn:
+        from . import _thunks
 
-    def __lt__(self, other: TensorFn) -> TensorFn:
-
-        from ._thunks import AnyThunk
-
-        return AnyThunk(operator.lt, self, other)
-
-    def __le__(self, other: TensorFn) -> TensorFn:
-
-        from ._thunks import AnyThunk
-
-        return AnyThunk(operator.le, self, other)
+        return _thunks.thunk(operator.le, self, other)
 
     def attr(self) -> Attr:
         return self.__attr
@@ -140,23 +127,20 @@ class TensorFn(Fn[Tensor], ABC):
         Perform the computation.
 
         If the result is previously stored, use the stored result.
-        If we are in fake mode, do not store the result.
+        If we are in fake mode, return the `FakeTensor` version.
 
         Returns:
             A `FakeTensor` if in fake mode, a `Tensor` otherwise.
         """
 
-        if self.__result is not None:
-            assert fake.is_real_tensor(self.__result)
-            return self.__result
+        if fake.detect_fake_mode():
+            return self.__fake_result
 
-        result = self.forward()
+        if self.__real_result is None:
+            self.__real_result = self.forward()
 
-        # Only store the tensor if we're not in fake mode!
-        if not fake.detect_fake_mode():
-            self.__result = result
-
-        return result
+        assert fake.is_real_tensor(self.__real_result)
+        return self.__real_result
 
     @abc.abstractmethod
     def forward(self) -> Tensor:
@@ -173,7 +157,13 @@ class TensorFn(Fn[Tensor], ABC):
 
     @property
     def state(self) -> TensorFnState:
-        if self.__result is None:
+        if self.__real_result is None:
             return TensorFnState.PENDING
         else:
             return TensorFnState.EVALUATED
+
+    @classmethod
+    def from_tensor(cls, data: Tensor, /) -> TensorFn:
+        from ._data import TensorDataFn
+
+        return TensorDataFn(data)

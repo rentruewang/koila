@@ -1,7 +1,9 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
+import dataclasses as dcls
 import typing
 from collections.abc import Callable, Iterator
+from types import NotImplementedType
 from typing import Any, override
 
 from torch import Tensor
@@ -12,24 +14,49 @@ from aioway.fn import Fn
 
 from .fn import TensorFn
 
-__all__ = ["thunk1"]
+__all__ = ["thunk"]
 
 
-def thunk1(func: Callable[[Tensor], Tensor], fn: TensorFn):
-    return UFunc1Thunk(func=func, arg=fn)
+@typing.overload
+def thunk(func: Callable[[Tensor], Tensor], arg: TensorFn, /) -> UFunc1Thunk: ...
 
 
+@typing.overload
+def thunk(
+    func: Callable[[Tensor, BinaryTensorFnRhs], Tensor], left: TensorFn, right: Any, /
+) -> UFunc2Thunk: ...
+
+
+@typing.overload
+def thunk(*args) -> NotImplementedType: ...
+
+
+def thunk(func, *args):
+    try:
+        return UFunc1Thunk(func, *args)
+    except TypeError:
+        pass
+
+    try:
+        return UFunc2Thunk(func, *args)
+    except TypeError:
+        pass
+
+    return NotImplemented
+
+
+@dcls.dataclass
 class AnyThunk(TensorFn):
     "Represents some computation that is deferred."
 
     __match_args__ = "func", "args", "kwargs"
 
-    def __init__(
-        self, func: Callable[..., Tensor], *args: Fn[Any], **kwargs: Fn[Any]
-    ) -> None:
-        super().__init__()
+    func: Callable[..., Tensor]
+    args: tuple[Fn[Any], ...]
+    kwargs: dict[str, Fn[Any]]
 
-        self._func = func
+    def __post_init__(self) -> None:
+        super().__init__()
 
         for arg in self.args:
             if not isinstance(arg, Fn):
@@ -38,9 +65,6 @@ class AnyThunk(TensorFn):
         for key, value in self.kwargs.items():
             if not isinstance(value, Fn):
                 raise TypeError(f"{key}={value} is not a `Thunk`")
-
-        self._args = args
-        self._kwargs = kwargs
 
     def __repr__(self) -> str:
         return _common.format_function(self.func, *self.args, **self.kwargs)
@@ -56,52 +80,76 @@ class AnyThunk(TensorFn):
         yield from self.args
         yield from self.kwargs.values()
 
-    @property
-    def func(self) -> Callable[..., Tensor]:
-        return self._func
 
-    @property
-    def args(self) -> tuple[Fn[Any], ...]:
-        return self._args
-
-    @property
-    def kwargs(self) -> dict[str, Fn[Any]]:
-        return self._kwargs
-
-
+@dcls.dataclass
 class UFunc1Thunk(TensorFn):
     """
     Thunk for unary function.
     """
 
-    __match_args__ = "func", "arg"
+    func: Callable[[Tensor], Tensor]
+    arg: TensorFn
 
-    def __init__(self, func: Callable[[Tensor], Tensor], arg: TensorFn) -> None:
+    def __post_init__(self):
         super().__init__()
-        self._func = func
-        self._arg = arg
+
+        if not callable(self.func):
+            raise TypeError
+
+        if not isinstance(self.arg, TensorFn):
+            raise TypeError
 
     @typing.override
     def forward(self) -> Tensor:
         return self.func(self.arg.do())
 
-    @property
-    def func(self):
-        return self._func
-
-    @property
-    def arg(self):
-        return self._arg
-
     @override
     def _deps(self) -> Iterator[TensorFn]:
         # If it's a primitive or `Tensor`, do not recurse.
-        if isinstance(self.arg, TensorFn):
-            yield self.arg
+        yield self.arg
 
 
 type BinaryTensorFnRhs = TensorFn | Tensor | int | float | bool
 
 
+@dcls.dataclass
 class UFunc2Thunk(TensorFn):
-    pass
+    """
+    Thunk for binary function.
+    """
+
+    __match_args__ = "func", "left", "right"
+
+    func: Callable[[Tensor, Any], Tensor]
+    left: TensorFn
+    right: BinaryTensorFnRhs
+
+    def __post_init__(self) -> None:
+        super().__init__()
+
+        if not callable(self.func):
+            raise TypeError
+
+        if not isinstance(self.left, TensorFn):
+            raise TypeError
+
+        if not isinstance(self.right, TensorFn | Tensor | int | float | bool):
+            raise TypeError
+
+    @typing.override
+    def forward(self) -> Tensor:
+        left_do = self.left.do()
+
+        match right := self.right:
+            case TensorFn():
+                return self.func(left_do, right.do())
+            case _:
+                return self.func(left_do, right)
+
+    @override
+    def _deps(self) -> Iterator[TensorFn]:
+        # If it's a primitive or `Tensor`, do not recurse.
+        yield self.left
+
+        if isinstance(right := self.right, TensorFn):
+            yield right
