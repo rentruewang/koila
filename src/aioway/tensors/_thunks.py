@@ -2,50 +2,20 @@
 
 import typing
 from collections.abc import Callable, Iterator
-from types import NotImplementedType
-from typing import Any, override
+from typing import Any
 
 from torch import Tensor
 from torch._tensor import Tensor
 
-from aioway import _common as _aioway_common
+from aioway import _common as _common
 from aioway.fn import Fn
 
-from . import _common
 from .fn import TensorFn
 
-__all__ = ["thunk"]
+__all__ = ["UFunc1Thunk", "UFunc2Thunk", "GatherThunk"]
 
 
-@typing.overload
-def thunk(func: Callable[[Tensor], Tensor], arg: TensorFn, /) -> UFunc1Thunk: ...
-
-
-@typing.overload
-def thunk(
-    func: Callable[[Tensor, BinaryTensorFnRhs], Tensor], left: TensorFn, right: Any, /
-) -> UFunc2Thunk: ...
-
-
-@typing.overload
-def thunk(*args) -> NotImplementedType: ...
-
-
-def thunk(func, *args):
-    try:
-        return UFunc1Thunk(func, *args)
-    except TypeError:
-        pass
-
-    try:
-        return UFunc2Thunk(func, *args)
-    except TypeError:
-        pass
-
-    return NotImplemented
-
-
-@_common.fn_dcls
+@_common.dcls_no_eq
 class AnyThunk(TensorFn):
     "Represents some computation that is deferred."
 
@@ -67,7 +37,7 @@ class AnyThunk(TensorFn):
                 raise TypeError(f"{key}={value} is not a `Thunk`")
 
     def __repr__(self) -> str:
-        return _aioway_common.format_function(self.func, *self.args, **self.kwargs)
+        return _common.format_function(self.func, *self.args, **self.kwargs)
 
     @typing.override
     def forward(self) -> Tensor:
@@ -81,7 +51,7 @@ class AnyThunk(TensorFn):
         yield from self.kwargs.values()
 
 
-@_common.fn_dcls
+@_common.dcls_no_eq
 class UFunc1Thunk(TensorFn):
     """
     Thunk for unary function.
@@ -103,7 +73,7 @@ class UFunc1Thunk(TensorFn):
     def forward(self) -> Tensor:
         return self.func(self.arg.do())
 
-    @override
+    @typing.override
     def _deps(self) -> Iterator[TensorFn]:
         # If it's a primitive or `Tensor`, do not recurse.
         yield self.arg
@@ -112,13 +82,11 @@ class UFunc1Thunk(TensorFn):
 type BinaryTensorFnRhs = TensorFn | Tensor | int | float | bool
 
 
-@_common.fn_dcls
+@_common.dcls_no_eq
 class UFunc2Thunk(TensorFn):
     """
     Thunk for binary function.
     """
-
-    __match_args__ = "func", "left", "right"
 
     func: Callable[[Tensor, Any], Tensor]
     left: TensorFn
@@ -146,10 +114,37 @@ class UFunc2Thunk(TensorFn):
             case _:
                 return self.func(left_do, right)
 
-    @override
+    @typing.override
     def _deps(self) -> Iterator[TensorFn]:
         # If it's a primitive or `Tensor`, do not recurse.
         yield self.left
 
         if isinstance(right := self.right, TensorFn):
             yield right
+
+
+@_common.dcls_no_eq
+class GatherThunk(TensorFn):
+    tensor: TensorFn | Tensor
+    index: TensorFn | Tensor
+
+    def __post_init__(self):
+        super().__init__()
+
+        # One of them should be `TensorFn`.
+        if not isinstance(self.tensor, TensorFn) and isinstance(self.index, TensorFn):
+            raise TypeError
+
+    @typing.override
+    def forward(self) -> Tensor:
+        tensor = self.tensor.do() if isinstance(self.tensor, TensorFn) else self.tensor
+        index = self.index.do() if isinstance(self.index, TensorFn) else self.index
+        return tensor[index]
+
+    @typing.override
+    def _deps(self) -> Iterator[TensorFn]:
+        if isinstance(self.tensor, TensorFn):
+            yield self.tensor
+
+        if isinstance(self.index, TensorFn):
+            yield self.index

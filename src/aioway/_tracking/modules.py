@@ -7,8 +7,6 @@ import dataclasses as dcls
 import typing
 from collections.abc import Callable
 
-from aioway._signs.signs import Signature
-
 from . import logging
 
 if typing.TYPE_CHECKING:

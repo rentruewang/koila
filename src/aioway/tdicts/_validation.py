@@ -7,12 +7,9 @@ from tensordict import TensorDict
 from torch import Tensor
 
 from aioway._tracking import logging
+from aioway.tensors import Attr, Device, DType, Shape
 
-from .attrs import Attr
-from .devices import Device
-from .dtypes import DType
-from .sets import AttrSet
-from .shapes import Shape
+from .attrs import AttrSet
 
 __all__ = ["validate_schema", "validate_attr"]
 

@@ -14,9 +14,9 @@ from typing import Self
 from torch.utils.data import DataLoader, Sampler
 
 from aioway import _typing
-from aioway._previews import AttrSet
 from aioway._tracking import logging
 from aioway.chunks import Chunk
+from aioway.tdicts import AttrSet
 
 from ..frames import Frame
 from .streams import Stream
@@ -42,7 +42,7 @@ class BoundedStream(Stream, ABC):
     def __len__(self) -> int:
         "The number of batches saved in the current `Stream`."
 
-        ...
+        raise NotImplementedError
 
     def __getitem__(self, key):
         if isinstance(key, int):

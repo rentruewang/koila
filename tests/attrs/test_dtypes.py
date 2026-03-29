@@ -8,7 +8,7 @@ import pytest
 import torch
 from pytest import FixtureRequest
 
-from aioway._previews import DType
+from aioway.tensors import DType
 
 
 @dcls.dataclass(frozen=True)

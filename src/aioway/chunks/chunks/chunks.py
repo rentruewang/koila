@@ -11,10 +11,10 @@ import tensordict
 from tensordict import TensorDict
 from torch import Size, Tensor
 
-from aioway import _previews, _typing
-from aioway._previews import AttrSet, AttrSetLike, _validation
+from aioway import _typing
 from aioway._tensor_exprs import SourceTensorDictExpr
 from aioway._tracking import logging
+from aioway.tdicts import AttrSet, AttrSetLike, _validation
 
 from ..vectors import Vector
 
@@ -133,7 +133,7 @@ class Chunk(Mapping[str, Vector]):
         td = _as_tensordict(data)
         td.auto_batch_size_()
         td.auto_device_()
-        aset = _previews.attr_set(schema)
+        aset = AttrSet.parse(schema)
         return cls(data=td, attrs=aset)
 
     @classmethod

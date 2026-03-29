@@ -10,8 +10,8 @@ from abc import ABC
 from collections.abc import Iterator
 from typing import ClassVar, Self
 
-from aioway._previews import AttrSet
 from aioway.chunks import Chunk
+from aioway.tdicts import AttrSet
 
 from ..datasets import Dataset, DatasetViewTypes
 
@@ -90,7 +90,7 @@ class Stream(Iterator[Chunk], Dataset, ABC):
         Does not change when the `Stream` is being iterated over.
         """
 
-        ...
+        raise NotImplementedError
 
     @property
     @abc.abstractmethod
@@ -99,7 +99,7 @@ class Stream(Iterator[Chunk], Dataset, ABC):
         The schema for the current `Stream`.
         """
 
-        ...
+        raise NotImplementedError
 
     @abc.abstractmethod
     def _next(self) -> Chunk:
@@ -116,7 +116,7 @@ class Stream(Iterator[Chunk], Dataset, ABC):
 
         """
 
-        ...
+        raise NotImplementedError
 
     @abc.abstractmethod
     def _inputs(self) -> tuple[Stream, ...]:
@@ -125,7 +125,7 @@ class Stream(Iterator[Chunk], Dataset, ABC):
         when calling `__next__` on the current `Stream`.
         """
 
-        ...
+        raise NotImplementedError
 
     @functools.cached_property
     def state(self) -> StreamState:

@@ -1,9 +1,11 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
+import dataclasses as dcls
+import typing
 from collections.abc import Callable
 from typing import Any
 
-__all__ = ["format_function"]
+__all__ = ["format_function", "dcls_no_eq"]
 
 
 def format_function(func: Callable, *args: Any, **kwargs: Any) -> str:
@@ -22,3 +24,9 @@ def format_function(func: Callable, *args: Any, **kwargs: Any) -> str:
     args_str = ", ".join(args_builder)
     func_str = func.__qualname__
     return f"{func_str}({args_str})"
+
+
+@typing.dataclass_transform(eq_default=False)
+def dcls_no_eq[T: type](cls: T) -> T:
+    result: Any = dcls.dataclass(eq=False)(cls)
+    return result

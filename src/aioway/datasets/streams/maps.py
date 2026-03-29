@@ -11,8 +11,8 @@ from collections.abc import Callable
 import torch
 from torch import Tensor
 
-from aioway._previews import AttrSet
 from aioway.chunks import Chunk
+from aioway.tdicts import AttrSet
 
 from .streams import Stream
 
@@ -75,7 +75,7 @@ class MapStream(Stream, ABC):
             See class docstring for more details.
         """
 
-        ...
+        raise NotImplementedError
 
     @typing.override
     @typing.final

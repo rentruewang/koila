@@ -1,15 +1,46 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import contextlib as ctxl
+import dataclasses as dcls
 from collections.abc import Callable
 from typing import TypeIs
 
-from torch import Tensor, _guards
+from torch import Tensor
 from torch._subclasses import FakeTensor, FakeTensorMode
 
 __all__ = ["enable", "enable_func", "is_fake_tensor", "is_real_tensor"]
 
-_FAKE_MODE: FakeTensorMode = FakeTensorMode()
+
+@dcls.dataclass
+class FakeModeRc:
+    """
+    Do "reference counting" for fake mode.
+    """
+
+    mode: FakeTensorMode = dcls.field(default_factory=FakeTensorMode)
+    "The fake mode instance that shall be entered."
+
+    count: int = 0
+    "The enter count."
+
+    @ctxl.contextmanager
+    def __call__(self):
+        with self.mode, self._count_mode():
+            yield self.mode
+
+    @ctxl.contextmanager
+    def _count_mode(self):
+        try:
+            self.count += 1
+            yield
+        finally:
+            self.count -= 1
+
+    def active(self) -> bool:
+        return self.count != 0
+
+
+_FAKE_MODE = FakeModeRc()
 
 
 def to_fake_tensor(tensor: Tensor) -> FakeTensor:
@@ -41,14 +72,17 @@ def is_fake_tensor(tensor: object) -> TypeIs[FakeTensor]:
     return isinstance(tensor, FakeTensor)
 
 
-def detect_fake_mode():
+def is_enabled() -> FakeTensorMode | None:
     """
     Get the current fake mode, is available.
 
     This can be used in an `if` or a `with`.
     """
 
-    return _guards.detect_fake_mode()
+    if _FAKE_MODE.active():
+        return _FAKE_MODE.mode
+    else:
+        return None
 
 
 @ctxl.contextmanager
@@ -58,8 +92,9 @@ def enable():
 
     Since fake mode doesn't nest (it seems), if fake mode is already on, yield that.
     """
-    with _FAKE_MODE:
-        yield _FAKE_MODE
+
+    with _FAKE_MODE():
+        yield _FAKE_MODE.mode
 
 
 def enable_func[**P, T](func: Callable[P, T]) -> Callable[P, T]:

@@ -16,13 +16,9 @@ from torch import Tensor
 from aioway import _typing
 from aioway._signs import Signature
 from aioway._tracking import ModuleApiTracker, logging
+from aioway.tensors import Attr, Device, DeviceLike, DType, DTypeLike, Shape, ShapeLike
 
-from .attrs import Attr
-from .devices import Device, DeviceLike
-from .dtypes import DType, DTypeLike
-from .shapes import Shape, ShapeLike
-
-__all__ = ["AttrSet", "DTypeSet", "DeviceSet", "ShapeSet", "AttrSetLike", "attr_set"]
+__all__ = ["AttrSet", "DTypeSet", "DeviceSet", "ShapeSet", "AttrSetLike"]
 
 type AttrSetLike = AttrSet | dict[str, Attr]
 
@@ -235,9 +231,9 @@ class AttrSet(_AttrSetBase[Attr]):
         cls,
         *,
         names: Sequence[str],
-        shapes: Sequence[Shape],
-        dtypes: Sequence[DType],
-        devices: Sequence[Device],
+        shapes: Sequence[ShapeLike],
+        dtypes: Sequence[DTypeLike],
+        devices: Sequence[DeviceLike],
     ) -> Self:
         "Create an `AttrSet` from a set of seuqences of attributes of same length."
 
@@ -285,6 +281,17 @@ class AttrSet(_AttrSetBase[Attr]):
     @classmethod
     def from_tensordict(cls, data: TensorDict, /) -> Self:
         return cls.from_dict({key: Attr.from_tensor(val) for key, val in data.items()})
+
+    @classmethod
+    def parse(cls, schema: AttrSetLike):
+        if isinstance(schema, AttrSet):
+            return schema
+
+        _is_dict_of_attr = _typing.is_dict_of_str_to(Attr)
+        if _is_dict_of_attr(schema):
+            return cls.from_dict(schema)
+
+        raise TypeError(type(schema))
 
 
 @dcls.dataclass(frozen=True)
@@ -336,14 +343,3 @@ class _AttrKeysView(KeysView[str]):
     @property
     def keys(self) -> list[str]:
         return self.attrset.names
-
-
-def attr_set(schema: AttrSetLike, /) -> AttrSet:
-    if isinstance(schema, AttrSet):
-        return schema
-
-    _is_dict_of_attr = _typing.is_dict_of_str_to(Attr)
-    if _is_dict_of_attr(schema):
-        return AttrSet.from_dict(schema)
-
-    raise TypeError(type(schema))

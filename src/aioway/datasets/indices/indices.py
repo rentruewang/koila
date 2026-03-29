@@ -79,4 +79,4 @@ class Index(ABC):
             and not too much to gain (perhaps able to broadcast but that's all.)
         """
 
-        ...
+        raise NotImplementedError

@@ -9,8 +9,8 @@ from abc import ABC
 from collections.abc import KeysView, Sequence
 from typing import ClassVar, NamedTuple, Self
 
-from aioway._previews import AttrSet
-from aioway._previews.attrs import Attr
+from aioway.tdicts import AttrSet
+from aioway.tensors import Attr
 
 __all__ = ["Dataset", "DatasetColumnView", "DatasetSelectView", "DatasetViewTypes"]
 
@@ -53,7 +53,7 @@ class Dataset(ABC):
     def attrs(self) -> AttrSet:
         "All datasets have the metadta `attrs` present."
 
-        ...
+        raise NotImplementedError
 
     @typing.final
     def keys(self) -> KeysView[str]:
@@ -107,7 +107,7 @@ class Dataset(ABC):
         making it a circular dependency if it were a `ClassVar`.
         """
 
-        ...
+        raise NotImplementedError
 
 
 @dcls.dataclass(frozen=True)

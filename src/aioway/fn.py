@@ -1,14 +1,27 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-"`Fn` is the base class for deferred operation."
-
 import abc
 import functools
+import typing
 from abc import ABC
 from collections.abc import Iterator
+from enum import Enum
+from enum import auto as Auto
 from typing import Any, ClassVar
 
-__all__ = ["Fn"]
+from aioway import fake
+
+__all__ = ["Fn", "FnState"]
+
+
+class FnState(Enum):
+    "The status of a `Later` object."
+
+    PENDING = Auto()
+    "The object is pending evaluation."
+
+    EVALUATED = Auto()
+    "The object is evaluated."
 
 
 class Fn[T](ABC):
@@ -24,10 +37,39 @@ class Fn[T](ABC):
 
     __match_args__: ClassVar[tuple[str, ...]]
 
-    @abc.abstractmethod
+    def __init__(self) -> None:
+        super().__init__()
+
+        self._real_result: T | None = None
+
+        with fake.enable():
+            self._fake_result: T = self.forward()
+
+    @typing.final
     def do(self) -> T:
         """
-        Do the computation.
+        Perform the computation.
+
+        If the result is previously stored, use the stored result.
+        If we are in fake mode, return the `FakeTensor` version.
+
+        Returns:
+            A `FakeTensor` if in fake mode, a `Tensor` otherwise.
+        """
+
+        if fake.is_enabled():
+            return self._fake_result
+
+        if self._real_result is None:
+            self._real_result = self.forward()
+
+        return self._real_result
+
+    @abc.abstractmethod
+    def forward(self) -> T:
+        """
+        Do the `torch` related operations.
+        This would yield `Fake*` in fake mode, but real tensor in real mode.
         """
 
         raise NotImplementedError
@@ -48,3 +90,15 @@ class Fn[T](ABC):
         """
         Return the depedent thunks.
         """
+
+    @property
+    def state(self) -> FnState:
+        """
+        If `do` has been called, return `EVALUATED`.
+        Else return `PENDING`.
+        """
+
+        if self._real_result is None:
+            return FnState.PENDING
+        else:
+            return FnState.EVALUATED

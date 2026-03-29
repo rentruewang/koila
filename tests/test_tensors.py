@@ -8,8 +8,7 @@ import torch
 from torch import Tensor
 
 from aioway import fake
-from aioway._previews import Attr
-from aioway.torch import TensorFn
+from aioway.tensors import Attr, TensorFn
 
 
 @pytest.fixture
@@ -30,6 +29,16 @@ def left_fn(left: Tensor):
 @pytest.fixture
 def right_fn(right: Tensor):
     return TensorFn.from_tensor(right)
+
+
+@pytest.fixture
+def index():
+    return torch.randint(0, 3, [2, 7])
+
+
+@pytest.fixture
+def index_fn(index):
+    return TensorFn.from_tensor(index)
 
 
 @pytest.fixture(
@@ -74,7 +83,7 @@ def test_left_fake_do(left_fn: TensorFn):
 
 
 def test_left_attr(left_fn: TensorFn):
-    attr = left_fn.attr()
+    attr = left_fn.attr
     assert isinstance(attr, Attr)
     assert attr.shape == [3, 5]
     assert attr.device == "cpu"
@@ -90,3 +99,9 @@ def test_binary_ufunc(
 
     assert isinstance(result, TensorFn)
     assert isinstance(result.do(), Tensor)
+
+
+def test_getitem(left_fn: TensorFn, index_fn: TensorFn):
+    result = left_fn[index_fn]
+    assert isinstance(result, TensorFn)
+    assert result.attr.shape == [2, 7, 5]

@@ -39,7 +39,7 @@ class UFuncSymColSymbol1(ColSymbol, ABC):
     def token(self) -> str:
         "The token representing the current operator."
 
-        ...
+        raise NotImplementedError
 
 
 @_common.symbol_dataclass
@@ -58,7 +58,7 @@ class UFuncSymColSymbol2(ColSymbol, ABC):
     def token(self) -> str:
         "The token representing the current operator."
 
-        ...
+        raise NotImplementedError
 
 
 @_common.symbol_dataclass
