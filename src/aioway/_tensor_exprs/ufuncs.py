@@ -5,18 +5,17 @@ from collections import abc as cabc
 
 import torch
 
-from . import _common
-from .exprs import TensorExpr, TensorExprRhs
+from . import _common, exprs
 
 __all__ = ["TensorExpr1", "TensorExpr2"]
 
 
 @_common.expr_dcls
-class TensorExpr1(TensorExpr):
+class TensorExpr1(exprs.TensorExpr):
     __match_args__ = ("source",)
 
     name: str
-    source: TensorExpr
+    source: exprs.TensorExpr
     op: cabc.Callable[[torch.Tensor], torch.Tensor]
 
     def __repr__(self):
@@ -30,21 +29,21 @@ class TensorExpr1(TensorExpr):
         return self.op(source)
 
     @classmethod
-    def invert(cls, source: TensorExpr):
+    def invert(cls, source: exprs.TensorExpr):
         return cls("~", source=source, op=operator.invert)
 
     @classmethod
-    def neg(cls, source: TensorExpr):
+    def neg(cls, source: exprs.TensorExpr):
         return cls("-", source=source, op=operator.neg)
 
 
 @_common.expr_dcls
-class TensorExpr2(TensorExpr):
+class TensorExpr2(exprs.TensorExpr):
     __match_args__ = "left", "right"
 
     name: str
-    left: TensorExpr
-    right: TensorExpr | torch.Tensor | int | float | bool
+    left: exprs.TensorExpr
+    right: exprs.TensorExpr | torch.Tensor | int | float | bool
     op: cabc.Callable[[torch.Tensor, torch.Tensor | int | float | bool], torch.Tensor]
 
     def __repr__(self):
@@ -56,7 +55,7 @@ class TensorExpr2(TensorExpr):
     def _compute(self):
         left = self.left.compute()
 
-        if not isinstance(self.right, TensorExpr):
+        if not isinstance(self.right, exprs.TensorExpr):
             right = self.right
         else:
             right = self.right.compute()
@@ -64,53 +63,53 @@ class TensorExpr2(TensorExpr):
         return self.op(left, right)
 
     @classmethod
-    def add(cls, left: TensorExpr, right: TensorExprRhs):
+    def add(cls, left: exprs.TensorExpr, right: exprs.TensorExprRhs):
         return cls(name="+", left=left, right=right, op=operator.add)
 
     @classmethod
-    def sub(cls, left: TensorExpr, right: TensorExprRhs):
+    def sub(cls, left: exprs.TensorExpr, right: exprs.TensorExprRhs):
         return cls(name="-", left=left, right=right, op=operator.sub)
 
     @classmethod
-    def mul(cls, left: TensorExpr, right: TensorExprRhs):
+    def mul(cls, left: exprs.TensorExpr, right: exprs.TensorExprRhs):
         return cls(name="*", left=left, right=right, op=operator.mul)
 
     @classmethod
-    def truediv(cls, left: TensorExpr, right: TensorExprRhs):
+    def truediv(cls, left: exprs.TensorExpr, right: exprs.TensorExprRhs):
         return cls(name="/", left=left, right=right, op=operator.truediv)
 
     @classmethod
-    def floordiv(cls, left: TensorExpr, right: TensorExprRhs):
+    def floordiv(cls, left: exprs.TensorExpr, right: exprs.TensorExprRhs):
         return cls(name="//", left=left, right=right, op=operator.floordiv)
 
     @classmethod
-    def mod(cls, left: TensorExpr, right: TensorExprRhs):
+    def mod(cls, left: exprs.TensorExpr, right: exprs.TensorExprRhs):
         return cls(name="%", left=left, right=right, op=operator.mod)
 
     @classmethod
-    def pow(cls, left: TensorExpr, right: TensorExprRhs):
+    def pow(cls, left: exprs.TensorExpr, right: exprs.TensorExprRhs):
         return cls(name="**", left=left, right=right, op=operator.pow)
 
     @classmethod
-    def eq(cls, left: TensorExpr, right: TensorExprRhs):
+    def eq(cls, left: exprs.TensorExpr, right: exprs.TensorExprRhs):
         return cls(name="==", left=left, right=right, op=operator.eq)
 
     @classmethod
-    def ne(cls, left: TensorExpr, right: TensorExprRhs):
+    def ne(cls, left: exprs.TensorExpr, right: exprs.TensorExprRhs):
         return cls(name="!=", left=left, right=right, op=operator.ne)
 
     @classmethod
-    def ge(cls, left: TensorExpr, right: TensorExprRhs):
+    def ge(cls, left: exprs.TensorExpr, right: exprs.TensorExprRhs):
         return cls(name=">=", left=left, right=right, op=operator.ge)
 
     @classmethod
-    def gt(cls, left: TensorExpr, right: TensorExprRhs):
+    def gt(cls, left: exprs.TensorExpr, right: exprs.TensorExprRhs):
         return cls(name=">", left=left, right=right, op=operator.gt)
 
     @classmethod
-    def le(cls, left: TensorExpr, right: TensorExprRhs):
+    def le(cls, left: exprs.TensorExpr, right: exprs.TensorExprRhs):
         return cls(name="<=", left=left, right=right, op=operator.le)
 
     @classmethod
-    def lt(cls, left: TensorExpr, right: TensorExprRhs):
+    def lt(cls, left: exprs.TensorExpr, right: exprs.TensorExprRhs):
         return cls(name="<", left=left, right=right, op=operator.lt)

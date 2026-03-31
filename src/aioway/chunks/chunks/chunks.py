@@ -10,12 +10,11 @@ import tensordict
 import tensordict as td
 import torch
 
-from aioway import _typing, tdicts
-from aioway._tensor_exprs import SourceTensorDictExpr
+from aioway import _tensor_exprs, _typing, tdicts
 from aioway._tracking import logging
 from aioway.tdicts import _validation
 
-from ..vectors import Vector
+from .. import vectors
 
 __all__ = ["Chunk"]
 
@@ -23,12 +22,12 @@ LOGGER = logging.get_logger(__name__)
 
 
 type TensorDictLike = td.TensorDict | dict[str, torch.Tensor]
-type ChunkLike = Chunk | dict[str, Vector]
+type ChunkLike = Chunk | dict[str, vectors.Vector]
 
 
 @typing.final
 @dcls.dataclass(frozen=True)
-class Chunk(cabc.Mapping[str, Vector]):
+class Chunk(cabc.Mapping[str, vectors.Vector]):
     """
     A `Chunk` represents a batch of data, following a specific scheam.
 
@@ -82,7 +81,7 @@ class Chunk(cabc.Mapping[str, Vector]):
         from . import exprs
 
         return exprs.ChunkExpr(
-            tensordict=SourceTensorDictExpr(self.data),
+            tensordict=_tensor_exprs.SourceTensorDictExpr(self.data),
             attrs=self.attrs,
         )
 
@@ -162,6 +161,6 @@ def _as_tensordict(data: TensorDictLike, /) -> td.TensorDict:
 
 
 @typing.no_type_check
-def _is_mapping_of_vector(obj) -> typing.TypeGuard[dict[str, Vector]]:
+def _is_mapping_of_vector(obj) -> typing.TypeGuard[dict[str, vectors.Vector]]:
     # Wrapper function because `mypy` doesn't do well with abstract type guards.
-    return _typing.is_dict_of_str_to(Vector)(obj)
+    return _typing.is_dict_of_str_to(vectors.Vector)(obj)

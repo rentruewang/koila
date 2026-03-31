@@ -7,15 +7,14 @@ from collections import abc as cabc
 
 from aioway._typing import SeqKeysView
 
-from . import _common
-from .exprs import ColSymbol, TableSymbol
+from . import _common, exprs
 
 __all__ = ["SourceSymbol", "SelectSymbol", "GetItemSymbol"]
 
 
 @typing.final
 @_common.symbol_dataclass
-class SourceSymbol(TableSymbol):
+class SourceSymbol(exprs.TableSymbol):
     name: str
     "The table's name. Matches the table names given in the `subs` method."
 
@@ -30,8 +29,8 @@ class SourceSymbol(TableSymbol):
 
 
 @_common.symbol_dataclass
-class SelectSymbol(TableSymbol):
-    table: TableSymbol
+class SelectSymbol(exprs.TableSymbol):
+    table: exprs.TableSymbol
     "The source to the selection."
 
     columns: cabc.Sequence[str]
@@ -47,10 +46,10 @@ class SelectSymbol(TableSymbol):
 
 
 @_common.symbol_dataclass
-class GetItemSymbol(ColSymbol):
+class GetItemSymbol(exprs.ColSymbol):
     "Perform the `__getitem__` operation. Select one of the keys."
 
-    table: TableSymbol
+    table: exprs.TableSymbol
     """
     The table expression that the column would operate on.
     """

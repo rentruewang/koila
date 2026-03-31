@@ -8,8 +8,7 @@ import torch
 
 from aioway._signs import Signature
 
-from . import _common
-from .exprs import TensorExpr
+from . import _common, exprs
 
 __all__ = ["GatherTensorExpr"]
 
@@ -19,16 +18,16 @@ _TENSOR_BINOP = Signature(torch.Tensor, torch.Tensor, torch.Tensor)
 
 @typing.final
 @_common.expr_dcls
-class GatherTensorExpr(TensorExpr):
+class GatherTensorExpr(exprs.TensorExpr):
     """
     The tensor that supports `__getitem__`.
     """
 
     __match_args__ = "tensor", "index"
 
-    tensor: TensorExpr
+    tensor: exprs.TensorExpr
 
-    index: TensorExpr
+    index: exprs.TensorExpr
 
     def _compute(self) -> torch.Tensor:
         tensor = self.tensor.compute()
@@ -43,12 +42,12 @@ class GatherTensorExpr(TensorExpr):
 
 @typing.final
 @_common.expr_dcls
-class StaticArrayGatherTensorExpr(TensorExpr):
+class StaticArrayGatherTensorExpr(exprs.TensorExpr):
     __match_args__ = "tensor", "index"
 
     tensor: torch.Tensor
 
-    index: TensorExpr
+    index: exprs.TensorExpr
 
     def _compute(self) -> torch.Tensor:
         tensor = self.tensor
@@ -63,10 +62,10 @@ class StaticArrayGatherTensorExpr(TensorExpr):
 
 @typing.final
 @_common.expr_dcls
-class StaticIndexGatherTensorExpr(TensorExpr):
+class StaticIndexGatherTensorExpr(exprs.TensorExpr):
     __match_args__ = "tensor", "index"
 
-    tensor: TensorExpr
+    tensor: exprs.TensorExpr
 
     index: int | slice | torch.Tensor
 

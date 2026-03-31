@@ -12,8 +12,7 @@ from numpy import typing as npt
 from aioway._signs import Signature
 from aioway._tracking import logging
 
-from . import _common
-from .exprs import TensorDictExpr, TensorExpr
+from . import _common, exprs
 
 __all__ = [
     "SourceTensorDictExpr",
@@ -55,7 +54,7 @@ class _SourceExpr[T: torch.Tensor | td.TensorDict]:
 
 
 @_common.expr_dcls
-class SourceTensorDictExpr(_SourceExpr[td.TensorDict], TensorDictExpr):
+class SourceTensorDictExpr(_SourceExpr[td.TensorDict], exprs.TensorDictExpr):
     "The source expression for `td.TensorDict`."
 
     _DATA_TYPE = td.TensorDict
@@ -65,15 +64,15 @@ class SourceTensorDictExpr(_SourceExpr[td.TensorDict], TensorDictExpr):
 
 
 @_common.expr_dcls
-class SourceTensorExpr(_SourceExpr[torch.Tensor], TensorExpr):
+class SourceTensorExpr(_SourceExpr[torch.Tensor], exprs.TensorExpr):
     "The source expression for `torch.Tensor`."
 
     _DATA_TYPE = torch.Tensor
 
 
 @_common.expr_dcls
-class ColumnTensorExpr(TensorExpr):
-    source: TensorDictExpr
+class ColumnTensorExpr(exprs.TensorExpr):
+    source: exprs.TensorDictExpr
 
     column: str
 
@@ -91,8 +90,8 @@ class ColumnTensorExpr(TensorExpr):
 
 
 @_common.expr_dcls
-class _GetItemTensorExpr[T](TensorDictExpr):
-    source: TensorDictExpr
+class _GetItemTensorExpr[T](exprs.TensorDictExpr):
+    source: exprs.TensorDictExpr
 
     index: T
 
@@ -113,13 +112,13 @@ class _GetItemTensorExpr[T](TensorDictExpr):
 
 
 @_common.expr_dcls
-class ItemTensorDictExpr(_GetItemTensorExpr[int], TensorDictExpr): ...
+class ItemTensorDictExpr(_GetItemTensorExpr[int], exprs.TensorDictExpr): ...
 
 
 type BatchIndex = list[int] | slice | npt.NDArray | torch.Tensor
 
 
 @_common.expr_dcls
-class BatchTensorDictExpr(_GetItemTensorExpr[BatchIndex], TensorDictExpr):
+class BatchTensorDictExpr(_GetItemTensorExpr[BatchIndex], exprs.TensorDictExpr):
     def keys(self) -> cabc.KeysView[str]:
         return self.source.keys()

@@ -7,10 +7,8 @@ import typing
 
 import torch
 
-from aioway import tensors
-from aioway._tensor_exprs import SourceTensorExpr
+from aioway import _tensor_exprs, _typing, tensors
 from aioway._tracking import logging
-from aioway._typing import AnyUFunc1, AnyUFunc2
 
 if typing.TYPE_CHECKING:
     from . import exprs
@@ -106,10 +104,12 @@ class Vector:
     def __lt__(self, other: exprs.VectorExprRhs) -> typing.Self:
         return self.__op2(other, operator.lt)
 
-    def __op1(self, unop: AnyUFunc1) -> typing.Self:
+    def __op1(self, unop: _typing.AnyUFunc1) -> typing.Self:
         return self.from_expr(unop(self.expr()))
 
-    def __op2(self, other: exprs.VectorExprRhs, binop: AnyUFunc2) -> typing.Self:
+    def __op2(
+        self, other: exprs.VectorExprRhs, binop: _typing.AnyUFunc2
+    ) -> typing.Self:
         from . import exprs
 
         match other:
@@ -147,7 +147,7 @@ class Vector:
         from . import exprs
 
         return exprs.VectorExpr(
-            tensor=SourceTensorExpr(self.torch()), attr=self.typeof()
+            tensor=_tensor_exprs.SourceTensorExpr(self.torch()), attr=self.typeof()
         )
 
     @property

@@ -6,10 +6,8 @@ import typing
 
 import torch
 
-from aioway import tensors
-from aioway._tensor_exprs import SourceTensorExpr, TensorExpr
+from aioway import _tensor_exprs, _typing, tensors
 from aioway._tracking import logging
-from aioway._typing import AnyUFunc1, AnyUFunc2
 
 from .vectors import Vector, VectorRhs
 
@@ -27,15 +25,17 @@ class VectorExpr:
     The expression type for `Vector`.
     """
 
-    tensor: TensorExpr
+    tensor: _tensor_exprs.TensorExpr
     "The tensor expression type."
 
     attr: tensors.Attr
     "The attribute type (eagerly computed)."
 
     def __post_init__(self):
-        if not isinstance(self.tensor, TensorExpr):
-            raise TypeError(f"{type(self.tensor)=} is not a `TensorExpr`.")
+        if not isinstance(self.tensor, _tensor_exprs.TensorExpr):
+            raise TypeError(
+                f"{type(self.tensor)=} is not a `_tensor_exprs.TensorExpr`."
+            )
 
         if not isinstance(self.attr, tensors.Attr):
             raise TypeError(f"{type(self.tensor)=} is not an `tensors.Attr`.")
@@ -114,13 +114,13 @@ class VectorExpr:
 
         return Vector(data=data, attr=self.attr)
 
-    def __ufunc1(self, op: AnyUFunc1) -> typing.Self:
+    def __ufunc1(self, op: _typing.AnyUFunc1) -> typing.Self:
         LOGGER.debug("%s.%s called", self, op)
         result = type(self)(tensor=op(self.tensor), attr=op(self.attr.term).unpack())
         LOGGER.debug("%s.%s returned %s", self, op, result)
         return result
 
-    def __ufunc2(self, other: VectorExprRhs, op: AnyUFunc2) -> typing.Self:
+    def __ufunc2(self, other: VectorExprRhs, op: _typing.AnyUFunc2) -> typing.Self:
         LOGGER.debug("%s.%s(%s) called", self, op, other)
         result = type(self)(
             tensor=self._tensor_expr(other=other, op=op),
@@ -129,20 +129,24 @@ class VectorExpr:
         LOGGER.debug("%s.%s(%s) returned %s", self, op, other, result)
         return result
 
-    def __cmp(self, other: VectorExprRhs, op: AnyUFunc2) -> typing.Self:
+    def __cmp(self, other: VectorExprRhs, op: _typing.AnyUFunc2) -> typing.Self:
         return self.__ufunc2(other, op)
 
-    def _tensor_expr(self, other: VectorExprRhs, op: AnyUFunc2) -> TensorExpr:
+    def _tensor_expr(
+        self, other: VectorExprRhs, op: _typing.AnyUFunc2
+    ) -> _tensor_exprs.TensorExpr:
         match other:
             case VectorExpr(tensor=tensor):
                 return op(self.tensor, tensor)
             case Vector():
-                return op(self.tensor, SourceTensorExpr(other.torch()))
+                return op(self.tensor, _tensor_exprs.SourceTensorExpr(other.torch()))
             case int() | float() | bool():
                 return op(self.tensor, other)
         raise TypeError(f"Do not know how to handle {type(other)=}.")
 
-    def _dtype_term(self, other: VectorExprRhs, op: AnyUFunc2) -> tensors.AttrTerm:
+    def _dtype_term(
+        self, other: VectorExprRhs, op: _typing.AnyUFunc2
+    ) -> tensors.AttrTerm:
         match other:
             case VectorExpr(attr=attr) | Vector(attr=attr):
                 return op(self.attr.term, attr.term)

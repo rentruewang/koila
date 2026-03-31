@@ -11,8 +11,7 @@ from aioway._signs import Signature
 from aioway._tracking import logging
 from aioway._typing import SeqKeysView, SetKeysView
 
-from . import _common
-from .exprs import TensorDictExpr
+from . import _common, exprs
 
 __all__ = ["SelectTensorDictExpr", "RenameTensorDictExpr", "ZipTensorDictExpr"]
 
@@ -21,8 +20,8 @@ LOGGER = logging.get_logger(__name__)
 
 
 @_common.expr_dcls
-class SelectTensorDictExpr(TensorDictExpr):
-    source: TensorDictExpr
+class SelectTensorDictExpr(exprs.TensorDictExpr):
+    source: exprs.TensorDictExpr
 
     columns: cabc.Sequence[str]
 
@@ -41,8 +40,8 @@ class SelectTensorDictExpr(TensorDictExpr):
 
 
 @_common.expr_dcls
-class RenameTensorDictExpr(TensorDictExpr):
-    source: TensorDictExpr
+class RenameTensorDictExpr(exprs.TensorDictExpr):
+    source: exprs.TensorDictExpr
 
     renames: dict[str, str]
 
@@ -61,9 +60,9 @@ class RenameTensorDictExpr(TensorDictExpr):
 
 
 @_common.expr_dcls
-class ZipTensorDictExpr(TensorDictExpr):
-    left: TensorDictExpr
-    right: TensorDictExpr
+class ZipTensorDictExpr(exprs.TensorDictExpr):
+    left: exprs.TensorDictExpr
+    right: exprs.TensorDictExpr
 
     @typing.override
     def keys(self) -> cabc.KeysView[str]:

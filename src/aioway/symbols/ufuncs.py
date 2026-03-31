@@ -4,8 +4,7 @@ import abc
 import typing
 from abc import ABC
 
-from . import _common
-from .exprs import ColSymbol
+from . import _common, exprs
 
 __all__ = [
     "UFuncSymColSymbol1",
@@ -28,8 +27,8 @@ __all__ = [
 
 
 @_common.symbol_dataclass
-class UFuncSymColSymbol1(ColSymbol, ABC):
-    source: ColSymbol
+class UFuncSymColSymbol1(exprs.ColSymbol, ABC):
+    source: exprs.ColSymbol
 
     @typing.override
     def __str__(self) -> str:
@@ -43,11 +42,11 @@ class UFuncSymColSymbol1(ColSymbol, ABC):
 
 
 @_common.symbol_dataclass
-class UFuncSymColSymbol2(ColSymbol, ABC):
-    left: ColSymbol
+class UFuncSymColSymbol2(exprs.ColSymbol, ABC):
+    left: exprs.ColSymbol
     "The lhs of the expression. Must be `ColSymSymbol` because it corresponds to `self`."
 
-    right: ColSymbol | int | float | bool
+    right: exprs.ColSymbol | int | float | bool
     "The rhs of the expression. Can be either `ColSymSymbol` or primitive types."
 
     @typing.override
