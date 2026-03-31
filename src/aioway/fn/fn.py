@@ -1,30 +1,27 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import abc
+import enum
 import functools
 import typing
-from abc import ABC
-from collections.abc import Iterator
-from enum import Enum
-from enum import auto as Auto
-from typing import Any, ClassVar
+from collections import abc as cabc
 
-from . import deferral
+from aioway import fake
 
 __all__ = ["Fn", "FnState"]
 
 
-class FnState(Enum):
+class FnState(enum.Enum):
     "The status of a `Later` object."
 
-    PENDING = Auto()
+    PENDING = enum.auto()
     "The object is pending evaluation."
 
-    EVALUATED = Auto()
+    EVALUATED = enum.auto()
     "The object is evaluated."
 
 
-class Fn[P, T](ABC):
+class Fn[T](abc.ABC):
     """
     `Fn`s represent computation that shall be done later.
 
@@ -35,27 +32,15 @@ class Fn[P, T](ABC):
     I was going to go for `Op` but it's used a lot in `torch`.
     """
 
-    __match_args__: ClassVar[tuple[str, ...]]
+    __match_args__: typing.ClassVar[tuple[str, ...]]
 
     def __init__(self) -> None:
         super().__init__()
 
-        self.__result: T | None = None
+        self._real_result: T | None = None
 
-        self.__preview: P = self._preview()
-
-    @typing.final
-    def preview(self) -> P:
-        return self.__preview
-
-    @abc.abstractmethod
-    def _preview(self) -> P:
-        """
-        The result, in fake mode.
-        This is always available as fake results are computed during init.
-        """
-
-        raise NotImplementedError
+        with fake.enable():
+            self._fake_result: T = self.forward()
 
     @typing.final
     def do(self) -> T:
@@ -63,17 +48,25 @@ class Fn[P, T](ABC):
         Perform the computation.
 
         If the result is previously stored, use the stored result.
+        If we are in fake mode, return the `FakeTensor` version.
+
+        Returns:
+            A `FakeTensor` if in fake mode, a `Tensor` otherwise.
         """
 
-        if self.__result is None:
-            self.__result = self._do()
+        if fake.is_enabled():
+            return self._fake_result
 
-        return self.__result
+        if self._real_result is None:
+            self._real_result = self.forward()
+
+        return self._real_result
 
     @abc.abstractmethod
-    def _do(self) -> T:
+    def forward(self) -> T:
         """
         Do the `torch` related operations.
+        This would yield `Fake*` in fake mode, but real tensor in real mode.
         """
 
         raise NotImplementedError
@@ -90,7 +83,7 @@ class Fn[P, T](ABC):
         return not self.deps
 
     @abc.abstractmethod
-    def _deps(self) -> Iterator[Fn[Any]]:
+    def _deps(self) -> cabc.Iterator[Fn[typing.Any]]:
         """
         Return the depedent thunks.
         """
@@ -102,11 +95,7 @@ class Fn[P, T](ABC):
         Else return `PENDING`.
         """
 
-        if self.__result is None:
+        if self._real_result is None:
             return FnState.PENDING
         else:
             return FnState.EVALUATED
-
-    @staticmethod
-    def defer(item):
-        return deferral.defer(item)
