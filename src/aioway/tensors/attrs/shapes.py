@@ -3,7 +3,6 @@
 import dataclasses as dcls
 import typing
 from collections.abc import Iterable, Iterator, Sequence
-from typing import Self
 
 import numpy as np
 from numpy import ndarray as _NumpyNDArray
@@ -89,7 +88,7 @@ class Shape(Sequence[int]):
     def __getitem__(self, idx: int) -> int: ...
 
     @typing.overload
-    def __getitem__(self, idx: slice) -> Self: ...
+    def __getitem__(self, idx: slice) -> typing.Self: ...
 
     @typing.override
     def __getitem__(self, idx):
@@ -166,14 +165,14 @@ class Shape(Sequence[int]):
 
     @typing.overload
     @classmethod
-    def parse(cls, *dims: int) -> Self: ...
+    def parse(cls, *dims: int) -> typing.Self: ...
 
     @typing.overload
     @classmethod
-    def parse(cls, dim: ShapeLike, /) -> Self: ...
+    def parse(cls, dim: ShapeLike, /) -> typing.Self: ...
 
     @classmethod
-    def parse(cls, *dims) -> Self:
+    def parse(cls, *dims) -> typing.Self:
         """
         Convenience constructor for `Shape`.
 
@@ -198,7 +197,7 @@ class Shape(Sequence[int]):
             raise ValueError(*dims)
 
     @classmethod
-    def _shape(cls, dims) -> Self:
+    def _shape(cls, dims) -> typing.Self:
         "Try converting dims to `Shape`, raise `ValueError` on failure."
 
         if isinstance(dims, cls):
