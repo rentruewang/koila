@@ -7,10 +7,10 @@ import typing
 
 import torch
 
+from aioway import tensors
 from aioway._tensor_exprs import SourceTensorExpr
 from aioway._tracking import logging
 from aioway._typing import AnyUFunc1, AnyUFunc2
-from aioway.tensors import Attr
 
 if typing.TYPE_CHECKING:
     from . import exprs
@@ -25,12 +25,12 @@ type VectorRhs = Vector | torch.Tensor | int | float | bool
 
 class Vector:
     """
-    A `Vector` is a `torch.Tensor` plus its `Attr`.
+    A `Vector` is a `torch.Tensor` plus its `tensors.Attr`.
     """
 
     __match_args__ = "data", "attr"
 
-    def __init__(self, data: torch.Tensor, attr: Attr) -> None:
+    def __init__(self, data: torch.Tensor, attr: tensors.Attr) -> None:
         self._attr = attr
         "The attribute that the `torch.Tensor` must satisfy."
 
@@ -124,13 +124,13 @@ class Vector:
         "Get the `torch.Tensor` data that this `Vector` contains."
         return self._data
 
-    def typeof(self) -> Attr:
-        "Get the type information `Attr` of the `torch.Tensor` that this `Vector` represents."
+    def typeof(self) -> tensors.Attr:
+        "Get the type information `tensors.Attr` of the `torch.Tensor` that this `Vector` represents."
         return self._attr
 
     def cpu(self):
         data = self._data.cpu()
-        attr = Attr.parse(
+        attr = tensors.Attr.parse(
             device="cpu",
             shape=self._attr.shape,
             dtype=self._attr.dtype,

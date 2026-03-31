@@ -6,8 +6,7 @@ from collections import abc as cabc
 import pytest
 import torch
 
-from aioway import fake
-from aioway.tensors import Attr, TensorFn
+from aioway import fake, tensors
 
 
 @pytest.fixture
@@ -22,12 +21,12 @@ def right():
 
 @pytest.fixture
 def left_fn(left: torch.Tensor):
-    return TensorFn.from_tensor(left)
+    return tensors.TensorFn.from_tensor(left)
 
 
 @pytest.fixture
 def right_fn(right: torch.Tensor):
-    return TensorFn.from_tensor(right)
+    return tensors.TensorFn.from_tensor(right)
 
 
 @pytest.fixture
@@ -37,7 +36,7 @@ def index():
 
 @pytest.fixture
 def index_fn(index):
-    return TensorFn.from_tensor(index)
+    return tensors.TensorFn.from_tensor(index)
 
 
 @pytest.fixture(
@@ -67,40 +66,40 @@ def fake_mode():
         yield f
 
 
-def test_left_normal(left_fn: TensorFn):
+def test_left_normal(left_fn: tensors.TensorFn):
     assert isinstance(left_fn.do(), torch.Tensor)
 
 
-def test_left_fake_forward(left_fn: TensorFn):
+def test_left_fake_forward(left_fn: tensors.TensorFn):
     with fake.enable():
         assert fake.is_fake_tensor(left_fn.forward())
 
 
-def test_left_fake_do(left_fn: TensorFn):
+def test_left_fake_do(left_fn: tensors.TensorFn):
     with fake.enable():
         assert fake.is_fake_tensor(left_fn.do())
 
 
-def test_left_attr(left_fn: TensorFn):
+def test_left_attr(left_fn: tensors.TensorFn):
     attr = left_fn.attr
-    assert isinstance(attr, Attr)
+    assert isinstance(attr, tensors.Attr)
     assert attr.shape == [3, 5]
     assert attr.device == "cpu"
     assert attr.dtype == "float"
 
 
 def test_binary_ufunc(
-    left_fn: TensorFn,
-    right_fn: TensorFn,
-    binop: cabc.Callable[[TensorFn, TensorFn], TensorFn],
+    left_fn: tensors.TensorFn,
+    right_fn: tensors.TensorFn,
+    binop: cabc.Callable[[tensors.TensorFn, tensors.TensorFn], tensors.TensorFn],
 ):
     result = binop(left_fn, right_fn)
 
-    assert isinstance(result, TensorFn)
+    assert isinstance(result, tensors.TensorFn)
     assert isinstance(result.do(), torch.Tensor)
 
 
-def test_getitem(left_fn: TensorFn, index_fn: TensorFn):
+def test_getitem(left_fn: tensors.TensorFn, index_fn: tensors.TensorFn):
     result = left_fn[index_fn]
-    assert isinstance(result, TensorFn)
+    assert isinstance(result, tensors.TensorFn)
     assert result.attr.shape == [2, 7, 5]

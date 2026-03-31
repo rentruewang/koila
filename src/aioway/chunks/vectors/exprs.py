@@ -6,10 +6,10 @@ import typing
 
 import torch
 
+from aioway import tensors
 from aioway._tensor_exprs import SourceTensorExpr, TensorExpr
 from aioway._tracking import logging
 from aioway._typing import AnyUFunc1, AnyUFunc2
-from aioway.tensors import Attr, AttrTerm
 
 from .vectors import Vector, VectorRhs
 
@@ -30,15 +30,15 @@ class VectorExpr:
     tensor: TensorExpr
     "The tensor expression type."
 
-    attr: Attr
+    attr: tensors.Attr
     "The attribute type (eagerly computed)."
 
     def __post_init__(self):
         if not isinstance(self.tensor, TensorExpr):
             raise TypeError(f"{type(self.tensor)=} is not a `TensorExpr`.")
 
-        if not isinstance(self.attr, Attr):
-            raise TypeError(f"{type(self.tensor)=} is not an `Attr`.")
+        if not isinstance(self.attr, tensors.Attr):
+            raise TypeError(f"{type(self.tensor)=} is not an `tensors.Attr`.")
 
     def __neg__(self) -> typing.Self:
         return self.__ufunc1(operator.neg)
@@ -142,7 +142,7 @@ class VectorExpr:
                 return op(self.tensor, other)
         raise TypeError(f"Do not know how to handle {type(other)=}.")
 
-    def _dtype_term(self, other: VectorExprRhs, op: AnyUFunc2) -> AttrTerm:
+    def _dtype_term(self, other: VectorExprRhs, op: AnyUFunc2) -> tensors.AttrTerm:
         match other:
             case VectorExpr(attr=attr) | Vector(attr=attr):
                 return op(self.attr.term, attr.term)

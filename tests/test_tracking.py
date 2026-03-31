@@ -2,8 +2,8 @@
 
 import pytest
 
+from aioway import tensors
 from aioway._tracking import logging
-from aioway.tensors import Attr
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -14,19 +14,19 @@ def enable_rich():
 
 @pytest.fixture
 def lhs():
-    return Attr.parse(dtype="int8", device="cpu", shape=[1, 2, 3])
+    return tensors.Attr.parse(dtype="int8", device="cpu", shape=[1, 2, 3])
 
 
 @pytest.fixture
 def rhs():
-    return Attr.parse(dtype="float16", device="cpu", shape=[1, 1, 3])
+    return tensors.Attr.parse(dtype="float16", device="cpu", shape=[1, 1, 3])
 
 
-def test_attr_binary(lhs: Attr, rhs: Attr):
+def test_attr_binary(lhs: tensors.Attr, rhs: tensors.Attr):
     result = lhs.term + rhs
-    assert isinstance(result.unpack(), Attr)
+    assert isinstance(result.unpack(), tensors.Attr)
 
 
-def test_attr_unary(lhs: Attr):
+def test_attr_unary(lhs: tensors.Attr):
     result = ~lhs.term
-    assert isinstance(result.unpack(), Attr)
+    assert isinstance(result.unpack(), tensors.Attr)

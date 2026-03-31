@@ -9,8 +9,7 @@ import typing
 from abc import ABC
 from collections import abc as cabc
 
-from aioway import tdicts
-from aioway.chunks import Chunk
+from aioway import chunks, tdicts
 
 from ..datasets import Dataset, DatasetViewTypes
 
@@ -44,7 +43,7 @@ class StreamState:
 
 
 @dcls.dataclass(frozen=True)
-class Stream(cabc.Iterator[Chunk], Dataset, ABC):
+class Stream(cabc.Iterator[chunks.Chunk], Dataset, ABC):
     """
     `Stream` produces a stream of batches of data, in the form of `TensorDict`s,
     everytime `__next__` is called on it, a `TensorDict` is yielded.
@@ -70,7 +69,7 @@ class Stream(cabc.Iterator[Chunk], Dataset, ABC):
 
     @typing.final
     @typing.override
-    def __next__(self) -> Chunk:
+    def __next__(self) -> chunks.Chunk:
         """
         `__next__` allows `Stream`s to be used in `for` loops.
         """
@@ -101,9 +100,9 @@ class Stream(cabc.Iterator[Chunk], Dataset, ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def _next(self) -> Chunk:
+    def _next(self) -> chunks.Chunk:
         """
-        Compute the next batch (a `Chunk`).
+        Compute the next batch (a `chunks.Chunk`).
 
         An exception raised here would be translated to `StopIteration`.
 

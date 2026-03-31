@@ -5,8 +5,8 @@
 import dataclasses as dcls
 import typing
 
+from aioway import chunks
 from aioway._typing import BatchIndex
-from aioway.chunks import Chunk, Vector
 
 from ..datasets import DatasetColumnView, DatasetSelectView
 from .frames import Frame, IntArray
@@ -24,7 +24,7 @@ class FrameColumnView(DatasetColumnView[Frame]):
     def __len__(self) -> int:
         return len(self.dset)
 
-    def __getitem__(self, idx: BatchIndex, /) -> Vector:
+    def __getitem__(self, idx: BatchIndex, /) -> chunks.Vector:
         batch = self.dset[idx]
         return batch[self.col]
 
@@ -46,7 +46,7 @@ class FrameSelectView(DatasetSelectView[Frame], Frame):
         return len(self.dset)
 
     @typing.override
-    def _getitem(self, idx: IntArray, /) -> Chunk:
+    def _getitem(self, idx: IntArray, /) -> chunks.Chunk:
         items = self.dset[idx]
         return items.select(*self.cols)
 

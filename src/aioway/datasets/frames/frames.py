@@ -8,11 +8,9 @@ import typing
 from abc import ABC
 
 import numpy as np
-from numpy import ndarray as NpArr
 
-from aioway import _typing, tdicts
+from aioway import _typing, chunks, tdicts
 from aioway._typing import BatchIndex, IntArray
-from aioway.chunks import Chunk
 
 from ..datasets import Dataset, DatasetViewTypes
 
@@ -28,10 +26,10 @@ class Frame(Dataset, ABC):
     `Frame` represents a set of heterogenious data stored in memory,
     it is one of the main physical abstractions in `aioway` to represent eager computation.
 
-    Think of it as a normal `Sequence` of `Chunk`,
+    Think of it as a normal `Sequence` of `chunks.Chunk`,
     where computation happens eagerly, imperatively, and the result is stored in memory.
 
-    Each `Chunk` retrieved from `Frame` is a minibatch of data.
+    Each `chunks.Chunk` retrieved from `Frame` is a minibatch of data.
 
     Similar to `Dataset`, but only allows retrieving a batch at a time.
     To get a single item, retrieve a batch of size 1.
@@ -48,7 +46,7 @@ class Frame(Dataset, ABC):
         """
 
     @typing.overload
-    def __getitem__(self, idx: BatchIndex, /) -> Chunk: ...
+    def __getitem__(self, idx: BatchIndex, /) -> chunks.Chunk: ...
 
     @typing.overload
     def __getitem__(self, idx: str, /) -> views.FrameColumnView: ...
@@ -111,7 +109,7 @@ class Frame(Dataset, ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def _getitem(self, idx: IntArray, /) -> Chunk:
+    def _getitem(self, idx: IntArray, /) -> chunks.Chunk:
         """
         The implementation of `__getitem__`.
 
@@ -164,7 +162,7 @@ def _is_table_index(idx: typing.Any) -> typing.TypeIs[BatchIndex]:
         return True
 
     # Check if it's a `NDArray[int]`.
-    if isinstance(idx, NpArr) and np.isdtype(idx.dtype, "integral"):
+    if isinstance(idx, np.ndarray) and np.isdtype(idx.dtype, "integral"):
         return True
 
     return False

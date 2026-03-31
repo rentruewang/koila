@@ -4,7 +4,7 @@ import dataclasses as dcls
 import typing
 from collections import abc as cabc
 
-from numpy.typing import NDArray
+from numpy import typing as npt
 
 from ..frames import Frame
 from .indices import Index
@@ -26,7 +26,7 @@ class MultiPlanIndex:
     columns: MultiCol
     indices: dict[type[IndexPlan], Index]
 
-    def __call__(self, op: IndexPlan, value: NDArray) -> NDArray:
+    def __call__(self, op: IndexPlan, value: npt.NDArray) -> npt.NDArray:
         index = self.indices[type(op)]
         return index(op=op, value=value)
 

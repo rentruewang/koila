@@ -6,35 +6,24 @@ from collections import abc as cabc
 
 import pytest
 
-from aioway import tdicts
-from aioway.chunks import Chunk
-from aioway.datasets import (
-    ApplyStream,
-    CacheStream,
-    FuncFilterStream,
-    MapStream,
-    ProjectStream,
-    RenameStream,
-    Stream,
-    StreamState,
-)
+from aioway import chunks, datasets, tdicts
 
 
 @dcls.dataclass
-class SaveLastState(StreamState):
+class SaveLastState(datasets.StreamState):
 
-    last: Chunk = dcls.field(init=False, repr=False)
+    last: chunks.Chunk = dcls.field(init=False, repr=False)
     "The last batch."
 
 
 @dcls.dataclass(frozen=True)
-class SaveLastMapStream(MapStream):
-    "`Stream` that saves the last `__next__` call."
+class SaveLastMapStream(datasets.MapStream):
+    "`datasets.Stream` that saves the last `__next__` call."
 
     state: SaveLastState = dcls.field(default_factory=SaveLastState)
 
     @typing.override
-    def _apply(self, batch: Chunk) -> Chunk:
+    def _apply(self, batch: chunks.Chunk) -> chunks.Chunk:
         self.state.last = batch
         return batch
 
@@ -43,12 +32,12 @@ class SaveLastMapStream(MapStream):
         return self.source.attrs
 
     @property
-    def last(self) -> Chunk:
+    def last(self) -> chunks.Chunk:
         return self.state.last
 
 
 @pytest.fixture
-def save_last(table_stream: Stream):
+def save_last(table_stream: datasets.Stream):
     "The stream that is wrapped, preserving the last item."
 
     return SaveLastMapStream(table_stream)
@@ -56,30 +45,30 @@ def save_last(table_stream: Stream):
 
 @pytest.fixture
 def map_stream(request: pytest.FixtureRequest, save_last: SaveLastMapStream):
-    "Indirect fixture to create `MapStream`s based on a builder function."
+    "Indirect fixture to create `datasets.MapStream`s based on a builder function."
 
-    builder: cabc.Callable[[Stream], MapStream] = request.param
+    builder: cabc.Callable[[datasets.Stream], datasets.MapStream] = request.param
 
     if not callable(builder):
         raise TypeError("The `map_stream` fixture only accepts function parameters.")
 
-    return typing.cast(MapStream, builder(save_last))
+    return typing.cast(datasets.MapStream, builder(save_last))
 
 
 def _pred_filter_builder(source):
-    return FuncFilterStream(
+    return datasets.FuncFilterStream(
         source=source,
         predicate=lambda t: (t["f1d"] > 0).torch(),
     )
 
 
 @pytest.mark.parametrize("map_stream", [_pred_filter_builder], indirect=True)
-def test_filter(map_stream: Stream, save_last: SaveLastMapStream):
+def test_filter(map_stream: datasets.Stream, save_last: SaveLastMapStream):
     "Testing the 2 filter streams and whether they are doing their jobs."
 
     for filtered in map_stream:
         f1d = save_last.last["f1d"]
-        manual_filtered: Chunk = save_last.last[f1d > 0]
+        manual_filtered: chunks.Chunk = save_last.last[f1d > 0]
         assert filtered.shape == manual_filtered.shape, {
             "lhs.shape": filtered.shape,
             "rhs.shape": manual_filtered.shape,
@@ -89,11 +78,11 @@ def test_filter(map_stream: Stream, save_last: SaveLastMapStream):
 
 def _rename_builder(save_last: SaveLastMapStream):
     renames = {"f1d": "f1", "f2d": "f2", "i1d": "i1", "i2d": "i2"}
-    return RenameStream(source=save_last, renames=renames)
+    return datasets.RenameStream(source=save_last, renames=renames)
 
 
 @pytest.mark.parametrize("map_stream", [_rename_builder], indirect=True)
-def test_rename(map_stream: Stream, save_last: SaveLastMapStream):
+def test_rename(map_stream: datasets.Stream, save_last: SaveLastMapStream):
     "Testing the renaming functionality."
 
     for renamed in map_stream:
@@ -104,21 +93,21 @@ def test_rename(map_stream: Stream, save_last: SaveLastMapStream):
 def _apply_builder(save_last: SaveLastMapStream):
     func = lambda td: td.rename(f1d="f", i1d="i")
     schema = lambda attrs: attrs.rename(f1d="f", i1d="i")
-    return ApplyStream(source=save_last, apply=func, schema=schema)
+    return datasets.ApplyStream(source=save_last, apply=func, schema=schema)
 
 
 @pytest.mark.parametrize("map_stream", [_apply_builder], indirect=True)
-def test_apply(map_stream: Stream, save_last: SaveLastMapStream):
+def test_apply(map_stream: datasets.Stream, save_last: SaveLastMapStream):
     for mapped in map_stream:
         assert mapped == map_stream.apply(save_last.last)
 
 
 def _project_builder(save_last: SaveLastMapStream):
-    return ProjectStream(source=save_last, subset=["f1d", "i2d"])
+    return datasets.ProjectStream(source=save_last, subset=["f1d", "i2d"])
 
 
 @pytest.mark.parametrize("map_stream", [_project_builder], indirect=True)
-def test_project(map_stream: Stream, save_last: SaveLastMapStream):
+def test_project(map_stream: datasets.Stream, save_last: SaveLastMapStream):
     for projected in map_stream:
         assert projected == save_last.last[["f1d", "i2d"]]
 
@@ -133,7 +122,9 @@ def test_project(map_stream: Stream, save_last: SaveLastMapStream):
     ],
     indirect=True,
 )
-def test_map_stream_one_to_one(map_stream: Stream, save_last: SaveLastMapStream):
+def test_map_stream_one_to_one(
+    map_stream: datasets.Stream, save_last: SaveLastMapStream
+):
     assert (
         map_stream.source is save_last
     ), f"Malformed input {map_stream}, should have source={save_last}"
@@ -152,6 +143,6 @@ def test_map_stream_one_to_one(map_stream: Stream, save_last: SaveLastMapStream)
 @pytest.mark.parametrize(
     "map_stream", [_project_builder, _apply_builder], indirect=True
 )
-def test_caching(map_stream: Stream):
-    cached = CacheStream(map_stream)
+def test_caching(map_stream: datasets.Stream):
+    cached = datasets.CacheStream(map_stream)
     assert cached.size == map_stream.size

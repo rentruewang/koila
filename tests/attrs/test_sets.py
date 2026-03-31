@@ -5,21 +5,19 @@ import pytest
 import tensordict as td
 import torch
 
-from aioway import tdicts
-from aioway.chunks import Chunk
+from aioway import chunks, tdicts, tensors
 from aioway.tdicts import _validation
-from aioway.tensors import Attr
 
 
 @pytest.fixture
 def schema() -> tdicts.AttrSet:
     return tdicts.AttrSet.from_values(
-        a=Attr.parse(
+        a=tensors.Attr.parse(
             device="cpu",
             dtype="int32",
             shape=[1, 2, 3],
         ),
-        b=Attr.parse(
+        b=tensors.Attr.parse(
             device="cpu",
             dtype="float32",
             shape=[1, 6],
@@ -63,7 +61,7 @@ def invalid_data(request: pytest.FixtureRequest) -> td.TensorDict:
 
 
 def test_attrset_getitem(schema: tdicts.AttrSet):
-    assert isinstance(schema["a"], Attr)
+    assert isinstance(schema["a"], tensors.Attr)
     assert isinstance(schema[["a", "b"]], tdicts.AttrSet)
     assert schema == schema[["a", "b"]]
     assert isinstance(schema[[1, 2, 3]], tdicts.AttrSet)
@@ -78,8 +76,8 @@ def test_construction_of_attrset(valid_data: td.TensorDict):
     parsed = tdicts.AttrSet.from_tensordict(valid_data)
     assert parsed == tdicts.AttrSet.parse(
         {
-            "a": Attr.parse(device="cpu", shape=[11, 2, 3], dtype="int32"),
-            "b": Attr.parse(device="cpu", shape=[11, 6], dtype="float32"),
+            "a": tensors.Attr.parse(device="cpu", shape=[11, 2, 3], dtype="int32"),
+            "b": tensors.Attr.parse(device="cpu", shape=[11, 6], dtype="float32"),
         }
     )
 
@@ -90,9 +88,9 @@ def test_validation_fail(schema: tdicts.AttrSet, invalid_data: td.TensorDict):
 
 
 @pytest.fixture
-def block(schema: tdicts.AttrSet, valid_data: td.TensorDict) -> Chunk:
-    return Chunk.from_data_schema(data=valid_data, schema=schema)
+def block(schema: tdicts.AttrSet, valid_data: td.TensorDict) -> chunks.Chunk:
+    return chunks.Chunk.from_data_schema(data=valid_data, schema=schema)
 
 
-def test_block_init(block: Chunk):
+def test_block_init(block: chunks.Chunk):
     _ = block

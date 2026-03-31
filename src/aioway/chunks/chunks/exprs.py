@@ -5,17 +5,11 @@
 import dataclasses as dcls
 import typing
 
+import numpy as np
 import torch
-from numpy import ndarray as NpArr
 
-from aioway import _typing, tdicts
+from aioway import _tensor_exprs, _typing, tdicts
 from aioway._errors import GitHubTicketFiled
-from aioway._tensor_exprs import (
-    BatchTensorDictExpr,
-    ItemTensorDictExpr,
-    RenameTensorDictExpr,
-    TensorDictExpr,
-)
 
 from ..vectors import Vector, VectorExpr
 from .chunks import Chunk
@@ -29,7 +23,7 @@ class ChunkExpr:
     The expression type for `Chunk`.
     """
 
-    tensordict: TensorDictExpr
+    tensordict: _tensor_exprs.TensorDictExpr
     attrs: tdicts.AttrSet
 
     def keys(self):
@@ -48,7 +42,7 @@ class ChunkExpr:
     @typing.overload
     def __getitem__(
         self,
-        idx: int | slice | list[int] | list[str] | NpArr | torch.Tensor | Vector,
+        idx: int | slice | list[int] | list[str] | np.ndarray | torch.Tensor | Vector,
         /,
     ) -> typing.Self: ...
 
@@ -58,7 +52,9 @@ class ChunkExpr:
 
         if isinstance(idx, int):
             return type(self)(
-                tensordict=ItemTensorDictExpr(source=self.tensordict, index=idx),
+                tensordict=_tensor_exprs.ItemTensorDictExpr(
+                    source=self.tensordict, index=idx
+                ),
                 attrs=self.attrs[idx],
             )
 
@@ -73,11 +69,11 @@ class ChunkExpr:
 
         # Doing the batch operations that simply does type check first,
         # to avoid expensive iteration over the input.
-        if isinstance(idx, slice | NpArr | torch.Tensor) or _typing.is_list_of(int)(
-            idx
-        ):
+        if isinstance(idx, slice | np.ndarray | torch.Tensor) or _typing.is_list_of(
+            int
+        )(idx):
             return type(self)(
-                tensordict=BatchTensorDictExpr(self.tensordict, idx),
+                tensordict=_tensor_exprs.BatchTensorDictExpr(self.tensordict, idx),
                 attrs=self.attrs,
             )
 
@@ -97,7 +93,7 @@ class ChunkExpr:
         return type(self)(tensordict=td, attrs=schema)
 
     def rename(self, **renames) -> typing.Self:
-        td = RenameTensorDictExpr(self.tensordict, renames)
+        td = _tensor_exprs.RenameTensorDictExpr(self.tensordict, renames)
         return type(self)(tensordict=td, attrs=self.attrs.rename(**renames))
 
     def zip(self, rhs: ChunkExpr | Chunk) -> typing.Self:

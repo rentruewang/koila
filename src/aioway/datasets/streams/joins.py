@@ -7,8 +7,7 @@ import typing
 
 import torch
 
-from aioway import tdicts
-from aioway.chunks import Chunk
+from aioway import chunks, tdicts
 
 from .sources import CacheStream
 from .streams import Stream, StreamState
@@ -43,7 +42,7 @@ class ZipStream(Stream):
         return self.left.attrs | self.right.attrs
 
     @typing.override
-    def _next(self) -> Chunk:
+    def _next(self) -> chunks.Chunk:
         # Either one of those may raise `StopIteration`, at which point it is done.
         left_batch = next(self.left)
         right_batch = next(self.right)
@@ -57,7 +56,7 @@ class ZipStream(Stream):
 
 @dcls.dataclass
 class NestedState(StreamState):
-    lhs_batch: Chunk | None = None
+    lhs_batch: chunks.Chunk | None = None
 
     # It is necessary to save the last batch for the LHS,
     # as it would be paired with multiple RHS batches.
@@ -104,7 +103,7 @@ class NestedLoopJoinStream(Stream):
         return self.left, self.right
 
     @typing.override
-    def _next(self) -> Chunk:
+    def _next(self) -> chunks.Chunk:
         lhs_batch = self._get_lhs()
         rhs_batch = self._get_rhs()
 
@@ -118,14 +117,14 @@ class NestedLoopJoinStream(Stream):
         assert len(out) == torch.sum(matrix)
         return out
 
-    def _get_lhs(self) -> Chunk:
+    def _get_lhs(self) -> chunks.Chunk:
         # Clear cache and re-evalaute.
         if self._right_idx == 0:
             self.state.lhs_batch = next(self.left)
         assert self.state.lhs_batch
         return self.state.lhs_batch
 
-    def _get_rhs(self) -> Chunk:
+    def _get_rhs(self) -> chunks.Chunk:
         if self.idx < self.right.size:
             out = next(self.right)
             assert out is self.right[self._right_idx]

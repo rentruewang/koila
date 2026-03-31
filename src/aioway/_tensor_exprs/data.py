@@ -7,7 +7,7 @@ from collections import abc as cabc
 
 import tensordict as td
 import torch
-from numpy.typing import NDArray
+from numpy import typing as npt
 
 from aioway._signs import Signature
 from aioway._tracking import logging
@@ -116,7 +116,7 @@ class _GetItemTensorExpr[T](TensorDictExpr):
 class ItemTensorDictExpr(_GetItemTensorExpr[int], TensorDictExpr): ...
 
 
-type BatchIndex = list[int] | slice | NDArray | torch.Tensor
+type BatchIndex = list[int] | slice | npt.NDArray | torch.Tensor
 
 
 @_common.expr_dcls

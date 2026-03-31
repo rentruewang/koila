@@ -6,7 +6,7 @@ from abc import ABC
 from collections import abc as cabc
 
 import numpy as np
-from numpy.typing import ArrayLike, NDArray
+from numpy import typing as npt
 
 from ..frames import Frame
 from .ops import IndexPlan
@@ -52,7 +52,7 @@ class Index(ABC):
     The context of the `Index`.
     """
 
-    def __call__(self, op: IndexPlan, value: ArrayLike) -> NDArray:
+    def __call__(self, op: IndexPlan, value: npt.ArrayLike) -> npt.NDArray:
         arr = np.array(value)
         _, *dims = arr.shape
 
@@ -64,7 +64,7 @@ class Index(ABC):
         return self.search(op, arr)
 
     @abc.abstractmethod
-    def search(self, op: IndexPlan, value: NDArray, /) -> NDArray: ...
+    def search(self, op: IndexPlan, value: npt.NDArray, /) -> npt.NDArray: ...
 
     @property
     @abc.abstractmethod

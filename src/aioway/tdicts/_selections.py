@@ -5,17 +5,16 @@ import typing
 import tensordict as td
 import torch
 
-from aioway import _common
-from aioway.tensors import TensorFn
+from aioway import _common, tensors
 
-from .tdicts import TensorDictFn
+from . import tdicts
 
 __all__ = ["GetItemFn", "SelectFn"]
 
 
 @_common.dcls_no_eq
-class GetItemFn(TensorFn):
-    tdict: TensorDictFn
+class GetItemFn(tensors.TensorFn):
+    tdict: tdicts.TensorDictFn
     column: str
 
     def __post_init__(self):
@@ -32,8 +31,8 @@ class GetItemFn(TensorFn):
 
 
 @_common.dcls_no_eq
-class SelectFn(TensorDictFn):
-    tdict: TensorDictFn
+class SelectFn(tdicts.TensorDictFn):
+    tdict: tdicts.TensorDictFn
     columns: list[str]
 
     def __post_init__(self):

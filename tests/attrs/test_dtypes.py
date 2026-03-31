@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 import torch
 
-from aioway.tensors import DType
+from aioway import tensors
 
 
 @dcls.dataclass(frozen=True)
@@ -18,10 +18,10 @@ class _CaseChecker:
 
     @property
     def dtype(self):
-        return DType.parse(self.original)
+        return tensors.DType.parse(self.original)
 
     def check(self):
-        assert isinstance(self.dtype, DType)
+        assert isinstance(self.dtype, tensors.DType)
         assert self.dtype.family == self.family
         assert self.dtype.bits == self.bits
         assert self.dtype == self.original

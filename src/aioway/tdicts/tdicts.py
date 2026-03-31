@@ -7,23 +7,21 @@ from collections import abc as cabc
 
 import tensordict as td
 
-from aioway import _typing, fake
-from aioway.fn import Fn
-from aioway.tensors.tensors import TensorFn
+from aioway import _typing, fake, fn, tensors
 
-from .attrs import AttrSet
+from . import attrs
 
 __all__ = ["TensorDictFn", "tdict"]
 
 
-class TensorDictFn(Fn[td.TensorDict], cabc.Mapping[str, TensorFn], ABC):
+class TensorDictFn(fn.Fn[td.TensorDict], cabc.Mapping[str, tensors.TensorFn], ABC):
     def __init__(self) -> None:
         super().__init__()
         assert all(fake.is_fake_tensor(tensor) for tensor in self._fake_result.values())
-        self.__attrs = AttrSet.from_tensordict(self._fake_result)
+        self.__attrs = attrs.AttrSet.from_tensordict(self._fake_result)
 
     @typing.overload
-    def __getitem__(self, key: str) -> TensorFn: ...
+    def __getitem__(self, key: str) -> tensors.TensorFn: ...
 
     @typing.overload
     def __getitem__(self, key: list[str]) -> TensorDictFn: ...
@@ -63,7 +61,7 @@ class TensorDictFn(Fn[td.TensorDict], cabc.Mapping[str, TensorFn], ABC):
 
     @abc.abstractmethod
     @typing.override
-    def _deps(self) -> cabc.Iterator[Fn[typing.Any]]:
+    def _deps(self) -> cabc.Iterator[fn.Fn[typing.Any]]:
         raise NotImplementedError
 
     @property

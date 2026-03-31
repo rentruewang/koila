@@ -4,8 +4,8 @@ import pytest
 import torch
 from torch import nn
 
+from aioway import tensors
 from aioway.modules import Module
-from aioway.tensors import Attr
 
 
 @pytest.fixture
@@ -25,7 +25,7 @@ def linear_input():
 
 @pytest.fixture
 def linear_attr(linear_input: torch.Tensor):
-    return Attr.from_tensor(linear_input)
+    return tensors.Attr.from_tensor(linear_input)
 
 
 @pytest.fixture
@@ -87,9 +87,9 @@ def test_linear(linear: Module, linear_input: torch.Tensor):
     assert result.shape == (7, 5)
 
 
-def test_linear_preview(linear: Module, linear_attr: Attr):
+def test_linear_preview(linear: Module, linear_attr: tensors.Attr):
     result = linear.preview(linear_attr)
-    assert isinstance(result, Attr)
+    assert isinstance(result, tensors.Attr)
     assert result.shape == (7, 5)
 
 
@@ -99,9 +99,9 @@ def test_identity(identity: Module, linear_input: torch.Tensor):
     assert result.shape == (7, 3)
 
 
-def test_identity_preview(identity: Module, linear_attr: Attr):
+def test_identity_preview(identity: Module, linear_attr: tensors.Attr):
     result = identity.preview(linear_attr)
-    assert isinstance(result, Attr)
+    assert isinstance(result, tensors.Attr)
     assert result.shape == (7, 3)
 
 
@@ -113,7 +113,7 @@ def test_conv2d_forward(conv2d: Module, conv2d_input: torch.Tensor):
 
 
 def test_conv2d_preview(conv2d: Module, conv2d_input: torch.Tensor):
-    ours = conv2d.preview(Attr.from_tensor(conv2d_input))
+    ours = conv2d.preview(tensors.Attr.from_tensor(conv2d_input))
     theirs = conv2d.real_module(conv2d_input)
 
     assert ours.shape == theirs.shape
@@ -125,7 +125,7 @@ def test_emb_forward(emb_input: torch.Tensor, emb: Module):
 
 
 def test_emb_preview(emb_input: torch.Tensor, emb: Module):
-    preview = emb.preview(Attr.from_tensor(emb_input))
+    preview = emb.preview(tensors.Attr.from_tensor(emb_input))
     real = emb.real_module(emb_input)
     assert preview.shape == real.shape
     assert preview.dtype == real.dtype

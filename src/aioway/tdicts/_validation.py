@@ -6,8 +6,8 @@ import numpy as np
 import tensordict as td
 import torch
 
+from aioway import tensors
 from aioway._tracking import logging
-from aioway.tensors import Attr, Device, DType, Shape
 
 from .attrs import AttrSet
 
@@ -42,7 +42,7 @@ def validate_schema(attrs: AttrSet, data: td.TensorDict) -> None:
 import torch
 
 
-def validate_attr(attr: Attr, tensor: torch.Tensor) -> None:
+def validate_attr(attr: tensors.Attr, tensor: torch.Tensor) -> None:
     """
     Validate `tensor` against `attr`.
 
@@ -57,19 +57,19 @@ def validate_attr(attr: Attr, tensor: torch.Tensor) -> None:
 import torch
 
 
-def validate_shape_matches(shape: Shape, tensor: torch.Tensor) -> None:
+def validate_shape_matches(shape: tensors.Shape, tensor: torch.Tensor) -> None:
     try:
         _validate_shape_matches(shape, tensor)
     except ValueError:
         raise RuntimeError(
-            f"Shape of tensor {tensor.shape=} should match attr's {shape=}"
+            f"tensors.Shape of tensor {tensor.shape=} should match attr's {shape=}"
         )
 
 
 import torch
 
 
-def _validate_shape_matches(shape: Shape, tensor: torch.Tensor) -> None:
+def _validate_shape_matches(shape: tensors.Shape, tensor: torch.Tensor) -> None:
     # Convert to numpy array s.t. we can elegantly formulate the verification.
     left = np.array(shape)
     right = tensor.shape
@@ -86,18 +86,18 @@ def _validate_shape_matches(shape: Shape, tensor: torch.Tensor) -> None:
 import torch
 
 
-def validate_dtype_matches(dtype: DType, tensor: torch.Tensor) -> None:
+def validate_dtype_matches(dtype: tensors.DType, tensor: torch.Tensor) -> None:
     if dtype != tensor.dtype:
         raise RuntimeError(
-            f"DType of tensor {tensor.dtype=} should match attr's {dtype=}"
+            f"tensors.DType of tensor {tensor.dtype=} should match attr's {dtype=}"
         )
 
 
 import torch
 
 
-def validate_device_matches(device: Device, tensor: torch.Tensor) -> None:
+def validate_device_matches(device: tensors.Device, tensor: torch.Tensor) -> None:
     if device != tensor.device:
         raise RuntimeError(
-            f"Device of tensor {tensor.device=} should match attr's {device=}"
+            f"tensors.Device of tensor {tensor.device=} should match attr's {device=}"
         )

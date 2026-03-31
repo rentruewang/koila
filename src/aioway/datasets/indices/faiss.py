@@ -3,7 +3,7 @@
 import dataclasses as dcls
 import typing
 
-from numpy.typing import NDArray
+from numpy import typing as npt
 
 from .indices import Index
 from .ops import IndexAnn, IndexPlan
@@ -27,7 +27,7 @@ class FaissIndex(Index):
     """
 
     @typing.override
-    def search(self, operator: IndexPlan, value: NDArray) -> NDArray:
+    def search(self, operator: IndexPlan, value: npt.NDArray) -> npt.NDArray:
         assert isinstance(operator, IndexAnn)
 
         if value.ndim != 2:

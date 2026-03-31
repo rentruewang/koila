@@ -5,7 +5,7 @@ import typing
 from collections import abc as cabc
 
 import numpy as np
-from numpy.typing import NDArray
+from numpy import typing as npt
 
 __all__ = ["SeqKeysView", "SetKeysView", "IntArray", "BatchIndex"]
 
@@ -29,7 +29,7 @@ class SeqKeysView(_ContainerKeysView[cabc.Sequence[str]]): ...
 class SetKeysView(_ContainerKeysView[set[str]]): ...
 
 
-type IntArray = NDArray[np.int_]
+type IntArray = npt.NDArray[np.int_]
 "Integer numpy array."
 
 type BatchIndex = slice | list[int] | IntArray

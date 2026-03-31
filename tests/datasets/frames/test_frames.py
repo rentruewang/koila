@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from numpy import random
 
-from aioway.chunks import Chunk
+from aioway import chunks
 from aioway.datasets import Frame
 
 
@@ -21,13 +21,13 @@ def test_table_idx_arr(frame: Frame):
     assert idx.shape == (len(frame),)
 
     out = frame[idx]
-    assert isinstance(out, Chunk)
+    assert isinstance(out, chunks.Chunk)
     assert len(out) == len(idx)
 
 
 def test_table_idx_slice(frame: Frame):
     out = frame[-len(frame) : len(frame)]
-    assert isinstance(out, Chunk)
+    assert isinstance(out, chunks.Chunk)
     assert len(out) == len(frame)
 
 

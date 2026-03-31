@@ -4,7 +4,6 @@ import abc
 import enum
 import functools
 import typing
-from abc import ABC
 from collections import abc as cabc
 
 from aioway import fake
@@ -22,7 +21,7 @@ class FnState(enum.Enum):
     "The object is evaluated."
 
 
-class Fn[T](ABC):
+class Fn[T](abc.ABC):
     """
     `Fn`s represent computation that shall be done later.
 

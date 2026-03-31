@@ -4,8 +4,7 @@
 import pytest
 import tensordict as td
 
-from aioway import tdicts
-from aioway.tensors import TensorFn
+from aioway import tdicts, tensors
 
 
 @pytest.fixture
@@ -42,7 +41,7 @@ def test_keys(tdict_fn: tdicts.TensorDictFn):
 
 
 def test_getitem(tdict_fn: tdicts.TensorDictFn):
-    assert isinstance(tdict_fn["a"], TensorFn)
+    assert isinstance(tdict_fn["a"], tensors.TensorFn)
 
 
 def test_getitem_fail(tdict_fn: tdicts.TensorDictFn):

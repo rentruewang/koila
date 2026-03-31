@@ -12,9 +12,8 @@ from collections import abc as cabc
 
 from torch.utils import data
 
-from aioway import _typing, tdicts
+from aioway import _typing, chunks, tdicts
 from aioway._tracking import logging
-from aioway.chunks import Chunk
 
 from ..frames import Frame
 from .streams import Stream
@@ -52,7 +51,7 @@ class BoundedStream(Stream, ABC):
         raise TypeError(f"Do not know how to handle {type(key)=}.")
 
     @abc.abstractmethod
-    def _getitem_int(self, idx: int) -> Chunk:
+    def _getitem_int(self, idx: int) -> chunks.Chunk:
         """
         Get individual items. Does not support slice input.
 
@@ -60,7 +59,7 @@ class BoundedStream(Stream, ABC):
             idx: An integer. Must be in the range `[-len(self), len(self))`.
 
         Returns:
-            The `Chunk` batch.
+            The `chunks.Chunk` batch.
         """
 
 
@@ -73,7 +72,7 @@ class CacheStream(BoundedStream):
     stream: Stream
     "The input stream."
 
-    saved: list[Chunk] = dcls.field(default_factory=list)
+    saved: list[chunks.Chunk] = dcls.field(default_factory=list)
     "The cache for the input `Stream`."
 
     @typing.override
@@ -89,7 +88,7 @@ class CacheStream(BoundedStream):
         return self.saved[idx]
 
     @typing.override
-    def _next(self) -> Chunk:
+    def _next(self) -> chunks.Chunk:
         LOGGER.debug(
             "Executing `__iter__` for `CacheStream`. self.idx=%s, stream.idx=%s",
             self.idx,
@@ -133,7 +132,7 @@ class CacheStream(BoundedStream):
 class ListStream(BoundedStream):
     "A `Stream` backed by a list of `TensorDict`."
 
-    sequence: cabc.Sequence[Chunk]
+    sequence: cabc.Sequence[chunks.Chunk]
     "List of chunks."
 
     @typing.override
@@ -141,7 +140,7 @@ class ListStream(BoundedStream):
         return self.size
 
     @typing.override
-    def _getitem_int(self, idx: int) -> Chunk:
+    def _getitem_int(self, idx: int) -> chunks.Chunk:
         return self.sequence[idx]
 
     @property
@@ -165,7 +164,7 @@ class ListStream(BoundedStream):
         raise ValueError("Chunks should have the same schema.")
 
     @typing.override
-    def _next(self) -> Chunk:
+    def _next(self) -> chunks.Chunk:
         if self.idx < self.size:
             return self[self.idx]
         else:
@@ -210,7 +209,7 @@ class FrameStream(Stream):
     """
 
     @typing.override
-    def _next(self) -> Chunk:
+    def _next(self) -> chunks.Chunk:
         try:
             return self._get_batch(self.idx)
         except IndexError as ie:
@@ -243,7 +242,7 @@ class FrameStream(Stream):
         rounding = math.floor if drop_last else math.ceil
         return rounding(len(self.frame) / batch_size)
 
-    def _get_batch(self, idx: int) -> Chunk:
+    def _get_batch(self, idx: int) -> chunks.Chunk:
         batch_size = self.options.batch_size
 
         if not -self.size <= idx < self.size:

@@ -4,10 +4,10 @@
 
 import dataclasses as dcls
 import functools
+import types
 import typing
-from types import GenericAlias
 
-from lark import Lark, Transformer
+import lark
 
 from aioway._tracking import logging
 
@@ -24,7 +24,7 @@ class TypeList:
     This is useful to support type checking on `Tensor` related operations.
     """
 
-    def __init__(self, *types: type | GenericAlias) -> None:
+    def __init__(self, *types: type | types.GenericAlias) -> None:
         self._types = types
         "The types of the list of params."
 
@@ -83,11 +83,11 @@ VAR_NAME: /[a-zA-Z_]\w*/
 
 @functools.cache
 def _param_list_lark_parser():
-    return Lark(_PARAM_LIST_GRAMMAR, start="param_list")
+    return lark.Lark(_PARAM_LIST_GRAMMAR, start="param_list")
 
 
 @_common.lark_transformer_dcls
-class ParamListTransformer(Transformer):
+class ParamListTransformer(lark.Transformer):
     _mapping: dict[str, type] = dcls.field(default_factory=dict)
 
     def params(self, *names: str):

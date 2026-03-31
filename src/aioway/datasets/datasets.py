@@ -8,8 +8,7 @@ import typing
 from abc import ABC
 from collections import abc as cabc
 
-from aioway import tdicts
-from aioway.tensors import Attr
+from aioway import tdicts, tensors
 
 __all__ = ["Dataset", "DatasetColumnView", "DatasetSelectView", "DatasetViewTypes"]
 
@@ -126,7 +125,7 @@ class DatasetColumnView[T: Dataset = Dataset](DatasetView[T], ABC):
 
     @property
     @typing.final
-    def attr(self) -> Attr:
+    def attr(self) -> tensors.Attr:
         return self.dset.attrs.column(self.col)
 
     @classmethod
