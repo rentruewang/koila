@@ -5,8 +5,8 @@ import tensordict as td
 import torch
 from torch import cuda
 
-from aioway.chunks import Chunk
 from aioway import tdicts
+from aioway.chunks import Chunk
 from aioway.tensors import Attr
 
 

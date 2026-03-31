@@ -5,10 +5,10 @@ import pytest
 import tensordict as td
 import torch
 
+from aioway import tdicts
 from aioway.chunks import Chunk
 from aioway.tdicts import _validation
 from aioway.tensors import Attr
-from aioway import tdicts
 
 
 @pytest.fixture

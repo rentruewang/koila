@@ -8,7 +8,7 @@ import typing
 import torch
 from numpy import ndarray as NpArr
 
-from aioway import _typing
+from aioway import _typing, tdicts
 from aioway._errors import GitHubTicketFiled
 from aioway._tensor_exprs import (
     BatchTensorDictExpr,
@@ -16,7 +16,6 @@ from aioway._tensor_exprs import (
     RenameTensorDictExpr,
     TensorDictExpr,
 )
-from aioway import tdicts
 
 from ..vectors import Vector, VectorExpr
 from .chunks import Chunk

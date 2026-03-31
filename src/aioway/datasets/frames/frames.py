@@ -10,10 +10,9 @@ from abc import ABC
 import numpy as np
 from numpy import ndarray as NpArr
 
-from aioway import _typing
+from aioway import _typing, tdicts
 from aioway._typing import BatchIndex, IntArray
 from aioway.chunks import Chunk
-from aioway import tdicts
 
 from ..datasets import Dataset, DatasetViewTypes
 

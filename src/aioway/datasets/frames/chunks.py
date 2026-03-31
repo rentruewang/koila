@@ -8,9 +8,8 @@ import typing
 
 import numpy as np
 
-from aioway import _typing
+from aioway import _typing, tdicts
 from aioway.chunks import Chunk
-from aioway import tdicts
 
 from .frames import Frame, IntArray
 

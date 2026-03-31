@@ -9,8 +9,8 @@ import typing
 from abc import ABC
 from collections import abc as cabc
 
-from aioway.chunks import Chunk
 from aioway import tdicts
+from aioway.chunks import Chunk
 
 from ..datasets import Dataset, DatasetViewTypes
 

@@ -10,8 +10,8 @@ from collections import abc as cabc
 
 import torch
 
-from aioway.chunks import Chunk
 from aioway import tdicts
+from aioway.chunks import Chunk
 
 from .streams import Stream
 

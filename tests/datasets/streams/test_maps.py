@@ -6,6 +6,7 @@ from collections import abc as cabc
 
 import pytest
 
+from aioway import tdicts
 from aioway.chunks import Chunk
 from aioway.datasets import (
     ApplyStream,
@@ -17,7 +18,6 @@ from aioway.datasets import (
     Stream,
     StreamState,
 )
-from aioway import tdicts
 
 
 @dcls.dataclass

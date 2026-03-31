@@ -12,10 +12,9 @@ from collections import abc as cabc
 
 from torch.utils import data
 
-from aioway import _typing
+from aioway import _typing, tdicts
 from aioway._tracking import logging
 from aioway.chunks import Chunk
-from aioway import tdicts
 
 from ..frames import Frame
 from .streams import Stream

@@ -25,86 +25,86 @@ class TensorFn(fn.Fn[torch.Tensor], ABC):
         return self.attr.shape[0]
 
     def __getitem__(self, key: typing.Any) -> TensorFn:
-        from ._thunks import GatherThunk
+        from . import _thunks
 
-        return GatherThunk(self, key)
+        return _thunks.GatherThunk(self, key)
 
     def __invert__(self) -> TensorFn:
-        from ._thunks import UFunc1Thunk
+        from . import _thunks
 
-        return UFunc1Thunk(operator.invert, self)
+        return _thunks.UFunc1Thunk(operator.invert, self)
 
     def __neg__(self) -> TensorFn:
-        from ._thunks import UFunc1Thunk
+        from . import _thunks
 
-        return UFunc1Thunk(operator.neg, self)
+        return _thunks.UFunc1Thunk(operator.neg, self)
 
     def __add__(self, other: typing.Any) -> TensorFn:
-        from ._thunks import UFunc2Thunk
+        from . import _thunks
 
-        return UFunc2Thunk(operator.add, self, other)
+        return _thunks.UFunc2Thunk(operator.add, self, other)
 
     def __sub__(self, other: typing.Any) -> TensorFn:
-        from ._thunks import UFunc2Thunk
+        from . import _thunks
 
-        return UFunc2Thunk(operator.sub, self, other)
+        return _thunks.UFunc2Thunk(operator.sub, self, other)
 
     def __mul__(self, other: typing.Any) -> TensorFn:
-        from ._thunks import UFunc2Thunk
+        from . import _thunks
 
-        return UFunc2Thunk(operator.mul, self, other)
+        return _thunks.UFunc2Thunk(operator.mul, self, other)
 
     def __truediv__(self, other: typing.Any) -> TensorFn:
-        from ._thunks import UFunc2Thunk
+        from . import _thunks
 
-        return UFunc2Thunk(operator.truediv, self, other)
+        return _thunks.UFunc2Thunk(operator.truediv, self, other)
 
     def __floordiv__(self, other: typing.Any) -> TensorFn:
-        from ._thunks import UFunc2Thunk
+        from . import _thunks
 
-        return UFunc2Thunk(operator.floordiv, self, other)
+        return _thunks.UFunc2Thunk(operator.floordiv, self, other)
 
     def __mod__(self, other: typing.Any) -> TensorFn:
-        from ._thunks import UFunc2Thunk
+        from . import _thunks
 
-        return UFunc2Thunk(operator.mod, self, other)
+        return _thunks.UFunc2Thunk(operator.mod, self, other)
 
     def __pow__(self, other: typing.Any) -> TensorFn:
-        from ._thunks import UFunc2Thunk
+        from . import _thunks
 
-        return UFunc2Thunk(operator.pow, self, other)
+        return _thunks.UFunc2Thunk(operator.pow, self, other)
 
     @typing.no_type_check
     def __eq__(self, other: typing.Any) -> TensorFn:
-        from ._thunks import UFunc2Thunk
+        from . import _thunks
 
-        return UFunc2Thunk(operator.eq, self, other)
+        return _thunks.UFunc2Thunk(operator.eq, self, other)
 
     @typing.no_type_check
     def __ne__(self, other: typing.Any) -> TensorFn:
-        from ._thunks import UFunc2Thunk
+        from . import _thunks
 
-        return UFunc2Thunk(operator.ne, self, other)
+        return _thunks.UFunc2Thunk(operator.ne, self, other)
 
     def __gt__(self, other: typing.Any) -> TensorFn:
-        from ._thunks import UFunc2Thunk
+        from . import _thunks
 
-        return UFunc2Thunk(operator.gt, self, other)
+        return _thunks.UFunc2Thunk(operator.gt, self, other)
 
     def __ge__(self, other: typing.Any) -> TensorFn:
-        from ._thunks import UFunc2Thunk
+        from . import _thunks
 
-        return UFunc2Thunk(operator.ge, self, other)
+        return _thunks.UFunc2Thunk(operator.ge, self, other)
 
     def __lt__(self, other: typing.Any) -> TensorFn:
-        from ._thunks import UFunc2Thunk
+        from . import _thunks
 
-        return UFunc2Thunk(operator.lt, self, other)
+        return _thunks.UFunc2Thunk(operator.lt, self, other)
 
     def __le__(self, other: typing.Any) -> TensorFn:
-        from ._thunks import UFunc2Thunk
+        from . import _thunks
 
-        return UFunc2Thunk(operator.le, self, other)
+        return _thunks.UFunc2Thunk(operator.le, self, other)
 
     @property
     def attr(self) -> attrs.Attr:
