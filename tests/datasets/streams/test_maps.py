@@ -5,7 +5,6 @@ import typing
 from collections import abc as cabc
 
 import pytest
-from pytest import FixtureRequest
 
 from aioway.chunks import Chunk
 from aioway.datasets import (
@@ -56,7 +55,7 @@ def save_last(table_stream: Stream):
 
 
 @pytest.fixture
-def map_stream(request: FixtureRequest, save_last: SaveLastMapStream):
+def map_stream(request: pytest.FixtureRequest, save_last: SaveLastMapStream):
     "Indirect fixture to create `MapStream`s based on a builder function."
 
     builder: cabc.Callable[[Stream], MapStream] = request.param

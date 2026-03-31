@@ -2,7 +2,6 @@
 
 import pytest
 import torch
-from pytest import FixtureRequest
 
 from aioway.tensors import Device
 
@@ -13,7 +12,7 @@ def _cpus():
 
 
 @pytest.fixture(params=_cpus())
-def cpu(request: FixtureRequest):
+def cpu(request: pytest.FixtureRequest):
     return Device.parse(request.param)
 
 

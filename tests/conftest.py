@@ -5,7 +5,6 @@ import random
 import pytest
 import torch
 from numpy import random as npr
-from pytest import FixtureRequest
 from rich import traceback
 
 from . import fake
@@ -29,7 +28,7 @@ def seed():
 
 
 @pytest.fixture(params=fake.cpu_and_maybe_cuda())
-def device(request: FixtureRequest) -> str:
+def device(request: pytest.FixtureRequest) -> str:
     return request.param
 
 
@@ -39,5 +38,5 @@ def data_size() -> int:
 
 
 @pytest.fixture(params=fake.batch_sizes())
-def batch_size(request: FixtureRequest) -> int:
+def batch_size(request: pytest.FixtureRequest) -> int:
     return request.param

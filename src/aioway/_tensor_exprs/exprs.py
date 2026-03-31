@@ -5,8 +5,8 @@ import typing
 from abc import ABC
 from collections import abc as cabc
 
+import tensordict as td
 import torch
-from tensordict import TensorDict
 
 __all__ = ["TensorDictExpr", "TensorExpr", "TensorExprRhs"]
 
@@ -143,10 +143,10 @@ class TensorDictExpr(ABC):
         return self._compute()
 
     @abc.abstractmethod
-    def _compute(self) -> TensorDict: ...
+    def _compute(self) -> td.TensorDict: ...
 
-    def _return_type(self) -> type[TensorDict]:
-        return TensorDict
+    def _return_type(self) -> type[td.TensorDict]:
+        return td.TensorDict
 
     @abc.abstractmethod
     def keys(self) -> cabc.KeysView[str]: ...
@@ -161,7 +161,7 @@ class TensorDictExpr(ABC):
 
         return ColumnTensorExpr(self, key)
 
-    def zip(self, other: TensorDictExpr | TensorDict) -> TensorDictExpr:
+    def zip(self, other: TensorDictExpr | td.TensorDict) -> TensorDictExpr:
         from .data import SourceTensorDictExpr
         from .relations import ZipTensorDictExpr
 
@@ -169,7 +169,7 @@ class TensorDictExpr(ABC):
             case TensorDictExpr():
                 return ZipTensorDictExpr(self, other)
 
-            case TensorDict():
+            case td.TensorDict():
                 return self.zip(other=SourceTensorDictExpr(other))
 
         raise TypeError(f"Does not know how to handle {type(other)=}.")

@@ -1,8 +1,8 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import numpy as np
+import tensordict as td
 import torch
-from tensordict import TensorDict
 from torch import cuda
 
 from aioway.chunks import Chunk
@@ -31,7 +31,7 @@ def batch_sizes():
 
 
 def chunk_ok(*, size: int, device: str) -> Chunk:
-    data = TensorDict(
+    data = td.TensorDict(
         {
             "f1d": torch.randn(size),
             "f2d": torch.randn(size, 32),

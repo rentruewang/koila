@@ -5,7 +5,6 @@ import typing
 from collections import abc as cabc
 
 import pytest
-from pytest import FixtureRequest
 
 from aioway.symbols import ColSymbol, SourceSymbol
 
@@ -36,7 +35,7 @@ def e(b: SourceSymbol):
 
 
 @pytest.fixture(params="cde")
-def col_expr(request: FixtureRequest) -> ColSymbol:
+def col_expr(request: pytest.FixtureRequest) -> ColSymbol:
     return request.getfixturevalue(request.param)
 
 

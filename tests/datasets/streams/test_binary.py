@@ -5,7 +5,6 @@ from collections import abc as cabc
 
 import pytest
 import torch
-from pytest import FixtureRequest
 
 from aioway.chunks import Chunk
 from aioway.datasets import (
@@ -37,7 +36,9 @@ def test_rhs_stream_length(joinable_stream: Stream, rhs_stream: CacheStream):
 
 
 @pytest.fixture
-def binary_stream(request: FixtureRequest, lhs_stream: Stream, rhs_stream: CacheStream):
+def binary_stream(
+    request: pytest.FixtureRequest, lhs_stream: Stream, rhs_stream: CacheStream
+):
     "An indirect fixture that takes in a builder function and outputs a stream."
 
     builder: cabc.Callable[[Stream, Stream], Stream] = request.param

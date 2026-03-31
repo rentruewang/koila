@@ -7,8 +7,8 @@ import typing
 from collections import abc as cabc
 
 import tensordict
+import tensordict as td
 import torch
-from tensordict import TensorDict
 
 from aioway import _typing
 from aioway._tensor_exprs import SourceTensorDictExpr
@@ -22,7 +22,7 @@ __all__ = ["Chunk"]
 LOGGER = logging.get_logger(__name__)
 
 
-type TensorDictLike = TensorDict | dict[str, torch.Tensor]
+type TensorDictLike = td.TensorDict | dict[str, torch.Tensor]
 type ChunkLike = Chunk | dict[str, Vector]
 
 
@@ -36,7 +36,7 @@ class Chunk(cabc.Mapping[str, Vector]):
     This can change in the future.
     """
 
-    data: TensorDict
+    data: td.TensorDict
     "The underlying data."
 
     attrs: AttrSet
@@ -63,7 +63,7 @@ class Chunk(cabc.Mapping[str, Vector]):
             return self.attrs == rhs.attrs and (self.data == rhs.data).all()
 
         # If tensordict, don't compare schema.
-        if isinstance(rhs, dict | TensorDict):
+        if isinstance(rhs, dict | td.TensorDict):
             try:
                 return (self.data == rhs).all()
             except KeyError:
@@ -123,7 +123,7 @@ class Chunk(cabc.Mapping[str, Vector]):
 
         schema = chunks[0].attrs
 
-        data = tensordict.cat([c.data for c in chunks])
+        data = td.cat([c.data for c in chunks])
 
         return cls.from_data_schema(schema=schema, data=data)
 
@@ -148,13 +148,13 @@ class Chunk(cabc.Mapping[str, Vector]):
         raise TypeError(type(chunk))
 
 
-def _as_tensordict(data: TensorDictLike, /) -> TensorDict:
-    if isinstance(data, TensorDict):
+def _as_tensordict(data: TensorDictLike, /) -> td.TensorDict:
+    if isinstance(data, td.TensorDict):
         return data
 
     _is_dict_of_tensor = _typing.is_dict_of_str_to(torch.Tensor)
     if _is_dict_of_tensor(data):
-        return TensorDict(data)
+        return td.TensorDict(data)
 
     raise TypeError(type(data))
 

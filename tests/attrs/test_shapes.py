@@ -2,7 +2,6 @@
 
 import numpy as np
 import pytest
-from pytest import FixtureRequest
 
 from aioway.tensors import Shape
 
@@ -13,7 +12,7 @@ def _shapes():
 
 
 @pytest.fixture(params=_shapes())
-def shape(request: FixtureRequest) -> Shape:
+def shape(request: pytest.FixtureRequest) -> Shape:
     return request.param
 
 

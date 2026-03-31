@@ -6,7 +6,6 @@ import typing
 from collections import abc as cabc
 
 import tensordict as td
-from tensordict import TensorDict
 
 from aioway._signs import Signature
 from aioway._tracking import logging
@@ -31,12 +30,12 @@ class SelectTensorDictExpr(TensorDictExpr):
         raise NotImplementedError
 
     @typing.override
-    def _compute(self) -> TensorDict:
+    def _compute(self) -> td.TensorDict:
         pulled = self.source.compute()
 
         with _common.TRACKER(
             name="select",
-            signature=Signature(TensorDict, TensorDict),
+            signature=Signature(td.TensorDict, td.TensorDict),
         ):
             return pulled.select(*self.columns)
 
@@ -52,11 +51,11 @@ class RenameTensorDictExpr(TensorDictExpr):
         return SeqKeysView([self.renames.get(key, key) for key in self.keys()])
 
     @typing.override
-    def _compute(self) -> TensorDict:
+    def _compute(self) -> td.TensorDict:
         td = self.source.compute()
         with _common.TRACKER(
             name="rename",
-            signature=Signature(TensorDict, TensorDict),
+            signature=Signature(td.TensorDict, td.TensorDict),
         ):
             return _rename(td, **self.renames)
 
@@ -71,24 +70,24 @@ class ZipTensorDictExpr(TensorDictExpr):
         return SetKeysView({*self.left.keys(), *self.right.keys()})
 
     @typing.override
-    def _compute(self) -> TensorDict:
+    def _compute(self) -> td.TensorDict:
         left = self.left.compute()
         right = self.right.compute()
 
         with _common.TRACKER(
             name="zip",
-            signature=Signature(TensorDict, TensorDict, TensorDict),
+            signature=Signature(td.TensorDict, td.TensorDict, td.TensorDict),
         ):
             return td.merge_tensordicts(left, right)
 
 
-def _rename(td: TensorDict, **names: str) -> TensorDict:
+def _rename(td: td.TensorDict, **names: str) -> td.TensorDict:
     """
     Rename the columns of the current `Block`.
     """
 
     LOGGER.debug("Renamed called with names=%s", names)
-    return TensorDict(
+    return td.TensorDict(
         {names.get(key, key): val for key, val in td.items()},
         batch_size=td.batch_size,
         device=td.device,

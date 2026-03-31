@@ -6,7 +6,6 @@ import typing
 import numpy as np
 import pytest
 import torch
-from pytest import FixtureRequest
 
 from aioway.tensors import DType
 
@@ -68,7 +67,7 @@ def _dtypes():
 
 
 @pytest.fixture(params=_golden())
-def golden(request: FixtureRequest) -> _CaseChecker:
+def golden(request: pytest.FixtureRequest) -> _CaseChecker:
     return request.param
 
 

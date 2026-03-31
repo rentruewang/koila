@@ -10,7 +10,7 @@ import typing
 from abc import ABC
 from collections import abc as cabc
 
-from torch.utils.data import DataLoader, Sampler
+from torch.utils import data
 
 from aioway import _typing
 from aioway._tracking import logging
@@ -180,7 +180,7 @@ class ListStream(BoundedStream):
 @dcls.dataclass(frozen=True)
 class FrameStreamLoader:
     """
-    The optoins for `DataLoader` on `Frame` in `FrameStream`.
+    The optoins for `data.DataLoader` on `Frame` in `FrameStream`.
     """
 
     batch_size: int = 1
@@ -192,7 +192,7 @@ class FrameStreamLoader:
     shuffle: bool = False
     "To shuffle or not."
 
-    sampler: Sampler[int] | None = None
+    sampler: data.Sampler[int] | None = None
     "How to sample in case when want to shuffle."
 
 
@@ -207,7 +207,7 @@ class FrameStream(Stream):
 
     options: FrameStreamLoader
     """
-    The options passed directly to `DataLoader`.
+    The options passed directly to `data.DataLoader`.
     """
 
     @typing.override
@@ -219,9 +219,9 @@ class FrameStream(Stream):
 
     @functools.cached_property
     @typing.no_type_check
-    def _dataloader(self) -> DataLoader:
+    def _dataloader(self) -> data.DataLoader:
         # Note that `__dict__` of a dataclass is just the custom fields.
-        return DataLoader(
+        return data.DataLoader(
             self.frame,
             **self.options.__dict__,
             collate_fn=_identity,

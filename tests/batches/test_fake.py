@@ -4,19 +4,18 @@ import numpy as np
 import pytest
 import torch
 from numpy import random as np_rand
-from pytest import FixtureRequest
 
 from aioway.chunks import Chunk
 from tests import fake
 
 
 @pytest.fixture(params=fake.cpu_and_maybe_cuda(), scope="session")
-def device(request: FixtureRequest) -> str:
+def device(request: pytest.FixtureRequest) -> str:
     return request.param
 
 
 @pytest.fixture(params=fake.batch_sizes(), scope="module")
-def batch(request: FixtureRequest) -> int:
+def batch(request: pytest.FixtureRequest) -> int:
     return request.param
 
 

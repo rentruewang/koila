@@ -2,8 +2,7 @@
 
 import pytest
 import torch
-from pytest import FixtureRequest
-from torch.nn import Conv2d, Embedding, Identity, Linear
+from torch import nn
 
 from aioway.modules import Module
 from aioway.tensors import Attr
@@ -11,12 +10,12 @@ from aioway.tensors import Attr
 
 @pytest.fixture
 def linear():
-    return Module(Linear, in_features=3, out_features=5, bias=True)
+    return Module(nn.Linear, in_features=3, out_features=5, bias=True)
 
 
 @pytest.fixture
 def identity():
-    return Module(Identity)
+    return Module(nn.Identity)
 
 
 @pytest.fixture
@@ -35,29 +34,29 @@ def conv2d_input():
 
 
 @pytest.fixture(params=[1, 2, 3])
-def dilation(request: FixtureRequest):
+def dilation(request: pytest.FixtureRequest):
     return request.param
 
 
 @pytest.fixture(params=[0, 1, 2, 3])
-def padding(request: FixtureRequest):
+def padding(request: pytest.FixtureRequest):
     return request.param
 
 
 @pytest.fixture(params=[1, 2, 3])
-def stride(request: FixtureRequest):
+def stride(request: pytest.FixtureRequest):
     return request.param
 
 
 @pytest.fixture(params=[1, 2, 3])
-def kernel_size(request: FixtureRequest):
+def kernel_size(request: pytest.FixtureRequest):
     return request.param
 
 
 @pytest.fixture
 def conv2d(dilation: int, padding: int, stride: int, kernel_size: int):
     return Module(
-        Conv2d,
+        nn.Conv2d,
         in_channels=5,
         out_channels=13,
         kernel_size=kernel_size,
@@ -69,7 +68,7 @@ def conv2d(dilation: int, padding: int, stride: int, kernel_size: int):
 
 @pytest.fixture
 def emb():
-    return Module(Embedding, num_embeddings=3, embedding_dim=5)
+    return Module(nn.Embedding, num_embeddings=3, embedding_dim=5)
 
 
 def _emb_inputs():
@@ -78,7 +77,7 @@ def _emb_inputs():
 
 
 @pytest.fixture(params=_emb_inputs())
-def emb_input(request: FixtureRequest):
+def emb_input(request: pytest.FixtureRequest):
     return request.param
 
 

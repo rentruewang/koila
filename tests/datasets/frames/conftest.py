@@ -1,7 +1,6 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import pytest
-from pytest import FixtureRequest
 
 from aioway.datasets import (
     ChunkFrame,
@@ -29,7 +28,7 @@ def list_table(device: str, batch_size: int, data_size: int):
 
 @pytest.fixture(params=[block_table, list_table])
 def frame(
-    request: FixtureRequest, device: str, batch_size: int, data_size: int
+    request: pytest.FixtureRequest, device: str, batch_size: int, data_size: int
 ) -> Frame:
     return request.param(device=device, batch_size=batch_size, data_size=data_size)
 

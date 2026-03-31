@@ -5,9 +5,9 @@
 import typing
 from collections import abc as cabc
 
+import tensordict as td
 import torch
 from numpy.typing import NDArray
-from tensordict import TensorDict
 
 from aioway._signs import Signature
 from aioway._tracking import logging
@@ -27,7 +27,7 @@ LOGGER = logging.get_logger(__name__)
 
 
 @_common.expr_dcls
-class _SourceExpr[T: torch.Tensor | TensorDict]:
+class _SourceExpr[T: torch.Tensor | td.TensorDict]:
     _DATA_TYPE: typing.ClassVar[type[T]]
 
     __match_args__ = ()
@@ -55,10 +55,10 @@ class _SourceExpr[T: torch.Tensor | TensorDict]:
 
 
 @_common.expr_dcls
-class SourceTensorDictExpr(_SourceExpr[TensorDict], TensorDictExpr):
-    "The source expression for `TensorDict`."
+class SourceTensorDictExpr(_SourceExpr[td.TensorDict], TensorDictExpr):
+    "The source expression for `td.TensorDict`."
 
-    _DATA_TYPE = TensorDict
+    _DATA_TYPE = td.TensorDict
 
     def keys(self) -> cabc.KeysView[str]:
         return self.data.keys()
@@ -82,7 +82,7 @@ class ColumnTensorExpr(TensorExpr):
         pulled = self.source.compute()
 
         with _common.TRACKER(
-            name="column", signature=Signature(TensorDict, torch.Tensor)
+            name="column", signature=Signature(td.TensorDict, torch.Tensor)
         ):
             return pulled[self.column]
 
@@ -100,11 +100,11 @@ class _GetItemTensorExpr[T](TensorDictExpr):
         return self.source.keys()
 
     @typing.no_type_check
-    def _compute(self) -> TensorDict:
+    def _compute(self) -> td.TensorDict:
         pulled = self.source.compute()
 
         with _common.TRACKER(
-            name="__getitem__", signature=Signature(TensorDict, type(self.index))
+            name="__getitem__", signature=Signature(td.TensorDict, type(self.index))
         ):
             return pulled[self.index]
 

@@ -3,7 +3,6 @@
 import typing
 
 import pytest
-from pytest import FixtureRequest
 
 from aioway._signs import Signature, TypeList
 
@@ -15,7 +14,7 @@ def _signature_str():
 
 
 @pytest.fixture(params=_signature_str())
-def signature(request: FixtureRequest):
+def signature(request: pytest.FixtureRequest):
     return Signature.parse(request.param, int=int, float=float, bool=bool)
 
 

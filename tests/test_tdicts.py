@@ -2,7 +2,7 @@
 
 
 import pytest
-from tensordict import TensorDict
+import tensordict as td
 
 from aioway.tdicts import TensorDictFn
 from aioway.tensors import TensorFn
@@ -10,11 +10,11 @@ from aioway.tensors import TensorFn
 
 @pytest.fixture
 def tdict():
-    return TensorDict({"a": [1, 2, 3], "b": [4, 5, 6]}).auto_batch_size_()
+    return td.TensorDict({"a": [1, 2, 3], "b": [4, 5, 6]}).auto_batch_size_()
 
 
 @pytest.fixture
-def tdict_fn(tdict: TensorDict):
+def tdict_fn(tdict: td.TensorDict):
     return TensorDictFn.from_tensordict(tdict)
 
 
@@ -30,7 +30,7 @@ def select_keys(request):
     return request.param
 
 
-def test_select(tdict_fn: TensorDictFn, tdict: TensorDict, select_keys: list[str]):
+def test_select(tdict_fn: TensorDictFn, tdict: td.TensorDict, select_keys: list[str]):
     result = tdict_fn[select_keys].do()
     assert (result == tdict.select(*select_keys)).all()
 
