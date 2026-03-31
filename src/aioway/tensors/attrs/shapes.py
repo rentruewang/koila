@@ -6,8 +6,7 @@ from collections.abc import Iterable, Iterator, Sequence
 
 import numpy as np
 import torch
-from numpy import ndarray as _NumpyNDArray
-from numpy.typing import NDArray
+from numpy import typing as npt
 
 from aioway import _typing
 from aioway._tracking import ModuleApiTracker, logging
@@ -18,7 +17,7 @@ LOGGER = logging.get_logger(__name__)
 TRACKER = ModuleApiTracker(lambda: Shape)
 
 type _PrimitiveNumber = float | int | bool
-type _IntArrayLike = tuple[int, ...] | list[int] | NDArray[np.int_]
+type _IntArrayLike = tuple[int, ...] | list[int] | npt.NDArray[np.int_]
 type ShapeCmpType = Shape | torch.Size | _IntArrayLike | _PrimitiveNumber
 
 type ShapeLike = int | Iterable[int] | Shape
@@ -71,7 +70,7 @@ class Shape(Sequence[int]):
             return other == self.dims
 
         # Do the numpy check first as `isinstance` is cheaper than the following ones.
-        if isinstance(other, _NumpyNDArray):
+        if isinstance(other, np.ndarray):
             arr = np.array(self)
             return arr.ndim == other.ndim and np.all(arr == other).item()
 
@@ -104,7 +103,7 @@ class Shape(Sequence[int]):
     def __iter__(self) -> Iterator[int]:
         return iter(self.dims)
 
-    def __array__(self) -> NDArray:
+    def __array__(self) -> npt.NDArray:
         return np.array(self.dims)
 
     def concrete(self) -> tuple[int, ...]:

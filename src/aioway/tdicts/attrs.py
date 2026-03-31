@@ -11,7 +11,6 @@ from typing import NamedTuple, Self
 import numpy as np
 import tensordict as td
 import torch
-from numpy import ndarray as NpArr
 
 from aioway import _typing
 from aioway._signs import Signature
@@ -155,7 +154,7 @@ class AttrSet(_AttrSetBase[Attr]):
 
     @typing.overload
     def __getitem__(
-        self, idx: int | slice | list[int] | list[str] | NpArr | torch.Tensor
+        self, idx: int | slice | list[int] | list[str] | np.ndarray | torch.Tensor
     ) -> Self: ...
 
     def __getitem__(self, idx):
@@ -196,7 +195,7 @@ class AttrSet(_AttrSetBase[Attr]):
         if isinstance(idx, int):
             new_shape = [shape[1:] for shape in shapes]
 
-        elif isinstance(idx, slice | NpArr | torch.Tensor):
+        elif isinstance(idx, slice | np.ndarray | torch.Tensor):
             new_shape = shapes[:]
 
         elif isinstance(idx, list) and all(isinstance(i, int) for i in idx):

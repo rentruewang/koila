@@ -9,7 +9,6 @@ from typing import Any, Literal, Self
 
 import numpy as np
 import torch
-from numpy import dtype as NumpyDType
 
 from aioway._tracking import ModuleApiTracker, logging
 
@@ -25,7 +24,7 @@ The DType strings family type.
 
 
 type _PrimitiveType = type[int] | type[float] | type[bool]
-type DTypeLike = str | DType | _PrimitiveType | torch.dtype | NumpyDType
+type DTypeLike = str | DType | _PrimitiveType | torch.dtype | np.dtype
 "Types that can be converted to `Dtype` with the public `dtype` function (or `DType.parse`)."
 
 
@@ -89,7 +88,7 @@ class DType:
         """
         return self._bits
 
-    def numpy(self) -> NumpyDType:
+    def numpy(self) -> np.dtype:
         "Convert this to a numpy dtype."
         return np.dtype(str(self))
 
@@ -136,7 +135,7 @@ class DType:
         if isinstance(dtype, torch.dtype):
             return cls._parse_torch(dtype)
 
-        if isinstance(dtype, NumpyDType):
+        if isinstance(dtype, np.dtype):
             return cls._parse_numpy(dtype)
 
         raise ValueError(f"Not sure how to handle {dtype=}.")
@@ -195,14 +194,14 @@ class DType:
         return cls(family=family, bits=bits)
 
     @classmethod
-    def _parse_numpy(cls, dtype: NumpyDType, /) -> Self:
+    def _parse_numpy(cls, dtype: np.dtype, /) -> Self:
         family = _parse_numpy_family(dtype)
         bits = _parse_numpy_bits(dtype, family)
 
         return cls(family=family, bits=bits)
 
 
-def _parse_numpy_family(dtype: NumpyDType, /) -> DTypeFamily:
+def _parse_numpy_family(dtype: np.dtype, /) -> DTypeFamily:
     "Create a `Dtype` from a `numpy.dtype`."
     if np.isdtype(dtype, "integral"):
         return "int"
@@ -216,7 +215,7 @@ def _parse_numpy_family(dtype: NumpyDType, /) -> DTypeFamily:
     raise ValueError(f"Cannot handle numpy {dtype=}.")
 
 
-def _parse_numpy_bits(dtype: NumpyDType, family: DTypeFamily, /):
+def _parse_numpy_bits(dtype: np.dtype, family: DTypeFamily, /):
     match family:
         case "bool":
             return 8
