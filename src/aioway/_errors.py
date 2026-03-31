@@ -3,8 +3,7 @@
 """User facing high level erros. Subclasses of `AiowayError`."""
 
 import contextlib as ctxl
-from types import ModuleType
-from typing import ClassVar
+import types
 
 __all__ = [
     "AiowayError",
@@ -51,7 +50,7 @@ class FrameworkUnexpected(AiowayError):
         where `trace` modifies the modules to do tracking.
     """
 
-    def __init__(self, module: ModuleType, *reasons: str) -> None:
+    def __init__(self, module: types.ModuleType, *reasons: str) -> None:
         self._module = module
         self._reasons = reasons
 
@@ -71,7 +70,9 @@ class GitHubTicketFiled(NotImplementedError):
     The ticket is filed on GitHub, when encountered, show the URL.
     """
 
-    REPO_URL: ClassVar[str] = "https://github.com/rentruewang/aioway"
+    import typing
+
+    REPO_URL: typing.ClassVar[str] = "https://github.com/rentruewang/aioway"
 
     def __init__(self, ticket: int = 0, /, *messages: str) -> None:
         super().__init__()

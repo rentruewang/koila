@@ -2,16 +2,16 @@
 
 import dataclasses as dcls
 
-from numpy.typing import NDArray
+from numpy import typing as npt
 
-from .indices import Index
+from . import indices
 
 __all__ = ["LexsortIndex"]
 
 
 @dcls.dataclass(frozen=True)
-class LexsortIndex(Index):
-    sorted_index: NDArray
+class LexsortIndex(indices.Index):
+    sorted_index: npt.NDArray
     """
     The 1D index for which
     """

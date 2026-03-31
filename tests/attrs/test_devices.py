@@ -2,9 +2,8 @@
 
 import pytest
 import torch
-from pytest import FixtureRequest
 
-from aioway.tensors import Device
+from aioway import tensors
 
 
 def _cpus():
@@ -13,14 +12,14 @@ def _cpus():
 
 
 @pytest.fixture(params=_cpus())
-def cpu(request: FixtureRequest):
-    return Device.parse(request.param)
+def cpu(request: pytest.FixtureRequest):
+    return tensors.Device.parse(request.param)
 
 
-def test_eq(cpu: Device):
+def test_eq(cpu: tensors.Device):
     assert cpu == "cpu"
-    assert cpu == Device.parse("cpu")
+    assert cpu == tensors.Device.parse("cpu")
 
 
-def test_no_fail(cpu: Device):
+def test_no_fail(cpu: tensors.Device):
     assert cpu != object()

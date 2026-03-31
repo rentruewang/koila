@@ -2,11 +2,11 @@
 
 import contextlib as ctxl
 import dataclasses as dcls
-from collections.abc import Callable
-from typing import TypeIs
+import typing
+from collections import abc as cabc
 
-from torch import Tensor
-from torch._subclasses import FakeTensor, FakeTensorMode
+import torch
+from torch import _subclasses as _S
 
 __all__ = ["enable", "enable_func", "is_fake_tensor", "is_real_tensor"]
 
@@ -17,7 +17,7 @@ class FakeModeRc:
     Do "reference counting" for fake mode.
     """
 
-    mode: FakeTensorMode = dcls.field(default_factory=FakeTensorMode)
+    mode: _S.FakeTensorMode = dcls.field(default_factory=_S.FakeTensorMode)
     "The fake mode instance that shall be entered."
 
     count: int = 0
@@ -43,9 +43,9 @@ class FakeModeRc:
 _FAKE_MODE = FakeModeRc()
 
 
-def to_fake_tensor(tensor: Tensor) -> FakeTensor:
+def to_fake_tensor(tensor: torch.Tensor) -> _S.FakeTensor:
     """
-    Move a possibly real tensor to a fake Tensor
+    Move a possibly real tensor to a fake torch.Tensor
     """
 
     if is_fake_tensor(tensor):
@@ -56,23 +56,23 @@ def to_fake_tensor(tensor: Tensor) -> FakeTensor:
         return converter.from_real_tensor(mode, tensor)
 
 
-def is_real_tensor(tensor: object) -> TypeIs[Tensor]:
+def is_real_tensor(tensor: object) -> typing.TypeIs[torch.Tensor]:
     """
     Detect if a tensor is a normal tensor.
     """
 
-    return isinstance(tensor, Tensor) and not is_fake_tensor(tensor)
+    return isinstance(tensor, torch.Tensor) and not is_fake_tensor(tensor)
 
 
-def is_fake_tensor(tensor: object) -> TypeIs[FakeTensor]:
+def is_fake_tensor(tensor: object) -> typing.TypeIs[_S.FakeTensor]:
     """
     Detect if a tensor is a fake tensor.
     """
 
-    return isinstance(tensor, FakeTensor)
+    return isinstance(tensor, _S.FakeTensor)
 
 
-def is_enabled() -> FakeTensorMode | None:
+def is_enabled() -> _S.FakeTensorMode | None:
     """
     Get the current fake mode, is available.
 
@@ -97,7 +97,7 @@ def enable():
         yield _FAKE_MODE.mode
 
 
-def enable_func[**P, T](func: Callable[P, T]) -> Callable[P, T]:
+def enable_func[**P, T](func: cabc.Callable[P, T]) -> cabc.Callable[P, T]:
     """
     Decorator on a function, s.t. when the function is being called, fake mode is enabled.
     """

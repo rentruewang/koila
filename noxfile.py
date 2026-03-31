@@ -5,23 +5,22 @@ import functools
 import os
 
 import nox
-from nox import Session
 
 
 @nox.session
-def publish(session: Session):
+def publish(session: nox.Session):
     "Nox `publish` command. Calls `pdm publish`."
     commands(session).publish()
 
 
 @nox.session
-def build(session: Session):
+def build(session: nox.Session):
     "Nox `build` command. Calls `pdm build`."
     commands(session).build()
 
 
 @nox.session
-def pre_commit(session: Session):
+def pre_commit(session: nox.Session):
     "Runs the pre-commit commands."
 
     formatting(session)
@@ -29,13 +28,13 @@ def pre_commit(session: Session):
 
 
 @nox.session
-def testing(session: Session):
+def testing(session: nox.Session):
     "Nox `testing` command. Calls `pytest` command. Runs in multiple python versions (if supported)."
     commands(session).test()
 
 
 @nox.session
-def formatting(session: Session):
+def formatting(session: nox.Session):
     "Nox `formatting` command. Calls `autoflake`, `isort`, `black`, in that order."
     autoflake(session)
     isort(session)
@@ -43,49 +42,49 @@ def formatting(session: Session):
 
 
 @nox.session
-def autoflake(session: Session):
+def autoflake(session: nox.Session):
     "Nox `autoflake` command. Calls `autoflake` command."
     commands(session).autoflake()
 
 
 @nox.session
-def isort(session: Session):
+def isort(session: nox.Session):
     "Nox `isort` command. Calls `isort` command."
     commands(session).isort()
 
 
 @nox.session
-def black(session: Session):
+def black(session: nox.Session):
     "Nox `black` command. Calls `black` command."
     commands(session).black()
 
 
 @nox.session
-def mypy(session: Session):
+def mypy(session: nox.Session):
     "Nox `mypy` command. Calls `mypy` command."
     commands(session).mypy()
 
 
 @nox.session
-def typing(session: Session):
+def typing(session: nox.Session):
     "Nox `typing` command. Calls `mypy` command."
     mypy(session)
 
 
 @functools.cache
-def github(session: Session):
+def github(session: nox.Session):
     "Global singleton for github."
     return _Github(session)
 
 
 @functools.cache
-def pdm(session: Session):
+def pdm(session: nox.Session):
     "Global singleton for pdm."
     return _Pdm(session)
 
 
 @functools.cache
-def commands(session: Session):
+def commands(session: nox.Session):
     "Global singleton for commands."
     return _Commands(session)
 
@@ -94,7 +93,7 @@ def commands(session: Session):
 class _Github:
     "The manager for setting up github."
 
-    session: Session
+    session: nox.Session
     "The nox session to use."
 
     @functools.cache
@@ -143,7 +142,7 @@ class _Github:
 
 @dcls.dataclass(frozen=True)
 class _Pdm:
-    session: Session
+    session: nox.Session
 
     def __post_init__(self):
         github(self.session).setup()
@@ -182,7 +181,7 @@ class _Pdm:
 
 @dcls.dataclass(frozen=True)
 class _Commands:
-    session: Session
+    session: nox.Session
 
     def __post_init__(self):
         github(self.session).setup()
@@ -220,5 +219,5 @@ class _Commands:
         return pdm(self.session)
 
 
-def _is_remote(session: Session):
+def _is_remote(session: nox.Session):
     return github(session).active()

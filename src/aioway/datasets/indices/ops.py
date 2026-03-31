@@ -3,7 +3,6 @@
 import abc
 import dataclasses as dcls
 import typing
-from abc import ABC
 
 __all__ = [
     "IndexPlan",
@@ -17,7 +16,7 @@ __all__ = [
 ]
 
 
-class IndexPlan(ABC):
+class IndexPlan(abc.ABC):
     """
     `IndexPlan` is the dynamic feature we would want to retrieve from an `Index`.
     """

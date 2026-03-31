@@ -2,14 +2,12 @@
 
 import dataclasses as dcls
 import typing
-from collections.abc import Iterator, Mapping
-from typing import NamedTuple
+from collections import abc as cabc
 
-from numpy.typing import NDArray
+from numpy import typing as npt
 
-from ..frames import Frame
-from .indices import Index
-from .ops import IndexPlan
+from .. import frames
+from . import indices, ops
 
 __all__ = ["MultiPlanIndex"]
 
@@ -25,32 +23,32 @@ class MultiPlanIndex:
 
     mgr: IndexManager
     columns: MultiCol
-    indices: dict[type[IndexPlan], Index]
+    indices: dict[type[ops.IndexPlan], indices.Index]
 
-    def __call__(self, op: IndexPlan, value: NDArray) -> NDArray:
+    def __call__(self, op: ops.IndexPlan, value: npt.NDArray) -> npt.NDArray:
         index = self.indices[type(op)]
         return index(op=op, value=value)
 
 
-class _ColTypeIndex(NamedTuple):
+class _ColTypeIndex(typing.NamedTuple):
     """
     A container storing columns, op types, and indices themselves.
     """
 
     cols: MultiCol
-    ops: type[IndexPlan]
-    idx: Index
+    ops: type[ops.IndexPlan]
+    idx: indices.Index
 
 
 @typing.final
 @dcls.dataclass(frozen=True)
-class IndexManager(Mapping[MultiCol, MultiPlanIndex]):
+class IndexManager(cabc.Mapping[MultiCol, MultiPlanIndex]):
     """
     The `IndexManager` class is acts as a dictionary,
     providing some additional utility to make the API easy to use.
     """
 
-    frame: Frame
+    frame: frames.Frame
     """
     The framem for which the `IndexManager` manages indices.
     """
@@ -60,7 +58,7 @@ class IndexManager(Mapping[MultiCol, MultiPlanIndex]):
     All the indices curerntly stored.
     """
 
-    def __iter__(self) -> Iterator[MultiCol]:
+    def __iter__(self) -> cabc.Iterator[MultiCol]:
         seen: set[MultiCol] = set()
 
         for cols, _, _ in self.indices:

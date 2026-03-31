@@ -5,11 +5,10 @@
 import contextlib as ctxl
 import dataclasses as dcls
 import logging
-from collections.abc import Callable
-from logging import Handler
-from typing import Literal
+import typing
+from collections import abc as cabc
 
-from rich.logging import RichHandler
+from rich import logging as rlogging
 
 from aioway import _common
 
@@ -17,7 +16,7 @@ __all__ = ["enable_log", "enable_rich_log", "Logger", "get_logger"]
 
 
 @ctxl.contextmanager
-def enable_log(level: str | int, /, *handlers: Handler):
+def enable_log(level: str | int, /, *handlers: logging.Handler):
     """
     Enable logging for the duration of the block package wide.
     """
@@ -44,11 +43,11 @@ def enable_rich_log(level: str | int, /):
     Enable logging for the duration of the block with rich handlers.
     """
 
-    with enable_log(level, RichHandler(show_path=False)) as logger:
+    with enable_log(level, rlogging.RichHandler(show_path=False)) as logger:
         yield logger
 
 
-type LoggingLevel = Literal[
+type LoggingLevel = typing.Literal[
     "NOTSET", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL", 0, 10, 20, 30, 40, 50
 ]
 "The accepted logging levels. Same as `logging` library."
@@ -98,7 +97,7 @@ class Logger:
     def __log_inputs_outputs(self, level: int):
         logger = self._logger
 
-        def decorator[**P, T](f: Callable[P, T]) -> Callable[P, T]:
+        def decorator[**P, T](f: cabc.Callable[P, T]) -> cabc.Callable[P, T]:
             # The actual wrapper wrapping the function.
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
                 # Here we assume that logging level is not changed for the duration for the module.
@@ -118,7 +117,7 @@ class Logger:
         return decorator
 
     @property
-    def _logger(self):
+    def _logger(self) -> logging.Logger:
         return logging.getLogger(self.module)
 
     @property
@@ -136,10 +135,10 @@ def get_logger(module: str, /) -> Logger:
 class _CallAndLog[**P, T]:
     "Also logs the input and output of the function."
 
-    log: Callable
+    log: cabc.Callable
     "The logger function."
 
-    func: Callable[P, T]
+    func: cabc.Callable[P, T]
 
     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> T:
         "Call and log."

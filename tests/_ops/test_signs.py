@@ -1,11 +1,10 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-from typing import Any
+import typing
 
 import pytest
-from pytest import FixtureRequest
 
-from aioway._signs import Signature, TypeList
+from aioway import _signs
 
 
 def _signature_str():
@@ -15,14 +14,14 @@ def _signature_str():
 
 
 @pytest.fixture(params=_signature_str())
-def signature(request: FixtureRequest):
-    return Signature.parse(request.param, int=int, float=float, bool=bool)
+def signature(request: pytest.FixtureRequest):
+    return _signs.Signature.parse(request.param, int=int, float=float, bool=bool)
 
 
-def test_signature_param(signature: Signature[Any]):
+def test_signature_param(signature: _signs.Signature[typing.Any]):
     assert len(signature.param_types) == 2
 
 
 @pytest.fixture
-def type_list() -> TypeList:
-    return TypeList(int, int, float)
+def type_list() -> _signs.TypeList:
+    return _signs.TypeList(int, int, float)

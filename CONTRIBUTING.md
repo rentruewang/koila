@@ -36,12 +36,7 @@ Both commands result in an editable installation.
 
 Please write code matching the style of the surrounding code.
 
-The code style in the project closely follows the recommended standard of python:
-
-1. [PEP8](https://peps.python.org/pep-0008/)
-2. Class imports are non-qualified (`from module.path import ClassName`), and do not use unqualified function names (however, upper case functions acting as classes are treated as classes, lower case classes are treated as functions).
-3. All other imports are qualified.
-4. Use of relative imports are preferred over absolute imports except in the case where the other module is **not** in the same top-level package (the relative '..package' dots does not cross over the top level).
+Otherwise, follow the following style guide that I personally use (by me): [link](https://github.com/rentruewang/mind/blob/main/py/CONTRIBUTING.md).
 
 ### Documentation
 

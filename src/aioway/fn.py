@@ -1,30 +1,27 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import abc
+import enum
 import functools
 import typing
-from abc import ABC
-from collections.abc import Iterator
-from enum import Enum
-from enum import auto as Auto
-from typing import Any, ClassVar
+from collections import abc as cabc
 
 from aioway import fake
 
 __all__ = ["Fn", "FnState"]
 
 
-class FnState(Enum):
+class FnState(enum.Enum):
     "The status of a `Later` object."
 
-    PENDING = Auto()
+    PENDING = enum.auto()
     "The object is pending evaluation."
 
-    EVALUATED = Auto()
+    EVALUATED = enum.auto()
     "The object is evaluated."
 
 
-class Fn[T](ABC):
+class Fn[T](abc.ABC):
     """
     `Fn`s represent computation that shall be done later.
 
@@ -35,7 +32,7 @@ class Fn[T](ABC):
     I was going to go for `Op` but it's used a lot in `torch`.
     """
 
-    __match_args__: ClassVar[tuple[str, ...]]
+    __match_args__: typing.ClassVar[tuple[str, ...]]
 
     def __init__(self) -> None:
         super().__init__()
@@ -86,7 +83,7 @@ class Fn[T](ABC):
         return not self.deps
 
     @abc.abstractmethod
-    def _deps(self) -> Iterator[Fn[Any]]:
+    def _deps(self) -> cabc.Iterator[Fn[typing.Any]]:
         """
         Return the depedent thunks.
         """

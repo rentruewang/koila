@@ -2,9 +2,7 @@
 
 import abc
 import typing
-from abc import ABC
-from collections.abc import KeysView
-from typing import Self
+from collections import abc as cabc
 
 from aioway._tracking import logging
 
@@ -13,7 +11,7 @@ __all__ = ["Symbol", "ColSymbol", "TableSymbol"]
 LOGGER = logging.get_logger(__name__)
 
 
-class Symbol(ABC):
+class Symbol(abc.ABC):
     """
     An (extended) projection operator that can be reprsented as an expression.
     """
@@ -26,108 +24,108 @@ class Symbol(ABC):
         return str
 
 
-class ColSymbol(Symbol, ABC):
+class ColSymbol(Symbol, abc.ABC):
     @abc.abstractmethod
     def __str__(self) -> str: ...
 
     @typing.final
     def __invert__(self):
-        from .ufuncs import InvColSymbol
+        from . import ufuncs
 
-        return InvColSymbol(self)
+        return ufuncs.InvColSymbol(self)
 
     @typing.final
     def __neg__(self):
-        from .ufuncs import NegColSymbol
+        from . import ufuncs
 
-        return NegColSymbol(self)
+        return ufuncs.NegColSymbol(self)
 
     @typing.final
     def __add__(self, other: ColSymbol):
-        from .ufuncs import AddColSymbol
+        from . import ufuncs
 
-        return AddColSymbol(self, other)
+        return ufuncs.AddColSymbol(self, other)
 
     @typing.final
     def __sub__(self, other: ColSymbol):
-        from .ufuncs import SubColSymbol
+        from . import ufuncs
 
-        return SubColSymbol(self, other)
+        return ufuncs.SubColSymbol(self, other)
 
     @typing.final
     def __mul__(self, other: ColSymbol):
-        from .ufuncs import MultColSymbol
+        from . import ufuncs
 
-        return MultColSymbol(self, other)
+        return ufuncs.MultColSymbol(self, other)
 
     @typing.final
     def __truediv__(self, other: ColSymbol):
-        from .ufuncs import TrueDivColSymbol
+        from . import ufuncs
 
-        return TrueDivColSymbol(self, other)
+        return ufuncs.TrueDivColSymbol(self, other)
 
     @typing.final
     def __floordiv__(self, other: ColSymbol):
-        from .ufuncs import FloorDivColSymbol
+        from . import ufuncs
 
-        return FloorDivColSymbol(self, other)
+        return ufuncs.FloorDivColSymbol(self, other)
 
     @typing.final
     def __pow__(self, other: ColSymbol):
-        from .ufuncs import ExpColSymbol
+        from . import ufuncs
 
-        return ExpColSymbol(self, other)
+        return ufuncs.ExpColSymbol(self, other)
 
     @typing.final
     def __eq__(self, other: object):
         if isinstance(other, ColSymbol):
-            from .ufuncs import EqColSymbol
+            from . import ufuncs
 
-            return EqColSymbol(self, other)
+            return ufuncs.EqColSymbol(self, other)
 
         return NotImplemented
 
     @typing.final
     def __ne__(self, other: object):
         if isinstance(other, ColSymbol):
-            from .ufuncs import NeColSymbol
+            from . import ufuncs
 
-            return NeColSymbol(self, other)
+            return ufuncs.NeColSymbol(self, other)
 
         return NotImplemented
 
     @typing.final
     def __gt__(self, other: ColSymbol):
-        from .ufuncs import GtColSymbol
+        from . import ufuncs
 
-        return GtColSymbol(self, other)
+        return ufuncs.GtColSymbol(self, other)
 
     @typing.final
     def __ge__(self, other: ColSymbol):
-        from .ufuncs import GeColSymbol
+        from . import ufuncs
 
-        return GeColSymbol(self, other)
+        return ufuncs.GeColSymbol(self, other)
 
     @typing.final
     def __lt__(self, other: ColSymbol):
-        from .ufuncs import LtColSymbol
+        from . import ufuncs
 
-        return LtColSymbol(self, other)
+        return ufuncs.LtColSymbol(self, other)
 
     @typing.final
     def __le__(self, other: ColSymbol):
-        from .ufuncs import LeColSymbol
+        from . import ufuncs
 
-        return LeColSymbol(self, other)
+        return ufuncs.LeColSymbol(self, other)
 
 
-class TableSymbol(Symbol, ABC):
+class TableSymbol(Symbol, abc.ABC):
 
     @typing.overload
     def __getitem__(self, key: str, /) -> ColSymbol: ...
 
     @typing.overload
-    def __getitem__(self, key: list[str], /) -> Self: ...
+    def __getitem__(self, key: list[str], /) -> typing.Self: ...
 
     def __getitem__(self, key, /):
         match key:
@@ -146,14 +144,14 @@ class TableSymbol(Symbol, ABC):
     def __str__(self) -> str: ...
 
     @abc.abstractmethod
-    def keys(self) -> KeysView[str]: ...
+    def keys(self) -> cabc.KeysView[str]: ...
 
     def column(self, key: str) -> ColSymbol:
-        from .getters import GetItemSymbol
+        from . import getters
 
-        return GetItemSymbol(table=self, column=key)
+        return getters.GetItemSymbol(table=self, column=key)
 
     def select(self, *keys: str) -> TableSymbol:
-        from .getters import SelectSymbol
+        from . import getters
 
-        return SelectSymbol(table=self, columns=keys)
+        return getters.SelectSymbol(table=self, columns=keys)

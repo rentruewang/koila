@@ -4,32 +4,30 @@
 
 import dataclasses as dcls
 import typing
-from collections.abc import Iterator, Mapping, Sequence
-from typing import Self, TypeGuard
+from collections import abc as cabc
 
 import tensordict
-from tensordict import TensorDict
-from torch import Size, Tensor
+import tensordict as td
+import torch
 
-from aioway import _typing
-from aioway._tensor_exprs import SourceTensorDictExpr
+from aioway import _tensor_exprs, _typing, tdicts
 from aioway._tracking import logging
-from aioway.tdicts import AttrSet, AttrSetLike, _validation
+from aioway.tdicts import _validation
 
-from ..vectors import Vector
+from .. import vectors
 
 __all__ = ["Chunk"]
 
 LOGGER = logging.get_logger(__name__)
 
 
-type TensorDictLike = TensorDict | dict[str, Tensor]
-type ChunkLike = Chunk | dict[str, Vector]
+type TensorDictLike = td.TensorDict | dict[str, torch.Tensor]
+type ChunkLike = Chunk | dict[str, vectors.Vector]
 
 
 @typing.final
 @dcls.dataclass(frozen=True)
-class Chunk(Mapping[str, Vector]):
+class Chunk(cabc.Mapping[str, vectors.Vector]):
     """
     A `Chunk` represents a batch of data, following a specific scheam.
 
@@ -37,10 +35,10 @@ class Chunk(Mapping[str, Vector]):
     This can change in the future.
     """
 
-    data: TensorDict
+    data: td.TensorDict
     "The underlying data."
 
-    attrs: AttrSet
+    attrs: tdicts.AttrSet
     "The schema for the `Chunk`."
 
     def __post_init__(self) -> None:
@@ -64,7 +62,7 @@ class Chunk(Mapping[str, Vector]):
             return self.attrs == rhs.attrs and (self.data == rhs.data).all()
 
         # If tensordict, don't compare schema.
-        if isinstance(rhs, dict | TensorDict):
+        if isinstance(rhs, dict | td.TensorDict):
             try:
                 return (self.data == rhs).all()
             except KeyError:
@@ -76,14 +74,14 @@ class Chunk(Mapping[str, Vector]):
         return self.expr()[key].compute()
 
     @typing.override
-    def __iter__(self) -> Iterator[str]:
+    def __iter__(self) -> cabc.Iterator[str]:
         return iter(self.attrs)
 
     def expr(self):
-        from .exprs import ChunkExpr
+        from . import exprs
 
-        return ChunkExpr(
-            tensordict=SourceTensorDictExpr(self.data),
+        return exprs.ChunkExpr(
+            tensordict=_tensor_exprs.SourceTensorDictExpr(self.data),
             attrs=self.attrs,
         )
 
@@ -103,11 +101,11 @@ class Chunk(Mapping[str, Vector]):
         return self.expr().rename(**renames).compute()
 
     @LOGGER.function("DEBUG")
-    def zip(self, rhs: Self):
+    def zip(self, rhs: typing.Self):
         return self.expr().zip(rhs).compute()
 
     @property
-    def shape(self) -> Size:
+    def shape(self) -> torch.Size:
         return self.data.shape
 
     def torch(self):
@@ -115,7 +113,7 @@ class Chunk(Mapping[str, Vector]):
 
     @classmethod
     @LOGGER.function("DEBUG")
-    def cat(cls, chunks: Sequence[Self]) -> Self:
+    def cat(cls, chunks: cabc.Sequence[typing.Self]) -> typing.Self:
         if not chunks:
             raise ValueError("Given an empty sequence. Not sure what to do.")
 
@@ -124,20 +122,22 @@ class Chunk(Mapping[str, Vector]):
 
         schema = chunks[0].attrs
 
-        data = tensordict.cat([c.data for c in chunks])
+        data = td.cat([c.data for c in chunks])
 
         return cls.from_data_schema(schema=schema, data=data)
 
     @classmethod
-    def from_data_schema(cls, data: TensorDictLike, schema: AttrSetLike) -> Self:
+    def from_data_schema(
+        cls, data: TensorDictLike, schema: tdicts.AttrSetLike
+    ) -> typing.Self:
         td = _as_tensordict(data)
         td.auto_batch_size_()
         td.auto_device_()
-        aset = AttrSet.parse(schema)
+        aset = tdicts.AttrSet.parse(schema)
         return cls(data=td, attrs=aset)
 
     @classmethod
-    def from_mapping(cls, chunk: ChunkLike) -> Self:
+    def from_mapping(cls, chunk: ChunkLike) -> typing.Self:
         if isinstance(chunk, cls):
             return chunk
 
@@ -149,18 +149,18 @@ class Chunk(Mapping[str, Vector]):
         raise TypeError(type(chunk))
 
 
-def _as_tensordict(data: TensorDictLike, /) -> TensorDict:
-    if isinstance(data, TensorDict):
+def _as_tensordict(data: TensorDictLike, /) -> td.TensorDict:
+    if isinstance(data, td.TensorDict):
         return data
 
-    _is_dict_of_tensor = _typing.is_dict_of_str_to(Tensor)
+    _is_dict_of_tensor = _typing.is_dict_of_str_to(torch.Tensor)
     if _is_dict_of_tensor(data):
-        return TensorDict(data)
+        return td.TensorDict(data)
 
     raise TypeError(type(data))
 
 
 @typing.no_type_check
-def _is_mapping_of_vector(obj) -> TypeGuard[dict[str, Vector]]:
+def _is_mapping_of_vector(obj) -> typing.TypeGuard[dict[str, vectors.Vector]]:
     # Wrapper function because `mypy` doesn't do well with abstract type guards.
-    return _typing.is_dict_of_str_to(Vector)(obj)
+    return _typing.is_dict_of_str_to(vectors.Vector)(obj)

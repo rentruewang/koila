@@ -6,14 +6,11 @@ import abc
 import dataclasses as dcls
 import functools
 import typing
-from abc import ABC
-from collections.abc import Iterator
-from typing import ClassVar, Self
+from collections import abc as cabc
 
-from aioway.chunks import Chunk
-from aioway.tdicts import AttrSet
+from aioway import chunks, tdicts
 
-from ..datasets import Dataset, DatasetViewTypes
+from .. import datasets
 
 __all__ = ["Stream", "StreamState", "Stream", "Stream", "Stream"]
 
@@ -45,7 +42,7 @@ class StreamState:
 
 
 @dcls.dataclass(frozen=True)
-class Stream(Iterator[Chunk], Dataset, ABC):
+class Stream(cabc.Iterator[chunks.Chunk], datasets.Dataset, abc.ABC):
     """
     `Stream` produces a stream of batches of data, in the form of `TensorDict`s,
     everytime `__next__` is called on it, a `TensorDict` is yielded.
@@ -54,13 +51,13 @@ class Stream(Iterator[Chunk], Dataset, ABC):
     it is an external iterator, supporting state inspection, simplifying debugging.
     """
 
-    __match_args__: ClassVar[tuple[str, ...]]
+    __match_args__: typing.ClassVar[tuple[str, ...]]
     """
     A `Stream` should be able to be decomposed with `match` statements.
     """
 
     @typing.override
-    def __iter__(self) -> Self:
+    def __iter__(self) -> typing.Self:
         """
         `__iter__` allows `Stream`s to be used in `for` loops.
 
@@ -71,7 +68,7 @@ class Stream(Iterator[Chunk], Dataset, ABC):
 
     @typing.final
     @typing.override
-    def __next__(self) -> Chunk:
+    def __next__(self) -> chunks.Chunk:
         """
         `__next__` allows `Stream`s to be used in `for` loops.
         """
@@ -94,7 +91,7 @@ class Stream(Iterator[Chunk], Dataset, ABC):
 
     @property
     @abc.abstractmethod
-    def attrs(self) -> AttrSet:
+    def attrs(self) -> tdicts.AttrSet:
         """
         The schema for the current `Stream`.
         """
@@ -102,9 +99,9 @@ class Stream(Iterator[Chunk], Dataset, ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def _next(self) -> Chunk:
+    def _next(self) -> chunks.Chunk:
         """
-        Compute the next batch (a `Chunk`).
+        Compute the next batch (a `chunks.Chunk`).
 
         An exception raised here would be translated to `StopIteration`.
 
@@ -154,6 +151,8 @@ class Stream(Iterator[Chunk], Dataset, ABC):
     @classmethod
     @typing.override
     def view_types(cls):
-        from .views import StreamColumnView, StreamSelectView
+        from . import views
 
-        return DatasetViewTypes(column=StreamColumnView, select=StreamSelectView)
+        return datasets.DatasetViewTypes(
+            column=views.StreamColumnView, select=views.StreamSelectView
+        )

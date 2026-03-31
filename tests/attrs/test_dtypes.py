@@ -1,28 +1,27 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import dataclasses as dcls
-from typing import Any
+import typing
 
 import numpy as np
 import pytest
 import torch
-from pytest import FixtureRequest
 
-from aioway.tensors import DType
+from aioway import tensors
 
 
 @dcls.dataclass(frozen=True)
 class _CaseChecker:
-    original: Any
+    original: typing.Any
     family: str
     bits: int
 
     @property
     def dtype(self):
-        return DType.parse(self.original)
+        return tensors.DType.parse(self.original)
 
     def check(self):
-        assert isinstance(self.dtype, DType)
+        assert isinstance(self.dtype, tensors.DType)
         assert self.dtype.family == self.family
         assert self.dtype.bits == self.bits
         assert self.dtype == self.original
@@ -68,7 +67,7 @@ def _dtypes():
 
 
 @pytest.fixture(params=_golden())
-def golden(request: FixtureRequest) -> _CaseChecker:
+def golden(request: pytest.FixtureRequest) -> _CaseChecker:
     return request.param
 
 

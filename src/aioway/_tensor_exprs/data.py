@@ -3,18 +3,16 @@
 "The 0-ary, 1-ary expressions."
 
 import typing
-from collections.abc import KeysView
-from typing import ClassVar
+from collections import abc as cabc
 
-from numpy.typing import NDArray
-from tensordict import TensorDict
-from torch import Tensor
+import tensordict as td
+import torch
+from numpy import typing as npt
 
-from aioway._signs import Signature
+from aioway import _signs
 from aioway._tracking import logging
 
-from . import _common
-from .exprs import TensorDictExpr, TensorExpr
+from . import _common, exprs
 
 __all__ = [
     "SourceTensorDictExpr",
@@ -28,8 +26,8 @@ LOGGER = logging.get_logger(__name__)
 
 
 @_common.expr_dcls
-class _SourceExpr[T: Tensor | TensorDict]:
-    _DATA_TYPE: ClassVar[type[T]]
+class _SourceExpr[T: torch.Tensor | td.TensorDict]:
+    _DATA_TYPE: typing.ClassVar[type[T]]
 
     __match_args__ = ()
 
@@ -47,7 +45,7 @@ class _SourceExpr[T: Tensor | TensorDict]:
 
     def _compute(self) -> T:
         with _common.TRACKER(
-            name="source", signature=Signature(self._DATA_TYPE, self._DATA_TYPE)
+            name="source", signature=_signs.Signature(self._DATA_TYPE, self._DATA_TYPE)
         ):
             return self.data
 
@@ -56,33 +54,35 @@ class _SourceExpr[T: Tensor | TensorDict]:
 
 
 @_common.expr_dcls
-class SourceTensorDictExpr(_SourceExpr[TensorDict], TensorDictExpr):
-    "The source expression for `TensorDict`."
+class SourceTensorDictExpr(_SourceExpr[td.TensorDict], exprs.TensorDictExpr):
+    "The source expression for `td.TensorDict`."
 
-    _DATA_TYPE = TensorDict
+    _DATA_TYPE = td.TensorDict
 
-    def keys(self) -> KeysView[str]:
+    def keys(self) -> cabc.KeysView[str]:
         return self.data.keys()
 
 
 @_common.expr_dcls
-class SourceTensorExpr(_SourceExpr[Tensor], TensorExpr):
-    "The source expression for `Tensor`."
+class SourceTensorExpr(_SourceExpr[torch.Tensor], exprs.TensorExpr):
+    "The source expression for `torch.Tensor`."
 
-    _DATA_TYPE = Tensor
+    _DATA_TYPE = torch.Tensor
 
 
 @_common.expr_dcls
-class ColumnTensorExpr(TensorExpr):
-    source: TensorDictExpr
+class ColumnTensorExpr(exprs.TensorExpr):
+    source: exprs.TensorDictExpr
 
     column: str
 
     @typing.no_type_check
-    def _compute(self) -> Tensor:
+    def _compute(self) -> torch.Tensor:
         pulled = self.source.compute()
 
-        with _common.TRACKER(name="column", signature=Signature(TensorDict, Tensor)):
+        with _common.TRACKER(
+            name="column", signature=_signs.Signature(td.TensorDict, torch.Tensor)
+        ):
             return pulled[self.column]
 
     def _inputs(self):
@@ -90,20 +90,21 @@ class ColumnTensorExpr(TensorExpr):
 
 
 @_common.expr_dcls
-class _GetItemTensorExpr[T](TensorDictExpr):
-    source: TensorDictExpr
+class _GetItemTensorExpr[T](exprs.TensorDictExpr):
+    source: exprs.TensorDictExpr
 
     index: T
 
-    def keys(self) -> KeysView[str]:
+    def keys(self) -> cabc.KeysView[str]:
         return self.source.keys()
 
     @typing.no_type_check
-    def _compute(self) -> TensorDict:
+    def _compute(self) -> td.TensorDict:
         pulled = self.source.compute()
 
         with _common.TRACKER(
-            name="__getitem__", signature=Signature(TensorDict, type(self.index))
+            name="__getitem__",
+            signature=_signs.Signature(td.TensorDict, type(self.index)),
         ):
             return pulled[self.index]
 
@@ -112,13 +113,13 @@ class _GetItemTensorExpr[T](TensorDictExpr):
 
 
 @_common.expr_dcls
-class ItemTensorDictExpr(_GetItemTensorExpr[int], TensorDictExpr): ...
+class ItemTensorDictExpr(_GetItemTensorExpr[int], exprs.TensorDictExpr): ...
 
 
-type BatchIndex = list[int] | slice | NDArray | Tensor
+type BatchIndex = list[int] | slice | npt.NDArray | torch.Tensor
 
 
 @_common.expr_dcls
-class BatchTensorDictExpr(_GetItemTensorExpr[BatchIndex], TensorDictExpr):
-    def keys(self) -> KeysView[str]:
+class BatchTensorDictExpr(_GetItemTensorExpr[BatchIndex], exprs.TensorDictExpr):
+    def keys(self) -> cabc.KeysView[str]:
         return self.source.keys()

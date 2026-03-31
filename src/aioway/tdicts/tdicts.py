@@ -2,29 +2,25 @@
 
 import abc
 import typing
-from abc import ABC
-from collections.abc import Iterator, Mapping
-from typing import Any
+from collections import abc as cabc
 
-from tensordict import TensorDict
+import tensordict as td
 
-from aioway import _typing, fake
-from aioway.fn import Fn
-from aioway.tensors.fn import TensorFn
+from aioway import _typing, fake, fn, tensors
 
-from .attrs import AttrSet
+from . import attrs
 
 __all__ = ["TensorDictFn", "tdict"]
 
 
-class TensorDictFn(Fn[TensorDict], Mapping[str, TensorFn], ABC):
+class TensorDictFn(fn.Fn[td.TensorDict], cabc.Mapping[str, tensors.TensorFn], abc.ABC):
     def __init__(self) -> None:
         super().__init__()
         assert all(fake.is_fake_tensor(tensor) for tensor in self._fake_result.values())
-        self.__attrs = AttrSet.from_tensordict(self._fake_result)
+        self.__attrs = attrs.AttrSet.from_tensordict(self._fake_result)
 
     @typing.overload
-    def __getitem__(self, key: str) -> TensorFn: ...
+    def __getitem__(self, key: str) -> tensors.TensorFn: ...
 
     @typing.overload
     def __getitem__(self, key: list[str]) -> TensorDictFn: ...
@@ -32,14 +28,14 @@ class TensorDictFn(Fn[TensorDict], Mapping[str, TensorFn], ABC):
     @typing.no_type_check
     def __getitem__(self, key):
         if isinstance(key, str):
-            from ._selections import GetItemFn
+            from . import _selections
 
-            return GetItemFn(self, key)
+            return _selections.GetItemFn(self, key)
 
         if _typing.is_list_of(str)(key):
-            from ._selections import SelectFn
+            from . import _selections
 
-            return SelectFn(self, key)
+            return _selections.SelectFn(self, key)
 
         raise TypeError(f"Does not handle {type(key)=}.")
 
@@ -64,7 +60,7 @@ class TensorDictFn(Fn[TensorDict], Mapping[str, TensorFn], ABC):
 
     @abc.abstractmethod
     @typing.override
-    def _deps(self) -> Iterator[Fn[Any]]:
+    def _deps(self) -> cabc.Iterator[fn.Fn[typing.Any]]:
         raise NotImplementedError
 
     @property
@@ -72,17 +68,17 @@ class TensorDictFn(Fn[TensorDict], Mapping[str, TensorFn], ABC):
         return self.__attrs
 
     @classmethod
-    def from_tensordict(cls, data: TensorDict) -> TensorDictFn:
-        from ._data import TensorDictDataFn
+    def from_tensordict(cls, data: td.TensorDict) -> TensorDictFn:
+        from . import _data
 
-        return TensorDictDataFn(data)
+        return _data.TensorDictDataFn(data)
 
 
-def tdict(item: TensorDictFn | TensorDict) -> TensorDictFn:
+def tdict(item: TensorDictFn | td.TensorDict) -> TensorDictFn:
     if isinstance(item, TensorDictFn):
         return item
 
-    if isinstance(item, TensorDict):
+    if isinstance(item, td.TensorDict):
         return TensorDictFn.from_tensordict(item)
 
     raise TypeError(f"Do not know how to handle {type(item)=}.")

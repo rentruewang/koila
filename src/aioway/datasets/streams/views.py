@@ -1,52 +1,53 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-"`StreamColumn`s are a column of `Stream`."
+"`StreamColumn`s are a column of `streams.Stream`."
 
 import dataclasses as dcls
 import typing
-from collections.abc import Iterator
-from typing import Self
+from collections import abc as cabc
 
-from aioway.chunks import Chunk, Vector
+from aioway import chunks
 
-from ..datasets import DatasetColumnView, DatasetSelectView
-from .streams import Stream
+from .. import datasets
+from . import streams
 
 __all__ = ["StreamColumnView", "StreamSelectView"]
 
 
 @dcls.dataclass(frozen=True)
-class StreamColumnView(Iterator[Vector], DatasetColumnView[Stream]):
+class StreamColumnView(
+    cabc.Iterator[chunks.Vector], datasets.DatasetColumnView[streams.Stream]
+):
     """
     A column reference (on a stream).
-    Performs `__next__` and yield `Vector`s.
+    Performs `__next__` and yield `chunks.Vector`s.
     """
 
-    def __iter__(self) -> Self:
+    def __iter__(self) -> typing.Self:
         return self
 
-    def __next__(self) -> Vector:
+    def __next__(self) -> chunks.Vector:
         batch = next(self.dset)
         return batch[self.col]
 
     @classmethod
-    def from_column(cls, dataset: Stream, /, column: str) -> Self:
+    def from_column(cls, dataset: streams.Stream, /, column: str) -> typing.Self:
         return cls(col=column, dset=dataset)
 
 
 @dcls.dataclass(frozen=True)
-class StreamSelectView(DatasetSelectView[Stream], Stream):
+class StreamSelectView(datasets.DatasetSelectView[streams.Stream], streams.Stream):
     """
-    The view generated when calling `Stream.select`.
+    The view generated when calling `streams.Stream.select`.
     """
 
     COLUMN_TYPE = StreamColumnView
 
-    def __iter__(self) -> Self:
+    def __iter__(self) -> typing.Self:
         return self
 
     @typing.override
-    def _next(self) -> Chunk:
+    def _next(self) -> chunks.Chunk:
         batch = next(self.dset)
         return batch.select(*self.cols)
 
@@ -60,5 +61,5 @@ class StreamSelectView(DatasetSelectView[Stream], Stream):
         return (self.dset,)
 
     @classmethod
-    def from_columns(cls, dataset: Stream, /, *columns: str) -> Self:
+    def from_columns(cls, dataset: streams.Stream, /, *columns: str) -> typing.Self:
         return cls(dset=dataset, cols=columns)

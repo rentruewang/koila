@@ -1,20 +1,17 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-"The `Stream`s that apply a transformation on the input `Stream`."
+"The `streams.Stream`s that apply a transformation on the input `streams.Stream`."
 
 import abc
 import dataclasses as dcls
 import typing
-from abc import ABC
-from collections.abc import Callable
+from collections import abc as cabc
 
 import torch
-from torch import Tensor
 
-from aioway.chunks import Chunk
-from aioway.tdicts import AttrSet
+from aioway import chunks, tdicts
 
-from .streams import Stream
+from . import streams
 
 __all__ = [
     "MapStream",
@@ -26,9 +23,9 @@ __all__ = [
 
 
 @dcls.dataclass(frozen=True)
-class MapStream(Stream, ABC):
+class MapStream(streams.Stream, abc.ABC):
     """
-    The shared base class for all the `map` like `Stream`s,
+    The shared base class for all the `map` like `streams.Stream`s,
     which share the trait of::
 
         #. Having 1 child, named `source`.
@@ -43,15 +40,15 @@ class MapStream(Stream, ABC):
         where each input row can correspond to one or multiple or 0 rows, in the same minibatch.
     """
 
-    source: Stream
+    source: streams.Stream
     """
     The source stream that will be yielded from.
     """
 
     def __post_init__(self):
-        if not isinstance(self.source, Stream):
+        if not isinstance(self.source, streams.Stream):
             raise ValueError(
-                f"{self.source=} should have been a `Stream`. Got {type(self.source)=}"
+                f"{self.source=} should have been a `streams.Stream`. Got {type(self.source)=}"
             )
 
     @property
@@ -62,16 +59,16 @@ class MapStream(Stream, ABC):
         return self.source.size
 
     @abc.abstractmethod
-    def _apply(self, batch: Chunk) -> Chunk:
+    def _apply(self, batch: chunks.Chunk) -> chunks.Chunk:
         """
         The protected method that subclass should overwrite.
         This method will define how each batch is processed.
 
         Args:
-            batch: The batch to handle. Will be a `Chunk`.
+            batch: The batch to handle. Will be a `chunks.Chunk`.
 
         Returns:
-            Another `Chunk`. Does not need to have the same `__len__` to the input.
+            Another `chunks.Chunk`. Does not need to have the same `__len__` to the input.
             See class docstring for more details.
         """
 
@@ -79,8 +76,8 @@ class MapStream(Stream, ABC):
 
     @typing.override
     @typing.final
-    def _next(self) -> Chunk:
-        # A `map` kind of `Stream` always calls `next` once on its source.
+    def _next(self) -> chunks.Chunk:
+        # A `map` kind of `streams.Stream` always calls `next` once on its source.
         # May raise `StopIteration` here.
         next_batch = next(self.source)
         return self._apply(next_batch)
@@ -94,7 +91,7 @@ class MapStream(Stream, ABC):
 @dcls.dataclass(frozen=True)
 class ApplyStream(MapStream):
     """
-    A `Stream` that you can customize what the `__next__` function do.
+    A `streams.Stream` that you can customize what the `__next__` function do.
 
     The full loop would be something like:
 
@@ -104,30 +101,30 @@ class ApplyStream(MapStream):
             yield self.apply(batch)
     """
 
-    apply: Callable[[Chunk], Chunk]
+    apply: cabc.Callable[[chunks.Chunk], chunks.Chunk]
     """
     Compute the output of `__next__` based on the input.
     """
 
-    schema: Callable[[AttrSet], AttrSet]
+    schema: cabc.Callable[[tdicts.AttrSet], tdicts.AttrSet]
 
     @typing.override
-    def _apply(self, batch: Chunk) -> Chunk:
+    def _apply(self, batch: chunks.Chunk) -> chunks.Chunk:
         return self.apply(batch)
 
     @property
     @typing.override
-    def attrs(self) -> AttrSet:
+    def attrs(self) -> tdicts.AttrSet:
         return self.schema(self.source.attrs)
 
 
 @dcls.dataclass(frozen=True)
 class FuncFilterStream(MapStream):
     """
-    A `Stream` that filteres on its inputs, based on a preducate function.
+    A `streams.Stream` that filteres on its inputs, based on a preducate function.
 
     The input is being used to generate predicate,
-    and the output of predicate must be a boolean `Tensor` of the same length as the input.
+    and the output of predicate must be a boolean `torch.Tensor` of the same length as the input.
 
     .. code-block:: python
 
@@ -135,23 +132,25 @@ class FuncFilterStream(MapStream):
             yield batch[self.predicate(batch)]
     """
 
-    predicate: Callable[[Chunk], Tensor]
+    predicate: cabc.Callable[[chunks.Chunk], torch.Tensor]
     """
-    A function of `Chunk -> Tensor`.
+    A function of `chunks.Chunk -> torch.Tensor`.
     """
 
     @typing.override
-    def _apply(self, batch: Chunk) -> Chunk:
+    def _apply(self, batch: chunks.Chunk) -> chunks.Chunk:
         pred = self.predicate(batch)
 
         if pred.dtype is not torch.bool:
-            raise ValueError(f"Should return a boolean `Tensor`. Got {pred.dtype}.")
+            raise ValueError(
+                f"Should return a boolean `torch.Tensor`. Got {pred.dtype}."
+            )
 
         return batch[pred]
 
     @property
     @typing.override
-    def attrs(self) -> AttrSet:
+    def attrs(self) -> tdicts.AttrSet:
         return self.source.attrs
 
 
@@ -167,12 +166,12 @@ class ProjectStream(MapStream):
     """
 
     @typing.override
-    def _apply(self, batch: Chunk) -> Chunk:
+    def _apply(self, batch: chunks.Chunk) -> chunks.Chunk:
         return batch[self.subset]
 
     @property
     @typing.override
-    def attrs(self) -> AttrSet:
+    def attrs(self) -> tdicts.AttrSet:
         return self.source.attrs.select(*self.subset)
 
 
@@ -188,10 +187,10 @@ class RenameStream(MapStream):
     """
 
     @typing.override
-    def _apply(self, batch: Chunk) -> Chunk:
+    def _apply(self, batch: chunks.Chunk) -> chunks.Chunk:
         return batch.rename(**self.renames)
 
     @property
     @typing.override
-    def attrs(self) -> AttrSet:
+    def attrs(self) -> tdicts.AttrSet:
         return self.source.attrs.rename(**self.renames)

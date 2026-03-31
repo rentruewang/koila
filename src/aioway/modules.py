@@ -3,22 +3,20 @@
 "The preview module protocol definition."
 
 import functools
-from collections.abc import Callable
+from collections import abc as cabc
 
-from torch import Tensor
-from torch.nn import Module as NnModule
+import torch
+from torch import nn
 
-from aioway import fake
-from aioway._signs import Signature
-from aioway._tracking import ModuleApiTracker, logging
-from aioway.tensors import Attr
+from aioway import _signs, _tracking, fake, tensors
+from aioway._tracking import logging
 
 __all__ = ["Module"]
 
 LOGGER = logging.get_logger(__name__)
 
 
-class Module[**P, T: NnModule]:
+class Module[**P, T: nn.Module]:
     """
     Preview informs us how an `nn.Module` would be behave without initializing it.
 
@@ -29,7 +27,7 @@ class Module[**P, T: NnModule]:
     """
 
     def __init__(
-        self, nn: Callable[P, T], /, *args: P.args, **kwargs: P.kwargs
+        self, nn: cabc.Callable[P, T], /, *args: P.args, **kwargs: P.kwargs
     ) -> None:
         self._module = nn
         self._args = args
@@ -44,31 +42,31 @@ class Module[**P, T: NnModule]:
     def real_module(self) -> T:
         return self._module(*self._args, **self._kwargs)
 
-    def preview(self, attr: Attr, /) -> Attr:
+    def preview(self, attr: tensors.Attr, /) -> tensors.Attr:
         """
         Transforms the input attribute into an attribute describing the output.
 
-        Returns `NotImplemented` when the input `Attr` is incompatible (usually device and dtype).
+        Returns `NotImplemented` when the input `tensors.Attr` is incompatible (usually device and dtype).
         """
 
-        with self._tracker()("preview", Signature(Attr, Attr)):
+        with self._tracker()("preview", _signs.Signature(tensors.Attr, tensors.Attr)):
             return self._preview(attr)
 
     @fake.enable_func
-    def _preview(self, attr: Attr) -> Attr:
+    def _preview(self, attr: tensors.Attr) -> tensors.Attr:
         tensor = attr.to_tensor()
-        result: Tensor = self.fake_module(tensor)
+        result: torch.Tensor = self.fake_module(tensor)
         assert fake.is_fake_tensor(result), "Function is running under fake mode."
-        return Attr.from_tensor(result)
+        return tensors.Attr.from_tensor(result)
 
-    def forward(self, tensor: Tensor) -> Tensor:
+    def forward(self, tensor: torch.Tensor) -> torch.Tensor:
         """
         Do a forward pass on the input `tensor`.
         """
 
-        with self._tracker()("forward", Signature(Tensor, Tensor)):
+        with self._tracker()("forward", _signs.Signature(torch.Tensor, torch.Tensor)):
             return self.real_module(tensor)
 
     @classmethod
-    def _tracker(cls) -> ModuleApiTracker:
-        return ModuleApiTracker(lambda: cls)
+    def _tracker(cls):
+        return _tracking.get_tracker(lambda: cls)

@@ -4,18 +4,17 @@
 
 import dataclasses as dcls
 import typing
-from typing import Any
 
-from torch import Tensor
+import torch
 
-from aioway._tracking import ModuleApiTracker
+from aioway import _tracking
 
 __all__ = ["expr_dcls", "TRACKER"]
 
-TRACKER = ModuleApiTracker(lambda: Tensor)
+TRACKER = _tracking.get_tracker(lambda: torch.Tensor)
 
 
 @typing.dataclass_transform(eq_default=False)
 def expr_dcls[T](cls: T) -> T:
-    dataclass: Any = dcls.dataclass
+    dataclass: typing.Any = dcls.dataclass
     return dataclass(match_args=False, eq=False, repr=False)(cls)

@@ -2,10 +2,9 @@
 
 import dataclasses as dcls
 import typing
-from collections.abc import Callable
+from collections import abc as cabc
 
 import lark
-from lark import Lark, Transformer
 
 from aioway._tracking import logging
 
@@ -24,8 +23,8 @@ def lark_transformer_dcls(cls):
 
 
 def parse_and_transform_later(
-    parser: Callable[[], Lark],
-    transformer: Callable[[dict[str, type]], Transformer],
+    parser: cabc.Callable[[], lark.Lark],
+    transformer: cabc.Callable[[dict[str, type]], lark.Transformer],
     text: str,
 ):
     def do_transform(**types: type):

@@ -2,20 +2,19 @@
 
 
 import pytest
-from tensordict import TensorDict
+import tensordict as td
 
-from aioway.tdicts import TensorDictFn
-from aioway.tensors import TensorFn
+from aioway import tdicts, tensors
 
 
 @pytest.fixture
 def tdict():
-    return TensorDict({"a": [1, 2, 3], "b": [4, 5, 6]}).auto_batch_size_()
+    return td.TensorDict({"a": [1, 2, 3], "b": [4, 5, 6]}).auto_batch_size_()
 
 
 @pytest.fixture
-def tdict_fn(tdict: TensorDict):
-    return TensorDictFn.from_tensordict(tdict)
+def tdict_fn(tdict: td.TensorDict):
+    return tdicts.TensorDictFn.from_tensordict(tdict)
 
 
 def _select_keys():
@@ -30,19 +29,21 @@ def select_keys(request):
     return request.param
 
 
-def test_select(tdict_fn: TensorDictFn, tdict: TensorDict, select_keys: list[str]):
+def test_select(
+    tdict_fn: tdicts.TensorDictFn, tdict: td.TensorDict, select_keys: list[str]
+):
     result = tdict_fn[select_keys].do()
     assert (result == tdict.select(*select_keys)).all()
 
 
-def test_keys(tdict_fn: TensorDictFn):
+def test_keys(tdict_fn: tdicts.TensorDictFn):
     assert set(tdict_fn.keys()) == {"a", "b"}
 
 
-def test_getitem(tdict_fn: TensorDictFn):
-    assert isinstance(tdict_fn["a"], TensorFn)
+def test_getitem(tdict_fn: tdicts.TensorDictFn):
+    assert isinstance(tdict_fn["a"], tensors.TensorFn)
 
 
-def test_getitem_fail(tdict_fn: TensorDictFn):
+def test_getitem_fail(tdict_fn: tdicts.TensorDictFn):
     with pytest.raises(KeyError):
         tdict_fn["g"]

@@ -4,33 +4,32 @@
 
 import typing
 
-from torch import Tensor
+import torch
 
-from aioway._signs import Signature
+from aioway import _signs
 
-from . import _common
-from .exprs import TensorExpr
+from . import _common, exprs
 
 __all__ = ["GatherTensorExpr"]
 
 
-_TENSOR_BINOP = Signature(Tensor, Tensor, Tensor)
+_TENSOR_BINOP = _signs.Signature(torch.Tensor, torch.Tensor, torch.Tensor)
 
 
 @typing.final
 @_common.expr_dcls
-class GatherTensorExpr(TensorExpr):
+class GatherTensorExpr(exprs.TensorExpr):
     """
     The tensor that supports `__getitem__`.
     """
 
     __match_args__ = "tensor", "index"
 
-    tensor: TensorExpr
+    tensor: exprs.TensorExpr
 
-    index: TensorExpr
+    index: exprs.TensorExpr
 
-    def _compute(self) -> Tensor:
+    def _compute(self) -> torch.Tensor:
         tensor = self.tensor.compute()
         index = self.index.compute()
 
@@ -43,14 +42,14 @@ class GatherTensorExpr(TensorExpr):
 
 @typing.final
 @_common.expr_dcls
-class StaticArrayGatherTensorExpr(TensorExpr):
+class StaticArrayGatherTensorExpr(exprs.TensorExpr):
     __match_args__ = "tensor", "index"
 
-    tensor: Tensor
+    tensor: torch.Tensor
 
-    index: TensorExpr
+    index: exprs.TensorExpr
 
-    def _compute(self) -> Tensor:
+    def _compute(self) -> torch.Tensor:
         tensor = self.tensor
         index = self.index.compute()
 
@@ -63,14 +62,14 @@ class StaticArrayGatherTensorExpr(TensorExpr):
 
 @typing.final
 @_common.expr_dcls
-class StaticIndexGatherTensorExpr(TensorExpr):
+class StaticIndexGatherTensorExpr(exprs.TensorExpr):
     __match_args__ = "tensor", "index"
 
-    tensor: TensorExpr
+    tensor: exprs.TensorExpr
 
-    index: int | slice | Tensor
+    index: int | slice | torch.Tensor
 
-    def _compute(self) -> Tensor:
+    def _compute(self) -> torch.Tensor:
         tensor = self.tensor.compute()
         index = self.index
 

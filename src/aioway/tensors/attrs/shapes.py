@@ -2,27 +2,25 @@
 
 import dataclasses as dcls
 import typing
-from collections.abc import Iterable, Iterator, Sequence
-from typing import Self
+from collections import abc as cabc
 
 import numpy as np
-from numpy import ndarray as _NumpyNDArray
-from numpy.typing import NDArray
-from torch import Size
+import torch
+from numpy import typing as npt
 
-from aioway import _typing
-from aioway._tracking import ModuleApiTracker, logging
+from aioway import _tracking, _typing
+from aioway._tracking import logging
 
 __all__ = ["ShapeLike", "Shape"]
 
 LOGGER = logging.get_logger(__name__)
-TRACKER = ModuleApiTracker(lambda: Shape)
+TRACKER = _tracking.get_tracker(lambda: Shape)
 
 type _PrimitiveNumber = float | int | bool
-type _IntArrayLike = tuple[int, ...] | list[int] | NDArray[np.int_]
-type ShapeCmpType = Shape | Size | _IntArrayLike | _PrimitiveNumber
+type _IntArrayLike = tuple[int, ...] | list[int] | npt.NDArray[np.int_]
+type ShapeCmpType = Shape | torch.Size | _IntArrayLike | _PrimitiveNumber
 
-type ShapeLike = int | Iterable[int] | Shape
+type ShapeLike = int | cabc.Iterable[int] | Shape
 "Types convertible to `Shape`s. Note that `int` can be converted as well."
 
 
@@ -31,7 +29,7 @@ _is_list_of_int = _typing.is_list_of(int)
 
 
 @dcls.dataclass(frozen=True)
-class Shape(Sequence[int]):
+class Shape(cabc.Sequence[int]):
     """
     `Shape` represents a regular (non-jagged) array's dimensions,
     must be a `tuple` like object, and `tuple` would be used on it.
@@ -68,11 +66,11 @@ class Shape(Sequence[int]):
         if isinstance(other, Shape):
             return self.dims == other.dims
 
-        if isinstance(other, Size):
+        if isinstance(other, torch.Size):
             return other == self.dims
 
         # Do the numpy check first as `isinstance` is cheaper than the following ones.
-        if isinstance(other, _NumpyNDArray):
+        if isinstance(other, np.ndarray):
             arr = np.array(self)
             return arr.ndim == other.ndim and np.all(arr == other).item()
 
@@ -89,7 +87,7 @@ class Shape(Sequence[int]):
     def __getitem__(self, idx: int) -> int: ...
 
     @typing.overload
-    def __getitem__(self, idx: slice) -> Self: ...
+    def __getitem__(self, idx: slice) -> typing.Self: ...
 
     @typing.override
     def __getitem__(self, idx):
@@ -102,10 +100,10 @@ class Shape(Sequence[int]):
                 raise TypeError(type(idx))
 
     @typing.override
-    def __iter__(self) -> Iterator[int]:
+    def __iter__(self) -> cabc.Iterator[int]:
         return iter(self.dims)
 
-    def __array__(self) -> NDArray:
+    def __array__(self) -> npt.NDArray:
         return np.array(self.dims)
 
     def concrete(self) -> tuple[int, ...]:
@@ -166,14 +164,14 @@ class Shape(Sequence[int]):
 
     @typing.overload
     @classmethod
-    def parse(cls, *dims: int) -> Self: ...
+    def parse(cls, *dims: int) -> typing.Self: ...
 
     @typing.overload
     @classmethod
-    def parse(cls, dim: ShapeLike, /) -> Self: ...
+    def parse(cls, dim: ShapeLike, /) -> typing.Self: ...
 
     @classmethod
-    def parse(cls, *dims) -> Self:
+    def parse(cls, *dims) -> typing.Self:
         """
         Convenience constructor for `Shape`.
 
@@ -198,13 +196,13 @@ class Shape(Sequence[int]):
             raise ValueError(*dims)
 
     @classmethod
-    def _shape(cls, dims) -> Self:
+    def _shape(cls, dims) -> typing.Self:
         "Try converting dims to `Shape`, raise `ValueError` on failure."
 
         if isinstance(dims, cls):
             return dims
 
-        if isinstance(dims, Iterable):
+        if isinstance(dims, cabc.Iterable):
             dims_tuple = tuple(dims)
 
             if _is_tuple_of_int(dims_tuple):

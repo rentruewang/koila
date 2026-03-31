@@ -1,24 +1,20 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import typing
-from collections.abc import Iterator
+from collections import abc as cabc
 
-from torch import Tensor
-from torch._tensor import Tensor
+import torch
 
-from aioway import _common, fake
-from aioway.fn import Fn
-
-from .fn import TensorFn
+from aioway import _common, fake, fn, tensors
 
 __all__ = ["TensorDataFn"]
 
 
 @_common.dcls_no_eq
-class TensorDataFn(TensorFn):
-    "The `Fn` representing a plain `Tensor`."
+class TensorDataFn(tensors.TensorFn):
+    "The `fn.Fn` representing a plain `torch.Tensor`."
 
-    data: Tensor
+    data: torch.Tensor
 
     def __post_init__(self) -> None:
         super().__init__()
@@ -36,6 +32,6 @@ class TensorDataFn(TensorFn):
             return self.data
 
     @typing.override
-    def _deps(self) -> Iterator[Fn[Tensor]]:
+    def _deps(self) -> cabc.Iterator[fn.Fn[torch.Tensor]]:
         return
         yield

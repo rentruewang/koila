@@ -4,28 +4,27 @@
 
 import functools
 import re
-from typing import Any, Literal, Self
+import typing
 
 import numpy as np
 import torch
-from numpy import dtype as NumpyDType
-from torch import dtype as TorchDType
 
-from aioway._tracking import ModuleApiTracker, logging
+from aioway import _tracking
+from aioway._tracking import logging
 
 __all__ = ["DType", "DTypeLike"]
 
 LOGGER = logging.get_logger(__name__)
-TRACKER = ModuleApiTracker(lambda: DType)
+TRACKER = _tracking.get_tracker(lambda: DType)
 
-type DTypeFamily = Literal["int", "float", "bool"]
+type DTypeFamily = typing.Literal["int", "float", "bool"]
 """
 The DType strings family type.
 """
 
 
 type _PrimitiveType = type[int] | type[float] | type[bool]
-type DTypeLike = str | DType | _PrimitiveType | TorchDType | NumpyDType
+type DTypeLike = str | DType | _PrimitiveType | torch.dtype | np.dtype
 "Types that can be converted to `Dtype` with the public `dtype` function (or `DType.parse`)."
 
 
@@ -65,7 +64,7 @@ class DType:
     def __repr__(self) -> str:
         return str(self)
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: typing.Any) -> bool:
         try:
             parsed = self.parse(other)
         except ValueError:
@@ -89,15 +88,15 @@ class DType:
         """
         return self._bits
 
-    def numpy(self) -> NumpyDType:
+    def numpy(self) -> np.dtype:
         "Convert this to a numpy dtype."
         return np.dtype(str(self))
 
-    def torch(self) -> TorchDType:
+    def torch(self) -> torch.dtype:
         "Convert this to a torch dtype."
         return getattr(torch, str(self))
 
-    def broadcast(self, other: DTypeLike) -> Self:
+    def broadcast(self, other: DTypeLike) -> typing.Self:
         try:
             rhs = DType.parse(other)
         except ValueError:
@@ -110,11 +109,11 @@ class DType:
         return self.parse(promoted)
 
     @classmethod
-    def boolean(cls) -> Self:
+    def boolean(cls) -> typing.Self:
         return cls(family="bool", bits=8)
 
     @classmethod
-    def parse(cls, dtype: DTypeLike) -> Self:
+    def parse(cls, dtype: DTypeLike) -> typing.Self:
         """
         The convenient wrapper to create a `DType` from compatible types.
 
@@ -133,16 +132,16 @@ class DType:
         if isinstance(dtype, str):
             return cls._parse_regex(dtype)
 
-        if isinstance(dtype, TorchDType):
+        if isinstance(dtype, torch.dtype):
             return cls._parse_torch(dtype)
 
-        if isinstance(dtype, NumpyDType):
+        if isinstance(dtype, np.dtype):
             return cls._parse_numpy(dtype)
 
         raise ValueError(f"Not sure how to handle {dtype=}.")
 
     @classmethod
-    def _parse_primitive_type(cls, dtype: type) -> Self:
+    def _parse_primitive_type(cls, dtype: type) -> typing.Self:
         if dtype == int:
             return cls("int", 64)
 
@@ -155,7 +154,7 @@ class DType:
         raise ValueError(dtype)
 
     @classmethod
-    def _parse_regex(cls, dtype: str, /) -> Self:
+    def _parse_regex(cls, dtype: str, /) -> typing.Self:
         """
         Create the `DType` instance from the `info` object.
 
@@ -177,7 +176,8 @@ class DType:
         raise ValueError(dtype)
 
     @classmethod
-    def _parse_torch(cls, dtype: TorchDType, /) -> Self:
+    @typing.no_type_check
+    def _parse_torch(cls, dtype: torch.dtype, /) -> typing.Self:
         "Create a `Dtype` from a `torch.dtype`."
         if dtype == torch.bool:
             return cls.boolean()
@@ -194,14 +194,14 @@ class DType:
         return cls(family=family, bits=bits)
 
     @classmethod
-    def _parse_numpy(cls, dtype: NumpyDType, /) -> Self:
+    def _parse_numpy(cls, dtype: np.dtype, /) -> typing.Self:
         family = _parse_numpy_family(dtype)
         bits = _parse_numpy_bits(dtype, family)
 
         return cls(family=family, bits=bits)
 
 
-def _parse_numpy_family(dtype: NumpyDType, /) -> DTypeFamily:
+def _parse_numpy_family(dtype: np.dtype, /) -> DTypeFamily:
     "Create a `Dtype` from a `numpy.dtype`."
     if np.isdtype(dtype, "integral"):
         return "int"
@@ -215,7 +215,7 @@ def _parse_numpy_family(dtype: NumpyDType, /) -> DTypeFamily:
     raise ValueError(f"Cannot handle numpy {dtype=}.")
 
 
-def _parse_numpy_bits(dtype: NumpyDType, family: DTypeFamily, /):
+def _parse_numpy_bits(dtype: np.dtype, family: DTypeFamily, /):
     match family:
         case "bool":
             return 8
