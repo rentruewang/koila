@@ -9,19 +9,18 @@ from typing import Any
 
 import torch
 
-from aioway import fake
-from aioway.fn import Fn
+from aioway import fake, fn
 
-from .attrs import Attr
+from . import attrs
 
 __all__ = ["TensorFn", "tensor"]
 
 
-class TensorFn(Fn[torch.Tensor], ABC):
+class TensorFn(fn.Fn[torch.Tensor], ABC):
     def __init__(self) -> None:
         super().__init__()
         assert fake.is_fake_tensor(self._fake_result), type(self._fake_result)
-        self.__attr = Attr.from_tensor(self._fake_result)
+        self.__attr = attrs.Attr.from_tensor(self._fake_result)
 
     def __len__(self) -> int:
         return self.attr.shape[0]
@@ -109,7 +108,7 @@ class TensorFn(Fn[torch.Tensor], ABC):
         return UFunc2Thunk(operator.le, self, other)
 
     @property
-    def attr(self) -> Attr:
+    def attr(self) -> attrs.Attr:
         return self.__attr
 
     @abc.abstractmethod
@@ -119,9 +118,9 @@ class TensorFn(Fn[torch.Tensor], ABC):
 
     @abc.abstractmethod
     @typing.override
-    def _deps(self) -> cabc.Iterator[Fn]:
+    def _deps(self) -> cabc.Iterator[fn.Fn]:
         """
-        Yields the dependent `Fn`s.
+        Yields the dependent `fn.Fn`s.
         """
 
         raise NotImplementedError

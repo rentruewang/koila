@@ -10,7 +10,7 @@ import tensordict as td
 
 from aioway import _typing, fake
 from aioway.fn import Fn
-from aioway.tensors.fn import TensorFn
+from aioway.tensors.tensors import TensorFn
 
 from .attrs import AttrSet
 

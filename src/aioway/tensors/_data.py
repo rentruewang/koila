@@ -8,7 +8,7 @@ import torch
 from aioway import _common, fake
 from aioway.fn import Fn
 
-from .fn import TensorFn
+from .tensors import TensorFn
 
 __all__ = ["TensorDataFn"]
 

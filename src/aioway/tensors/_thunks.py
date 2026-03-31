@@ -9,7 +9,7 @@ import torch
 from aioway import _common as _common
 from aioway.fn import Fn
 
-from .fn import TensorFn
+from .tensors import TensorFn
 
 __all__ = ["UFunc1Thunk", "UFunc2Thunk", "GatherThunk"]
 

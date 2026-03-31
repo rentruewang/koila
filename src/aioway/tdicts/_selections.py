@@ -8,7 +8,7 @@ import torch
 from aioway import _common
 from aioway.tensors import TensorFn
 
-from .fn import TensorDictFn
+from .tdicts import TensorDictFn
 
 __all__ = ["GetItemFn", "SelectFn"]
 

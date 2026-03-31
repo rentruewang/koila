@@ -5,17 +5,16 @@ from collections import abc as cabc
 
 import tensordict as td
 
-from aioway import _common, fake
-from aioway.fn import Fn
+from aioway import _common, fake, fn
 
-from .fn import TensorDictFn
+from . import tdicts
 
 __all__ = ["TensorDictDataFn"]
 
 
 @_common.dcls_no_eq
-class TensorDictDataFn(TensorDictFn):
-    "The `Fn` representing a plain `td.TensorDict`."
+class TensorDictDataFn(tdicts.TensorDictFn):
+    "The `fn.Fn` representing a plain `td.TensorDict`."
 
     data: td.TensorDict
 
@@ -39,6 +38,6 @@ class TensorDictDataFn(TensorDictFn):
         )
 
     @typing.override
-    def _deps(self) -> cabc.Iterator[Fn[td.TensorDict]]:
+    def _deps(self) -> cabc.Iterator[fn.Fn[td.TensorDict]]:
         return
         yield
