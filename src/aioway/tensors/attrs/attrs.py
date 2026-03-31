@@ -8,7 +8,6 @@ import typing
 from typing import Self
 
 import torch
-from torch import Tensor
 
 from aioway import fake
 from aioway._signs import Signature
@@ -25,13 +24,13 @@ __all__ = ["Attr", "AttrTerm", "AttrTermRhs"]
 LOGGER = logging.get_logger(__name__)
 TRACKER = ModuleApiTracker(lambda: Attr)
 
-type AttrTermRhs = AttrTerm | Attr | Tensor | int | float | bool
+type AttrTermRhs = AttrTerm | Attr | torch.Tensor | int | float | bool
 
 
 @dcls.dataclass(frozen=True)
 class Attr:
     """
-    The "type' for a `Tensor`, describing everything we want to know about it.
+    The "type' for a `torch.Tensor`, describing everything we want to know about it.
     """
 
     device: Device
@@ -105,8 +104,8 @@ class Attr:
         )
 
     @classmethod
-    def from_tensor(cls, tensor: Tensor, /) -> Self:
-        "Parse the `Tensor`'s `Attr` representation"
+    def from_tensor(cls, tensor: torch.Tensor, /) -> Self:
+        "Parse the `torch.Tensor`'s `Attr` representation"
 
         return cls.parse(
             device=tensor.device,
@@ -134,7 +133,7 @@ class AttrTerm:
         return self.__ufunc_op1(operator.neg)
 
     def __getitem__(
-        self, key: int | slice | IntArray | Tensor | Attr | AttrTerm
+        self, key: int | slice | IntArray | torch.Tensor | Attr | AttrTerm
     ) -> Self:
         sign = Signature(Attr, type(key), Attr)
         with TRACKER(name="__getitem__", signature=sign):
@@ -194,7 +193,7 @@ class AttrTerm:
     @fake.enable_func
     def __ufunc_op2(self, other: AttrTermRhs, op: AnyUFunc2):
         match other:
-            case Tensor():
+            case torch.Tensor():
                 return self.__ufunc_op2_tensor(other=other, op=op)
             case AttrTerm():
                 return self.__ufunc_op2(other=other.attr, op=op)
@@ -206,13 +205,15 @@ class AttrTerm:
         raise TypeError(f"Do not know how to handle {type(other)=}.")
 
     @fake.enable_func
-    def __ufunc_op2_tensor(self, other: Tensor, op: AnyUFunc2) -> Self:
+    def __ufunc_op2_tensor(self, other: torch.Tensor, op: AnyUFunc2) -> Self:
         signature = Signature(Attr, Attr, Attr)
         with TRACKER(name=f"__{op.__qualname__}__", signature=signature):
             return self.make(Attr.from_tensor(op(self.attr.to_tensor(), other)))
 
     @fake.enable_func
-    def __getitem_impl(self, key: int | slice | IntArray | Tensor | Attr | AttrTerm, /):
+    def __getitem_impl(
+        self, key: int | slice | IntArray | torch.Tensor | Attr | AttrTerm, /
+    ):
         if isinstance(key, Attr):
             return self.__getitem_impl(key.to_tensor())
 

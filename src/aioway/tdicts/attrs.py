@@ -9,9 +9,9 @@ from collections.abc import Iterator, KeysView, Mapping, Sequence
 from typing import NamedTuple, Self
 
 import numpy as np
+import tensordict as td
+import torch
 from numpy import ndarray as NpArr
-from tensordict import TensorDict
-from torch import Tensor
 
 from aioway import _typing
 from aioway._signs import Signature
@@ -41,7 +41,7 @@ class _AttrItem[T](NamedTuple):
 @dcls.dataclass(frozen=True, repr=False)
 class _AttrSetBase[T](Mapping[str, T]):
     """
-    A set of attributes. Representing the schema in a `TensorDict`.
+    A set of attributes. Representing the schema in a `td.TensorDict`.
 
     Right now the columns are in sorted order, but this is not guarenteed.
     Most likely will change in the future.
@@ -147,7 +147,7 @@ class ShapeSet(_AttrSetBase[Shape]):
 
 class AttrSet(_AttrSetBase[Attr]):
     """
-    The collection of `Attr`s. This is the data type for a `TensorDict`.
+    The collection of `Attr`s. This is the data type for a `td.TensorDict`.
     """
 
     @typing.overload
@@ -155,7 +155,7 @@ class AttrSet(_AttrSetBase[Attr]):
 
     @typing.overload
     def __getitem__(
-        self, idx: int | slice | list[int] | list[str] | NpArr | Tensor
+        self, idx: int | slice | list[int] | list[str] | NpArr | torch.Tensor
     ) -> Self: ...
 
     def __getitem__(self, idx):
@@ -196,7 +196,7 @@ class AttrSet(_AttrSetBase[Attr]):
         if isinstance(idx, int):
             new_shape = [shape[1:] for shape in shapes]
 
-        elif isinstance(idx, slice | NpArr | Tensor):
+        elif isinstance(idx, slice | NpArr | torch.Tensor):
             new_shape = shapes[:]
 
         elif isinstance(idx, list) and all(isinstance(i, int) for i in idx):
@@ -279,7 +279,7 @@ class AttrSet(_AttrSetBase[Attr]):
         )
 
     @classmethod
-    def from_tensordict(cls, data: TensorDict, /) -> Self:
+    def from_tensordict(cls, data: td.TensorDict, /) -> Self:
         return cls.from_dict({key: Attr.from_tensor(val) for key, val in data.items()})
 
     @classmethod

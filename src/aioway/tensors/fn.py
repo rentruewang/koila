@@ -7,8 +7,7 @@ from abc import ABC
 from collections.abc import Iterator
 from typing import Any
 
-from torch import Tensor
-from torch._tensor import Tensor
+import torch
 
 from aioway import fake
 from aioway.fn import Fn
@@ -18,7 +17,7 @@ from .attrs import Attr
 __all__ = ["TensorFn", "tensor"]
 
 
-class TensorFn(Fn[Tensor], ABC):
+class TensorFn(Fn[torch.Tensor], ABC):
     def __init__(self) -> None:
         super().__init__()
         assert fake.is_fake_tensor(self._fake_result), type(self._fake_result)
@@ -115,7 +114,7 @@ class TensorFn(Fn[Tensor], ABC):
 
     @abc.abstractmethod
     @typing.override
-    def forward(self) -> Tensor:
+    def forward(self) -> torch.Tensor:
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -128,18 +127,18 @@ class TensorFn(Fn[Tensor], ABC):
         raise NotImplementedError
 
     @classmethod
-    def from_tensor(cls, data: Tensor, /) -> TensorFn:
+    def from_tensor(cls, data: torch.Tensor, /) -> TensorFn:
         from ._data import TensorDataFn
 
         return TensorDataFn(data)
 
 
-def tensor(data: TensorFn | Tensor) -> TensorFn:
+def tensor(data: TensorFn | torch.Tensor) -> TensorFn:
 
     if isinstance(data, TensorFn):
         return data
 
-    if isinstance(data, Tensor):
+    if isinstance(data, torch.Tensor):
         return TensorFn.from_tensor(data)
 
     raise TypeError(f"Do not know how to handle {type(data)=}.")

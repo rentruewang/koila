@@ -5,9 +5,9 @@ import typing
 from collections.abc import Iterable, Iterator, Sequence
 
 import numpy as np
+import torch
 from numpy import ndarray as _NumpyNDArray
 from numpy.typing import NDArray
-from torch import Size
 
 from aioway import _typing
 from aioway._tracking import ModuleApiTracker, logging
@@ -19,7 +19,7 @@ TRACKER = ModuleApiTracker(lambda: Shape)
 
 type _PrimitiveNumber = float | int | bool
 type _IntArrayLike = tuple[int, ...] | list[int] | NDArray[np.int_]
-type ShapeCmpType = Shape | Size | _IntArrayLike | _PrimitiveNumber
+type ShapeCmpType = Shape | torch.Size | _IntArrayLike | _PrimitiveNumber
 
 type ShapeLike = int | Iterable[int] | Shape
 "Types convertible to `Shape`s. Note that `int` can be converted as well."
@@ -67,7 +67,7 @@ class Shape(Sequence[int]):
         if isinstance(other, Shape):
             return self.dims == other.dims
 
-        if isinstance(other, Size):
+        if isinstance(other, torch.Size):
             return other == self.dims
 
         # Do the numpy check first as `isinstance` is cheaper than the following ones.

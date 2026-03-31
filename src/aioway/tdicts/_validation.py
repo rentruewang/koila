@@ -1,10 +1,10 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-"Validation of data (`TensorDict`) against schema (`AttrSet`)."
+"Validation of data (`td.TensorDict`) against schema (`AttrSet`)."
 
 import numpy as np
-from tensordict import TensorDict
-from torch import Tensor
+import tensordict as td
+import torch
 
 from aioway._tracking import logging
 from aioway.tensors import Attr, Device, DType, Shape
@@ -16,7 +16,7 @@ __all__ = ["validate_schema", "validate_attr"]
 LOGGER = logging.get_logger(__name__)
 
 
-def validate_schema(attrs: AttrSet, data: TensorDict) -> None:
+def validate_schema(attrs: AttrSet, data: td.TensorDict) -> None:
     """
     Validate `data` against `attrs`.
 
@@ -39,7 +39,10 @@ def validate_schema(attrs: AttrSet, data: TensorDict) -> None:
         validate_attr(attr=attrs[key], tensor=data[key])
 
 
-def validate_attr(attr: Attr, tensor: Tensor) -> None:
+import torch
+
+
+def validate_attr(attr: Attr, tensor: torch.Tensor) -> None:
     """
     Validate `tensor` against `attr`.
 
@@ -51,7 +54,10 @@ def validate_attr(attr: Attr, tensor: Tensor) -> None:
     validate_dtype_matches(dtype=attr.dtype, tensor=tensor)
 
 
-def validate_shape_matches(shape: Shape, tensor: Tensor) -> None:
+import torch
+
+
+def validate_shape_matches(shape: Shape, tensor: torch.Tensor) -> None:
     try:
         _validate_shape_matches(shape, tensor)
     except ValueError:
@@ -60,7 +66,10 @@ def validate_shape_matches(shape: Shape, tensor: Tensor) -> None:
         )
 
 
-def _validate_shape_matches(shape: Shape, tensor: Tensor) -> None:
+import torch
+
+
+def _validate_shape_matches(shape: Shape, tensor: torch.Tensor) -> None:
     # Convert to numpy array s.t. we can elegantly formulate the verification.
     left = np.array(shape)
     right = tensor.shape
@@ -74,14 +83,20 @@ def _validate_shape_matches(shape: Shape, tensor: Tensor) -> None:
         raise ValueError
 
 
-def validate_dtype_matches(dtype: DType, tensor: Tensor) -> None:
+import torch
+
+
+def validate_dtype_matches(dtype: DType, tensor: torch.Tensor) -> None:
     if dtype != tensor.dtype:
         raise RuntimeError(
             f"DType of tensor {tensor.dtype=} should match attr's {dtype=}"
         )
 
 
-def validate_device_matches(device: Device, tensor: Tensor) -> None:
+import torch
+
+
+def validate_device_matches(device: Device, tensor: torch.Tensor) -> None:
     if device != tensor.device:
         raise RuntimeError(
             f"Device of tensor {tensor.device=} should match attr's {device=}"

@@ -4,8 +4,7 @@ import typing
 from collections.abc import Callable, Iterator
 from typing import Any
 
-from torch import Tensor
-from torch._tensor import Tensor
+import torch
 
 from aioway import _common as _common
 from aioway.fn import Fn
@@ -21,7 +20,7 @@ class AnyThunk(TensorFn):
 
     __match_args__ = "func", "args", "kwargs"
 
-    func: Callable[..., Tensor]
+    func: Callable[..., torch.Tensor]
     args: tuple[Fn[Any], ...]
     kwargs: dict[str, Fn[Any]]
 
@@ -40,7 +39,7 @@ class AnyThunk(TensorFn):
         return _common.format_function(self.func, *self.args, **self.kwargs)
 
     @typing.override
-    def forward(self) -> Tensor:
+    def forward(self) -> torch.Tensor:
         args = [arg.do() for arg in self.args]
         kwargs = {key: val.do() for key, val in self.kwargs.items()}
         return self.func(*args, **kwargs)
@@ -57,7 +56,7 @@ class UFunc1Thunk(TensorFn):
     Thunk for unary function.
     """
 
-    func: Callable[[Tensor], Tensor]
+    func: Callable[[torch.Tensor], torch.Tensor]
     arg: TensorFn
 
     def __post_init__(self):
@@ -70,16 +69,16 @@ class UFunc1Thunk(TensorFn):
             raise TypeError
 
     @typing.override
-    def forward(self) -> Tensor:
+    def forward(self) -> torch.Tensor:
         return self.func(self.arg.do())
 
     @typing.override
     def _deps(self) -> Iterator[TensorFn]:
-        # If it's a primitive or `Tensor`, do not recurse.
+        # If it's a primitive or `torch.Tensor`, do not recurse.
         yield self.arg
 
 
-type BinaryTensorFnRhs = TensorFn | Tensor | int | float | bool
+type BinaryTensorFnRhs = TensorFn | torch.Tensor | int | float | bool
 
 
 @_common.dcls_no_eq
@@ -88,7 +87,7 @@ class UFunc2Thunk(TensorFn):
     Thunk for binary function.
     """
 
-    func: Callable[[Tensor, Any], Tensor]
+    func: Callable[[torch.Tensor, Any], torch.Tensor]
     left: TensorFn
     right: BinaryTensorFnRhs
 
@@ -101,11 +100,11 @@ class UFunc2Thunk(TensorFn):
         if not isinstance(self.left, TensorFn):
             raise TypeError
 
-        if not isinstance(self.right, TensorFn | Tensor | int | float | bool):
+        if not isinstance(self.right, TensorFn | torch.Tensor | int | float | bool):
             raise TypeError
 
     @typing.override
-    def forward(self) -> Tensor:
+    def forward(self) -> torch.Tensor:
         left_do = self.left.do()
 
         match right := self.right:
@@ -116,7 +115,7 @@ class UFunc2Thunk(TensorFn):
 
     @typing.override
     def _deps(self) -> Iterator[TensorFn]:
-        # If it's a primitive or `Tensor`, do not recurse.
+        # If it's a primitive or `torch.Tensor`, do not recurse.
         yield self.left
 
         if isinstance(right := self.right, TensorFn):
@@ -125,8 +124,8 @@ class UFunc2Thunk(TensorFn):
 
 @_common.dcls_no_eq
 class GatherThunk(TensorFn):
-    tensor: TensorFn | Tensor
-    index: TensorFn | Tensor
+    tensor: TensorFn | torch.Tensor
+    index: TensorFn | torch.Tensor
 
     def __post_init__(self):
         super().__init__()
@@ -136,7 +135,7 @@ class GatherThunk(TensorFn):
             raise TypeError
 
     @typing.override
-    def forward(self) -> Tensor:
+    def forward(self) -> torch.Tensor:
         tensor = self.tensor.do() if isinstance(self.tensor, TensorFn) else self.tensor
         index = self.index.do() if isinstance(self.index, TensorFn) else self.index
         return tensor[index]

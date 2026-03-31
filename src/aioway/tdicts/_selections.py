@@ -2,8 +2,8 @@
 
 import typing
 
-from tensordict import TensorDict
-from torch import Tensor
+import tensordict as td
+import torch
 
 from aioway import _common
 from aioway.tensors import TensorFn
@@ -22,7 +22,7 @@ class GetItemFn(TensorFn):
         super().__init__()
 
     @typing.override
-    def forward(self) -> Tensor:
+    def forward(self) -> torch.Tensor:
         tdict = self.tdict.do()
         return tdict[self.column]
 
@@ -40,7 +40,7 @@ class SelectFn(TensorDictFn):
         super().__init__()
 
     @typing.override
-    def forward(self) -> TensorDict:
+    def forward(self) -> td.TensorDict:
         tdict = self.tdict.do()
         return tdict.select(*self.columns)
 

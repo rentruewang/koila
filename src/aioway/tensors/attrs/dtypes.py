@@ -4,12 +4,12 @@
 
 import functools
 import re
+import typing
 from typing import Any, Literal, Self
 
 import numpy as np
 import torch
 from numpy import dtype as NumpyDType
-from torch import dtype as TorchDType
 
 from aioway._tracking import ModuleApiTracker, logging
 
@@ -25,7 +25,7 @@ The DType strings family type.
 
 
 type _PrimitiveType = type[int] | type[float] | type[bool]
-type DTypeLike = str | DType | _PrimitiveType | TorchDType | NumpyDType
+type DTypeLike = str | DType | _PrimitiveType | torch.dtype | NumpyDType
 "Types that can be converted to `Dtype` with the public `dtype` function (or `DType.parse`)."
 
 
@@ -93,7 +93,7 @@ class DType:
         "Convert this to a numpy dtype."
         return np.dtype(str(self))
 
-    def torch(self) -> TorchDType:
+    def torch(self) -> torch.dtype:
         "Convert this to a torch dtype."
         return getattr(torch, str(self))
 
@@ -133,7 +133,7 @@ class DType:
         if isinstance(dtype, str):
             return cls._parse_regex(dtype)
 
-        if isinstance(dtype, TorchDType):
+        if isinstance(dtype, torch.dtype):
             return cls._parse_torch(dtype)
 
         if isinstance(dtype, NumpyDType):
@@ -177,7 +177,8 @@ class DType:
         raise ValueError(dtype)
 
     @classmethod
-    def _parse_torch(cls, dtype: TorchDType, /) -> Self:
+    @typing.no_type_check
+    def _parse_torch(cls, dtype: torch.dtype, /) -> Self:
         "Create a `Dtype` from a `torch.dtype`."
         if dtype == torch.bool:
             return cls.boolean()

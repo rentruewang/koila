@@ -3,8 +3,7 @@
 import typing
 from collections.abc import Iterator
 
-from torch import Tensor
-from torch._tensor import Tensor
+import torch
 
 from aioway import _common, fake
 from aioway.fn import Fn
@@ -16,9 +15,9 @@ __all__ = ["TensorDataFn"]
 
 @_common.dcls_no_eq
 class TensorDataFn(TensorFn):
-    "The `Fn` representing a plain `Tensor`."
+    "The `Fn` representing a plain `torch.Tensor`."
 
-    data: Tensor
+    data: torch.Tensor
 
     def __post_init__(self) -> None:
         super().__init__()
@@ -36,6 +35,6 @@ class TensorDataFn(TensorFn):
             return self.data
 
     @typing.override
-    def _deps(self) -> Iterator[Fn[Tensor]]:
+    def _deps(self) -> Iterator[Fn[torch.Tensor]]:
         return
         yield

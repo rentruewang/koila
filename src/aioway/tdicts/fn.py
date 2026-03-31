@@ -6,7 +6,7 @@ from abc import ABC
 from collections.abc import Iterator, Mapping
 from typing import Any
 
-from tensordict import TensorDict
+import tensordict as td
 
 from aioway import _typing, fake
 from aioway.fn import Fn
@@ -17,7 +17,7 @@ from .attrs import AttrSet
 __all__ = ["TensorDictFn", "tdict"]
 
 
-class TensorDictFn(Fn[TensorDict], Mapping[str, TensorFn], ABC):
+class TensorDictFn(Fn[td.TensorDict], Mapping[str, TensorFn], ABC):
     def __init__(self) -> None:
         super().__init__()
         assert all(fake.is_fake_tensor(tensor) for tensor in self._fake_result.values())
@@ -72,17 +72,17 @@ class TensorDictFn(Fn[TensorDict], Mapping[str, TensorFn], ABC):
         return self.__attrs
 
     @classmethod
-    def from_tensordict(cls, data: TensorDict) -> TensorDictFn:
+    def from_tensordict(cls, data: td.TensorDict) -> TensorDictFn:
         from ._data import TensorDictDataFn
 
         return TensorDictDataFn(data)
 
 
-def tdict(item: TensorDictFn | TensorDict) -> TensorDictFn:
+def tdict(item: TensorDictFn | td.TensorDict) -> TensorDictFn:
     if isinstance(item, TensorDictFn):
         return item
 
-    if isinstance(item, TensorDict):
+    if isinstance(item, td.TensorDict):
         return TensorDictFn.from_tensordict(item)
 
     raise TypeError(f"Do not know how to handle {type(item)=}.")

@@ -2,7 +2,7 @@
 
 import typing
 
-from torch import device as TorchDevice
+import torch
 
 from aioway._tracking import ModuleApiTracker, logging
 
@@ -12,7 +12,7 @@ LOGGER = logging.get_logger(__name__)
 TRACKER = ModuleApiTracker(lambda: Device)
 
 
-type DeviceLike = str | TorchDevice | Device
+type DeviceLike = str | torch.device | Device
 "Types convertible to a `Device`."
 
 
@@ -23,12 +23,12 @@ class Device:
 
     __match_args__ = ("device",)
 
-    def __init__(self, device: str | TorchDevice) -> None:
+    def __init__(self, device: str | torch.device) -> None:
         # On top of only needing to store `torch.device`,
         # it also does a check to ensure that if a string is passed,
         # the device is valid, and must follow the "device[:index]" format.
         try:
-            self._device = TorchDevice(device)
+            self._device = torch.device(device)
         except RuntimeError as e:
             raise ValueError("Not a valid `torch.device`.") from e
 
@@ -41,7 +41,7 @@ class Device:
     @typing.override
     def __eq__(self, other: object) -> bool:
         match other:
-            case TorchDevice():
+            case torch.device():
                 return self._device == other
             case Device(device):
                 return self._device == device
@@ -78,7 +78,7 @@ class Device:
         if isinstance(device, cls):
             return device
 
-        if isinstance(device, str | TorchDevice):
+        if isinstance(device, str | torch.device):
             return Device(device)
 
         raise TypeError(f"Cannot handle {type(device)=}.")
