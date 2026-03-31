@@ -5,7 +5,6 @@
 import functools
 import re
 import typing
-from typing import Any, Literal, Self
 
 import numpy as np
 import torch
@@ -17,7 +16,7 @@ __all__ = ["DType", "DTypeLike"]
 LOGGER = logging.get_logger(__name__)
 TRACKER = ModuleApiTracker(lambda: DType)
 
-type DTypeFamily = Literal["int", "float", "bool"]
+type DTypeFamily = typing.Literal["int", "float", "bool"]
 """
 The DType strings family type.
 """
@@ -64,7 +63,7 @@ class DType:
     def __repr__(self) -> str:
         return str(self)
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: typing.Any) -> bool:
         try:
             parsed = self.parse(other)
         except ValueError:
@@ -96,7 +95,7 @@ class DType:
         "Convert this to a torch dtype."
         return getattr(torch, str(self))
 
-    def broadcast(self, other: DTypeLike) -> Self:
+    def broadcast(self, other: DTypeLike) -> typing.Self:
         try:
             rhs = DType.parse(other)
         except ValueError:
@@ -109,11 +108,11 @@ class DType:
         return self.parse(promoted)
 
     @classmethod
-    def boolean(cls) -> Self:
+    def boolean(cls) -> typing.Self:
         return cls(family="bool", bits=8)
 
     @classmethod
-    def parse(cls, dtype: DTypeLike) -> Self:
+    def parse(cls, dtype: DTypeLike) -> typing.Self:
         """
         The convenient wrapper to create a `DType` from compatible types.
 
@@ -141,7 +140,7 @@ class DType:
         raise ValueError(f"Not sure how to handle {dtype=}.")
 
     @classmethod
-    def _parse_primitive_type(cls, dtype: type) -> Self:
+    def _parse_primitive_type(cls, dtype: type) -> typing.Self:
         if dtype == int:
             return cls("int", 64)
 
@@ -154,7 +153,7 @@ class DType:
         raise ValueError(dtype)
 
     @classmethod
-    def _parse_regex(cls, dtype: str, /) -> Self:
+    def _parse_regex(cls, dtype: str, /) -> typing.Self:
         """
         Create the `DType` instance from the `info` object.
 
@@ -177,7 +176,7 @@ class DType:
 
     @classmethod
     @typing.no_type_check
-    def _parse_torch(cls, dtype: torch.dtype, /) -> Self:
+    def _parse_torch(cls, dtype: torch.dtype, /) -> typing.Self:
         "Create a `Dtype` from a `torch.dtype`."
         if dtype == torch.bool:
             return cls.boolean()
@@ -194,7 +193,7 @@ class DType:
         return cls(family=family, bits=bits)
 
     @classmethod
-    def _parse_numpy(cls, dtype: np.dtype, /) -> Self:
+    def _parse_numpy(cls, dtype: np.dtype, /) -> typing.Self:
         family = _parse_numpy_family(dtype)
         bits = _parse_numpy_bits(dtype, family)
 

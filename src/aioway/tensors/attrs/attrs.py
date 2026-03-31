@@ -5,7 +5,6 @@
 import dataclasses as dcls
 import operator
 import typing
-from typing import Self
 
 import torch
 
@@ -84,7 +83,9 @@ class Attr:
         )
 
     @classmethod
-    def parse(cls, device: DeviceLike, dtype: DTypeLike, shape: ShapeLike) -> Self:
+    def parse(
+        cls, device: DeviceLike, dtype: DTypeLike, shape: ShapeLike
+    ) -> typing.Self:
         """
         The convenient constructor for `Attr`.
 
@@ -104,7 +105,7 @@ class Attr:
         )
 
     @classmethod
-    def from_tensor(cls, tensor: torch.Tensor, /) -> Self:
+    def from_tensor(cls, tensor: torch.Tensor, /) -> typing.Self:
         "Parse the `torch.Tensor`'s `Attr` representation"
 
         return cls.parse(
@@ -125,67 +126,67 @@ class AttrTerm:
         return f"{self.attr!r}.term"
 
     @typing.no_type_check
-    def __invert__(self) -> Self:
+    def __invert__(self) -> typing.Self:
         return self.__ufunc_op1(operator.invert)
 
     @typing.no_type_check
-    def __neg__(self) -> Self:
+    def __neg__(self) -> typing.Self:
         return self.__ufunc_op1(operator.neg)
 
     def __getitem__(
         self, key: int | slice | IntArray | torch.Tensor | Attr | AttrTerm
-    ) -> Self:
+    ) -> typing.Self:
         sign = Signature(Attr, type(key), Attr)
         with TRACKER(name="__getitem__", signature=sign):
             return self.__getitem_impl(key)
 
-    def __add__(self, other: AttrTermRhs) -> Self:
+    def __add__(self, other: AttrTermRhs) -> typing.Self:
         return self.__ufunc_op2(other, operator.add)
 
-    def __sub__(self, other: AttrTermRhs) -> Self:
+    def __sub__(self, other: AttrTermRhs) -> typing.Self:
         return self.__ufunc_op2(other, operator.sub)
 
-    def __mul__(self, other: AttrTermRhs) -> Self:
+    def __mul__(self, other: AttrTermRhs) -> typing.Self:
         return self.__ufunc_op2(other, operator.mul)
 
-    def __truediv__(self, other: AttrTermRhs) -> Self:
+    def __truediv__(self, other: AttrTermRhs) -> typing.Self:
         return self.__ufunc_op2(other, operator.truediv)
 
-    def __floordiv__(self, other: AttrTermRhs) -> Self:
+    def __floordiv__(self, other: AttrTermRhs) -> typing.Self:
         return self.__ufunc_op2(other, operator.floordiv)
 
-    def __mod__(self, other: AttrTermRhs) -> Self:
+    def __mod__(self, other: AttrTermRhs) -> typing.Self:
         return self.__ufunc_op2(other, operator.mod)
 
-    def __pow__(self, other: AttrTermRhs) -> Self:
+    def __pow__(self, other: AttrTermRhs) -> typing.Self:
         return self.__ufunc_op2(other, operator.pow)
 
     @typing.no_type_check
-    def __eq__(self, other: AttrTermRhs) -> Self:
+    def __eq__(self, other: AttrTermRhs) -> typing.Self:
         return self.__ufunc_op2(other, operator.eq)
 
     @typing.no_type_check
-    def __ne__(self, other: AttrTermRhs) -> Self:
+    def __ne__(self, other: AttrTermRhs) -> typing.Self:
         return self.__ufunc_op2(other, operator.ne)
 
     @typing.no_type_check
-    def __ge__(self, other: AttrTermRhs) -> Self:
+    def __ge__(self, other: AttrTermRhs) -> typing.Self:
         return self.__ufunc_op2(other, operator.ge)
 
     @typing.no_type_check
-    def __gt__(self, other: AttrTermRhs) -> Self:
+    def __gt__(self, other: AttrTermRhs) -> typing.Self:
         return self.__ufunc_op2(other, operator.gt)
 
     @typing.no_type_check
-    def __le__(self, other: AttrTermRhs) -> Self:
+    def __le__(self, other: AttrTermRhs) -> typing.Self:
         return self.__ufunc_op2(other, operator.le)
 
     @typing.no_type_check
-    def __lt__(self, other: AttrTermRhs) -> Self:
+    def __lt__(self, other: AttrTermRhs) -> typing.Self:
         return self.__ufunc_op2(other, operator.lt)
 
     @fake.enable_func
-    def __ufunc_op1(self, op: UFunc1) -> Self:
+    def __ufunc_op1(self, op: UFunc1) -> typing.Self:
         signature = Signature(Attr, Attr)
         with TRACKER(name=f"__{op.__qualname__}__", signature=signature):
             return self.make(Attr.from_tensor(op(self.attr.to_tensor())))
@@ -205,7 +206,7 @@ class AttrTerm:
         raise TypeError(f"Do not know how to handle {type(other)=}.")
 
     @fake.enable_func
-    def __ufunc_op2_tensor(self, other: torch.Tensor, op: AnyUFunc2) -> Self:
+    def __ufunc_op2_tensor(self, other: torch.Tensor, op: AnyUFunc2) -> typing.Self:
         signature = Signature(Attr, Attr, Attr)
         with TRACKER(name=f"__{op.__qualname__}__", signature=signature):
             return self.make(Attr.from_tensor(op(self.attr.to_tensor(), other)))
@@ -242,5 +243,5 @@ class AttrTerm:
         return self.attr
 
     @classmethod
-    def make(cls, data: Attr, /) -> Self:
+    def make(cls, data: Attr, /) -> typing.Self:
         return cls(data)

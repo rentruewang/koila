@@ -4,7 +4,6 @@ import abc
 import typing
 from abc import ABC
 from collections import abc as cabc
-from typing import Any
 
 import tensordict as td
 
@@ -64,7 +63,7 @@ class TensorDictFn(Fn[td.TensorDict], cabc.Mapping[str, TensorFn], ABC):
 
     @abc.abstractmethod
     @typing.override
-    def _deps(self) -> cabc.Iterator[Fn[Any]]:
+    def _deps(self) -> cabc.Iterator[Fn[typing.Any]]:
         raise NotImplementedError
 
     @property

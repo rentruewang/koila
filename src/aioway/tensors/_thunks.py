@@ -2,7 +2,6 @@
 
 import typing
 from collections import abc as cabc
-from typing import Any
 
 import torch
 
@@ -21,8 +20,8 @@ class AnyThunk(TensorFn):
     __match_args__ = "func", "args", "kwargs"
 
     func: cabc.Callable[..., torch.Tensor]
-    args: tuple[Fn[Any], ...]
-    kwargs: dict[str, Fn[Any]]
+    args: tuple[Fn[typing.Any], ...]
+    kwargs: dict[str, Fn[typing.Any]]
 
     def __post_init__(self) -> None:
         super().__init__()
@@ -87,7 +86,7 @@ class UFunc2Thunk(TensorFn):
     Thunk for binary function.
     """
 
-    func: cabc.Callable[[torch.Tensor, Any], torch.Tensor]
+    func: cabc.Callable[[torch.Tensor, typing.Any], torch.Tensor]
     left: TensorFn
     right: BinaryTensorFnRhs
 

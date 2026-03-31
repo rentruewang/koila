@@ -5,7 +5,6 @@ import operator
 import typing
 from abc import ABC
 from collections import abc as cabc
-from typing import Any
 
 import torch
 
@@ -25,7 +24,7 @@ class TensorFn(fn.Fn[torch.Tensor], ABC):
     def __len__(self) -> int:
         return self.attr.shape[0]
 
-    def __getitem__(self, key: Any) -> TensorFn:
+    def __getitem__(self, key: typing.Any) -> TensorFn:
         from ._thunks import GatherThunk
 
         return GatherThunk(self, key)
@@ -40,69 +39,69 @@ class TensorFn(fn.Fn[torch.Tensor], ABC):
 
         return UFunc1Thunk(operator.neg, self)
 
-    def __add__(self, other: Any) -> TensorFn:
+    def __add__(self, other: typing.Any) -> TensorFn:
         from ._thunks import UFunc2Thunk
 
         return UFunc2Thunk(operator.add, self, other)
 
-    def __sub__(self, other: Any) -> TensorFn:
+    def __sub__(self, other: typing.Any) -> TensorFn:
         from ._thunks import UFunc2Thunk
 
         return UFunc2Thunk(operator.sub, self, other)
 
-    def __mul__(self, other: Any) -> TensorFn:
+    def __mul__(self, other: typing.Any) -> TensorFn:
         from ._thunks import UFunc2Thunk
 
         return UFunc2Thunk(operator.mul, self, other)
 
-    def __truediv__(self, other: Any) -> TensorFn:
+    def __truediv__(self, other: typing.Any) -> TensorFn:
         from ._thunks import UFunc2Thunk
 
         return UFunc2Thunk(operator.truediv, self, other)
 
-    def __floordiv__(self, other: Any) -> TensorFn:
+    def __floordiv__(self, other: typing.Any) -> TensorFn:
         from ._thunks import UFunc2Thunk
 
         return UFunc2Thunk(operator.floordiv, self, other)
 
-    def __mod__(self, other: Any) -> TensorFn:
+    def __mod__(self, other: typing.Any) -> TensorFn:
         from ._thunks import UFunc2Thunk
 
         return UFunc2Thunk(operator.mod, self, other)
 
-    def __pow__(self, other: Any) -> TensorFn:
+    def __pow__(self, other: typing.Any) -> TensorFn:
         from ._thunks import UFunc2Thunk
 
         return UFunc2Thunk(operator.pow, self, other)
 
     @typing.no_type_check
-    def __eq__(self, other: Any) -> TensorFn:
+    def __eq__(self, other: typing.Any) -> TensorFn:
         from ._thunks import UFunc2Thunk
 
         return UFunc2Thunk(operator.eq, self, other)
 
     @typing.no_type_check
-    def __ne__(self, other: Any) -> TensorFn:
+    def __ne__(self, other: typing.Any) -> TensorFn:
         from ._thunks import UFunc2Thunk
 
         return UFunc2Thunk(operator.ne, self, other)
 
-    def __gt__(self, other: Any) -> TensorFn:
+    def __gt__(self, other: typing.Any) -> TensorFn:
         from ._thunks import UFunc2Thunk
 
         return UFunc2Thunk(operator.gt, self, other)
 
-    def __ge__(self, other: Any) -> TensorFn:
+    def __ge__(self, other: typing.Any) -> TensorFn:
         from ._thunks import UFunc2Thunk
 
         return UFunc2Thunk(operator.ge, self, other)
 
-    def __lt__(self, other: Any) -> TensorFn:
+    def __lt__(self, other: typing.Any) -> TensorFn:
         from ._thunks import UFunc2Thunk
 
         return UFunc2Thunk(operator.lt, self, other)
 
-    def __le__(self, other: Any) -> TensorFn:
+    def __le__(self, other: typing.Any) -> TensorFn:
         from ._thunks import UFunc2Thunk
 
         return UFunc2Thunk(operator.le, self, other)
