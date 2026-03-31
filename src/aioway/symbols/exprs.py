@@ -3,7 +3,7 @@
 import abc
 import typing
 from abc import ABC
-from collections.abc import KeysView
+from collections import abc as cabc
 
 from aioway._tracking import logging
 
@@ -145,7 +145,7 @@ class TableSymbol(Symbol, ABC):
     def __str__(self) -> str: ...
 
     @abc.abstractmethod
-    def keys(self) -> KeysView[str]: ...
+    def keys(self) -> cabc.KeysView[str]: ...
 
     def column(self, key: str) -> ColSymbol:
         from .getters import GetItemSymbol

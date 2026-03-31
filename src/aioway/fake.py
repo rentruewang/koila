@@ -3,7 +3,7 @@
 import contextlib as ctxl
 import dataclasses as dcls
 import typing
-from collections.abc import Callable
+from collections import abc as cabc
 
 from torch import Tensor
 from torch._subclasses import FakeTensor, FakeTensorMode
@@ -97,7 +97,7 @@ def enable():
         yield _FAKE_MODE.mode
 
 
-def enable_func[**P, T](func: Callable[P, T]) -> Callable[P, T]:
+def enable_func[**P, T](func: cabc.Callable[P, T]) -> cabc.Callable[P, T]:
     """
     Decorator on a function, s.t. when the function is being called, fake mode is enabled.
     """

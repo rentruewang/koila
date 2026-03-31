@@ -3,7 +3,7 @@
 "The 0-ary, 1-ary expressions."
 
 import typing
-from collections.abc import KeysView
+from collections import abc as cabc
 
 from numpy.typing import NDArray
 from tensordict import TensorDict
@@ -60,7 +60,7 @@ class SourceTensorDictExpr(_SourceExpr[TensorDict], TensorDictExpr):
 
     _DATA_TYPE = TensorDict
 
-    def keys(self) -> KeysView[str]:
+    def keys(self) -> cabc.KeysView[str]:
         return self.data.keys()
 
 
@@ -94,7 +94,7 @@ class _GetItemTensorExpr[T](TensorDictExpr):
 
     index: T
 
-    def keys(self) -> KeysView[str]:
+    def keys(self) -> cabc.KeysView[str]:
         return self.source.keys()
 
     @typing.no_type_check
@@ -119,5 +119,5 @@ type BatchIndex = list[int] | slice | NDArray | Tensor
 
 @_common.expr_dcls
 class BatchTensorDictExpr(_GetItemTensorExpr[BatchIndex], TensorDictExpr):
-    def keys(self) -> KeysView[str]:
+    def keys(self) -> cabc.KeysView[str]:
         return self.source.keys()

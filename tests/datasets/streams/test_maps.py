@@ -2,7 +2,7 @@
 
 import dataclasses as dcls
 import typing
-from collections.abc import Callable
+from collections import abc as cabc
 
 import pytest
 from pytest import FixtureRequest
@@ -59,7 +59,7 @@ def save_last(table_stream: Stream):
 def map_stream(request: FixtureRequest, save_last: SaveLastMapStream):
     "Indirect fixture to create `MapStream`s based on a builder function."
 
-    builder: Callable[[Stream], MapStream] = request.param
+    builder: cabc.Callable[[Stream], MapStream] = request.param
 
     if not callable(builder):
         raise TypeError("The `map_stream` fixture only accepts function parameters.")

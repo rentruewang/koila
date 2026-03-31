@@ -1,7 +1,7 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import operator
-from collections.abc import Callable
+from collections import abc as cabc
 
 import pytest
 import torch
@@ -93,7 +93,7 @@ def test_left_attr(left_fn: TensorFn):
 def test_binary_ufunc(
     left_fn: TensorFn,
     right_fn: TensorFn,
-    binop: Callable[[TensorFn, TensorFn], TensorFn],
+    binop: cabc.Callable[[TensorFn, TensorFn], TensorFn],
 ):
     result = binop(left_fn, right_fn)
 

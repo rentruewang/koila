@@ -5,7 +5,7 @@
 import contextlib as ctxl
 import dataclasses as dcls
 import typing
-from collections.abc import Callable
+from collections import abc as cabc
 
 from . import logging
 
@@ -30,17 +30,17 @@ def _logging_exit(info: ModuleMethodInfo) -> None:
 class ModuleApiTracker:
     "The object for module API tracking."
 
-    module: Callable[[], type]
+    module: cabc.Callable[[], type]
     """
     The function to high level module to track.
     The reason this is a callable is to allow lambdas,
     s.t. the tracker can be placed before the class definition, which can be more elegant.
     """
 
-    enter: Callable[[ModuleMethodInfo], None] = _logging_enter
+    enter: cabc.Callable[[ModuleMethodInfo], None] = _logging_enter
     "The function to call before entering."
 
-    exit: Callable[[ModuleMethodInfo], None] = _logging_exit
+    exit: cabc.Callable[[ModuleMethodInfo], None] = _logging_exit
     "The function to call before exiting."
 
     @ctxl.contextmanager
@@ -63,7 +63,7 @@ class ModuleApiTracker:
 
     def wrap[**P, T](self, name: str, signature: Signature):
 
-        def decorator(function: Callable[P, T]) -> Callable[P, T]:
+        def decorator(function: cabc.Callable[P, T]) -> cabc.Callable[P, T]:
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
                 with self(name=name, signature=signature):
                     return function(*args, **kwargs)

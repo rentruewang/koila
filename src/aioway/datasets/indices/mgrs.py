@@ -2,7 +2,7 @@
 
 import dataclasses as dcls
 import typing
-from collections.abc import Iterator, Mapping
+from collections import abc as cabc
 
 from numpy.typing import NDArray
 
@@ -43,7 +43,7 @@ class _ColTypeIndex(typing.NamedTuple):
 
 @typing.final
 @dcls.dataclass(frozen=True)
-class IndexManager(Mapping[MultiCol, MultiPlanIndex]):
+class IndexManager(cabc.Mapping[MultiCol, MultiPlanIndex]):
     """
     The `IndexManager` class is acts as a dictionary,
     providing some additional utility to make the API easy to use.
@@ -59,7 +59,7 @@ class IndexManager(Mapping[MultiCol, MultiPlanIndex]):
     All the indices curerntly stored.
     """
 
-    def __iter__(self) -> Iterator[MultiCol]:
+    def __iter__(self) -> cabc.Iterator[MultiCol]:
         seen: set[MultiCol] = set()
 
         for cols, _, _ in self.indices:

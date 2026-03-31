@@ -6,7 +6,7 @@ import abc
 import dataclasses as dcls
 import typing
 from abc import ABC
-from collections.abc import KeysView, Sequence
+from collections import abc as cabc
 
 from aioway.tdicts import AttrSet
 from aioway.tensors import Attr
@@ -24,7 +24,7 @@ class Dataset(ABC):
         Getting the individual column.
     2. `select(*keys: str) -> typing.Self`.
         Getting a couple of columns should return the same `Table`.
-    3. `keys() -> KeysView[str]`
+    3. `keys() -> cabc.KeysView[str]`
 
     """
 
@@ -55,9 +55,9 @@ class Dataset(ABC):
         raise NotImplementedError
 
     @typing.final
-    def keys(self) -> KeysView[str]:
+    def keys(self) -> cabc.KeysView[str]:
         """
-        A `KeysView` object.
+        A `cabc.KeysView` object.
         """
         return self.attrs.keys()
 
@@ -66,7 +66,7 @@ class Dataset(ABC):
         Get the column from the `Tabular` object.
         A `KeyError` is raised if the column is not present.
 
-        Essentially this is the `Mapping.__getitem__` method,
+        Essentially this is the `cabc.Mapping.__getitem__` method,
         but a normal method to simplify implementation.
 
         Args:
@@ -144,7 +144,7 @@ class DatasetSelectView[T: Dataset = Dataset](Dataset, DatasetView[T], ABC):
     COLUMN_TYPE: typing.ClassVar[type[DatasetColumnView[T]]]
     "The column type associated with the current `DatasetSelectView`."
 
-    cols: Sequence[str]
+    cols: cabc.Sequence[str]
     "The columns to select. Should be in the original table."
 
     def __post_init__(self) -> None:

@@ -2,7 +2,7 @@
 
 import operator
 import typing
-from collections.abc import Callable
+from collections import abc as cabc
 
 import pytest
 from pytest import FixtureRequest
@@ -48,7 +48,7 @@ def test_col_repr(c: str, d: str, e: str):
 
 class _OpFunc(typing.NamedTuple):
     name: str
-    func: Callable[..., object]
+    func: cabc.Callable[..., object]
 
 
 @pytest.mark.parametrize(
@@ -63,7 +63,7 @@ class _OpFunc(typing.NamedTuple):
     ],
 )
 def test_infix_op_repr(
-    c: str, d: str, op: str, func: Callable[[typing.Any, typing.Any], typing.Any]
+    c: str, d: str, op: str, func: cabc.Callable[[typing.Any, typing.Any], typing.Any]
 ) -> None:
     assert str(func(c, d)) == f"{c!s} {op} {d!s}"
 
@@ -86,7 +86,7 @@ def test_infix_op_repr(
     ],
 )
 def test_binray_ufunc_repr(
-    c: str, d: str, op: str, func: Callable[[typing.Any, typing.Any], typing.Any]
+    c: str, d: str, op: str, func: cabc.Callable[[typing.Any, typing.Any], typing.Any]
 ) -> None:
     assert str(func(c, d)) == f"{c!s} {op} {d!s}"
     assert str(func(d, c)) == f"{d!s} {op} {c!s}"
@@ -110,7 +110,7 @@ def test_binray_ufunc_repr(
     ],
 )
 def test_binary_ufunc_type(
-    c: str, e: str, op: Callable[[typing.Any, typing.Any], typing.Any]
+    c: str, e: str, op: cabc.Callable[[typing.Any, typing.Any], typing.Any]
 ) -> None:
     assert isinstance(expr := op(c, e), ColSymbol), type(expr)
     assert isinstance(expr := op(e, c), ColSymbol), type(expr)
@@ -124,6 +124,8 @@ def test_binary_ufunc_type(
     ],
 )
 def test_prefix_op_repr(
-    col_expr: ColSymbol, op: str, func: Callable[[typing.Any, typing.Any], typing.Any]
+    col_expr: ColSymbol,
+    op: str,
+    func: cabc.Callable[[typing.Any, typing.Any], typing.Any],
 ):
     assert str(func(col_expr)) == f"{op}{col_expr!s}"

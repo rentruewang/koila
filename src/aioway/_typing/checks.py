@@ -1,7 +1,7 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import typing
-from collections.abc import Callable, Mapping, Sequence
+from collections import abc as cabc
 
 __all__ = [
     "is_list_of",
@@ -13,8 +13,10 @@ __all__ = [
 
 @typing.no_type_check
 def _seq_check[T](seq: type, typ: type[T]):
-    if not issubclass(seq, Sequence):
-        raise TypeError(f"The given seq: `{seq}` should be subclass of `Sequence`.")
+    if not issubclass(seq, cabc.Sequence):
+        raise TypeError(
+            f"The given seq: `{seq}` should be subclass of `cabc.Sequence`."
+        )
 
     if not isinstance(typ, type):
         raise TypeError(f"The given typ: `{typ}` should be a type.")
@@ -27,9 +29,9 @@ def _seq_check[T](seq: type, typ: type[T]):
 
 @typing.no_type_check
 def _mapping_check[K, V](mapping: type, key: type[K], val: type[V]):
-    if not issubclass(mapping, Mapping):
+    if not issubclass(mapping, cabc.Mapping):
         raise TypeError(
-            f"The given mapping: `{mapping}` should be subclass of `Mapping`."
+            f"The given mapping: `{mapping}` should be subclass of `cabc.Mapping`."
         )
 
     if not isinstance(key, type):
@@ -48,21 +50,23 @@ def _mapping_check[K, V](mapping: type, key: type[K], val: type[V]):
 
 def is_seq_of[T](
     typ: type[T], /
-) -> Callable[[typing.Any], typing.TypeGuard[Sequence[T]]]:
-    return _seq_check(Sequence, typ)
+) -> cabc.Callable[[typing.Any], typing.TypeGuard[cabc.Sequence[T]]]:
+    return _seq_check(cabc.Sequence, typ)
 
 
-def is_list_of[T](typ: type[T], /) -> Callable[[typing.Any], typing.TypeGuard[list[T]]]:
+def is_list_of[T](
+    typ: type[T], /
+) -> cabc.Callable[[typing.Any], typing.TypeGuard[list[T]]]:
     return _seq_check(list, typ)
 
 
 def is_tuple_of[T](
     typ: type[T], /
-) -> Callable[[typing.Any], typing.TypeGuard[tuple[T, ...]]]:
+) -> cabc.Callable[[typing.Any], typing.TypeGuard[tuple[T, ...]]]:
     return _seq_check(tuple, typ)
 
 
 def is_dict_of_str_to[T](
     typ: type[T], /
-) -> Callable[[typing.Any], typing.TypeGuard[dict[str, T]]]:
+) -> cabc.Callable[[typing.Any], typing.TypeGuard[dict[str, T]]]:
     return _mapping_check(dict, str, typ)

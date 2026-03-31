@@ -6,7 +6,7 @@ import abc
 import dataclasses as dcls
 import typing
 from abc import ABC
-from collections.abc import Callable
+from collections import abc as cabc
 
 import torch
 from torch import Tensor
@@ -104,12 +104,12 @@ class ApplyStream(MapStream):
             yield self.apply(batch)
     """
 
-    apply: Callable[[Chunk], Chunk]
+    apply: cabc.Callable[[Chunk], Chunk]
     """
     Compute the output of `__next__` based on the input.
     """
 
-    schema: Callable[[AttrSet], AttrSet]
+    schema: cabc.Callable[[AttrSet], AttrSet]
 
     @typing.override
     def _apply(self, batch: Chunk) -> Chunk:
@@ -135,7 +135,7 @@ class FuncFilterStream(MapStream):
             yield batch[self.predicate(batch)]
     """
 
-    predicate: Callable[[Chunk], Tensor]
+    predicate: cabc.Callable[[Chunk], Tensor]
     """
     A function of `Chunk -> Tensor`.
     """

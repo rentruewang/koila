@@ -3,7 +3,7 @@
 import abc
 import dataclasses as dcls
 from abc import ABC
-from collections.abc import Sequence
+from collections import abc as cabc
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
@@ -25,7 +25,7 @@ class IndexContext:
     The `Frame` to apply the index on.
     """
 
-    columns: Sequence[str]
+    columns: cabc.Sequence[str]
     """
     The columns on which the index works. The order of the indices matter.
     """

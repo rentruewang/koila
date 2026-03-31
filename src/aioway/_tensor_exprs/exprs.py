@@ -3,7 +3,7 @@
 import abc
 import typing
 from abc import ABC
-from collections.abc import KeysView
+from collections import abc as cabc
 
 from tensordict import TensorDict
 from torch import Tensor
@@ -149,7 +149,7 @@ class TensorDictExpr(ABC):
         return TensorDict
 
     @abc.abstractmethod
-    def keys(self) -> KeysView[str]: ...
+    def keys(self) -> cabc.KeysView[str]: ...
 
     def select(self, *keys: str) -> TensorDictExpr:
         from .relations import SelectTensorDictExpr

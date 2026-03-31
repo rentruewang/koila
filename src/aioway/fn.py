@@ -4,7 +4,7 @@ import abc
 import functools
 import typing
 from abc import ABC
-from collections.abc import Iterator
+from collections import abc as cabc
 from enum import Enum
 from enum import auto as Auto
 
@@ -85,7 +85,7 @@ class Fn[T](ABC):
         return not self.deps
 
     @abc.abstractmethod
-    def _deps(self) -> Iterator[Fn[typing.Any]]:
+    def _deps(self) -> cabc.Iterator[Fn[typing.Any]]:
         """
         Return the depedent thunks.
         """

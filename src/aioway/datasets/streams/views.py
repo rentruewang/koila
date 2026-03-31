@@ -4,7 +4,7 @@
 
 import dataclasses as dcls
 import typing
-from collections.abc import Iterator
+from collections import abc as cabc
 
 from aioway.chunks import Chunk, Vector
 
@@ -15,7 +15,7 @@ __all__ = ["StreamColumnView", "StreamSelectView"]
 
 
 @dcls.dataclass(frozen=True)
-class StreamColumnView(Iterator[Vector], DatasetColumnView[Stream]):
+class StreamColumnView(cabc.Iterator[Vector], DatasetColumnView[Stream]):
     """
     A column reference (on a stream).
     Performs `__next__` and yield `Vector`s.

@@ -2,12 +2,14 @@
 
 import dataclasses as dcls
 import typing
-from collections.abc import Callable
+from collections import abc as cabc
 
 __all__ = ["format_function", "dcls_no_eq"]
 
 
-def format_function(func: Callable, *args: typing.Any, **kwargs: typing.Any) -> str:
+def format_function(
+    func: cabc.Callable, *args: typing.Any, **kwargs: typing.Any
+) -> str:
     "Format the function into readable string, mimicking signature in python."
 
     args_builder: list[str] = []

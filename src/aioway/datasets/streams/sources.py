@@ -8,7 +8,7 @@ import functools
 import math
 import typing
 from abc import ABC
-from collections.abc import Sequence
+from collections import abc as cabc
 
 from torch.utils.data import DataLoader, Sampler
 
@@ -134,7 +134,7 @@ class CacheStream(BoundedStream):
 class ListStream(BoundedStream):
     "A `Stream` backed by a list of `TensorDict`."
 
-    sequence: Sequence[Chunk]
+    sequence: cabc.Sequence[Chunk]
     "List of chunks."
 
     @typing.override

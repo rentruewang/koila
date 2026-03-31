@@ -6,7 +6,7 @@ import contextlib as ctxl
 import dataclasses as dcls
 import logging
 import typing
-from collections.abc import Callable
+from collections import abc as cabc
 from logging import Handler
 
 from rich.logging import RichHandler
@@ -98,7 +98,7 @@ class Logger:
     def __log_inputs_outputs(self, level: int):
         logger = self._logger
 
-        def decorator[**P, T](f: Callable[P, T]) -> Callable[P, T]:
+        def decorator[**P, T](f: cabc.Callable[P, T]) -> cabc.Callable[P, T]:
             # The actual wrapper wrapping the function.
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
                 # Here we assume that logging level is not changed for the duration for the module.
@@ -136,10 +136,10 @@ def get_logger(module: str, /) -> Logger:
 class _CallAndLog[**P, T]:
     "Also logs the input and output of the function."
 
-    log: Callable
+    log: cabc.Callable
     "The logger function."
 
-    func: Callable[P, T]
+    func: cabc.Callable[P, T]
 
     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> T:
         "Call and log."

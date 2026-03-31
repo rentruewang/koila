@@ -3,7 +3,7 @@
 "The expressions represent a table or a view."
 
 import typing
-from collections.abc import KeysView, Sequence
+from collections import abc as cabc
 
 from aioway._typing import SeqKeysView
 
@@ -19,13 +19,13 @@ class SourceSymbol(TableSymbol):
     name: str
     "The table's name. Matches the table names given in the `subs` method."
 
-    columns: Sequence[str]
+    columns: cabc.Sequence[str]
     "The columns in the table."
 
     def __str__(self) -> str:
         return self.name
 
-    def keys(self) -> KeysView[str]:
+    def keys(self) -> cabc.KeysView[str]:
         return SeqKeysView(self.columns)
 
 
@@ -34,7 +34,7 @@ class SelectSymbol(TableSymbol):
     table: TableSymbol
     "The source to the selection."
 
-    columns: Sequence[str]
+    columns: cabc.Sequence[str]
     "The columns to select."
 
     @typing.override
@@ -42,7 +42,7 @@ class SelectSymbol(TableSymbol):
         return f"select({self.table!s}, {self.columns!r})"
 
     @typing.override
-    def keys(self) -> KeysView[str]:
+    def keys(self) -> cabc.KeysView[str]:
         return SeqKeysView(self.columns)
 
 

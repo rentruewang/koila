@@ -1,7 +1,7 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import operator
-from collections.abc import Callable
+from collections import abc as cabc
 
 from torch import Tensor
 
@@ -17,7 +17,7 @@ class UFuncTensorExpr1(TensorExpr):
 
     name: str
     source: TensorExpr
-    op: Callable[[Tensor], Tensor]
+    op: cabc.Callable[[Tensor], Tensor]
 
     def __repr__(self):
         return f"{self.name}{self.source!r}"
@@ -45,7 +45,7 @@ class UFuncTensorExpr2(TensorExpr):
     name: str
     left: TensorExpr
     right: TensorExpr | Tensor | int | float | bool
-    op: Callable[[Tensor, Tensor | int | float | bool], Tensor]
+    op: cabc.Callable[[Tensor, Tensor | int | float | bool], Tensor]
 
     def __repr__(self):
         return f"{self.left!r} {self.name} {self.right!r}"

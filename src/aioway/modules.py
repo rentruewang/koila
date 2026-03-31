@@ -3,7 +3,7 @@
 "The preview module protocol definition."
 
 import functools
-from collections.abc import Callable
+from collections import abc as cabc
 
 from torch import Tensor
 from torch.nn import Module as NnModule
@@ -29,7 +29,7 @@ class Module[**P, T: NnModule]:
     """
 
     def __init__(
-        self, nn: Callable[P, T], /, *args: P.args, **kwargs: P.kwargs
+        self, nn: cabc.Callable[P, T], /, *args: P.args, **kwargs: P.kwargs
     ) -> None:
         self._module = nn
         self._args = args

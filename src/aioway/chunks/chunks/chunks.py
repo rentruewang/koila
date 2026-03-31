@@ -4,7 +4,7 @@
 
 import dataclasses as dcls
 import typing
-from collections.abc import Iterator, Mapping, Sequence
+from collections import abc as cabc
 
 import tensordict
 from tensordict import TensorDict
@@ -28,7 +28,7 @@ type ChunkLike = Chunk | dict[str, Vector]
 
 @typing.final
 @dcls.dataclass(frozen=True)
-class Chunk(Mapping[str, Vector]):
+class Chunk(cabc.Mapping[str, Vector]):
     """
     A `Chunk` represents a batch of data, following a specific scheam.
 
@@ -75,7 +75,7 @@ class Chunk(Mapping[str, Vector]):
         return self.expr()[key].compute()
 
     @typing.override
-    def __iter__(self) -> Iterator[str]:
+    def __iter__(self) -> cabc.Iterator[str]:
         return iter(self.attrs)
 
     def expr(self):
@@ -114,7 +114,7 @@ class Chunk(Mapping[str, Vector]):
 
     @classmethod
     @LOGGER.function("DEBUG")
-    def cat(cls, chunks: Sequence[typing.Self]) -> typing.Self:
+    def cat(cls, chunks: cabc.Sequence[typing.Self]) -> typing.Self:
         if not chunks:
             raise ValueError("Given an empty sequence. Not sure what to do.")
 

@@ -2,7 +2,7 @@
 
 import dataclasses as dcls
 import typing
-from collections.abc import KeysView, Sequence, Set
+from collections import abc as cabc
 
 import numpy as np
 from numpy.typing import NDArray
@@ -11,7 +11,7 @@ __all__ = ["SeqKeysView", "SetKeysView", "IntArray", "BatchIndex"]
 
 
 @dcls.dataclass(frozen=True)
-class _ContainerKeysView[C: Sequence[str] | Set[str]](KeysView[str]):
+class _ContainerKeysView[C: cabc.Sequence[str] | cabc.Set[str]](cabc.KeysView[str]):
     seq: C
 
     @typing.override
@@ -23,7 +23,7 @@ class _ContainerKeysView[C: Sequence[str] | Set[str]](KeysView[str]):
         yield from self.seq
 
 
-class SeqKeysView(_ContainerKeysView[Sequence[str]]): ...
+class SeqKeysView(_ContainerKeysView[cabc.Sequence[str]]): ...
 
 
 class SetKeysView(_ContainerKeysView[set[str]]): ...

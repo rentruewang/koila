@@ -3,7 +3,7 @@
 "The operators in relational algebra."
 
 import typing
-from collections.abc import KeysView, Sequence
+from collections import abc as cabc
 
 import tensordict as td
 from tensordict import TensorDict
@@ -25,9 +25,9 @@ LOGGER = logging.get_logger(__name__)
 class SelectTensorDictExpr(TensorDictExpr):
     source: TensorDictExpr
 
-    columns: Sequence[str]
+    columns: cabc.Sequence[str]
 
-    def keys(self) -> KeysView[str]:
+    def keys(self) -> cabc.KeysView[str]:
         raise NotImplementedError
 
     @typing.override
@@ -48,7 +48,7 @@ class RenameTensorDictExpr(TensorDictExpr):
     renames: dict[str, str]
 
     @typing.override
-    def keys(self) -> KeysView[str]:
+    def keys(self) -> cabc.KeysView[str]:
         return SeqKeysView([self.renames.get(key, key) for key in self.keys()])
 
     @typing.override
@@ -67,7 +67,7 @@ class ZipTensorDictExpr(TensorDictExpr):
     right: TensorDictExpr
 
     @typing.override
-    def keys(self) -> KeysView[str]:
+    def keys(self) -> cabc.KeysView[str]:
         return SetKeysView({*self.left.keys(), *self.right.keys()})
 
     @typing.override
