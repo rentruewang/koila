@@ -11,16 +11,16 @@ import numpy as np
 import tensordict as td
 import torch
 
-from aioway import _typing, tensors
+from aioway import _tracking, _typing, tensors
 from aioway._signs import Signature
-from aioway._tracking import ModuleApiTracker, logging
+from aioway._tracking import logging
 
 __all__ = ["AttrSet", "DTypeSet", "DeviceSet", "ShapeSet", "AttrSetLike"]
 
 type AttrSetLike = AttrSet | dict[str, tensors.Attr]
 
 LOGGER = logging.get_logger(__name__)
-TRACKER = ModuleApiTracker(lambda: AttrSet)
+TRACKER = _tracking.get_tracker(lambda: AttrSet)
 
 
 class _AttrItem[T](typing.NamedTuple):

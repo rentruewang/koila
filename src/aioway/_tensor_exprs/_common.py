@@ -7,11 +7,11 @@ import typing
 
 import torch
 
-from aioway._tracking import ModuleApiTracker
+from aioway import _tracking
 
 __all__ = ["expr_dcls", "TRACKER"]
 
-TRACKER = ModuleApiTracker(lambda: torch.Tensor)
+TRACKER = _tracking.get_tracker(lambda: torch.Tensor)
 
 
 @typing.dataclass_transform(eq_default=False)

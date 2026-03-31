@@ -12,7 +12,8 @@ from . import logging
 if typing.TYPE_CHECKING:
     from aioway._signs import Signature
 
-__all__ = ["ModuleApiTracker"]
+__all__ = ["get_tracker"]
+
 
 # The global API logger.
 LOGGER = logging.get_logger("aioway.__api__")
@@ -24,6 +25,14 @@ def _logging_enter(info: ModuleMethodInfo) -> None:
 
 def _logging_exit(info: ModuleMethodInfo) -> None:
     LOGGER.info("Exit %s.%s%s", info.module.__qualname__, info.name, info.signature)
+
+
+def get_tracker(
+    module: cabc.Callable[[], type],
+    enter: cabc.Callable[[ModuleMethodInfo], None] = _logging_enter,
+    exit: cabc.Callable[[ModuleMethodInfo], None] = _logging_exit,
+):
+    return ModuleApiTracker(module=module, enter=enter, exit=exit)
 
 
 @dcls.dataclass(frozen=True)

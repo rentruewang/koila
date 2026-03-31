@@ -8,9 +8,8 @@ from collections import abc as cabc
 import torch
 from torch import nn
 
-from aioway import fake
-from aioway._signs import Signature
-from aioway._tracking import ModuleApiTracker, logging
+from aioway import _signs, _tracking, fake
+from aioway._tracking import logging
 from aioway.tensors import Attr
 
 __all__ = ["Module"]
@@ -51,7 +50,7 @@ class Module[**P, T: nn.Module]:
         Returns `NotImplemented` when the input `Attr` is incompatible (usually device and dtype).
         """
 
-        with self._tracker()("preview", Signature(Attr, Attr)):
+        with self._tracker()("preview", _signs.Signature(Attr, Attr)):
             return self._preview(attr)
 
     @fake.enable_func
@@ -66,9 +65,9 @@ class Module[**P, T: nn.Module]:
         Do a forward pass on the input `tensor`.
         """
 
-        with self._tracker()("forward", Signature(torch.Tensor, torch.Tensor)):
+        with self._tracker()("forward", _signs.Signature(torch.Tensor, torch.Tensor)):
             return self.real_module(tensor)
 
     @classmethod
-    def _tracker(cls) -> ModuleApiTracker:
-        return ModuleApiTracker(lambda: cls)
+    def _tracker(cls):
+        return _tracking.get_tracker(lambda: cls)

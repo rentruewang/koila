@@ -8,9 +8,9 @@ import typing
 
 import torch
 
-from aioway import fake
+from aioway import _tracking, fake
 from aioway._signs import Signature
-from aioway._tracking import ModuleApiTracker, logging
+from aioway._tracking import logging
 from aioway._typing import AnyUFunc2, IntArray, UFunc1
 
 from .devices import Device, DeviceLike
@@ -21,7 +21,7 @@ __all__ = ["Attr", "AttrTerm", "AttrTermRhs"]
 
 
 LOGGER = logging.get_logger(__name__)
-TRACKER = ModuleApiTracker(lambda: Attr)
+TRACKER = _tracking.get_tracker(lambda: Attr)
 
 type AttrTermRhs = AttrTerm | Attr | torch.Tensor | int | float | bool
 

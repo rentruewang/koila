@@ -8,13 +8,13 @@ import numpy as np
 import torch
 from numpy import typing as npt
 
-from aioway import _typing
-from aioway._tracking import ModuleApiTracker, logging
+from aioway import _tracking, _typing
+from aioway._tracking import logging
 
 __all__ = ["ShapeLike", "Shape"]
 
 LOGGER = logging.get_logger(__name__)
-TRACKER = ModuleApiTracker(lambda: Shape)
+TRACKER = _tracking.get_tracker(lambda: Shape)
 
 type _PrimitiveNumber = float | int | bool
 type _IntArrayLike = tuple[int, ...] | list[int] | npt.NDArray[np.int_]
