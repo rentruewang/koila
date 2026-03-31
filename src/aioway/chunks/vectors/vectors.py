@@ -13,7 +13,7 @@ from aioway._typing import AnyUFunc1, AnyUFunc2
 from aioway.tensors import Attr
 
 if typing.TYPE_CHECKING:
-    from .exprs import VectorExpr, VectorExprRhs
+    from . import exprs
 
 __all__ = ["Vector"]
 
@@ -49,73 +49,73 @@ class Vector:
         return self.__op1(operator.invert)
 
     @LOGGER.function("DEBUG")
-    def __add__(self, other: VectorExprRhs) -> typing.Self:
+    def __add__(self, other: exprs.VectorExprRhs) -> typing.Self:
         return self.__op2(other, operator.add)
 
     @LOGGER.function("DEBUG")
-    def __sub__(self, other: VectorExprRhs) -> typing.Self:
+    def __sub__(self, other: exprs.VectorExprRhs) -> typing.Self:
         return self.__op2(other, operator.sub)
 
     @LOGGER.function("DEBUG")
-    def __mul__(self, other: VectorExprRhs) -> typing.Self:
+    def __mul__(self, other: exprs.VectorExprRhs) -> typing.Self:
         return self.__op2(other, operator.mul)
 
     @LOGGER.function("DEBUG")
-    def __truediv__(self, other: VectorExprRhs) -> typing.Self:
+    def __truediv__(self, other: exprs.VectorExprRhs) -> typing.Self:
         return self.__op2(other, operator.truediv)
 
     @LOGGER.function("DEBUG")
-    def __floordiv__(self, other: VectorExprRhs) -> typing.Self:
+    def __floordiv__(self, other: exprs.VectorExprRhs) -> typing.Self:
         return self.__op2(other, operator.floordiv)
 
     @LOGGER.function("DEBUG")
-    def __mod__(self, other: VectorExprRhs) -> typing.Self:
+    def __mod__(self, other: exprs.VectorExprRhs) -> typing.Self:
         return self.__op2(other, operator.mod)
 
     @LOGGER.function("DEBUG")
-    def __pow__(self, other: VectorExprRhs) -> typing.Self:
+    def __pow__(self, other: exprs.VectorExprRhs) -> typing.Self:
         return self.__op2(other, operator.pow)
 
     @typing.no_type_check
     @LOGGER.function("DEBUG")
-    def __eq__(self, other: VectorExprRhs) -> typing.Self:
+    def __eq__(self, other: exprs.VectorExprRhs) -> typing.Self:
         return self.__op2(other, operator.eq)
 
     @typing.no_type_check
     @LOGGER.function("DEBUG")
-    def __ne__(self, other: VectorExprRhs) -> typing.Self:
+    def __ne__(self, other: exprs.VectorExprRhs) -> typing.Self:
         return self.__op2(other, operator.ne)
 
     @typing.no_type_check
     @LOGGER.function("DEBUG")
-    def __ge__(self, other: VectorExprRhs) -> typing.Self:
+    def __ge__(self, other: exprs.VectorExprRhs) -> typing.Self:
         return self.__op2(other, operator.ge)
 
     @typing.no_type_check
     @LOGGER.function("DEBUG")
-    def __gt__(self, other: VectorExprRhs) -> typing.Self:
+    def __gt__(self, other: exprs.VectorExprRhs) -> typing.Self:
         return self.__op2(other, operator.gt)
 
     @typing.no_type_check
     @LOGGER.function("DEBUG")
-    def __le__(self, other: VectorExprRhs) -> typing.Self:
+    def __le__(self, other: exprs.VectorExprRhs) -> typing.Self:
         return self.__op2(other, operator.le)
 
     @typing.no_type_check
     @LOGGER.function("DEBUG")
-    def __lt__(self, other: VectorExprRhs) -> typing.Self:
+    def __lt__(self, other: exprs.VectorExprRhs) -> typing.Self:
         return self.__op2(other, operator.lt)
 
     def __op1(self, unop: AnyUFunc1) -> typing.Self:
         return self.from_expr(unop(self.expr()))
 
-    def __op2(self, other: VectorExprRhs, binop: AnyUFunc2) -> typing.Self:
-        from .exprs import VectorExpr
+    def __op2(self, other: exprs.VectorExprRhs, binop: AnyUFunc2) -> typing.Self:
+        from . import exprs
 
         match other:
             case Vector():
                 return self.from_expr(binop(self.expr(), other.expr()))
-            case VectorExpr() | float() | int() | bool():
+            case exprs.VectorExpr() | float() | int() | bool():
                 return self.from_expr(binop(self.expr(), other))
 
         raise NotImplementedError
@@ -144,9 +144,11 @@ class Vector:
         return self.torch().tolist()
 
     def expr(self):
-        from .exprs import VectorExpr
+        from . import exprs
 
-        return VectorExpr(tensor=SourceTensorExpr(self.torch()), attr=self.typeof())
+        return exprs.VectorExpr(
+            tensor=SourceTensorExpr(self.torch()), attr=self.typeof()
+        )
 
     @property
     def data(self):
@@ -157,6 +159,6 @@ class Vector:
         return self._attr
 
     @classmethod
-    def from_expr(cls, expr: VectorExpr, /) -> typing.Self:
+    def from_expr(cls, expr: exprs.VectorExpr, /) -> typing.Self:
         vec = expr.compute()
         return cls(data=vec.data, attr=vec.attr)

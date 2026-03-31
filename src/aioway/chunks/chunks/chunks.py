@@ -79,9 +79,9 @@ class Chunk(cabc.Mapping[str, Vector]):
         return iter(self.attrs)
 
     def expr(self):
-        from .exprs import ChunkExpr
+        from . import exprs
 
-        return ChunkExpr(
+        return exprs.ChunkExpr(
             tensordict=SourceTensorDictExpr(self.data),
             attrs=self.attrs,
         )

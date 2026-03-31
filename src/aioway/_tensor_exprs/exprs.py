@@ -2,7 +2,6 @@
 
 import abc
 import typing
-from abc import ABC
 from collections import abc as cabc
 
 import tensordict as td
@@ -14,7 +13,7 @@ __all__ = ["TensorDictExpr", "TensorExpr", "TensorExprRhs"]
 type TensorExprRhs = TensorExpr | torch.Tensor | int | float | bool
 
 
-class TensorExpr(ABC):
+class TensorExpr(abc.ABC):
     __match_args__: typing.ClassVar[tuple[str, ...]]
 
     def __invert__(self):
@@ -118,7 +117,7 @@ class TensorExpr(ABC):
         return torch.Tensor
 
 
-class TensorDictExpr(ABC):
+class TensorDictExpr(abc.ABC):
 
     @typing.overload
     def __getitem__(self, key: str, /) -> TensorExpr: ...
@@ -152,24 +151,23 @@ class TensorDictExpr(ABC):
     def keys(self) -> cabc.KeysView[str]: ...
 
     def select(self, *keys: str) -> TensorDictExpr:
-        from .relations import SelectTensorDictExpr
+        from . import relations
 
-        return SelectTensorDictExpr(self, keys)
+        return relations.SelectTensorDictExpr(self, keys)
 
     def column(self, key: str) -> TensorExpr:
-        from .data import ColumnTensorExpr
+        from . import data
 
-        return ColumnTensorExpr(self, key)
+        return data.ColumnTensorExpr(self, key)
 
     def zip(self, other: TensorDictExpr | td.TensorDict) -> TensorDictExpr:
-        from .data import SourceTensorDictExpr
-        from .relations import ZipTensorDictExpr
+        from . import data, relations
 
         match other:
             case TensorDictExpr():
-                return ZipTensorDictExpr(self, other)
+                return relations.ZipTensorDictExpr(self, other)
 
             case td.TensorDict():
-                return self.zip(other=SourceTensorDictExpr(other))
+                return self.zip(other=data.SourceTensorDictExpr(other))
 
         raise TypeError(f"Does not know how to handle {type(other)=}.")

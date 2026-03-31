@@ -31,14 +31,14 @@ class TensorDictFn(Fn[td.TensorDict], cabc.Mapping[str, TensorFn], ABC):
     @typing.no_type_check
     def __getitem__(self, key):
         if isinstance(key, str):
-            from ._selections import GetItemFn
+            from . import _selections
 
-            return GetItemFn(self, key)
+            return _selections.GetItemFn(self, key)
 
         if _typing.is_list_of(str)(key):
-            from ._selections import SelectFn
+            from . import _selections
 
-            return SelectFn(self, key)
+            return _selections.SelectFn(self, key)
 
         raise TypeError(f"Does not handle {type(key)=}.")
 
@@ -72,9 +72,9 @@ class TensorDictFn(Fn[td.TensorDict], cabc.Mapping[str, TensorFn], ABC):
 
     @classmethod
     def from_tensordict(cls, data: td.TensorDict) -> TensorDictFn:
-        from ._data import TensorDictDataFn
+        from . import _data
 
-        return TensorDictDataFn(data)
+        return _data.TensorDictDataFn(data)
 
 
 def tdict(item: TensorDictFn | td.TensorDict) -> TensorDictFn:

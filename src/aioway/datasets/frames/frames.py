@@ -17,7 +17,7 @@ from aioway.chunks import Chunk
 from ..datasets import Dataset, DatasetViewTypes
 
 if typing.TYPE_CHECKING:
-    from .views import FrameColumnView, FrameSelectView
+    from . import views
 
 __all__ = ["Frame"]
 
@@ -51,10 +51,10 @@ class Frame(Dataset, ABC):
     def __getitem__(self, idx: BatchIndex, /) -> Chunk: ...
 
     @typing.overload
-    def __getitem__(self, idx: str, /) -> FrameColumnView: ...
+    def __getitem__(self, idx: str, /) -> views.FrameColumnView: ...
 
     @typing.overload
-    def __getitem__(self, idx: list[str], /) -> FrameSelectView: ...
+    def __getitem__(self, idx: list[str], /) -> views.FrameSelectView: ...
 
     @typing.no_type_check
     def __getitem__(self, idx, /):
@@ -127,9 +127,11 @@ class Frame(Dataset, ABC):
     @classmethod
     @typing.override
     def view_types(cls):
-        from .views import FrameColumnView, FrameSelectView
+        from . import views
 
-        return DatasetViewTypes(column=FrameColumnView, select=FrameSelectView)
+        return DatasetViewTypes(
+            column=views.FrameColumnView, select=views.FrameSelectView
+        )
 
     def _check_idx(self, idx: IntArray, /) -> IntArray:
         "Check if the index is valid, and then remap the index to be positive."

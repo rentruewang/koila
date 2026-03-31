@@ -126,9 +126,9 @@ class TensorFn(fn.Fn[torch.Tensor], ABC):
 
     @classmethod
     def from_tensor(cls, data: torch.Tensor, /) -> TensorFn:
-        from ._data import TensorDataFn
+        from . import _data
 
-        return TensorDataFn(data)
+        return _data.TensorDataFn(data)
 
 
 def tensor(data: TensorFn | torch.Tensor) -> TensorFn:

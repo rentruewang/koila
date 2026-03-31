@@ -153,6 +153,8 @@ class Stream(cabc.Iterator[Chunk], Dataset, ABC):
     @classmethod
     @typing.override
     def view_types(cls):
-        from .views import StreamColumnView, StreamSelectView
+        from . import views
 
-        return DatasetViewTypes(column=StreamColumnView, select=StreamSelectView)
+        return DatasetViewTypes(
+            column=views.StreamColumnView, select=views.StreamSelectView
+        )
