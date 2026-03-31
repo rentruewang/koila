@@ -2,14 +2,13 @@
 
 import abc
 import dataclasses as dcls
-from abc import ABC
 from collections import abc as cabc
 
 import numpy as np
 from numpy import typing as npt
 
-from ..frames import Frame
-from .ops import IndexPlan
+from .. import frames
+from . import ops
 
 __all__ = ["Index", "IndexContext"]
 
@@ -20,9 +19,9 @@ class IndexContext:
     The indexing information for looking upu an index.
     """
 
-    frame: Frame
+    frame: frames.Frame
     """
-    The `Frame` to apply the index on.
+    The `frames.Frame` to apply the index on.
     """
 
     columns: cabc.Sequence[str]
@@ -36,7 +35,7 @@ class IndexContext:
 
 
 @dcls.dataclass(frozen=True, eq=False)
-class Index(ABC):
+class Index(abc.ABC):
     """
     `Index` corresponds to different types of backends, e.g. `faiss`, `b-tree`,
     and is responsible for routing to different `Index` types.
@@ -52,7 +51,7 @@ class Index(ABC):
     The context of the `Index`.
     """
 
-    def __call__(self, op: IndexPlan, value: npt.ArrayLike) -> npt.NDArray:
+    def __call__(self, op: ops.IndexPlan, value: npt.ArrayLike) -> npt.NDArray:
         arr = np.array(value)
         _, *dims = arr.shape
 
@@ -64,7 +63,7 @@ class Index(ABC):
         return self.search(op, arr)
 
     @abc.abstractmethod
-    def search(self, op: IndexPlan, value: npt.NDArray, /) -> npt.NDArray: ...
+    def search(self, op: ops.IndexPlan, value: npt.NDArray, /) -> npt.NDArray: ...
 
     @property
     @abc.abstractmethod

@@ -2,7 +2,6 @@
 
 import abc
 import typing
-from abc import ABC
 
 from . import _common, exprs
 
@@ -27,7 +26,7 @@ __all__ = [
 
 
 @_common.symbol_dataclass
-class UFuncSymColSymbol1(exprs.ColSymbol, ABC):
+class UFuncSymColSymbol1(exprs.ColSymbol, abc.ABC):
     source: exprs.ColSymbol
 
     @typing.override
@@ -42,7 +41,7 @@ class UFuncSymColSymbol1(exprs.ColSymbol, ABC):
 
 
 @_common.symbol_dataclass
-class UFuncSymColSymbol2(exprs.ColSymbol, ABC):
+class UFuncSymColSymbol2(exprs.ColSymbol, abc.ABC):
     left: exprs.ColSymbol
     "The lhs of the expression. Must be `ColSymSymbol` because it corresponds to `self`."
 

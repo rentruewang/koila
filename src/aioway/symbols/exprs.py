@@ -2,7 +2,6 @@
 
 import abc
 import typing
-from abc import ABC
 from collections import abc as cabc
 
 from aioway._tracking import logging
@@ -12,7 +11,7 @@ __all__ = ["Symbol", "ColSymbol", "TableSymbol"]
 LOGGER = logging.get_logger(__name__)
 
 
-class Symbol(ABC):
+class Symbol(abc.ABC):
     """
     An (extended) projection operator that can be reprsented as an expression.
     """
@@ -25,7 +24,7 @@ class Symbol(ABC):
         return str
 
 
-class ColSymbol(Symbol, ABC):
+class ColSymbol(Symbol, abc.ABC):
     @abc.abstractmethod
     def __str__(self) -> str: ...
 
@@ -120,7 +119,7 @@ class ColSymbol(Symbol, ABC):
         return ufuncs.LeColSymbol(self, other)
 
 
-class TableSymbol(Symbol, ABC):
+class TableSymbol(Symbol, abc.ABC):
 
     @typing.overload
     def __getitem__(self, key: str, /) -> ColSymbol: ...

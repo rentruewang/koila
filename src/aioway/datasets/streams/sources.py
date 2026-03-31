@@ -1,13 +1,12 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-"The `Stream` that records past histories and supports random access."
+"The `streams.Stream` that records past histories and supports random access."
 
 import abc
 import dataclasses as dcls
 import functools
 import math
 import typing
-from abc import ABC
 from collections import abc as cabc
 
 from torch.utils import data
@@ -15,8 +14,8 @@ from torch.utils import data
 from aioway import _typing, chunks, tdicts
 from aioway._tracking import logging
 
-from ..frames import Frame
-from .streams import Stream
+from .. import frames
+from . import streams
 
 __all__ = [
     "BoundedStream",
@@ -30,14 +29,14 @@ LOGGER = logging.get_logger(__name__)
 
 
 @dcls.dataclass(frozen=True)
-class BoundedStream(Stream, ABC):
+class BoundedStream(streams.Stream, abc.ABC):
     """
     A stream with `__len__` and `__getitem__`.
     """
 
     @abc.abstractmethod
     def __len__(self) -> int:
-        "The number of batches saved in the current `Stream`."
+        "The number of batches saved in the current `streams.Stream`."
 
         raise NotImplementedError
 
@@ -46,7 +45,7 @@ class BoundedStream(Stream, ABC):
             return self._getitem_int(key)
 
         if isinstance(key, str) or _typing.is_list_of(str)(key):
-            return Stream.__getitem__(self, key)
+            return streams.Stream.__getitem__(self, key)
 
         raise TypeError(f"Do not know how to handle {type(key)=}.")
 
@@ -69,11 +68,11 @@ class CacheStream(BoundedStream):
     Exhaust the input stream, store it into a cache for repeating access.
     """
 
-    stream: Stream
+    stream: streams.Stream
     "The input stream."
 
     saved: list[chunks.Chunk] = dcls.field(default_factory=list)
-    "The cache for the input `Stream`."
+    "The cache for the input `streams.Stream`."
 
     @typing.override
     def __iter__(self) -> typing.Self:
@@ -130,7 +129,7 @@ class CacheStream(BoundedStream):
 
 @dcls.dataclass(frozen=True)
 class ListStream(BoundedStream):
-    "A `Stream` backed by a list of `TensorDict`."
+    "A `streams.Stream` backed by a list of `TensorDict`."
 
     sequence: cabc.Sequence[chunks.Chunk]
     "List of chunks."
@@ -178,7 +177,7 @@ class ListStream(BoundedStream):
 @dcls.dataclass(frozen=True)
 class FrameStreamLoader:
     """
-    The optoins for `data.DataLoader` on `Frame` in `FrameStream`.
+    The optoins for `data.DataLoader` on `frames.Frame` in `FrameStream`.
     """
 
     batch_size: int = 1
@@ -195,13 +194,13 @@ class FrameStreamLoader:
 
 
 @dcls.dataclass(frozen=True)
-class FrameStream(Stream):
+class FrameStream(streams.Stream):
     """
-    A `Stream` backed by a `Frame`.
+    A `streams.Stream` backed by a `frames.Frame`.
     """
 
-    frame: Frame
-    "The underlying `Frame`."
+    frame: frames.Frame
+    "The underlying `frames.Frame`."
 
     options: FrameStreamLoader
     """

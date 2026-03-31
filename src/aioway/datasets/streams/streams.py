@@ -6,7 +6,6 @@ import abc
 import dataclasses as dcls
 import functools
 import typing
-from abc import ABC
 from collections import abc as cabc
 
 from aioway import chunks, tdicts
@@ -43,7 +42,7 @@ class StreamState:
 
 
 @dcls.dataclass(frozen=True)
-class Stream(cabc.Iterator[chunks.Chunk], Dataset, ABC):
+class Stream(cabc.Iterator[chunks.Chunk], Dataset, abc.ABC):
     """
     `Stream` produces a stream of batches of data, in the form of `TensorDict`s,
     everytime `__next__` is called on it, a `TensorDict` is yielded.

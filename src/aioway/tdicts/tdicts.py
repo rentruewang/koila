@@ -2,7 +2,6 @@
 
 import abc
 import typing
-from abc import ABC
 from collections import abc as cabc
 
 import tensordict as td
@@ -14,7 +13,7 @@ from . import attrs
 __all__ = ["TensorDictFn", "tdict"]
 
 
-class TensorDictFn(fn.Fn[td.TensorDict], cabc.Mapping[str, tensors.TensorFn], ABC):
+class TensorDictFn(fn.Fn[td.TensorDict], cabc.Mapping[str, tensors.TensorFn], abc.ABC):
     def __init__(self) -> None:
         super().__init__()
         assert all(fake.is_fake_tensor(tensor) for tensor in self._fake_result.values())

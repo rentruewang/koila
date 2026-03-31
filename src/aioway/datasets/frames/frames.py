@@ -5,7 +5,6 @@
 import abc
 import dataclasses as dcls
 import typing
-from abc import ABC
 
 import numpy as np
 
@@ -21,7 +20,7 @@ __all__ = ["Frame"]
 
 
 @dcls.dataclass(frozen=True)
-class Frame(Dataset, ABC):
+class Frame(Dataset, abc.ABC):
     """
     `Frame` represents a set of heterogenious data stored in memory,
     it is one of the main physical abstractions in `aioway` to represent eager computation.

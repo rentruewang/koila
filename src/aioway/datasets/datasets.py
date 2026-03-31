@@ -5,7 +5,6 @@
 import abc
 import dataclasses as dcls
 import typing
-from abc import ABC
 from collections import abc as cabc
 
 from aioway import tdicts, tensors
@@ -13,7 +12,7 @@ from aioway import tdicts, tensors
 __all__ = ["Dataset", "DatasetColumnView", "DatasetSelectView", "DatasetViewTypes"]
 
 
-class Dataset(ABC):
+class Dataset(abc.ABC):
     """
     A tabular type that acts like a table, and is the shared base class for `Frame` and `Stream`.
 
@@ -109,14 +108,14 @@ class Dataset(ABC):
 
 
 @dcls.dataclass(frozen=True)
-class DatasetView[T: Dataset](ABC):
+class DatasetView[T: Dataset](abc.ABC):
 
     dset: T
     "The original dataset that would be used in the view."
 
 
 @dcls.dataclass(frozen=True)
-class DatasetColumnView[T: Dataset = Dataset](DatasetView[T], ABC):
+class DatasetColumnView[T: Dataset = Dataset](DatasetView[T], abc.ABC):
     col: str
     "The column to pick. Must be in the original table."
 
@@ -134,7 +133,7 @@ class DatasetColumnView[T: Dataset = Dataset](DatasetView[T], ABC):
 
 
 @dcls.dataclass(frozen=True)
-class DatasetSelectView[T: Dataset = Dataset](Dataset, DatasetView[T], ABC):
+class DatasetSelectView[T: Dataset = Dataset](Dataset, DatasetView[T], abc.ABC):
     """
     Perform a selection in the table.
     This is a `View`, which means creation is cheap, but you pay the price in runtime.

@@ -3,7 +3,6 @@
 import abc
 import operator
 import typing
-from abc import ABC
 from collections import abc as cabc
 
 import torch
@@ -15,7 +14,7 @@ from . import attrs
 __all__ = ["TensorFn", "tensor"]
 
 
-class TensorFn(fn.Fn[torch.Tensor], ABC):
+class TensorFn(fn.Fn[torch.Tensor], abc.ABC):
     def __init__(self) -> None:
         super().__init__()
         assert fake.is_fake_tensor(self._fake_result), type(self._fake_result)
