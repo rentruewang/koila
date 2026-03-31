@@ -6,7 +6,7 @@ import torch
 from torch import cuda
 
 from aioway.chunks import Chunk
-from aioway.tdicts import AttrSet
+from aioway import tdicts
 from aioway.tensors import Attr
 
 
@@ -41,7 +41,7 @@ def chunk_ok(*, size: int, device: str) -> Chunk:
         batch_size=size,
         device=device,
     )
-    schema = AttrSet.from_values(
+    schema = tdicts.AttrSet.from_values(
         f1d=Attr.parse(
             device="cpu",
             shape=[1],

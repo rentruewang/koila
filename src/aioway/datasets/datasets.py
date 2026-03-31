@@ -8,7 +8,7 @@ import typing
 from abc import ABC
 from collections import abc as cabc
 
-from aioway.tdicts import AttrSet
+from aioway import tdicts
 from aioway.tensors import Attr
 
 __all__ = ["Dataset", "DatasetColumnView", "DatasetSelectView", "DatasetViewTypes"]
@@ -49,7 +49,7 @@ class Dataset(ABC):
 
     @property
     @abc.abstractmethod
-    def attrs(self) -> AttrSet:
+    def attrs(self) -> tdicts.AttrSet:
         "All datasets have the metadta `attrs` present."
 
         raise NotImplementedError
@@ -153,7 +153,7 @@ class DatasetSelectView[T: Dataset = Dataset](Dataset, DatasetView[T], ABC):
 
     @property
     @typing.final
-    def attrs(self) -> AttrSet:
+    def attrs(self) -> tdicts.AttrSet:
         return self.dset.attrs.select(*self.cols)
 
     @typing.final
@@ -183,7 +183,7 @@ class DatasetViewTypes[T: Dataset](typing.NamedTuple):
     "The type used to construct `.select` views."
 
 
-def _assert_column_in_dataset(col: str, attrs: AttrSet) -> None:
+def _assert_column_in_dataset(col: str, attrs: tdicts.AttrSet) -> None:
     if col in attrs.keys():
         return
 

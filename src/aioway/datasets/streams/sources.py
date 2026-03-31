@@ -15,7 +15,7 @@ from torch.utils import data
 from aioway import _typing
 from aioway._tracking import logging
 from aioway.chunks import Chunk
-from aioway.tdicts import AttrSet
+from aioway import tdicts
 
 from ..frames import Frame
 from .streams import Stream
@@ -126,7 +126,7 @@ class CacheStream(BoundedStream):
 
     @property
     @typing.override
-    def attrs(self) -> AttrSet:
+    def attrs(self) -> tdicts.AttrSet:
         return self.stream.attrs
 
 
@@ -152,11 +152,11 @@ class ListStream(BoundedStream):
 
     @property
     @typing.override
-    def attrs(self) -> AttrSet:
+    def attrs(self) -> tdicts.AttrSet:
         return self._schema
 
     @functools.cached_property
-    def _schema(self) -> AttrSet:
+    def _schema(self) -> tdicts.AttrSet:
         schemas = {chunk.attrs for chunk in self.sequence}
 
         if len(schemas) == 1:
@@ -234,7 +234,7 @@ class FrameStream(Stream):
 
     @property
     @typing.override
-    def attrs(self) -> AttrSet:
+    def attrs(self) -> tdicts.AttrSet:
         return self.frame.attrs
 
     @functools.cached_property

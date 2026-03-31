@@ -16,7 +16,7 @@ from aioway._tensor_exprs import (
     RenameTensorDictExpr,
     TensorDictExpr,
 )
-from aioway.tdicts import AttrSet
+from aioway import tdicts
 
 from ..vectors import Vector, VectorExpr
 from .chunks import Chunk
@@ -31,7 +31,7 @@ class ChunkExpr:
     """
 
     tensordict: TensorDictExpr
-    attrs: AttrSet
+    attrs: tdicts.AttrSet
 
     def keys(self):
         return self.tensordict.keys()
@@ -105,7 +105,7 @@ class ChunkExpr:
         rhs_td = rhs.tensordict if isinstance(rhs, ChunkExpr) else rhs.data
         td = self.tensordict.zip(rhs_td)
         return type(self)(
-            tensordict=td, attrs=AttrSet.from_dict({**self.attrs, **rhs.attrs})
+            tensordict=td, attrs=tdicts.AttrSet.from_dict({**self.attrs, **rhs.attrs})
         )
 
     def _inputs(self):

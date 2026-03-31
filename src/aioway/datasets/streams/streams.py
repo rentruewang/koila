@@ -10,7 +10,7 @@ from abc import ABC
 from collections import abc as cabc
 
 from aioway.chunks import Chunk
-from aioway.tdicts import AttrSet
+from aioway import tdicts
 
 from ..datasets import Dataset, DatasetViewTypes
 
@@ -93,7 +93,7 @@ class Stream(cabc.Iterator[Chunk], Dataset, ABC):
 
     @property
     @abc.abstractmethod
-    def attrs(self) -> AttrSet:
+    def attrs(self) -> tdicts.AttrSet:
         """
         The schema for the current `Stream`.
         """

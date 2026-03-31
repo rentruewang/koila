@@ -13,7 +13,7 @@ from numpy import ndarray as NpArr
 from aioway import _typing
 from aioway._typing import BatchIndex, IntArray
 from aioway.chunks import Chunk
-from aioway.tdicts import AttrSet
+from aioway import tdicts
 
 from ..datasets import Dataset, DatasetViewTypes
 
@@ -106,7 +106,7 @@ class Frame(Dataset, ABC):
 
     @property
     @abc.abstractmethod
-    def attrs(self) -> AttrSet:
+    def attrs(self) -> tdicts.AttrSet:
         "The schema of the current frame."
 
         raise NotImplementedError

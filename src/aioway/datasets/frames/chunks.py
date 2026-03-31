@@ -10,7 +10,7 @@ import numpy as np
 
 from aioway import _typing
 from aioway.chunks import Chunk
-from aioway.tdicts import AttrSet
+from aioway import tdicts
 
 from .frames import Frame, IntArray
 
@@ -40,7 +40,7 @@ class ChunkFrame(Frame):
 
     @property
     @typing.override
-    def attrs(self) -> AttrSet:
+    def attrs(self) -> tdicts.AttrSet:
         return self.data.attrs
 
 
@@ -107,7 +107,7 @@ class ChunkListFrame(Frame):
 
     @property
     @typing.override
-    def attrs(self) -> AttrSet:
+    def attrs(self) -> tdicts.AttrSet:
         return self._attrs
 
     @functools.cached_property

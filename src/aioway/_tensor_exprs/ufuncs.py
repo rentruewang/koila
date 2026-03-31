@@ -8,11 +8,11 @@ import torch
 from . import _common
 from .exprs import TensorExpr, TensorExprRhs
 
-__all__ = ["UFuncTensorExpr1", "UFuncTensorExpr2"]
+__all__ = ["TensorExpr1", "TensorExpr2"]
 
 
 @_common.expr_dcls
-class UFuncTensorExpr1(TensorExpr):
+class TensorExpr1(TensorExpr):
     __match_args__ = ("source",)
 
     name: str
@@ -39,7 +39,7 @@ class UFuncTensorExpr1(TensorExpr):
 
 
 @_common.expr_dcls
-class UFuncTensorExpr2(TensorExpr):
+class TensorExpr2(TensorExpr):
     __match_args__ = "left", "right"
 
     name: str

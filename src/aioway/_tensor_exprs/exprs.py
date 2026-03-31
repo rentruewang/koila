@@ -18,92 +18,92 @@ class TensorExpr(ABC):
     __match_args__: typing.ClassVar[tuple[str, ...]]
 
     def __invert__(self):
-        from .ufuncs import UFuncTensorExpr1
+        from . import ufuncs
 
-        return UFuncTensorExpr1.invert(self)
+        return ufuncs.TensorExpr1.invert(self)
 
     def __neg__(self):
-        from .ufuncs import UFuncTensorExpr1
+        from . import ufuncs
 
-        return UFuncTensorExpr1.neg(self)
+        return ufuncs.TensorExpr1.neg(self)
 
     def __getitem__(self, key: int | slice | torch.Tensor | TensorExpr):
-        from .gathers import GatherTensorExpr, StaticIndexGatherTensorExpr
+        from . import gathers
 
         # typing.Self is symbolic. If key is symbolic, use the 2-ary expression.
         if isinstance(key, TensorExpr):
-            return GatherTensorExpr(self, key)
+            return gathers.GatherTensorExpr(self, key)
 
         # This is a unary expression.
         else:
-            return StaticIndexGatherTensorExpr(self, key)
+            return gathers.StaticIndexGatherTensorExpr(self, key)
 
     def __add__(self, other: TensorExprRhs):
-        from .ufuncs import UFuncTensorExpr2
+        from . import ufuncs
 
-        return UFuncTensorExpr2.add(self, other)
+        return ufuncs.TensorExpr2.add(self, other)
 
     def __sub__(self, other: TensorExprRhs):
-        from .ufuncs import UFuncTensorExpr2
+        from . import ufuncs
 
-        return UFuncTensorExpr2.sub(self, other)
+        return ufuncs.TensorExpr2.sub(self, other)
 
     def __mul__(self, other: TensorExprRhs):
-        from .ufuncs import UFuncTensorExpr2
+        from . import ufuncs
 
-        return UFuncTensorExpr2.mul(self, other)
+        return ufuncs.TensorExpr2.mul(self, other)
 
     def __truediv__(self, other: TensorExprRhs):
-        from .ufuncs import UFuncTensorExpr2
+        from . import ufuncs
 
-        return UFuncTensorExpr2.truediv(self, other)
+        return ufuncs.TensorExpr2.truediv(self, other)
 
     def __floordiv__(self, other: TensorExprRhs):
-        from .ufuncs import UFuncTensorExpr2
+        from . import ufuncs
 
-        return UFuncTensorExpr2.floordiv(self, other)
+        return ufuncs.TensorExpr2.floordiv(self, other)
 
     def __mod__(self, other: TensorExprRhs):
-        from .ufuncs import UFuncTensorExpr2
+        from . import ufuncs
 
-        return UFuncTensorExpr2.mod(self, other)
+        return ufuncs.TensorExpr2.mod(self, other)
 
     def __pow__(self, other: TensorExprRhs):
-        from .ufuncs import UFuncTensorExpr2
+        from . import ufuncs
 
-        return UFuncTensorExpr2.pow(self, other)
+        return ufuncs.TensorExpr2.pow(self, other)
 
     @typing.no_type_check
     def __eq__(self, other: TensorExprRhs):
-        from .ufuncs import UFuncTensorExpr2
+        from . import ufuncs
 
-        return UFuncTensorExpr2.eq(self, other)
+        return ufuncs.TensorExpr2.eq(self, other)
 
     @typing.no_type_check
     def __ne__(self, other: TensorExprRhs):
-        from .ufuncs import UFuncTensorExpr2
+        from . import ufuncs
 
-        return UFuncTensorExpr2.ne(self, other)
+        return ufuncs.TensorExpr2.ne(self, other)
 
     def __ge__(self, other: TensorExprRhs):
-        from .ufuncs import UFuncTensorExpr2
+        from . import ufuncs
 
-        return UFuncTensorExpr2.ge(self, other)
+        return ufuncs.TensorExpr2.ge(self, other)
 
     def __gt__(self, other: TensorExprRhs):
-        from .ufuncs import UFuncTensorExpr2
+        from . import ufuncs
 
-        return UFuncTensorExpr2.gt(self, other)
+        return ufuncs.TensorExpr2.gt(self, other)
 
     def __le__(self, other: TensorExprRhs):
-        from .ufuncs import UFuncTensorExpr2
+        from . import ufuncs
 
-        return UFuncTensorExpr2.le(self, other)
+        return ufuncs.TensorExpr2.le(self, other)
 
     def __lt__(self, other: TensorExprRhs):
-        from .ufuncs import UFuncTensorExpr2
+        from . import ufuncs
 
-        return UFuncTensorExpr2.lt(self, other)
+        return ufuncs.TensorExpr2.lt(self, other)
 
     def compute(self):
         return self._compute()

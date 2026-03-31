@@ -10,10 +10,10 @@ import tensordict
 import tensordict as td
 import torch
 
-from aioway import _typing
+from aioway import _typing, tdicts
 from aioway._tensor_exprs import SourceTensorDictExpr
 from aioway._tracking import logging
-from aioway.tdicts import AttrSet, AttrSetLike, _validation
+from aioway.tdicts import _validation
 
 from ..vectors import Vector
 
@@ -39,7 +39,7 @@ class Chunk(cabc.Mapping[str, Vector]):
     data: td.TensorDict
     "The underlying data."
 
-    attrs: AttrSet
+    attrs: tdicts.AttrSet
     "The schema for the `Chunk`."
 
     def __post_init__(self) -> None:
@@ -128,11 +128,13 @@ class Chunk(cabc.Mapping[str, Vector]):
         return cls.from_data_schema(schema=schema, data=data)
 
     @classmethod
-    def from_data_schema(cls, data: TensorDictLike, schema: AttrSetLike) -> typing.Self:
+    def from_data_schema(
+        cls, data: TensorDictLike, schema: tdicts.AttrSetLike
+    ) -> typing.Self:
         td = _as_tensordict(data)
         td.auto_batch_size_()
         td.auto_device_()
-        aset = AttrSet.parse(schema)
+        aset = tdicts.AttrSet.parse(schema)
         return cls(data=td, attrs=aset)
 
     @classmethod

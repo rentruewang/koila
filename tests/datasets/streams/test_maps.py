@@ -17,7 +17,7 @@ from aioway.datasets import (
     Stream,
     StreamState,
 )
-from aioway.tdicts import AttrSet
+from aioway import tdicts
 
 
 @dcls.dataclass
@@ -39,7 +39,7 @@ class SaveLastMapStream(MapStream):
         return batch
 
     @property
-    def attrs(self) -> AttrSet:
+    def attrs(self) -> tdicts.AttrSet:
         return self.source.attrs
 
     @property
