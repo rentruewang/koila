@@ -4,8 +4,8 @@
 
 import dataclasses as dcls
 import functools
+import typing
 from types import GenericAlias
-from typing import Self
 
 from lark import Lark, Transformer
 
@@ -59,7 +59,7 @@ class TypeList:
         return iter(self._types)
 
     @classmethod
-    def parse(cls, text: str, /, **types: type) -> Self:
+    def parse(cls, text: str, /, **types: type) -> typing.Self:
         return _common.parse_and_transform_later(
             parser=_param_list_lark_parser,
             transformer=ParamListTransformer,

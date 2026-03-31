@@ -8,7 +8,6 @@ import functools
 import typing
 from abc import ABC
 from collections.abc import Iterator
-from typing import ClassVar, Self
 
 from aioway.chunks import Chunk
 from aioway.tdicts import AttrSet
@@ -54,13 +53,13 @@ class Stream(Iterator[Chunk], Dataset, ABC):
     it is an external iterator, supporting state inspection, simplifying debugging.
     """
 
-    __match_args__: ClassVar[tuple[str, ...]]
+    __match_args__: typing.ClassVar[tuple[str, ...]]
     """
     A `Stream` should be able to be decomposed with `match` statements.
     """
 
     @typing.override
-    def __iter__(self) -> Self:
+    def __iter__(self) -> typing.Self:
         """
         `__iter__` allows `Stream`s to be used in `for` loops.
 

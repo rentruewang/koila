@@ -2,7 +2,6 @@
 
 import typing
 from collections.abc import Callable, Mapping, Sequence
-from typing import Any, TypeGuard
 
 __all__ = [
     "is_list_of",
@@ -20,7 +19,7 @@ def _seq_check[T](seq: type, typ: type[T]):
     if not isinstance(typ, type):
         raise TypeError(f"The given typ: `{typ}` should be a type.")
 
-    def check(obj) -> TypeGuard[Any]:
+    def check(obj) -> typing.TypeGuard[typing.Any]:
         return isinstance(obj, seq) and all(isinstance(i, typ) for i in obj)
 
     return check
@@ -39,7 +38,7 @@ def _mapping_check[K, V](mapping: type, key: type[K], val: type[V]):
     if not isinstance(val, type):
         raise TypeError(f"The given val: `{val}` should be a type.")
 
-    def check(obj) -> TypeGuard[Any]:
+    def check(obj) -> typing.TypeGuard[typing.Any]:
         return isinstance(obj, mapping) and all(
             isinstance(k, key) and isinstance(v, val) for k, v in obj.items()
         )
@@ -47,17 +46,23 @@ def _mapping_check[K, V](mapping: type, key: type[K], val: type[V]):
     return check
 
 
-def is_seq_of[T](typ: type[T], /) -> Callable[[Any], TypeGuard[Sequence[T]]]:
+def is_seq_of[T](
+    typ: type[T], /
+) -> Callable[[typing.Any], typing.TypeGuard[Sequence[T]]]:
     return _seq_check(Sequence, typ)
 
 
-def is_list_of[T](typ: type[T], /) -> Callable[[Any], TypeGuard[list[T]]]:
+def is_list_of[T](typ: type[T], /) -> Callable[[typing.Any], typing.TypeGuard[list[T]]]:
     return _seq_check(list, typ)
 
 
-def is_tuple_of[T](typ: type[T], /) -> Callable[[Any], TypeGuard[tuple[T, ...]]]:
+def is_tuple_of[T](
+    typ: type[T], /
+) -> Callable[[typing.Any], typing.TypeGuard[tuple[T, ...]]]:
     return _seq_check(tuple, typ)
 
 
-def is_dict_of_str_to[T](typ: type[T], /) -> Callable[[Any], TypeGuard[dict[str, T]]]:
+def is_dict_of_str_to[T](
+    typ: type[T], /
+) -> Callable[[typing.Any], typing.TypeGuard[dict[str, T]]]:
     return _mapping_check(dict, str, typ)

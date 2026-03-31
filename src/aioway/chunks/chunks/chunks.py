@@ -5,7 +5,6 @@
 import dataclasses as dcls
 import typing
 from collections.abc import Iterator, Mapping, Sequence
-from typing import Self, TypeGuard
 
 import tensordict
 from tensordict import TensorDict
@@ -103,7 +102,7 @@ class Chunk(Mapping[str, Vector]):
         return self.expr().rename(**renames).compute()
 
     @LOGGER.function("DEBUG")
-    def zip(self, rhs: Self):
+    def zip(self, rhs: typing.Self):
         return self.expr().zip(rhs).compute()
 
     @property
@@ -115,7 +114,7 @@ class Chunk(Mapping[str, Vector]):
 
     @classmethod
     @LOGGER.function("DEBUG")
-    def cat(cls, chunks: Sequence[Self]) -> Self:
+    def cat(cls, chunks: Sequence[typing.Self]) -> typing.Self:
         if not chunks:
             raise ValueError("Given an empty sequence. Not sure what to do.")
 
@@ -129,7 +128,7 @@ class Chunk(Mapping[str, Vector]):
         return cls.from_data_schema(schema=schema, data=data)
 
     @classmethod
-    def from_data_schema(cls, data: TensorDictLike, schema: AttrSetLike) -> Self:
+    def from_data_schema(cls, data: TensorDictLike, schema: AttrSetLike) -> typing.Self:
         td = _as_tensordict(data)
         td.auto_batch_size_()
         td.auto_device_()
@@ -137,7 +136,7 @@ class Chunk(Mapping[str, Vector]):
         return cls(data=td, attrs=aset)
 
     @classmethod
-    def from_mapping(cls, chunk: ChunkLike) -> Self:
+    def from_mapping(cls, chunk: ChunkLike) -> typing.Self:
         if isinstance(chunk, cls):
             return chunk
 
@@ -161,6 +160,6 @@ def _as_tensordict(data: TensorDictLike, /) -> TensorDict:
 
 
 @typing.no_type_check
-def _is_mapping_of_vector(obj) -> TypeGuard[dict[str, Vector]]:
+def _is_mapping_of_vector(obj) -> typing.TypeGuard[dict[str, Vector]]:
     # Wrapper function because `mypy` doesn't do well with abstract type guards.
     return _typing.is_dict_of_str_to(Vector)(obj)

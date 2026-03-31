@@ -4,7 +4,6 @@ import abc
 import typing
 from abc import ABC
 from collections.abc import KeysView
-from typing import ClassVar, Self
 
 from tensordict import TensorDict
 from torch import Tensor
@@ -16,7 +15,7 @@ type TensorExprRhs = TensorExpr | Tensor | int | float | bool
 
 
 class TensorExpr(ABC):
-    __match_args__: ClassVar[tuple[str, ...]]
+    __match_args__: typing.ClassVar[tuple[str, ...]]
 
     def __invert__(self):
         from .ufuncs import UFuncTensorExpr1
@@ -31,7 +30,7 @@ class TensorExpr(ABC):
     def __getitem__(self, key: int | slice | Tensor | TensorExpr):
         from .gathers import GatherTensorExpr, StaticIndexGatherTensorExpr
 
-        # Self is symbolic. If key is symbolic, use the 2-ary expression.
+        # typing.Self is symbolic. If key is symbolic, use the 2-ary expression.
         if isinstance(key, TensorExpr):
             return GatherTensorExpr(self, key)
 
@@ -125,7 +124,7 @@ class TensorDictExpr(ABC):
     def __getitem__(self, key: str, /) -> TensorExpr: ...
 
     @typing.overload
-    def __getitem__(self, key: list[str], /) -> Self: ...
+    def __getitem__(self, key: list[str], /) -> typing.Self: ...
 
     def __getitem__(self, key, /):
         match key:

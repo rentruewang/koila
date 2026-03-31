@@ -4,7 +4,6 @@
 
 import typing
 from collections.abc import KeysView
-from typing import ClassVar
 
 from numpy.typing import NDArray
 from tensordict import TensorDict
@@ -29,7 +28,7 @@ LOGGER = logging.get_logger(__name__)
 
 @_common.expr_dcls
 class _SourceExpr[T: Tensor | TensorDict]:
-    _DATA_TYPE: ClassVar[type[T]]
+    _DATA_TYPE: typing.ClassVar[type[T]]
 
     __match_args__ = ()
 

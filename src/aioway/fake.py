@@ -2,8 +2,8 @@
 
 import contextlib as ctxl
 import dataclasses as dcls
+import typing
 from collections.abc import Callable
-from typing import TypeIs
 
 from torch import Tensor
 from torch._subclasses import FakeTensor, FakeTensorMode
@@ -56,7 +56,7 @@ def to_fake_tensor(tensor: Tensor) -> FakeTensor:
         return converter.from_real_tensor(mode, tensor)
 
 
-def is_real_tensor(tensor: object) -> TypeIs[Tensor]:
+def is_real_tensor(tensor: object) -> typing.TypeIs[Tensor]:
     """
     Detect if a tensor is a normal tensor.
     """
@@ -64,7 +64,7 @@ def is_real_tensor(tensor: object) -> TypeIs[Tensor]:
     return isinstance(tensor, Tensor) and not is_fake_tensor(tensor)
 
 
-def is_fake_tensor(tensor: object) -> TypeIs[FakeTensor]:
+def is_fake_tensor(tensor: object) -> typing.TypeIs[FakeTensor]:
     """
     Detect if a tensor is a fake tensor.
     """

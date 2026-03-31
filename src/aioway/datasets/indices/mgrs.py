@@ -3,7 +3,6 @@
 import dataclasses as dcls
 import typing
 from collections.abc import Iterator, Mapping
-from typing import NamedTuple
 
 from numpy.typing import NDArray
 
@@ -32,7 +31,7 @@ class MultiPlanIndex:
         return index(op=op, value=value)
 
 
-class _ColTypeIndex(NamedTuple):
+class _ColTypeIndex(typing.NamedTuple):
     """
     A container storing columns, op types, and indices themselves.
     """

@@ -5,7 +5,6 @@
 import dataclasses as dcls
 import typing
 from collections.abc import Iterator
-from typing import Self
 
 from aioway.chunks import Chunk, Vector
 
@@ -22,7 +21,7 @@ class StreamColumnView(Iterator[Vector], DatasetColumnView[Stream]):
     Performs `__next__` and yield `Vector`s.
     """
 
-    def __iter__(self) -> Self:
+    def __iter__(self) -> typing.Self:
         return self
 
     def __next__(self) -> Vector:
@@ -30,7 +29,7 @@ class StreamColumnView(Iterator[Vector], DatasetColumnView[Stream]):
         return batch[self.col]
 
     @classmethod
-    def from_column(cls, dataset: Stream, /, column: str) -> Self:
+    def from_column(cls, dataset: Stream, /, column: str) -> typing.Self:
         return cls(col=column, dset=dataset)
 
 
@@ -42,7 +41,7 @@ class StreamSelectView(DatasetSelectView[Stream], Stream):
 
     COLUMN_TYPE = StreamColumnView
 
-    def __iter__(self) -> Self:
+    def __iter__(self) -> typing.Self:
         return self
 
     @typing.override
@@ -60,5 +59,5 @@ class StreamSelectView(DatasetSelectView[Stream], Stream):
         return (self.dset,)
 
     @classmethod
-    def from_columns(cls, dataset: Stream, /, *columns: str) -> Self:
+    def from_columns(cls, dataset: Stream, /, *columns: str) -> typing.Self:
         return cls(dset=dataset, cols=columns)

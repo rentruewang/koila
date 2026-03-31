@@ -1,6 +1,6 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-from typing import Any
+import typing
 
 import pytest
 from pytest import FixtureRequest
@@ -19,7 +19,7 @@ def signature(request: FixtureRequest):
     return Signature.parse(request.param, int=int, float=float, bool=bool)
 
 
-def test_signature_param(signature: Signature[Any]):
+def test_signature_param(signature: Signature[typing.Any]):
     assert len(signature.param_types) == 2
 
 

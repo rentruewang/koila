@@ -7,7 +7,6 @@ import dataclasses as dcls
 import typing
 from abc import ABC
 from collections.abc import KeysView, Sequence
-from typing import ClassVar, NamedTuple, Self
 
 from aioway.tdicts import AttrSet
 from aioway.tensors import Attr
@@ -23,17 +22,17 @@ class Dataset(ABC):
 
     1. `column(key: str, /) -> `.
         Getting the individual column.
-    2. `select(*keys: str) -> Self`.
+    2. `select(*keys: str) -> typing.Self`.
         Getting a couple of columns should return the same `Table`.
     3. `keys() -> KeysView[str]`
 
     """
 
     @typing.overload
-    def __getitem__(self, key: str, /) -> DatasetColumnView[Self]: ...
+    def __getitem__(self, key: str, /) -> DatasetColumnView[typing.Self]: ...
 
     @typing.overload
-    def __getitem__(self, key: list[str], /) -> DatasetSelectView[Self]: ...
+    def __getitem__(self, key: list[str], /) -> DatasetSelectView[typing.Self]: ...
 
     def __getitem__(self, key, /):
         match key:
@@ -62,7 +61,7 @@ class Dataset(ABC):
         """
         return self.attrs.keys()
 
-    def column(self, key: str) -> DatasetColumnView[Self]:
+    def column(self, key: str) -> DatasetColumnView[typing.Self]:
         """
         Get the column from the `Tabular` object.
         A `KeyError` is raised if the column is not present.
@@ -83,7 +82,7 @@ class Dataset(ABC):
         col_type, _ = self.view_types()
         return col_type.from_column(self, key)
 
-    def select(self, *keys: str) -> DatasetSelectView[Self]:
+    def select(self, *keys: str) -> DatasetSelectView[typing.Self]:
         """
         Select multiple columns from the `Tabular` object.
 
@@ -102,9 +101,9 @@ class Dataset(ABC):
         """
         The type used to construct `.column`, `.select` views.
 
-        The reason this is not a `ClassVar` is purely technical,
-        because `*SelectView`s often inherit from `Self`,
-        making it a circular dependency if it were a `ClassVar`.
+        The reason this is not a `typing.ClassVar` is purely technical,
+        because `*SelectView`s often inherit from `typing.Self`,
+        making it a circular dependency if it were a `typing.ClassVar`.
         """
 
         raise NotImplementedError
@@ -132,7 +131,7 @@ class DatasetColumnView[T: Dataset = Dataset](DatasetView[T], ABC):
 
     @classmethod
     @abc.abstractmethod
-    def from_column(cls, dataset: T, /, column: str) -> Self: ...
+    def from_column(cls, dataset: T, /, column: str) -> typing.Self: ...
 
 
 @dcls.dataclass(frozen=True)
@@ -142,7 +141,7 @@ class DatasetSelectView[T: Dataset = Dataset](Dataset, DatasetView[T], ABC):
     This is a `View`, which means creation is cheap, but you pay the price in runtime.
     """
 
-    COLUMN_TYPE: ClassVar[type[DatasetColumnView[T]]]
+    COLUMN_TYPE: typing.ClassVar[type[DatasetColumnView[T]]]
     "The column type associated with the current `DatasetSelectView`."
 
     cols: Sequence[str]
@@ -171,10 +170,10 @@ class DatasetSelectView[T: Dataset = Dataset](Dataset, DatasetView[T], ABC):
 
     @classmethod
     @abc.abstractmethod
-    def from_columns(cls, dataset: T, /, *columns: str) -> Self: ...
+    def from_columns(cls, dataset: T, /, *columns: str) -> typing.Self: ...
 
 
-class DatasetViewTypes[T: Dataset](NamedTuple):
+class DatasetViewTypes[T: Dataset](typing.NamedTuple):
     "The view types."
 
     column: type[DatasetColumnView[T]]

@@ -4,7 +4,6 @@
 
 import dataclasses as dcls
 import typing
-from typing import Self
 
 from numpy import ndarray as NpArr
 from torch import Tensor
@@ -52,7 +51,7 @@ class ChunkExpr:
         self,
         idx: int | slice | list[int] | list[str] | NpArr | Tensor | Vector,
         /,
-    ) -> Self: ...
+    ) -> typing.Self: ...
 
     def __getitem__(self, idx):
         if isinstance(idx, str):
@@ -91,16 +90,16 @@ class ChunkExpr:
         attr = self.attrs[key]
         return VectorExpr(tensor=tensor, attr=attr)
 
-    def select(self, *keys: str) -> Self:
+    def select(self, *keys: str) -> typing.Self:
         td = self.tensordict.select(*keys)
         schema = self.attrs.select(*keys)
         return type(self)(tensordict=td, attrs=schema)
 
-    def rename(self, **renames) -> Self:
+    def rename(self, **renames) -> typing.Self:
         td = RenameTensorDictExpr(self.tensordict, renames)
         return type(self)(tensordict=td, attrs=self.attrs.rename(**renames))
 
-    def zip(self, rhs: ChunkExpr | Chunk) -> Self:
+    def zip(self, rhs: ChunkExpr | Chunk) -> typing.Self:
         rhs_td = rhs.tensordict if isinstance(rhs, ChunkExpr) else rhs.data
         td = self.tensordict.zip(rhs_td)
         return type(self)(

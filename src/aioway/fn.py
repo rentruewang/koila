@@ -7,7 +7,6 @@ from abc import ABC
 from collections.abc import Iterator
 from enum import Enum
 from enum import auto as Auto
-from typing import Any, ClassVar
 
 from aioway import fake
 
@@ -35,7 +34,7 @@ class Fn[T](ABC):
     I was going to go for `Op` but it's used a lot in `torch`.
     """
 
-    __match_args__: ClassVar[tuple[str, ...]]
+    __match_args__: typing.ClassVar[tuple[str, ...]]
 
     def __init__(self) -> None:
         super().__init__()
@@ -86,7 +85,7 @@ class Fn[T](ABC):
         return not self.deps
 
     @abc.abstractmethod
-    def _deps(self) -> Iterator[Fn[Any]]:
+    def _deps(self) -> Iterator[Fn[typing.Any]]:
         """
         Return the depedent thunks.
         """

@@ -3,7 +3,6 @@
 import dataclasses as dcls
 import operator
 import typing
-from typing import Self
 
 from torch import Tensor
 
@@ -41,13 +40,13 @@ class VectorExpr:
         if not isinstance(self.attr, Attr):
             raise TypeError(f"{type(self.tensor)=} is not an `Attr`.")
 
-    def __neg__(self) -> Self:
+    def __neg__(self) -> typing.Self:
         return self.__ufunc1(operator.neg)
 
-    def __invert__(self) -> Self:
+    def __invert__(self) -> typing.Self:
         return self.__ufunc1(operator.invert)
 
-    def __getitem__(self, key: int | slice | Tensor | VectorExpr) -> Self:
+    def __getitem__(self, key: int | slice | Tensor | VectorExpr) -> typing.Self:
         if isinstance(key, VectorExpr):
             return type(self)(
                 attr=self.attr.term[key.attr].unpack(),
@@ -60,45 +59,45 @@ class VectorExpr:
                 tensor=self.tensor[key],
             )
 
-    def __add__(self, other: VectorExprRhs) -> Self:
+    def __add__(self, other: VectorExprRhs) -> typing.Self:
         return self.__ufunc2(other, operator.add)
 
-    def __sub__(self, other: VectorExprRhs) -> Self:
+    def __sub__(self, other: VectorExprRhs) -> typing.Self:
         return self.__ufunc2(other, operator.sub)
 
-    def __mul__(self, other: VectorExprRhs) -> Self:
+    def __mul__(self, other: VectorExprRhs) -> typing.Self:
         return self.__ufunc2(other, operator.mul)
 
-    def __truediv__(self, other: VectorExprRhs) -> Self:
+    def __truediv__(self, other: VectorExprRhs) -> typing.Self:
         return self.__ufunc2(other, operator.truediv)
 
-    def __floordiv__(self, other: VectorExprRhs) -> Self:
+    def __floordiv__(self, other: VectorExprRhs) -> typing.Self:
         return self.__ufunc2(other, operator.floordiv)
 
-    def __mod__(self, other: VectorExprRhs) -> Self:
+    def __mod__(self, other: VectorExprRhs) -> typing.Self:
         return self.__ufunc2(other, operator.mod)
 
-    def __pow__(self, other: VectorExprRhs) -> Self:
+    def __pow__(self, other: VectorExprRhs) -> typing.Self:
         return self.__ufunc2(other, operator.pow)
 
     @typing.no_type_check
-    def __eq__(self, other: VectorExprRhs) -> Self:
+    def __eq__(self, other: VectorExprRhs) -> typing.Self:
         return self.__cmp(other, operator.eq)
 
     @typing.no_type_check
-    def __ne__(self, other: VectorExprRhs) -> Self:
+    def __ne__(self, other: VectorExprRhs) -> typing.Self:
         return self.__cmp(other, operator.ne)
 
-    def __ge__(self, other: VectorExprRhs) -> Self:
+    def __ge__(self, other: VectorExprRhs) -> typing.Self:
         return self.__cmp(other, operator.ge)
 
-    def __gt__(self, other: VectorExprRhs) -> Self:
+    def __gt__(self, other: VectorExprRhs) -> typing.Self:
         return self.__cmp(other, operator.gt)
 
-    def __le__(self, other: VectorExprRhs) -> Self:
+    def __le__(self, other: VectorExprRhs) -> typing.Self:
         return self.__cmp(other, operator.le)
 
-    def __lt__(self, other: VectorExprRhs) -> Self:
+    def __lt__(self, other: VectorExprRhs) -> typing.Self:
         return self.__cmp(other, operator.lt)
 
     def _inputs(self):
@@ -115,13 +114,13 @@ class VectorExpr:
 
         return Vector(data=data, attr=self.attr)
 
-    def __ufunc1(self, op: AnyUFunc1) -> Self:
+    def __ufunc1(self, op: AnyUFunc1) -> typing.Self:
         LOGGER.debug("%s.%s called", self, op)
         result = type(self)(tensor=op(self.tensor), attr=op(self.attr.term).unpack())
         LOGGER.debug("%s.%s returned %s", self, op, result)
         return result
 
-    def __ufunc2(self, other: VectorExprRhs, op: AnyUFunc2) -> Self:
+    def __ufunc2(self, other: VectorExprRhs, op: AnyUFunc2) -> typing.Self:
         LOGGER.debug("%s.%s(%s) called", self, op, other)
         result = type(self)(
             tensor=self._tensor_expr(other=other, op=op),
@@ -130,7 +129,7 @@ class VectorExpr:
         LOGGER.debug("%s.%s(%s) returned %s", self, op, other, result)
         return result
 
-    def __cmp(self, other: VectorExprRhs, op: AnyUFunc2) -> Self:
+    def __cmp(self, other: VectorExprRhs, op: AnyUFunc2) -> typing.Self:
         return self.__ufunc2(other, op)
 
     def _tensor_expr(self, other: VectorExprRhs, op: AnyUFunc2) -> TensorExpr:

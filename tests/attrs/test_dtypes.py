@@ -1,7 +1,7 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import dataclasses as dcls
-from typing import Any
+import typing
 
 import numpy as np
 import pytest
@@ -13,7 +13,7 @@ from aioway.tensors import DType
 
 @dcls.dataclass(frozen=True)
 class _CaseChecker:
-    original: Any
+    original: typing.Any
     family: str
     bits: int
 

@@ -4,7 +4,6 @@
 
 import dataclasses as dcls
 import typing
-from typing import Any
 
 from torch import Tensor
 
@@ -17,5 +16,5 @@ TRACKER = ModuleApiTracker(lambda: Tensor)
 
 @typing.dataclass_transform(eq_default=False)
 def expr_dcls[T](cls: T) -> T:
-    dataclass: Any = dcls.dataclass
+    dataclass: typing.Any = dcls.dataclass
     return dataclass(match_args=False, eq=False, repr=False)(cls)

@@ -4,7 +4,6 @@ import abc
 import typing
 from abc import ABC
 from collections.abc import KeysView
-from typing import Self
 
 from aioway._tracking import logging
 
@@ -127,7 +126,7 @@ class TableSymbol(Symbol, ABC):
     def __getitem__(self, key: str, /) -> ColSymbol: ...
 
     @typing.overload
-    def __getitem__(self, key: list[str], /) -> Self: ...
+    def __getitem__(self, key: list[str], /) -> typing.Self: ...
 
     def __getitem__(self, key, /):
         match key:

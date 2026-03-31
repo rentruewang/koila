@@ -6,7 +6,6 @@ import abc
 import dataclasses as dcls
 import typing
 from abc import ABC
-from typing import Any, TypeIs
 
 import numpy as np
 from numpy import ndarray as NpArr
@@ -146,7 +145,7 @@ class Frame(Dataset, ABC):
         return idx % length
 
 
-def _is_table_index(idx: Any) -> TypeIs[BatchIndex]:
+def _is_table_index(idx: typing.Any) -> typing.TypeIs[BatchIndex]:
     "Check if the `idx` passed in is a valid type."
 
     # Check if it's a valid slice.

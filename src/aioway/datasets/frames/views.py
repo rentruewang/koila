@@ -4,7 +4,6 @@
 
 import dataclasses as dcls
 import typing
-from typing import Self
 
 from aioway._typing import BatchIndex
 from aioway.chunks import Chunk, Vector
@@ -30,7 +29,7 @@ class FrameColumnView(DatasetColumnView[Frame]):
         return batch[self.col]
 
     @classmethod
-    def from_column(cls, dataset: Frame, /, column: str) -> Self:
+    def from_column(cls, dataset: Frame, /, column: str) -> typing.Self:
         return cls(dataset, column)
 
 
@@ -52,5 +51,5 @@ class FrameSelectView(DatasetSelectView[Frame], Frame):
         return items.select(*self.cols)
 
     @classmethod
-    def from_columns(cls, dataset: Frame, /, *columns: str) -> Self:
+    def from_columns(cls, dataset: Frame, /, *columns: str) -> typing.Self:
         return cls(dataset, columns)

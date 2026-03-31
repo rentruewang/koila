@@ -5,9 +5,9 @@
 import contextlib as ctxl
 import dataclasses as dcls
 import logging
+import typing
 from collections.abc import Callable
 from logging import Handler
-from typing import Literal
 
 from rich.logging import RichHandler
 
@@ -48,7 +48,7 @@ def enable_rich_log(level: str | int, /):
         yield logger
 
 
-type LoggingLevel = Literal[
+type LoggingLevel = typing.Literal[
     "NOTSET", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL", 0, 10, 20, 30, 40, 50
 ]
 "The accepted logging levels. Same as `logging` library."

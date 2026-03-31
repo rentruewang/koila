@@ -9,7 +9,6 @@ import math
 import typing
 from abc import ABC
 from collections.abc import Sequence
-from typing import Self
 
 from torch.utils.data import DataLoader, Sampler
 
@@ -79,7 +78,7 @@ class CacheStream(BoundedStream):
     "The cache for the input `Stream`."
 
     @typing.override
-    def __iter__(self) -> Self:
+    def __iter__(self) -> typing.Self:
         return dcls.replace(self, stream=self.stream, saved=self.saved)
 
     @typing.override

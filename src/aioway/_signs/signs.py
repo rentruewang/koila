@@ -3,8 +3,8 @@
 "The signature types."
 
 import functools
+import typing
 from types import GenericAlias
-from typing import Self
 
 from lark import Lark
 
@@ -69,7 +69,7 @@ class Signature:
         return self._return_type
 
     @classmethod
-    def parse(cls, text: str, /, **types: type) -> Self:
+    def parse(cls, text: str, /, **types: type) -> typing.Self:
         return _common.parse_and_transform_later(
             parser=_signature_lark_parser,
             transformer=SignatureTransformer,
