@@ -3,7 +3,7 @@
 import abc
 import typing
 from abc import ABC
-from collections.abc import Iterator, Mapping
+from collections import abc as cabc
 from typing import Any
 
 import tensordict as td
@@ -17,7 +17,7 @@ from .attrs import AttrSet
 __all__ = ["TensorDictFn", "tdict"]
 
 
-class TensorDictFn(Fn[td.TensorDict], Mapping[str, TensorFn], ABC):
+class TensorDictFn(Fn[td.TensorDict], cabc.Mapping[str, TensorFn], ABC):
     def __init__(self) -> None:
         super().__init__()
         assert all(fake.is_fake_tensor(tensor) for tensor in self._fake_result.values())
@@ -64,7 +64,7 @@ class TensorDictFn(Fn[td.TensorDict], Mapping[str, TensorFn], ABC):
 
     @abc.abstractmethod
     @typing.override
-    def _deps(self) -> Iterator[Fn[Any]]:
+    def _deps(self) -> cabc.Iterator[Fn[Any]]:
         raise NotImplementedError
 
     @property

@@ -1,7 +1,7 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import typing
-from collections.abc import Iterator
+from collections import abc as cabc
 
 import torch
 
@@ -35,6 +35,6 @@ class TensorDataFn(TensorFn):
             return self.data
 
     @typing.override
-    def _deps(self) -> Iterator[Fn[torch.Tensor]]:
+    def _deps(self) -> cabc.Iterator[Fn[torch.Tensor]]:
         return
         yield

@@ -2,7 +2,7 @@
 
 import dataclasses as dcls
 import typing
-from collections.abc import Iterable, Iterator, Sequence
+from collections import abc as cabc
 
 import numpy as np
 import torch
@@ -20,7 +20,7 @@ type _PrimitiveNumber = float | int | bool
 type _IntArrayLike = tuple[int, ...] | list[int] | npt.NDArray[np.int_]
 type ShapeCmpType = Shape | torch.Size | _IntArrayLike | _PrimitiveNumber
 
-type ShapeLike = int | Iterable[int] | Shape
+type ShapeLike = int | cabc.Iterable[int] | Shape
 "Types convertible to `Shape`s. Note that `int` can be converted as well."
 
 
@@ -29,7 +29,7 @@ _is_list_of_int = _typing.is_list_of(int)
 
 
 @dcls.dataclass(frozen=True)
-class Shape(Sequence[int]):
+class Shape(cabc.Sequence[int]):
     """
     `Shape` represents a regular (non-jagged) array's dimensions,
     must be a `tuple` like object, and `tuple` would be used on it.
@@ -100,7 +100,7 @@ class Shape(Sequence[int]):
                 raise TypeError(type(idx))
 
     @typing.override
-    def __iter__(self) -> Iterator[int]:
+    def __iter__(self) -> cabc.Iterator[int]:
         return iter(self.dims)
 
     def __array__(self) -> npt.NDArray:
@@ -202,7 +202,7 @@ class Shape(Sequence[int]):
         if isinstance(dims, cls):
             return dims
 
-        if isinstance(dims, Iterable):
+        if isinstance(dims, cabc.Iterable):
             dims_tuple = tuple(dims)
 
             if _is_tuple_of_int(dims_tuple):

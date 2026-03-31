@@ -4,7 +4,7 @@ import abc
 import operator
 import typing
 from abc import ABC
-from collections.abc import Iterator
+from collections import abc as cabc
 from typing import Any
 
 import torch
@@ -119,7 +119,7 @@ class TensorFn(Fn[torch.Tensor], ABC):
 
     @abc.abstractmethod
     @typing.override
-    def _deps(self) -> Iterator[Fn]:
+    def _deps(self) -> cabc.Iterator[Fn]:
         """
         Yields the dependent `Fn`s.
         """

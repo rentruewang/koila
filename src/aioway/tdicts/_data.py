@@ -1,7 +1,7 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import typing
-from collections.abc import Iterator
+from collections import abc as cabc
 
 import tensordict as td
 
@@ -39,6 +39,6 @@ class TensorDictDataFn(TensorDictFn):
         )
 
     @typing.override
-    def _deps(self) -> Iterator[Fn[td.TensorDict]]:
+    def _deps(self) -> cabc.Iterator[Fn[td.TensorDict]]:
         return
         yield

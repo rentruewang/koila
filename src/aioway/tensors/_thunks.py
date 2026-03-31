@@ -1,7 +1,7 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import typing
-from collections.abc import Callable, Iterator
+from collections import abc as cabc
 from typing import Any
 
 import torch
@@ -20,7 +20,7 @@ class AnyThunk(TensorFn):
 
     __match_args__ = "func", "args", "kwargs"
 
-    func: Callable[..., torch.Tensor]
+    func: cabc.Callable[..., torch.Tensor]
     args: tuple[Fn[Any], ...]
     kwargs: dict[str, Fn[Any]]
 
@@ -45,7 +45,7 @@ class AnyThunk(TensorFn):
         return self.func(*args, **kwargs)
 
     @typing.override
-    def _deps(self) -> Iterator[Fn[object]]:
+    def _deps(self) -> cabc.Iterator[Fn[object]]:
         yield from self.args
         yield from self.kwargs.values()
 
@@ -56,7 +56,7 @@ class UFunc1Thunk(TensorFn):
     Thunk for unary function.
     """
 
-    func: Callable[[torch.Tensor], torch.Tensor]
+    func: cabc.Callable[[torch.Tensor], torch.Tensor]
     arg: TensorFn
 
     def __post_init__(self):
@@ -73,7 +73,7 @@ class UFunc1Thunk(TensorFn):
         return self.func(self.arg.do())
 
     @typing.override
-    def _deps(self) -> Iterator[TensorFn]:
+    def _deps(self) -> cabc.Iterator[TensorFn]:
         # If it's a primitive or `torch.Tensor`, do not recurse.
         yield self.arg
 
@@ -87,7 +87,7 @@ class UFunc2Thunk(TensorFn):
     Thunk for binary function.
     """
 
-    func: Callable[[torch.Tensor, Any], torch.Tensor]
+    func: cabc.Callable[[torch.Tensor, Any], torch.Tensor]
     left: TensorFn
     right: BinaryTensorFnRhs
 
@@ -114,7 +114,7 @@ class UFunc2Thunk(TensorFn):
                 return self.func(left_do, right)
 
     @typing.override
-    def _deps(self) -> Iterator[TensorFn]:
+    def _deps(self) -> cabc.Iterator[TensorFn]:
         # If it's a primitive or `torch.Tensor`, do not recurse.
         yield self.left
 
@@ -141,7 +141,7 @@ class GatherThunk(TensorFn):
         return tensor[index]
 
     @typing.override
-    def _deps(self) -> Iterator[TensorFn]:
+    def _deps(self) -> cabc.Iterator[TensorFn]:
         if isinstance(self.tensor, TensorFn):
             yield self.tensor
 

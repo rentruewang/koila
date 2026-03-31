@@ -5,7 +5,7 @@
 import dataclasses as dcls
 import functools
 import typing
-from collections.abc import Iterator, KeysView, Mapping, Sequence
+from collections import abc as cabc
 from typing import NamedTuple, Self
 
 import numpy as np
@@ -38,7 +38,7 @@ class _AttrItem[T](NamedTuple):
 
 
 @dcls.dataclass(frozen=True, repr=False)
-class _AttrSetBase[T](Mapping[str, T]):
+class _AttrSetBase[T](cabc.Mapping[str, T]):
     """
     A set of attributes. Representing the schema in a `td.TensorDict`.
 
@@ -59,7 +59,7 @@ class _AttrSetBase[T](Mapping[str, T]):
     def __repr__(self) -> str:
         return self._repr_string
 
-    def __or__(self, other: Mapping[str, T]) -> Self:
+    def __or__(self, other: cabc.Mapping[str, T]) -> Self:
         return type(self).from_dict({**self, **other})
 
     @typing.override
@@ -67,7 +67,7 @@ class _AttrSetBase[T](Mapping[str, T]):
         return len(self.attrs)
 
     @typing.override
-    def __iter__(self) -> Iterator[str]:
+    def __iter__(self) -> cabc.Iterator[str]:
         return (attr.name for attr in self.attrs)
 
     def __getitem__(self, key):
@@ -112,7 +112,7 @@ class _AttrSetBase[T](Mapping[str, T]):
         return cls.from_dict(attrs)
 
     @classmethod
-    def from_dict(cls, attrs: Mapping[str, T], /) -> Self:
+    def from_dict(cls, attrs: cabc.Mapping[str, T], /) -> Self:
         return cls(
             tuple(
                 sorted(_AttrItem(name=name, attr=attr) for name, attr in attrs.items())
@@ -123,7 +123,7 @@ class _AttrSetBase[T](Mapping[str, T]):
 class DTypeSet(_AttrSetBase[DType]):
     @classmethod
     @typing.override
-    def from_dict(cls, attrs: Mapping[str, DTypeLike], /) -> Self:
+    def from_dict(cls, attrs: cabc.Mapping[str, DTypeLike], /) -> Self:
         converted = {key: DType.parse(dt) for key, dt in attrs.items()}
         return super().from_dict(converted)
 
@@ -131,7 +131,7 @@ class DTypeSet(_AttrSetBase[DType]):
 class DeviceSet(_AttrSetBase[Device]):
     @classmethod
     @typing.override
-    def from_dict(cls, attrs: Mapping[str, DeviceLike]) -> Self:
+    def from_dict(cls, attrs: cabc.Mapping[str, DeviceLike]) -> Self:
         converted = {key: Device.parse(dev) for key, dev in attrs.items()}
         return super().from_dict(converted)
 
@@ -139,7 +139,7 @@ class DeviceSet(_AttrSetBase[Device]):
 class ShapeSet(_AttrSetBase[Shape]):
     @classmethod
     @typing.override
-    def from_dict(cls, attrs: Mapping[str, ShapeLike]) -> Self:
+    def from_dict(cls, attrs: cabc.Mapping[str, ShapeLike]) -> Self:
         converted = {key: Shape.parse(dev) for key, dev in attrs.items()}
         return super().from_dict(converted)
 
@@ -229,10 +229,10 @@ class AttrSet(_AttrSetBase[Attr]):
     def from_fields(
         cls,
         *,
-        names: Sequence[str],
-        shapes: Sequence[ShapeLike],
-        dtypes: Sequence[DTypeLike],
-        devices: Sequence[DeviceLike],
+        names: cabc.Sequence[str],
+        shapes: cabc.Sequence[ShapeLike],
+        dtypes: cabc.Sequence[DTypeLike],
+        devices: cabc.Sequence[DeviceLike],
     ) -> Self:
         "Create an `AttrSet` from a set of seuqences of attributes of same length."
 
@@ -294,7 +294,7 @@ class AttrSet(_AttrSetBase[Attr]):
 
 
 @dcls.dataclass(frozen=True)
-class _AttrKeysView(KeysView[str]):
+class _AttrKeysView(cabc.KeysView[str]):
     attrset: _AttrSetBase
     "The data to view. Its names must be sorted."
 
