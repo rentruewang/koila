@@ -5,8 +5,8 @@
 import functools
 from collections import abc as cabc
 
-from torch import Tensor
-from torch.nn import Module as NnModule
+import torch
+from torch import nn
 
 from aioway import fake
 from aioway._signs import Signature
@@ -18,7 +18,7 @@ __all__ = ["Module"]
 LOGGER = logging.get_logger(__name__)
 
 
-class Module[**P, T: NnModule]:
+class Module[**P, T: nn.Module]:
     """
     Preview informs us how an `nn.Module` would be behave without initializing it.
 
@@ -57,16 +57,16 @@ class Module[**P, T: NnModule]:
     @fake.enable_func
     def _preview(self, attr: Attr) -> Attr:
         tensor = attr.to_tensor()
-        result: Tensor = self.fake_module(tensor)
+        result: torch.Tensor = self.fake_module(tensor)
         assert fake.is_fake_tensor(result), "Function is running under fake mode."
         return Attr.from_tensor(result)
 
-    def forward(self, tensor: Tensor) -> Tensor:
+    def forward(self, tensor: torch.Tensor) -> torch.Tensor:
         """
         Do a forward pass on the input `tensor`.
         """
 
-        with self._tracker()("forward", Signature(Tensor, Tensor)):
+        with self._tracker()("forward", Signature(torch.Tensor, torch.Tensor)):
             return self.real_module(tensor)
 
     @classmethod

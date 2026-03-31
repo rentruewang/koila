@@ -3,7 +3,6 @@
 import pytest
 import torch
 from pytest import FixtureRequest
-from torch import Tensor
 from torch.nn import Conv2d, Embedding, Identity, Linear
 
 from aioway.modules import Module
@@ -26,7 +25,7 @@ def linear_input():
 
 
 @pytest.fixture
-def linear_attr(linear_input: Tensor):
+def linear_attr(linear_input: torch.Tensor):
     return Attr.from_tensor(linear_input)
 
 
@@ -83,9 +82,9 @@ def emb_input(request: FixtureRequest):
     return request.param
 
 
-def test_linear(linear: Module, linear_input: Tensor):
+def test_linear(linear: Module, linear_input: torch.Tensor):
     result = linear.forward(linear_input)
-    assert isinstance(result, Tensor)
+    assert isinstance(result, torch.Tensor)
     assert result.shape == (7, 5)
 
 
@@ -95,9 +94,9 @@ def test_linear_preview(linear: Module, linear_attr: Attr):
     assert result.shape == (7, 5)
 
 
-def test_identity(identity: Module, linear_input: Tensor):
+def test_identity(identity: Module, linear_input: torch.Tensor):
     result = identity.forward(linear_input)
-    assert isinstance(result, Tensor)
+    assert isinstance(result, torch.Tensor)
     assert result.shape == (7, 3)
 
 
@@ -107,26 +106,26 @@ def test_identity_preview(identity: Module, linear_attr: Attr):
     assert result.shape == (7, 3)
 
 
-def test_conv2d_forward(conv2d: Module, conv2d_input: Tensor):
+def test_conv2d_forward(conv2d: Module, conv2d_input: torch.Tensor):
     ours = conv2d.forward(conv2d_input)
     theirs = conv2d.real_module(conv2d_input)
 
     assert ours.shape == theirs.shape
 
 
-def test_conv2d_preview(conv2d: Module, conv2d_input: Tensor):
+def test_conv2d_preview(conv2d: Module, conv2d_input: torch.Tensor):
     ours = conv2d.preview(Attr.from_tensor(conv2d_input))
     theirs = conv2d.real_module(conv2d_input)
 
     assert ours.shape == theirs.shape
 
 
-def test_emb_forward(emb_input: Tensor, emb: Module):
+def test_emb_forward(emb_input: torch.Tensor, emb: Module):
     assert emb.forward(emb_input).shape == emb.real_module(emb_input).shape
     assert emb.forward(emb_input).dtype == emb.real_module(emb_input).dtype
 
 
-def test_emb_preview(emb_input: Tensor, emb: Module):
+def test_emb_preview(emb_input: torch.Tensor, emb: Module):
     preview = emb.preview(Attr.from_tensor(emb_input))
     real = emb.real_module(emb_input)
     assert preview.shape == real.shape

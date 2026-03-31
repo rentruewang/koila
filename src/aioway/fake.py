@@ -5,7 +5,7 @@ import dataclasses as dcls
 import typing
 from collections import abc as cabc
 
-from torch import Tensor
+import torch
 from torch._subclasses import FakeTensor, FakeTensorMode
 
 __all__ = ["enable", "enable_func", "is_fake_tensor", "is_real_tensor"]
@@ -43,9 +43,9 @@ class FakeModeRc:
 _FAKE_MODE = FakeModeRc()
 
 
-def to_fake_tensor(tensor: Tensor) -> FakeTensor:
+def to_fake_tensor(tensor: torch.Tensor) -> FakeTensor:
     """
-    Move a possibly real tensor to a fake Tensor
+    Move a possibly real tensor to a fake torch.Tensor
     """
 
     if is_fake_tensor(tensor):
@@ -56,12 +56,12 @@ def to_fake_tensor(tensor: Tensor) -> FakeTensor:
         return converter.from_real_tensor(mode, tensor)
 
 
-def is_real_tensor(tensor: object) -> typing.TypeIs[Tensor]:
+def is_real_tensor(tensor: object) -> typing.TypeIs[torch.Tensor]:
     """
     Detect if a tensor is a normal tensor.
     """
 
-    return isinstance(tensor, Tensor) and not is_fake_tensor(tensor)
+    return isinstance(tensor, torch.Tensor) and not is_fake_tensor(tensor)
 
 
 def is_fake_tensor(tensor: object) -> typing.TypeIs[FakeTensor]:

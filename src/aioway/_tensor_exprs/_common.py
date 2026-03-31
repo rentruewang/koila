@@ -5,13 +5,13 @@
 import dataclasses as dcls
 import typing
 
-from torch import Tensor
+import torch
 
 from aioway._tracking import ModuleApiTracker
 
 __all__ = ["expr_dcls", "TRACKER"]
 
-TRACKER = ModuleApiTracker(lambda: Tensor)
+TRACKER = ModuleApiTracker(lambda: torch.Tensor)
 
 
 @typing.dataclass_transform(eq_default=False)

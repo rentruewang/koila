@@ -5,13 +5,13 @@ import typing
 from abc import ABC
 from collections import abc as cabc
 
+import torch
 from tensordict import TensorDict
-from torch import Tensor
 
 __all__ = ["TensorDictExpr", "TensorExpr", "TensorExprRhs"]
 
 
-type TensorExprRhs = TensorExpr | Tensor | int | float | bool
+type TensorExprRhs = TensorExpr | torch.Tensor | int | float | bool
 
 
 class TensorExpr(ABC):
@@ -27,7 +27,7 @@ class TensorExpr(ABC):
 
         return UFuncTensorExpr1.neg(self)
 
-    def __getitem__(self, key: int | slice | Tensor | TensorExpr):
+    def __getitem__(self, key: int | slice | torch.Tensor | TensorExpr):
         from .gathers import GatherTensorExpr, StaticIndexGatherTensorExpr
 
         # typing.Self is symbolic. If key is symbolic, use the 2-ary expression.
@@ -109,13 +109,13 @@ class TensorExpr(ABC):
         return self._compute()
 
     @abc.abstractmethod
-    def _compute(self) -> Tensor: ...
+    def _compute(self) -> torch.Tensor: ...
 
     @abc.abstractmethod
     def _inputs(self) -> tuple[TensorExpr, ...]: ...
 
-    def _return_type(self) -> type[Tensor]:
-        return Tensor
+    def _return_type(self) -> type[torch.Tensor]:
+        return torch.Tensor
 
 
 class TensorDictExpr(ABC):

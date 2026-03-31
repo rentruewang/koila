@@ -3,7 +3,7 @@
 """User facing high level erros. Subclasses of `AiowayError`."""
 
 import contextlib as ctxl
-from types import ModuleType
+import types
 
 __all__ = [
     "AiowayError",
@@ -50,7 +50,7 @@ class FrameworkUnexpected(AiowayError):
         where `trace` modifies the modules to do tracking.
     """
 
-    def __init__(self, module: ModuleType, *reasons: str) -> None:
+    def __init__(self, module: types.ModuleType, *reasons: str) -> None:
         self._module = module
         self._reasons = reasons
 

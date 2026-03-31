@@ -5,9 +5,9 @@
 import typing
 from collections import abc as cabc
 
+import torch
 from numpy.typing import NDArray
 from tensordict import TensorDict
-from torch import Tensor
 
 from aioway._signs import Signature
 from aioway._tracking import logging
@@ -27,7 +27,7 @@ LOGGER = logging.get_logger(__name__)
 
 
 @_common.expr_dcls
-class _SourceExpr[T: Tensor | TensorDict]:
+class _SourceExpr[T: torch.Tensor | TensorDict]:
     _DATA_TYPE: typing.ClassVar[type[T]]
 
     __match_args__ = ()
@@ -65,10 +65,10 @@ class SourceTensorDictExpr(_SourceExpr[TensorDict], TensorDictExpr):
 
 
 @_common.expr_dcls
-class SourceTensorExpr(_SourceExpr[Tensor], TensorExpr):
-    "The source expression for `Tensor`."
+class SourceTensorExpr(_SourceExpr[torch.Tensor], TensorExpr):
+    "The source expression for `torch.Tensor`."
 
-    _DATA_TYPE = Tensor
+    _DATA_TYPE = torch.Tensor
 
 
 @_common.expr_dcls
@@ -78,10 +78,12 @@ class ColumnTensorExpr(TensorExpr):
     column: str
 
     @typing.no_type_check
-    def _compute(self) -> Tensor:
+    def _compute(self) -> torch.Tensor:
         pulled = self.source.compute()
 
-        with _common.TRACKER(name="column", signature=Signature(TensorDict, Tensor)):
+        with _common.TRACKER(
+            name="column", signature=Signature(TensorDict, torch.Tensor)
+        ):
             return pulled[self.column]
 
     def _inputs(self):
@@ -114,7 +116,7 @@ class _GetItemTensorExpr[T](TensorDictExpr):
 class ItemTensorDictExpr(_GetItemTensorExpr[int], TensorDictExpr): ...
 
 
-type BatchIndex = list[int] | slice | NDArray | Tensor
+type BatchIndex = list[int] | slice | NDArray | torch.Tensor
 
 
 @_common.expr_dcls

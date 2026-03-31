@@ -5,8 +5,8 @@
 import dataclasses as dcls
 import typing
 
+import torch
 from numpy import ndarray as NpArr
-from torch import Tensor
 
 from aioway import _typing
 from aioway._errors import GitHubTicketFiled
@@ -49,7 +49,7 @@ class ChunkExpr:
     @typing.overload
     def __getitem__(
         self,
-        idx: int | slice | list[int] | list[str] | NpArr | Tensor | Vector,
+        idx: int | slice | list[int] | list[str] | NpArr | torch.Tensor | Vector,
         /,
     ) -> typing.Self: ...
 
@@ -74,7 +74,9 @@ class ChunkExpr:
 
         # Doing the batch operations that simply does type check first,
         # to avoid expensive iteration over the input.
-        if isinstance(idx, slice | NpArr | Tensor) or _typing.is_list_of(int)(idx):
+        if isinstance(idx, slice | NpArr | torch.Tensor) or _typing.is_list_of(int)(
+            idx
+        ):
             return type(self)(
                 tensordict=BatchTensorDictExpr(self.tensordict, idx),
                 attrs=self.attrs,

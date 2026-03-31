@@ -4,7 +4,7 @@ import dataclasses as dcls
 import operator
 import typing
 
-from torch import Tensor
+import torch
 
 from aioway._tensor_exprs import SourceTensorExpr, TensorExpr
 from aioway._tracking import logging
@@ -46,7 +46,7 @@ class VectorExpr:
     def __invert__(self) -> typing.Self:
         return self.__ufunc1(operator.invert)
 
-    def __getitem__(self, key: int | slice | Tensor | VectorExpr) -> typing.Self:
+    def __getitem__(self, key: int | slice | torch.Tensor | VectorExpr) -> typing.Self:
         if isinstance(key, VectorExpr):
             return type(self)(
                 attr=self.attr.term[key.attr].unpack(),

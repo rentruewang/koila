@@ -3,7 +3,7 @@
 import operator
 from collections import abc as cabc
 
-from torch import Tensor
+import torch
 
 from . import _common
 from .exprs import TensorExpr, TensorExprRhs
@@ -17,7 +17,7 @@ class UFuncTensorExpr1(TensorExpr):
 
     name: str
     source: TensorExpr
-    op: cabc.Callable[[Tensor], Tensor]
+    op: cabc.Callable[[torch.Tensor], torch.Tensor]
 
     def __repr__(self):
         return f"{self.name}{self.source!r}"
@@ -44,8 +44,8 @@ class UFuncTensorExpr2(TensorExpr):
 
     name: str
     left: TensorExpr
-    right: TensorExpr | Tensor | int | float | bool
-    op: cabc.Callable[[Tensor, Tensor | int | float | bool], Tensor]
+    right: TensorExpr | torch.Tensor | int | float | bool
+    op: cabc.Callable[[torch.Tensor, torch.Tensor | int | float | bool], torch.Tensor]
 
     def __repr__(self):
         return f"{self.left!r} {self.name} {self.right!r}"

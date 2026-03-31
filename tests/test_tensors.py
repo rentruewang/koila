@@ -5,7 +5,6 @@ from collections import abc as cabc
 
 import pytest
 import torch
-from torch import Tensor
 
 from aioway import fake
 from aioway.tensors import Attr, TensorFn
@@ -22,12 +21,12 @@ def right():
 
 
 @pytest.fixture
-def left_fn(left: Tensor):
+def left_fn(left: torch.Tensor):
     return TensorFn.from_tensor(left)
 
 
 @pytest.fixture
-def right_fn(right: Tensor):
+def right_fn(right: torch.Tensor):
     return TensorFn.from_tensor(right)
 
 
@@ -69,7 +68,7 @@ def fake_mode():
 
 
 def test_left_normal(left_fn: TensorFn):
-    assert isinstance(left_fn.do(), Tensor)
+    assert isinstance(left_fn.do(), torch.Tensor)
 
 
 def test_left_fake_forward(left_fn: TensorFn):
@@ -98,7 +97,7 @@ def test_binary_ufunc(
     result = binop(left_fn, right_fn)
 
     assert isinstance(result, TensorFn)
-    assert isinstance(result.do(), Tensor)
+    assert isinstance(result.do(), torch.Tensor)
 
 
 def test_getitem(left_fn: TensorFn, index_fn: TensorFn):

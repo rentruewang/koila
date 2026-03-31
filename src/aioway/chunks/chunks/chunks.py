@@ -7,8 +7,8 @@ import typing
 from collections import abc as cabc
 
 import tensordict
+import torch
 from tensordict import TensorDict
-from torch import Size, Tensor
 
 from aioway import _typing
 from aioway._tensor_exprs import SourceTensorDictExpr
@@ -22,7 +22,7 @@ __all__ = ["Chunk"]
 LOGGER = logging.get_logger(__name__)
 
 
-type TensorDictLike = TensorDict | dict[str, Tensor]
+type TensorDictLike = TensorDict | dict[str, torch.Tensor]
 type ChunkLike = Chunk | dict[str, Vector]
 
 
@@ -106,7 +106,7 @@ class Chunk(cabc.Mapping[str, Vector]):
         return self.expr().zip(rhs).compute()
 
     @property
-    def shape(self) -> Size:
+    def shape(self) -> torch.Size:
         return self.data.shape
 
     def torch(self):
@@ -152,7 +152,7 @@ def _as_tensordict(data: TensorDictLike, /) -> TensorDict:
     if isinstance(data, TensorDict):
         return data
 
-    _is_dict_of_tensor = _typing.is_dict_of_str_to(Tensor)
+    _is_dict_of_tensor = _typing.is_dict_of_str_to(torch.Tensor)
     if _is_dict_of_tensor(data):
         return TensorDict(data)
 

@@ -9,7 +9,6 @@ from abc import ABC
 from collections import abc as cabc
 
 import torch
-from torch import Tensor
 
 from aioway.chunks import Chunk
 from aioway.tdicts import AttrSet
@@ -127,7 +126,7 @@ class FuncFilterStream(MapStream):
     A `Stream` that filteres on its inputs, based on a preducate function.
 
     The input is being used to generate predicate,
-    and the output of predicate must be a boolean `Tensor` of the same length as the input.
+    and the output of predicate must be a boolean `torch.Tensor` of the same length as the input.
 
     .. code-block:: python
 
@@ -135,9 +134,9 @@ class FuncFilterStream(MapStream):
             yield batch[self.predicate(batch)]
     """
 
-    predicate: cabc.Callable[[Chunk], Tensor]
+    predicate: cabc.Callable[[Chunk], torch.Tensor]
     """
-    A function of `Chunk -> Tensor`.
+    A function of `Chunk -> torch.Tensor`.
     """
 
     @typing.override
@@ -145,7 +144,9 @@ class FuncFilterStream(MapStream):
         pred = self.predicate(batch)
 
         if pred.dtype is not torch.bool:
-            raise ValueError(f"Should return a boolean `Tensor`. Got {pred.dtype}.")
+            raise ValueError(
+                f"Should return a boolean `torch.Tensor`. Got {pred.dtype}."
+            )
 
         return batch[pred]
 

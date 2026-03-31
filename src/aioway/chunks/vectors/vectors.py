@@ -5,7 +5,7 @@
 import operator
 import typing
 
-from torch import Tensor
+import torch
 
 from aioway._tensor_exprs import SourceTensorExpr
 from aioway._tracking import logging
@@ -20,19 +20,19 @@ __all__ = ["Vector"]
 LOGGER = logging.get_logger(__name__)
 
 
-type VectorRhs = Vector | Tensor | int | float | bool
+type VectorRhs = Vector | torch.Tensor | int | float | bool
 
 
 class Vector:
     """
-    A `Vector` is a `Tensor` plus its `Attr`.
+    A `Vector` is a `torch.Tensor` plus its `Attr`.
     """
 
     __match_args__ = "data", "attr"
 
-    def __init__(self, data: Tensor, attr: Attr) -> None:
+    def __init__(self, data: torch.Tensor, attr: Attr) -> None:
         self._attr = attr
-        "The attribute that the `Tensor` must satisfy."
+        "The attribute that the `torch.Tensor` must satisfy."
 
         self._data = data
         "The underlying data."
@@ -120,12 +120,12 @@ class Vector:
 
         raise NotImplementedError
 
-    def torch(self) -> Tensor:
-        "Get the `Tensor` data that this `Vector` contains."
+    def torch(self) -> torch.Tensor:
+        "Get the `torch.Tensor` data that this `Vector` contains."
         return self._data
 
     def typeof(self) -> Attr:
-        "Get the type information `Attr` of the `Tensor` that this `Vector` represents."
+        "Get the type information `Attr` of the `torch.Tensor` that this `Vector` represents."
         return self._attr
 
     def cpu(self):

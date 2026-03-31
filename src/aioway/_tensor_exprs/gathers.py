@@ -4,7 +4,7 @@
 
 import typing
 
-from torch import Tensor
+import torch
 
 from aioway._signs import Signature
 
@@ -14,7 +14,7 @@ from .exprs import TensorExpr
 __all__ = ["GatherTensorExpr"]
 
 
-_TENSOR_BINOP = Signature(Tensor, Tensor, Tensor)
+_TENSOR_BINOP = Signature(torch.Tensor, torch.Tensor, torch.Tensor)
 
 
 @typing.final
@@ -30,7 +30,7 @@ class GatherTensorExpr(TensorExpr):
 
     index: TensorExpr
 
-    def _compute(self) -> Tensor:
+    def _compute(self) -> torch.Tensor:
         tensor = self.tensor.compute()
         index = self.index.compute()
 
@@ -46,11 +46,11 @@ class GatherTensorExpr(TensorExpr):
 class StaticArrayGatherTensorExpr(TensorExpr):
     __match_args__ = "tensor", "index"
 
-    tensor: Tensor
+    tensor: torch.Tensor
 
     index: TensorExpr
 
-    def _compute(self) -> Tensor:
+    def _compute(self) -> torch.Tensor:
         tensor = self.tensor
         index = self.index.compute()
 
@@ -68,9 +68,9 @@ class StaticIndexGatherTensorExpr(TensorExpr):
 
     tensor: TensorExpr
 
-    index: int | slice | Tensor
+    index: int | slice | torch.Tensor
 
-    def _compute(self) -> Tensor:
+    def _compute(self) -> torch.Tensor:
         tensor = self.tensor.compute()
         index = self.index
 
