@@ -52,12 +52,12 @@ class RenameTensorDictExpr(TensorDictExpr):
 
     @typing.override
     def _compute(self) -> td.TensorDict:
-        td = self.source.compute()
+        data = self.source.compute()
         with _common.TRACKER(
             name="rename",
             signature=Signature(td.TensorDict, td.TensorDict),
         ):
-            return _rename(td, **self.renames)
+            return _rename(data, **self.renames)
 
 
 @_common.expr_dcls
@@ -81,14 +81,14 @@ class ZipTensorDictExpr(TensorDictExpr):
             return td.merge_tensordicts(left, right)
 
 
-def _rename(td: td.TensorDict, **names: str) -> td.TensorDict:
+def _rename(data: td.TensorDict, **names: str) -> td.TensorDict:
     """
     Rename the columns of the current `Block`.
     """
 
     LOGGER.debug("Renamed called with names=%s", names)
     return td.TensorDict(
-        {names.get(key, key): val for key, val in td.items()},
-        batch_size=td.batch_size,
-        device=td.device,
+        {names.get(key, key): val for key, val in data.items()},
+        batch_size=data.batch_size,
+        device=data.device,
     )

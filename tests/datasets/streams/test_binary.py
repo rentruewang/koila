@@ -1,6 +1,6 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-from collections import Counter
+import collections
 from collections import abc as cabc
 
 import pytest
@@ -175,8 +175,8 @@ def test_join_equal_as_original(
         )
     )
 
-    answer_count = Counter(answer_items.tolist())
-    truth_count = Counter(ground_truth["i1d"].tolist())
+    answer_count = collections.Counter(answer_items.tolist())
+    truth_count = collections.Counter(ground_truth["i1d"].tolist())
 
     assert answer_count == truth_count
 
@@ -192,10 +192,10 @@ def test_match_functionally(
     results = list(binary_stream)
     answer_items = Chunk.cat(results)["i1d"]
 
-    answer_count = Counter(answer_items.tolist())
+    answer_count = collections.Counter(answer_items.tolist())
 
-    left_count = Counter(block_frame_block["i1d"].tolist())
-    right_count = Counter(joinable_frame_block["i1d"].tolist())
+    left_count = collections.Counter(block_frame_block["i1d"].tolist())
+    right_count = collections.Counter(joinable_frame_block["i1d"].tolist())
 
     # Functionally correct join.
     assert left_count.keys() == {*block_frame_block["i1d"].tolist()}

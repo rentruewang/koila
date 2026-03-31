@@ -1,25 +1,24 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import abc
+import enum
 import functools
 import typing
 from abc import ABC
 from collections import abc as cabc
-from enum import Enum
-from enum import auto as Auto
 
 from aioway import fake
 
 __all__ = ["Fn", "FnState"]
 
 
-class FnState(Enum):
+class FnState(enum.Enum):
     "The status of a `Later` object."
 
-    PENDING = Auto()
+    PENDING = enum.auto()
     "The object is pending evaluation."
 
-    EVALUATED = Auto()
+    EVALUATED = enum.auto()
     "The object is evaluated."
 
 
