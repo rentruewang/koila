@@ -9,20 +9,20 @@ import torch
 from aioway import _tensor_exprs, _typing, tensors
 from aioway._tracking import logging
 
-from .vectors import Vector, VectorRhs
+from . import vectors
 
 __all__ = ["VectorExpr"]
 
 LOGGER = logging.get_logger(__name__)
 
 
-type VectorExprRhs = VectorExpr | VectorRhs
+type VectorExprRhs = VectorExpr | vectors.VectorRhs
 
 
 @dcls.dataclass(frozen=True)
 class VectorExpr:
     """
-    The expression type for `Vector`.
+    The expression type for `vectors.Vector`.
     """
 
     tensor: _tensor_exprs.TensorExpr
@@ -104,15 +104,15 @@ class VectorExpr:
         return (self.tensor,)
 
     def _return_type(self):
-        return Vector
+        return vectors.Vector
 
-    def compute(self) -> Vector:
+    def compute(self) -> vectors.Vector:
         return self._compute()
 
-    def _compute(self) -> Vector:
+    def _compute(self) -> vectors.Vector:
         data = self.tensor.compute()
 
-        return Vector(data=data, attr=self.attr)
+        return vectors.Vector(data=data, attr=self.attr)
 
     def __ufunc1(self, op: _typing.AnyUFunc1) -> typing.Self:
         LOGGER.debug("%s.%s called", self, op)
@@ -138,7 +138,7 @@ class VectorExpr:
         match other:
             case VectorExpr(tensor=tensor):
                 return op(self.tensor, tensor)
-            case Vector():
+            case vectors.Vector():
                 return op(self.tensor, _tensor_exprs.SourceTensorExpr(other.torch()))
             case int() | float() | bool():
                 return op(self.tensor, other)
@@ -148,7 +148,7 @@ class VectorExpr:
         self, other: VectorExprRhs, op: _typing.AnyUFunc2
     ) -> tensors.AttrTerm:
         match other:
-            case VectorExpr(attr=attr) | Vector(attr=attr):
+            case VectorExpr(attr=attr) | vectors.Vector(attr=attr):
                 return op(self.attr.term, attr.term)
             case int() | float() | bool():
                 return op(self.attr.term, other)

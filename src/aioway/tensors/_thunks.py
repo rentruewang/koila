@@ -5,33 +5,30 @@ from collections import abc as cabc
 
 import torch
 
-from aioway import _common as _common
-from aioway.fn import Fn
-
-from .tensors import TensorFn
+from aioway import _common, fn, tensors
 
 __all__ = ["UFunc1Thunk", "UFunc2Thunk", "GatherThunk"]
 
 
 @_common.dcls_no_eq
-class AnyThunk(TensorFn):
+class AnyThunk(tensors.TensorFn):
     "Represents some computation that is deferred."
 
     __match_args__ = "func", "args", "kwargs"
 
     func: cabc.Callable[..., torch.Tensor]
-    args: tuple[Fn[typing.Any], ...]
-    kwargs: dict[str, Fn[typing.Any]]
+    args: tuple[fn.Fn[typing.Any], ...]
+    kwargs: dict[str, fn.Fn[typing.Any]]
 
     def __post_init__(self) -> None:
         super().__init__()
 
         for arg in self.args:
-            if not isinstance(arg, Fn):
+            if not isinstance(arg, fn.Fn):
                 raise TypeError(f"{arg} is not a `Thunk`.")
 
         for key, value in self.kwargs.items():
-            if not isinstance(value, Fn):
+            if not isinstance(value, fn.Fn):
                 raise TypeError(f"{key}={value} is not a `Thunk`")
 
     def __repr__(self) -> str:
@@ -44,19 +41,19 @@ class AnyThunk(TensorFn):
         return self.func(*args, **kwargs)
 
     @typing.override
-    def _deps(self) -> cabc.Iterator[Fn[object]]:
+    def _deps(self) -> cabc.Iterator[fn.Fn[object]]:
         yield from self.args
         yield from self.kwargs.values()
 
 
 @_common.dcls_no_eq
-class UFunc1Thunk(TensorFn):
+class UFunc1Thunk(tensors.TensorFn):
     """
     Thunk for unary function.
     """
 
     func: cabc.Callable[[torch.Tensor], torch.Tensor]
-    arg: TensorFn
+    arg: tensors.TensorFn
 
     def __post_init__(self):
         super().__init__()
@@ -64,7 +61,7 @@ class UFunc1Thunk(TensorFn):
         if not callable(self.func):
             raise TypeError
 
-        if not isinstance(self.arg, TensorFn):
+        if not isinstance(self.arg, tensors.TensorFn):
             raise TypeError
 
     @typing.override
@@ -72,22 +69,22 @@ class UFunc1Thunk(TensorFn):
         return self.func(self.arg.do())
 
     @typing.override
-    def _deps(self) -> cabc.Iterator[TensorFn]:
+    def _deps(self) -> cabc.Iterator[tensors.TensorFn]:
         # If it's a primitive or `torch.Tensor`, do not recurse.
         yield self.arg
 
 
-type BinaryTensorFnRhs = TensorFn | torch.Tensor | int | float | bool
+type BinaryTensorFnRhs = tensors.TensorFn | torch.Tensor | int | float | bool
 
 
 @_common.dcls_no_eq
-class UFunc2Thunk(TensorFn):
+class UFunc2Thunk(tensors.TensorFn):
     """
     Thunk for binary function.
     """
 
     func: cabc.Callable[[torch.Tensor, typing.Any], torch.Tensor]
-    left: TensorFn
+    left: tensors.TensorFn
     right: BinaryTensorFnRhs
 
     def __post_init__(self) -> None:
@@ -96,10 +93,12 @@ class UFunc2Thunk(TensorFn):
         if not callable(self.func):
             raise TypeError
 
-        if not isinstance(self.left, TensorFn):
+        if not isinstance(self.left, tensors.TensorFn):
             raise TypeError
 
-        if not isinstance(self.right, TensorFn | torch.Tensor | int | float | bool):
+        if not isinstance(
+            self.right, tensors.TensorFn | torch.Tensor | int | float | bool
+        ):
             raise TypeError
 
     @typing.override
@@ -107,42 +106,50 @@ class UFunc2Thunk(TensorFn):
         left_do = self.left.do()
 
         match right := self.right:
-            case TensorFn():
+            case tensors.TensorFn():
                 return self.func(left_do, right.do())
             case _:
                 return self.func(left_do, right)
 
     @typing.override
-    def _deps(self) -> cabc.Iterator[TensorFn]:
+    def _deps(self) -> cabc.Iterator[tensors.TensorFn]:
         # If it's a primitive or `torch.Tensor`, do not recurse.
         yield self.left
 
-        if isinstance(right := self.right, TensorFn):
+        if isinstance(right := self.right, tensors.TensorFn):
             yield right
 
 
 @_common.dcls_no_eq
-class GatherThunk(TensorFn):
-    tensor: TensorFn | torch.Tensor
-    index: TensorFn | torch.Tensor
+class GatherThunk(tensors.TensorFn):
+    tensor: tensors.TensorFn | torch.Tensor
+    index: tensors.TensorFn | torch.Tensor
 
     def __post_init__(self):
         super().__init__()
 
-        # One of them should be `TensorFn`.
-        if not isinstance(self.tensor, TensorFn) and isinstance(self.index, TensorFn):
+        # One of them should be `tensors.TensorFn`.
+        if not isinstance(self.tensor, tensors.TensorFn) and isinstance(
+            self.index, tensors.TensorFn
+        ):
             raise TypeError
 
     @typing.override
     def forward(self) -> torch.Tensor:
-        tensor = self.tensor.do() if isinstance(self.tensor, TensorFn) else self.tensor
-        index = self.index.do() if isinstance(self.index, TensorFn) else self.index
+        tensor = (
+            self.tensor.do()
+            if isinstance(self.tensor, tensors.TensorFn)
+            else self.tensor
+        )
+        index = (
+            self.index.do() if isinstance(self.index, tensors.TensorFn) else self.index
+        )
         return tensor[index]
 
     @typing.override
-    def _deps(self) -> cabc.Iterator[TensorFn]:
-        if isinstance(self.tensor, TensorFn):
+    def _deps(self) -> cabc.Iterator[tensors.TensorFn]:
+        if isinstance(self.tensor, tensors.TensorFn):
             yield self.tensor
 
-        if isinstance(self.index, TensorFn):
+        if isinstance(self.index, tensors.TensorFn):
             yield self.index

@@ -7,9 +7,8 @@ from collections import abc as cabc
 
 import tensordict as td
 
-from aioway._signs import Signature
+from aioway import _signs, _typing
 from aioway._tracking import logging
-from aioway._typing import SeqKeysView, SetKeysView
 
 from . import _common, exprs
 
@@ -34,7 +33,7 @@ class SelectTensorDictExpr(exprs.TensorDictExpr):
 
         with _common.TRACKER(
             name="select",
-            signature=Signature(td.TensorDict, td.TensorDict),
+            signature=_signs.Signature(td.TensorDict, td.TensorDict),
         ):
             return pulled.select(*self.columns)
 
@@ -47,14 +46,14 @@ class RenameTensorDictExpr(exprs.TensorDictExpr):
 
     @typing.override
     def keys(self) -> cabc.KeysView[str]:
-        return SeqKeysView([self.renames.get(key, key) for key in self.keys()])
+        return _typing.SeqKeysView([self.renames.get(key, key) for key in self.keys()])
 
     @typing.override
     def _compute(self) -> td.TensorDict:
         data = self.source.compute()
         with _common.TRACKER(
             name="rename",
-            signature=Signature(td.TensorDict, td.TensorDict),
+            signature=_signs.Signature(td.TensorDict, td.TensorDict),
         ):
             return _rename(data, **self.renames)
 
@@ -66,7 +65,7 @@ class ZipTensorDictExpr(exprs.TensorDictExpr):
 
     @typing.override
     def keys(self) -> cabc.KeysView[str]:
-        return SetKeysView({*self.left.keys(), *self.right.keys()})
+        return _typing.SetKeysView({*self.left.keys(), *self.right.keys()})
 
     @typing.override
     def _compute(self) -> td.TensorDict:
@@ -75,7 +74,7 @@ class ZipTensorDictExpr(exprs.TensorDictExpr):
 
         with _common.TRACKER(
             name="zip",
-            signature=Signature(td.TensorDict, td.TensorDict, td.TensorDict),
+            signature=_signs.Signature(td.TensorDict, td.TensorDict, td.TensorDict),
         ):
             return td.merge_tensordicts(left, right)
 

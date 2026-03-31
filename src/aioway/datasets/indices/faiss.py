@@ -5,30 +5,29 @@ import typing
 
 from numpy import typing as npt
 
-from .indices import Index
-from .ops import IndexAnn, IndexPlan
+from . import indices, ops
 
 if typing.TYPE_CHECKING:
-    from faiss import Index as FaissIdx
+    import faiss
 
 
 __all__ = ["FaissIndex"]
 
 
 @dcls.dataclass(frozen=True)
-class FaissIndex(Index):
+class FaissIndex(indices.Index):
     """
     The `Index` backed by the `faiss` library.
     """
 
-    index: FaissIdx
+    index: faiss.Index
     """
     The faiss index.
     """
 
     @typing.override
-    def search(self, operator: IndexPlan, value: npt.NDArray) -> npt.NDArray:
-        assert isinstance(operator, IndexAnn)
+    def search(self, operator: ops.IndexPlan, value: npt.NDArray) -> npt.NDArray:
+        assert isinstance(operator, ops.IndexAnn)
 
         if value.ndim != 2:
             raise ValueError(f"Value must be 2 dimensions. Got {value.ndim=}.")

@@ -10,7 +10,7 @@ from collections import abc as cabc
 from . import logging
 
 if typing.TYPE_CHECKING:
-    from aioway._signs import Signature
+    from aioway import _signs
 
 __all__ = ["get_tracker"]
 
@@ -53,7 +53,7 @@ class ModuleApiTracker:
     "The function to call before exiting."
 
     @ctxl.contextmanager
-    def __call__(self, name: str, signature: Signature):
+    def __call__(self, name: str, signature: _signs.Signature):
         """
         Track the module's operator (name and signature of the operator).
 
@@ -70,7 +70,7 @@ class ModuleApiTracker:
         finally:
             self.exit(info)
 
-    def wrap[**P, T](self, name: str, signature: Signature):
+    def wrap[**P, T](self, name: str, signature: _signs.Signature):
 
         def decorator(function: cabc.Callable[P, T]) -> cabc.Callable[P, T]:
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
@@ -90,4 +90,4 @@ class ModuleApiTracker:
 class ModuleMethodInfo:
     module: type
     name: str
-    signature: Signature
+    signature: _signs.Signature

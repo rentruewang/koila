@@ -6,14 +6,14 @@ import typing
 
 import torch
 
-from aioway._signs import Signature
+from aioway import _signs
 
 from . import _common, exprs
 
 __all__ = ["GatherTensorExpr"]
 
 
-_TENSOR_BINOP = Signature(torch.Tensor, torch.Tensor, torch.Tensor)
+_TENSOR_BINOP = _signs.Signature(torch.Tensor, torch.Tensor, torch.Tensor)
 
 
 @typing.final

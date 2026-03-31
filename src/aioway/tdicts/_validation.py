@@ -1,6 +1,6 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-"Validation of data (`td.TensorDict`) against schema (`AttrSet`)."
+"Validation of data (`td.TensorDict`) against schema (`attrs.AttrSet`)."
 
 import numpy as np
 import tensordict as td
@@ -9,14 +9,14 @@ import torch
 from aioway import tensors
 from aioway._tracking import logging
 
-from .attrs import AttrSet
+from . import attrs
 
 __all__ = ["validate_schema", "validate_attr"]
 
 LOGGER = logging.get_logger(__name__)
 
 
-def validate_schema(attrs: AttrSet, data: td.TensorDict) -> None:
+def validate_schema(attrs: attrs.AttrSet, data: td.TensorDict) -> None:
     """
     Validate `data` against `attrs`.
 

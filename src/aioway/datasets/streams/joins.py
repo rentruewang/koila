@@ -1,6 +1,6 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-"The binary `Stream`s that consumes 2 `Stream`s."
+"The binary `streams.Stream`s that consumes 2 `streams.Stream`s."
 
 import dataclasses as dcls
 import typing
@@ -9,24 +9,23 @@ import torch
 
 from aioway import chunks, tdicts
 
-from .sources import CacheStream
-from .streams import Stream, StreamState
+from . import sources, streams
 
 __all__ = ["ZipStream", "NestedLoopJoinStream"]
 
 
 @dcls.dataclass(frozen=True)
-class ZipStream(Stream):
+class ZipStream(streams.Stream):
     """
     `ZipStream` is similar to what `zip` does.
     """
 
-    left: Stream
+    left: streams.Stream
     """
     The LHS stream.
     """
 
-    right: Stream
+    right: streams.Stream
     """
     The RHS stream.
     """
@@ -55,7 +54,7 @@ class ZipStream(Stream):
 
 
 @dcls.dataclass
-class NestedState(StreamState):
+class NestedState(streams.StreamState):
     lhs_batch: chunks.Chunk | None = None
 
     # It is necessary to save the last batch for the LHS,
@@ -63,7 +62,7 @@ class NestedState(StreamState):
 
 
 @dcls.dataclass(frozen=True)
-class NestedLoopJoinStream(Stream):
+class NestedLoopJoinStream(streams.Stream):
     """
     This is a stream that combines 2 input streams in a nested-loop matter,
     as in `[[x, y] for x in left for y in right if x.key == y.key]`.
@@ -71,14 +70,14 @@ class NestedLoopJoinStream(Stream):
     The end result would be merged with `tensordict.merge_tensordicts`.
     """
 
-    left: Stream
+    left: streams.Stream
     """
     LHS is a normal stream. Will only be iterated over once.
     """
 
-    right: CacheStream
+    right: sources.CacheStream
     """
-    RHS is a `Stream` supporting index access, thus requiring materialization.
+    RHS is a `streams.Stream` supporting index access, thus requiring materialization.
     """
 
     key: str

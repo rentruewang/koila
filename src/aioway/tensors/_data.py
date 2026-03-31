@@ -5,17 +5,14 @@ from collections import abc as cabc
 
 import torch
 
-from aioway import _common, fake
-from aioway.fn import Fn
-
-from .tensors import TensorFn
+from aioway import _common, fake, fn, tensors
 
 __all__ = ["TensorDataFn"]
 
 
 @_common.dcls_no_eq
-class TensorDataFn(TensorFn):
-    "The `Fn` representing a plain `torch.Tensor`."
+class TensorDataFn(tensors.TensorFn):
+    "The `fn.Fn` representing a plain `torch.Tensor`."
 
     data: torch.Tensor
 
@@ -35,6 +32,6 @@ class TensorDataFn(TensorFn):
             return self.data
 
     @typing.override
-    def _deps(self) -> cabc.Iterator[Fn[torch.Tensor]]:
+    def _deps(self) -> cabc.Iterator[fn.Fn[torch.Tensor]]:
         return
         yield

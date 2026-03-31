@@ -8,14 +8,10 @@ import typing
 
 import torch
 
-from aioway import _tracking, fake
-from aioway._signs import Signature
+from aioway import _signs, _tracking, _typing, fake
 from aioway._tracking import logging
-from aioway._typing import AnyUFunc2, IntArray, UFunc1
 
-from .devices import Device, DeviceLike
-from .dtypes import DType, DTypeLike
-from .shapes import Shape, ShapeLike
+from . import devices, dtypes, shapes
 
 __all__ = ["Attr", "AttrTerm", "AttrTermRhs"]
 
@@ -32,29 +28,29 @@ class Attr:
     The "type' for a `torch.Tensor`, describing everything we want to know about it.
     """
 
-    device: Device
+    device: devices.Device
     """
     The device for the column.
     """
 
-    dtype: DType
+    dtype: dtypes.DType
     """
     The data type for the column.
     """
 
-    shape: Shape
+    shape: shapes.Shape
     """
     The shape of individual items in the column.
     """
 
     def __post_init__(self) -> None:
-        if not isinstance(self.device, Device):
+        if not isinstance(self.device, devices.Device):
             raise TypeError(type(self.device))
 
-        if not isinstance(self.dtype, DType):
+        if not isinstance(self.dtype, dtypes.DType):
             raise TypeError(type(self.dtype))
 
-        if not isinstance(self.shape, Shape):
+        if not isinstance(self.shape, shapes.Shape):
             raise TypeError(type(self.shape))
 
     def __repr__(self):
@@ -84,24 +80,27 @@ class Attr:
 
     @classmethod
     def parse(
-        cls, device: DeviceLike, dtype: DTypeLike, shape: ShapeLike
+        cls,
+        device: devices.DeviceLike,
+        dtype: dtypes.DTypeLike,
+        shape: shapes.ShapeLike,
     ) -> typing.Self:
         """
         The convenient constructor for `Attr`.
 
         Args:
-            device: Things that can be converted to `Device`.
-            dtype: Things that can be converted to `DType`.
-            shape: Things that can be converted to `Shape`.
+            device: Things that can be converted to `devices.Device`.
+            dtype: Things that can be converted to `dtypes.DType`.
+            shape: Things that can be converted to `shapes.Shape`.
 
         Returns:
             An attribute instance.
         """
 
         return cls(
-            device=Device.parse(device),
-            dtype=DType.parse(dtype),
-            shape=Shape.parse(shape),
+            device=devices.Device.parse(device),
+            dtype=dtypes.DType.parse(dtype),
+            shape=shapes.Shape.parse(shape),
         )
 
     @classmethod
@@ -134,9 +133,9 @@ class AttrTerm:
         return self.__ufunc_op1(operator.neg)
 
     def __getitem__(
-        self, key: int | slice | IntArray | torch.Tensor | Attr | AttrTerm
+        self, key: int | slice | _typing.IntArray | torch.Tensor | Attr | AttrTerm
     ) -> typing.Self:
-        sign = Signature(Attr, type(key), Attr)
+        sign = _signs.Signature(Attr, type(key), Attr)
         with TRACKER(name="__getitem__", signature=sign):
             return self.__getitem_impl(key)
 
@@ -186,13 +185,13 @@ class AttrTerm:
         return self.__ufunc_op2(other, operator.lt)
 
     @fake.enable_func
-    def __ufunc_op1(self, op: UFunc1) -> typing.Self:
-        signature = Signature(Attr, Attr)
+    def __ufunc_op1(self, op: _typing.UFunc1) -> typing.Self:
+        signature = _signs.Signature(Attr, Attr)
         with TRACKER(name=f"__{op.__qualname__}__", signature=signature):
             return self.make(Attr.from_tensor(op(self.attr.to_tensor())))
 
     @fake.enable_func
-    def __ufunc_op2(self, other: AttrTermRhs, op: AnyUFunc2):
+    def __ufunc_op2(self, other: AttrTermRhs, op: _typing.AnyUFunc2):
         match other:
             case torch.Tensor():
                 return self.__ufunc_op2_tensor(other=other, op=op)
@@ -206,14 +205,16 @@ class AttrTerm:
         raise TypeError(f"Do not know how to handle {type(other)=}.")
 
     @fake.enable_func
-    def __ufunc_op2_tensor(self, other: torch.Tensor, op: AnyUFunc2) -> typing.Self:
-        signature = Signature(Attr, Attr, Attr)
+    def __ufunc_op2_tensor(
+        self, other: torch.Tensor, op: _typing.AnyUFunc2
+    ) -> typing.Self:
+        signature = _signs.Signature(Attr, Attr, Attr)
         with TRACKER(name=f"__{op.__qualname__}__", signature=signature):
             return self.make(Attr.from_tensor(op(self.attr.to_tensor(), other)))
 
     @fake.enable_func
     def __getitem_impl(
-        self, key: int | slice | IntArray | torch.Tensor | Attr | AttrTerm, /
+        self, key: int | slice | _typing.IntArray | torch.Tensor | Attr | AttrTerm, /
     ):
         if isinstance(key, Attr):
             return self.__getitem_impl(key.to_tensor())

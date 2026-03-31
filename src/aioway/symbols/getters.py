@@ -5,7 +5,7 @@
 import typing
 from collections import abc as cabc
 
-from aioway._typing import SeqKeysView
+from aioway import _typing
 
 from . import _common, exprs
 
@@ -25,7 +25,7 @@ class SourceSymbol(exprs.TableSymbol):
         return self.name
 
     def keys(self) -> cabc.KeysView[str]:
-        return SeqKeysView(self.columns)
+        return _typing.SeqKeysView(self.columns)
 
 
 @_common.symbol_dataclass
@@ -42,7 +42,7 @@ class SelectSymbol(exprs.TableSymbol):
 
     @typing.override
     def keys(self) -> cabc.KeysView[str]:
-        return SeqKeysView(self.columns)
+        return _typing.SeqKeysView(self.columns)
 
 
 @_common.symbol_dataclass

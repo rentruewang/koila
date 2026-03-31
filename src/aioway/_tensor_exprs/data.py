@@ -9,7 +9,7 @@ import tensordict as td
 import torch
 from numpy import typing as npt
 
-from aioway._signs import Signature
+from aioway import _signs
 from aioway._tracking import logging
 
 from . import _common, exprs
@@ -45,7 +45,7 @@ class _SourceExpr[T: torch.Tensor | td.TensorDict]:
 
     def _compute(self) -> T:
         with _common.TRACKER(
-            name="source", signature=Signature(self._DATA_TYPE, self._DATA_TYPE)
+            name="source", signature=_signs.Signature(self._DATA_TYPE, self._DATA_TYPE)
         ):
             return self.data
 
@@ -81,7 +81,7 @@ class ColumnTensorExpr(exprs.TensorExpr):
         pulled = self.source.compute()
 
         with _common.TRACKER(
-            name="column", signature=Signature(td.TensorDict, torch.Tensor)
+            name="column", signature=_signs.Signature(td.TensorDict, torch.Tensor)
         ):
             return pulled[self.column]
 
@@ -103,7 +103,8 @@ class _GetItemTensorExpr[T](exprs.TensorDictExpr):
         pulled = self.source.compute()
 
         with _common.TRACKER(
-            name="__getitem__", signature=Signature(td.TensorDict, type(self.index))
+            name="__getitem__",
+            signature=_signs.Signature(td.TensorDict, type(self.index)),
         ):
             return pulled[self.index]
 

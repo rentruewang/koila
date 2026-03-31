@@ -7,9 +7,8 @@ import dataclasses as dcls
 import logging
 import typing
 from collections import abc as cabc
-from logging import Handler
 
-from rich.logging import RichHandler
+from rich import logging as rlogging
 
 from aioway import _common
 
@@ -17,7 +16,7 @@ __all__ = ["enable_log", "enable_rich_log", "Logger", "get_logger"]
 
 
 @ctxl.contextmanager
-def enable_log(level: str | int, /, *handlers: Handler):
+def enable_log(level: str | int, /, *handlers: logging.Handler):
     """
     Enable logging for the duration of the block package wide.
     """
@@ -44,7 +43,7 @@ def enable_rich_log(level: str | int, /):
     Enable logging for the duration of the block with rich handlers.
     """
 
-    with enable_log(level, RichHandler(show_path=False)) as logger:
+    with enable_log(level, rlogging.RichHandler(show_path=False)) as logger:
         yield logger
 
 
@@ -118,7 +117,7 @@ class Logger:
         return decorator
 
     @property
-    def _logger(self):
+    def _logger(self) -> logging.Logger:
         return logging.getLogger(self.module)
 
     @property

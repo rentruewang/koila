@@ -1,6 +1,6 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-"`Frame`s that produce data by slicing contiguous input records."
+"`frames.Frame`s that produce data by slicing contiguous input records."
 
 import dataclasses as dcls
 import functools
@@ -12,16 +12,16 @@ from aioway import _typing
 from aioway import chunks as _chunks
 from aioway import tdicts
 
-from .frames import Frame, IntArray
+from . import frames
 
 __all__ = ["ChunkFrame", "ChunkListFrame"]
 
 
 @typing.final
 @dcls.dataclass(frozen=True)
-class ChunkFrame(Frame):
+class ChunkFrame(frames.Frame):
     """
-    A `Frame` backed by a `TensorDict` (aka a batch in `aioway`).
+    A `frames.Frame` backed by a `TensorDict` (aka a batch in `aioway`).
     This means that it is non-distributed, and volatile.
     """
 
@@ -35,7 +35,7 @@ class ChunkFrame(Frame):
         return len(self.data)
 
     @typing.override
-    def _getitem(self, idx: IntArray) -> _chunks.Chunk:
+    def _getitem(self, idx: _typing.IntArray) -> _chunks.Chunk:
         return self.data[idx]
 
     @property
@@ -46,9 +46,9 @@ class ChunkFrame(Frame):
 
 @typing.final
 @dcls.dataclass(frozen=True)
-class ChunkListFrame(Frame):
+class ChunkListFrame(frames.Frame):
     """
-    A `Frame` backed by a `list[_chunks.Chunk]` (aka a batch in `aioway`).
+    A `frames.Frame` backed by a `list[_chunks.Chunk]` (aka a batch in `aioway`).
     This means that it is non-distributed, and volatile.
     """
 
@@ -80,17 +80,17 @@ class ChunkListFrame(Frame):
 
     @typing.override
     @typing.no_type_check
-    def _getitem(self, idx: IntArray, /) -> _chunks.Chunk:
+    def _getitem(self, idx: _typing.IntArray, /) -> _chunks.Chunk:
         # Which tensordict to use in `self.tensordicts`.
-        td_idx: IntArray = np.searchsorted(self._cumsum_len, idx, side="right")
+        td_idx: _typing.IntArray = np.searchsorted(self._cumsum_len, idx, side="right")
         assert td_idx.shape == idx.shape
 
         # How many elements are in the partitions prior to the current.
-        prior_elements: IntArray = np.roll(self._cumsum_len, 1)
+        prior_elements: _typing.IntArray = np.roll(self._cumsum_len, 1)
         prior_elements[0] = 0
 
         # Index in partition = original index - elements in prior partitions.
-        idx_in_part: IntArray = idx - prior_elements[td_idx]
+        idx_in_part: _typing.IntArray = idx - prior_elements[td_idx]
 
         # `_chunks.Chunk` that each index would correspond to.
         td_for_idx: list[_chunks.Chunk] = [self._chunks[t] for t in td_idx]
@@ -107,7 +107,7 @@ class ChunkListFrame(Frame):
         return _chunks.Chunk.cat(chunks)
 
     @property
-    def _cumsum_len(self) -> IntArray:
+    def _cumsum_len(self) -> _typing.IntArray:
         return np.cumsum([len(d) for d in self._chunks])
 
     @property

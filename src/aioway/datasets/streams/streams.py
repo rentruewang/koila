@@ -10,7 +10,7 @@ from collections import abc as cabc
 
 from aioway import chunks, tdicts
 
-from ..datasets import Dataset, DatasetViewTypes
+from .. import datasets
 
 __all__ = ["Stream", "StreamState", "Stream", "Stream", "Stream"]
 
@@ -42,7 +42,7 @@ class StreamState:
 
 
 @dcls.dataclass(frozen=True)
-class Stream(cabc.Iterator[chunks.Chunk], Dataset, abc.ABC):
+class Stream(cabc.Iterator[chunks.Chunk], datasets.Dataset, abc.ABC):
     """
     `Stream` produces a stream of batches of data, in the form of `TensorDict`s,
     everytime `__next__` is called on it, a `TensorDict` is yielded.
@@ -153,6 +153,6 @@ class Stream(cabc.Iterator[chunks.Chunk], Dataset, abc.ABC):
     def view_types(cls):
         from . import views
 
-        return DatasetViewTypes(
+        return datasets.DatasetViewTypes(
             column=views.StreamColumnView, select=views.StreamSelectView
         )

@@ -11,8 +11,7 @@ import numpy as np
 import tensordict as td
 import torch
 
-from aioway import _tracking, _typing, tensors
-from aioway._signs import Signature
+from aioway import _signs, _tracking, _typing, tensors
 from aioway._tracking import logging
 
 __all__ = ["AttrSet", "DTypeSet", "DeviceSet", "ShapeSet", "AttrSetLike"]
@@ -165,18 +164,18 @@ class AttrSet(_AttrSetBase[tensors.Attr]):
         return self.__getitem_batch(idx)
 
     def __getitem_str(self, idx: str):
-        signature = Signature(AttrSet, str, tensors.Attr)
+        signature = _signs.Signature(AttrSet, str, tensors.Attr)
         with TRACKER(name="__getitem__", signature=signature):
             return super().__getitem__(idx)
 
     def __getitem_list_str(self, idx: list[str]):
-        signature = Signature(AttrSet, list[str], AttrSet)
+        signature = _signs.Signature(AttrSet, list[str], AttrSet)
         with TRACKER(name="__getitem__", signature=signature):
             return super().__getitem__(idx)
 
     def __getitem_batch(self, idx):
         with TRACKER(
-            name="__getitem__", signature=Signature(AttrSet, type(idx), AttrSet)
+            name="__getitem__", signature=_signs.Signature(AttrSet, type(idx), AttrSet)
         ):
             return self.__getitem_batch_impl(idx)
 

@@ -1,6 +1,6 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-"`StreamColumn`s are a column of `Stream`."
+"`StreamColumn`s are a column of `streams.Stream`."
 
 import dataclasses as dcls
 import typing
@@ -8,14 +8,16 @@ from collections import abc as cabc
 
 from aioway import chunks
 
-from ..datasets import DatasetColumnView, DatasetSelectView
-from .streams import Stream
+from .. import datasets
+from . import streams
 
 __all__ = ["StreamColumnView", "StreamSelectView"]
 
 
 @dcls.dataclass(frozen=True)
-class StreamColumnView(cabc.Iterator[chunks.Vector], DatasetColumnView[Stream]):
+class StreamColumnView(
+    cabc.Iterator[chunks.Vector], datasets.DatasetColumnView[streams.Stream]
+):
     """
     A column reference (on a stream).
     Performs `__next__` and yield `chunks.Vector`s.
@@ -29,14 +31,14 @@ class StreamColumnView(cabc.Iterator[chunks.Vector], DatasetColumnView[Stream]):
         return batch[self.col]
 
     @classmethod
-    def from_column(cls, dataset: Stream, /, column: str) -> typing.Self:
+    def from_column(cls, dataset: streams.Stream, /, column: str) -> typing.Self:
         return cls(col=column, dset=dataset)
 
 
 @dcls.dataclass(frozen=True)
-class StreamSelectView(DatasetSelectView[Stream], Stream):
+class StreamSelectView(datasets.DatasetSelectView[streams.Stream], streams.Stream):
     """
-    The view generated when calling `Stream.select`.
+    The view generated when calling `streams.Stream.select`.
     """
 
     COLUMN_TYPE = StreamColumnView
@@ -59,5 +61,5 @@ class StreamSelectView(DatasetSelectView[Stream], Stream):
         return (self.dset,)
 
     @classmethod
-    def from_columns(cls, dataset: Stream, /, *columns: str) -> typing.Self:
+    def from_columns(cls, dataset: streams.Stream, /, *columns: str) -> typing.Self:
         return cls(dset=dataset, cols=columns)
