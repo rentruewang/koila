@@ -10,7 +10,7 @@ import tensordict
 import tensordict as td
 import torch
 
-from aioway import _tensor_exprs, _typing, tdicts
+from aioway import _typing, tdicts
 from aioway._tracking import logging
 from aioway.tdicts import _validation
 

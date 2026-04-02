@@ -6,7 +6,7 @@ import typing
 
 import torch
 
-from aioway import _tensor_exprs, _typing, tensors
+from aioway import _typing, tensors
 from aioway._tracking import logging
 
 from . import vectors

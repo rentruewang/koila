@@ -39,9 +39,6 @@ def validate_schema(attrs: attrs.AttrSet, data: td.TensorDict) -> None:
         validate_attr(attr=attrs[key], tensor=data[key])
 
 
-import torch
-
-
 def validate_attr(attr: tensors.Attr, tensor: torch.Tensor) -> None:
     """
     Validate `tensor` against `attr`.
@@ -54,9 +51,6 @@ def validate_attr(attr: tensors.Attr, tensor: torch.Tensor) -> None:
     validate_dtype_matches(dtype=attr.dtype, tensor=tensor)
 
 
-import torch
-
-
 def validate_shape_matches(shape: tensors.Shape, tensor: torch.Tensor) -> None:
     try:
         _validate_shape_matches(shape, tensor)
@@ -64,9 +58,6 @@ def validate_shape_matches(shape: tensors.Shape, tensor: torch.Tensor) -> None:
         raise RuntimeError(
             f"tensors.Shape of tensor {tensor.shape=} should match attr's {shape=}"
         )
-
-
-import torch
 
 
 def _validate_shape_matches(shape: tensors.Shape, tensor: torch.Tensor) -> None:
@@ -83,17 +74,11 @@ def _validate_shape_matches(shape: tensors.Shape, tensor: torch.Tensor) -> None:
         raise ValueError
 
 
-import torch
-
-
 def validate_dtype_matches(dtype: tensors.DType, tensor: torch.Tensor) -> None:
     if dtype != tensor.dtype:
         raise RuntimeError(
             f"tensors.DType of tensor {tensor.dtype=} should match attr's {dtype=}"
         )
-
-
-import torch
 
 
 def validate_device_matches(device: tensors.Device, tensor: torch.Tensor) -> None:
