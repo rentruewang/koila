@@ -5,6 +5,7 @@ import dataclasses as dcls
 import typing
 from collections import abc as cabc
 
+import tensordict as td
 import torch
 from torch import _subclasses as tsc
 
@@ -58,6 +59,10 @@ def to_fake_tensor(tensor: torch.Tensor) -> tsc.FakeTensor:
     with enable() as mode:
         converter = mode.fake_tensor_converter
         return converter.from_real_tensor(mode, tensor)
+
+
+def to_fake_tensordict(tensordict: td.TensorDict) -> td.TensorDict:
+    return td.TensorDict({key: to_fake_tensor(val) for key, val in tensordict.items()})
 
 
 def is_real_tensor(tensor: object) -> typing.TypeIs[torch.Tensor]:

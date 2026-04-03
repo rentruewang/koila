@@ -4,6 +4,7 @@ import abc
 import typing
 from collections import abc as cabc
 
+import numpy as np
 import tensordict as td
 import torch
 
@@ -41,9 +42,9 @@ class TensorDictFn(fn.Fn[td.TensorDict], cabc.Mapping[str, tensors.TensorFn], ab
 
             return _functions.LambdaTensorFn(self, get_col)
 
-        if isinstance(key, slice):
+        if isinstance(key, slice | np.ndarray | torch.Tensor):
 
-            def get_rows(tdict: td.TensorDict):
+            def get_rows(tdict: td.TensorDict) -> td.TensorDict:
                 return tdict[key]
 
             return _functions.LambdaTensorDictFn(self, get_rows)

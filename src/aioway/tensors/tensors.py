@@ -5,7 +5,6 @@ import operator
 import typing
 
 import torch
-from torch import _subclasses as tsc
 
 from aioway import fake, fn
 
@@ -18,7 +17,7 @@ class TensorFn(fn.Fn[torch.Tensor], abc.ABC):
     def __init__(self) -> None:
         super().__init__()
 
-        with tsc.FakeTensorMode():
+        with fake.enable():
             fake_result = self.do()
 
         assert fake.is_fake_tensor(fake_result), type(fake_result)

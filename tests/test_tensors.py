@@ -72,7 +72,7 @@ def test_left_normal(left_fn: tensors.TensorFn):
 
 def test_left_fake_forward(left_fn: tensors.TensorFn):
     with fake.enable():
-        assert fake.is_fake_tensor(left_fn.forward())
+        assert fake.is_fake_tensor(left_fn.do())
 
 
 def test_left_fake_do(left_fn: tensors.TensorFn):

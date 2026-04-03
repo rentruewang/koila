@@ -13,17 +13,14 @@ from . import tdicts
 __all__ = ["TensorDictDataFn", "LambdaTensorDictFn", "LambdaTensorFn"]
 
 
-@_common.dcls_no_eq
 class TensorDictDataFn(tdicts.TensorDictFn):
     "The `fn.Fn` representing a plain `td.TensorDict`."
 
-    data: td.TensorDict
+    def __init__(self, data: td.TensorDict) -> None:
+        self.data = data
+        self.data.auto_batch_size_()
 
-    def __post_init__(self) -> None:
         super().__init__()
-
-        # Mark as `EVALUATED`.
-        _ = self.do()
 
     @typing.override
     def do(self) -> td.TensorDict:
