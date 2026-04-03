@@ -7,8 +7,6 @@ import pytest
 import torch
 
 from aioway import fake, tensors
-from aioway.chunks import vectors
-from aioway.tensors import attrs
 
 
 @pytest.fixture
