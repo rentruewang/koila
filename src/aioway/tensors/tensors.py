@@ -28,7 +28,7 @@ class TensorFn(fn.Fn[torch.Tensor], abc.ABC):
     """
 
     def __len__(self) -> int:
-        return self.attr.max_shape[0]
+        return self.preview().max_shape[0]
 
     def __getitem__(self, key: typing.Any) -> TensorFn:
         from . import _thunks
