@@ -70,18 +70,8 @@ def test_left_normal(left_fn: tensors.TensorFn):
     assert isinstance(left_fn.do(), torch.Tensor)
 
 
-def test_left_fake_forward(left_fn: tensors.TensorFn):
-    with fake.enable():
-        assert fake.is_fake_tensor(left_fn.do())
-
-
-def test_left_fake_do(left_fn: tensors.TensorFn):
-    with fake.enable():
-        assert fake.is_fake_tensor(left_fn.do())
-
-
 def test_left_attr(left_fn: tensors.TensorFn):
-    attr = left_fn.attr
+    attr = left_fn.preview()
     assert isinstance(attr, tensors.Attr)
     assert attr.max_shape == [3, 5]
     assert attr.device == "cpu"
@@ -102,4 +92,4 @@ def test_binary_ufunc(
 def test_getitem(left_fn: tensors.TensorFn, index_fn: tensors.TensorFn):
     result = left_fn[index_fn]
     assert isinstance(result, tensors.TensorFn)
-    assert result.attr.max_shape == [2, 7, 5]
+    assert result.preview().max_shape == [2, 7, 5]

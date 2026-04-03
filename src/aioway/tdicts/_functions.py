@@ -57,7 +57,7 @@ class LambdaTensorDictFn(tdicts.TensorDictFn):
 
 
 @_common.dcls_no_eq
-class LambdaTensorFn(tensors.TensorFn):
+class LambdaTensorFn(tensors.BasicPreviewFn):
     "The `fn.Fn` representing arbitrary computation on `td.TensorDict`."
 
     source: tdicts.TensorDictFn

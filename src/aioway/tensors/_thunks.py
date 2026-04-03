@@ -13,7 +13,7 @@ __all__ = ["UFunc1Thunk", "UFunc2Thunk", "GatherThunk"]
 
 
 @_common.dcls_no_eq
-class AnyThunk(tensors.TensorFn):
+class AnyThunk(tensors.BasicPreviewFn):
     "Represents some computation that is deferred."
 
     __match_args__ = "func", "args", "kwargs"
@@ -52,7 +52,7 @@ class AnyThunk(tensors.TensorFn):
 
 
 @_common.dcls_no_eq
-class UFunc1Thunk(tensors.TensorFn):
+class UFunc1Thunk(tensors.BasicPreviewFn):
     """
     Thunk for unary function.
     """
@@ -83,7 +83,7 @@ type BinaryTensorFnRhs = tensors.TensorFn | torch.Tensor | int | float | bool
 
 
 @_common.dcls_no_eq
-class UFunc2Thunk(tensors.TensorFn):
+class UFunc2Thunk(tensors.BasicPreviewFn):
     """
     Thunk for binary function.
     """
@@ -130,7 +130,7 @@ class UFunc2Thunk(tensors.TensorFn):
 
 
 @_common.dcls_no_eq
-class GatherThunk(tensors.TensorFn):
+class GatherThunk(tensors.BasicPreviewFn):
     tensor: tensors.TensorFn | torch.Tensor
     index: tensors.TensorFn | torch.Tensor
 

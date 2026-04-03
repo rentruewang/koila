@@ -36,6 +36,7 @@ class TensorDictFn(fn.Fn[td.TensorDict], cabc.Mapping[str, tensors.TensorFn], ab
         from . import _functions
 
         if isinstance(key, str):
+            self.__check_keys(key)
 
             def get_col(tdict: td.TensorDict) -> torch.Tensor:
                 return tdict[key]
@@ -100,6 +101,8 @@ class TensorDictFn(fn.Fn[td.TensorDict], cabc.Mapping[str, tensors.TensorFn], ab
     def select(self, *keys: str):
         from . import _functions
 
+        self.__check_keys(*keys)
+
         def select(tdict: td.TensorDict) -> td.TensorDict:
             return tdict.select(*keys)
 
@@ -109,6 +112,11 @@ class TensorDictFn(fn.Fn[td.TensorDict], cabc.Mapping[str, tensors.TensorFn], ab
         from . import _functions
 
         return _functions.MergeTensorDictFn(self, other)
+
+    def __check_keys(self, *keys: str):
+        for key in keys:
+            if key not in self.keys():
+                raise KeyError(key)
 
     @classmethod
     def from_tensordict(cls, data: td.TensorDict) -> TensorDictFn:

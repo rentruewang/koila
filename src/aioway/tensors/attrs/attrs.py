@@ -128,7 +128,7 @@ class AttrProto(typing.Protocol):
     max_shape: shapes.ShapeLike
 
 
-type AttrLike = Attr | AttrDict
+type AttrLike = Attr | AttrDict | torch.Tensor
 
 
 def attr(item: AttrLike, /) -> Attr:
@@ -136,6 +136,9 @@ def attr(item: AttrLike, /) -> Attr:
 
     if isinstance(item, Attr):
         return item
+
+    if isinstance(item, torch.Tensor):
+        return Attr.from_tensor(item)
 
     if _is_attr_dict(item):
         return Attr.parse(

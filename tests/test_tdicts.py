@@ -45,5 +45,6 @@ def test_getitem(tdict_fn: tdicts.TensorDictFn):
 
 
 def test_getitem_fail(tdict_fn: tdicts.TensorDictFn):
+    assert "g" not in tdict_fn.keys()
     with pytest.raises(KeyError):
         tdict_fn["g"]

@@ -10,18 +10,22 @@ from aioway import fake, fn
 
 from . import attrs
 
-__all__ = ["TensorFn", "tensor"]
+__all__ = ["TensorFn", "tensor", "BasicPreviewFn"]
 
 
 class TensorFn(fn.Fn[torch.Tensor], abc.ABC):
-    def __init__(self) -> None:
-        super().__init__()
+    """
+    `TensorFn` is the `Fn` that would produce a `Tensor`.
 
-        with fake.enable():
-            fake_result = self.do()
+    As `Fn` represents lazy computation, the base class acts as a router,
+    routing different methods to the corresponding subclasses.
 
-        assert fake.is_fake_tensor(fake_result), type(fake_result)
-        self.__attr = attrs.Attr.from_tensor(fake_result)
+    Subclasses should overwrite these functions:
+
+    1. `do()`: Evaluate and generate the `Tensor`.
+    2. `deps()`: The dependent `Fn`, that will be evaluated during `do()`.
+    3. `attr()`: The (eager) description of the tensor computation.
+    """
 
     def __len__(self) -> int:
         return self.attr.max_shape[0]
@@ -108,9 +112,15 @@ class TensorFn(fn.Fn[torch.Tensor], abc.ABC):
 
         return _thunks.UFunc2Thunk(operator.le, self, other)
 
-    @property
-    def attr(self) -> attrs.Attr:
-        return self.__attr
+    @abc.abstractmethod
+    def preview(self) -> attrs.Attr:
+        """
+        The `preview` function generates a "preview" for the `Tensor` that would be generated.
+
+        The data type (`Attr`) is used to describe the meta data that we work with.
+        """
+
+        raise NotImplementedError
 
     @typing.override
     @abc.abstractmethod
@@ -120,10 +130,6 @@ class TensorFn(fn.Fn[torch.Tensor], abc.ABC):
     @typing.override
     @abc.abstractmethod
     def deps(self) -> tuple[fn.Fn[object], ...]:
-        """
-        Yields the dependent `fn.Fn`s.
-        """
-
         raise NotImplementedError
 
     @classmethod
@@ -142,3 +148,20 @@ def tensor(data: TensorFn | torch.Tensor) -> TensorFn:
         return TensorFn.from_tensor(data)
 
     raise TypeError(f"Do not know how to handle {type(data)=}.")
+
+
+class BasicPreviewFn(TensorFn, abc.ABC):
+    def __init__(self):
+        super().__init__()
+
+        if not self.deps():
+            raise ValueError(
+                "Non leaf base only a valid subclass if `deps()` is not empty."
+            )
+
+    @typing.override
+    @fake.enable_func
+    def preview(self) -> attrs.Attr:
+        result = self.do()
+        assert isinstance(result, torch.Tensor)
+        return attrs.attr(result)
