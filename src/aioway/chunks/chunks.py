@@ -65,7 +65,13 @@ class Chunk(cabc.Mapping[str, vectors.Vector]):
         return NotImplemented
 
     def __getitem__(self, key):
-        return type(self)(self.fn()[key].do())
+        result = self.fn()[key].do()
+
+        if isinstance(key, str):
+            assert isinstance(result, torch.Tensor)
+            return vectors.Vector(result)
+        else:
+            return type(self)(result)
 
     @typing.override
     def __iter__(self) -> cabc.Iterator[str]:

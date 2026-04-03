@@ -97,7 +97,7 @@ def _apply_builder(save_last: SaveLastMapStream):
 
 
 @pytest.mark.parametrize("map_stream", [_apply_builder], indirect=True)
-def test_apply(map_stream: datasets.Stream, save_last: SaveLastMapStream):
+def test_apply(map_stream: datasets.ApplyStream, save_last: SaveLastMapStream):
     for mapped in map_stream:
         assert mapped == map_stream.apply(save_last.last)
 
