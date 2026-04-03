@@ -105,6 +105,11 @@ class TensorDictFn(fn.Fn[td.TensorDict], cabc.Mapping[str, tensors.TensorFn], ab
 
         return _functions.LambdaTensorDictFn(self, select)
 
+    def zip(self, other: TensorDictFn, /):
+        from . import _functions
+
+        return _functions.MergeTensorDictFn(self, other)
+
     @classmethod
     def from_tensordict(cls, data: td.TensorDict) -> TensorDictFn:
         from . import _functions

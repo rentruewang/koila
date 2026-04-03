@@ -91,3 +91,20 @@ class GatherTensorDictFn(tdicts.TensorDictFn):
     @typing.override
     def deps(self):
         return self.source, self.index
+
+
+@_common.dcls_no_eq
+class MergeTensorDictFn(tdicts.TensorDictFn):
+
+    left: tdicts.TensorDictFn
+    right: tdicts.TensorDictFn
+
+    @typing.override
+    def do(self):
+        left = self.left.do()
+        right = self.right.do()
+        return td.merge_tensordicts(left, right)
+
+    @typing.override
+    def deps(self):
+        return self.left, self.right

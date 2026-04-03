@@ -82,22 +82,22 @@ class Chunk(cabc.Mapping[str, vectors.Vector]):
 
     @LOGGER.function("DEBUG")
     def select(self, *names: str):
-        return self.fn().select(*names).do()
+        return Chunk(self.fn().select(*names).do())
 
     @LOGGER.function("DEBUG")
     def column(self, col: str):
-        return self.fn()[col].do()
+        return vectors.Vector(self.fn()[col].do())
 
     @LOGGER.function("DEBUG")
     def rename(self, **renames: str):
         if not renames:
             return self
 
-        return self.fn().rename(**renames).do()
+        return Chunk(self.fn().rename(**renames).do())
 
     @LOGGER.function("DEBUG")
     def zip(self, rhs: typing.Self):
-        return self.fn().zip(rhs).do()
+        return Chunk(self.fn().zip(rhs.fn()).do())
 
     @property
     def shape(self) -> torch.Size:
