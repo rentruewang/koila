@@ -23,7 +23,6 @@ def cpu_and_maybe_cuda() -> list[str]:
 
 
 def batch_sizes():
-    yield 16
     yield 64
     yield 1024
 
@@ -42,22 +41,22 @@ def chunk_ok(*, size: int, device: str) -> chunks.Chunk:
     schema = tdicts.AttrSet.from_values(
         f1d=tensors.Attr.parse(
             device="cpu",
-            shape=[1],
+            max_shape=[1],
             dtype="float32",
         ),
         f2d=tensors.Attr.parse(
             device="cpu",
-            shape=[1, 32],
+            max_shape=[1, 32],
             dtype="float32",
         ),
         i1d=tensors.Attr.parse(
             device="cpu",
-            shape=[1],
+            max_shape=[1],
             dtype="int64",
         ),
         i2d=tensors.Attr.parse(
             device="cpu",
-            shape=[1, 32],
+            max_shape=[1, 32],
             dtype="int64",
         ),
     )

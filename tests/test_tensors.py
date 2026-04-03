@@ -83,7 +83,7 @@ def test_left_fake_do(left_fn: tensors.TensorFn):
 def test_left_attr(left_fn: tensors.TensorFn):
     attr = left_fn.attr
     assert isinstance(attr, tensors.Attr)
-    assert attr.shape == [3, 5]
+    assert attr.max_shape == [3, 5]
     assert attr.device == "cpu"
     assert attr.dtype == "float"
 
@@ -102,4 +102,4 @@ def test_binary_ufunc(
 def test_getitem(left_fn: tensors.TensorFn, index_fn: tensors.TensorFn):
     result = left_fn[index_fn]
     assert isinstance(result, tensors.TensorFn)
-    assert result.attr.shape == [2, 7, 5]
+    assert result.attr.max_shape == [2, 7, 5]

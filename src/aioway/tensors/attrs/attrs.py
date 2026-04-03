@@ -14,7 +14,7 @@ from aioway._tracking import logging
 
 from . import devices, dtypes, shapes
 
-__all__ = ["Attr", "AttrTerm", "AttrTermRhs"]
+__all__ = ["Attr", "AttrTerm", "AttrTermRhs", "attr"]
 
 
 LOGGER = logging.get_logger(__name__)
@@ -39,7 +39,7 @@ class Attr:
     The data type for the column.
     """
 
-    shape: shapes.Shape
+    max_shape: shapes.Shape
     """
     The shape of individual items in the column.
     """
@@ -51,13 +51,13 @@ class Attr:
         if not isinstance(self.dtype, dtypes.DType):
             raise TypeError(type(self.dtype))
 
-        if not isinstance(self.shape, shapes.Shape):
-            raise TypeError(type(self.shape))
+        if not isinstance(self.max_shape, shapes.Shape):
+            raise TypeError(type(self.max_shape))
 
     def __repr__(self):
         return repr(
             {
-                "shape": self.shape,
+                "max_shape": self.max_shape,
                 "dtype": self.dtype,
                 "device": self.device,
             }
@@ -74,7 +74,7 @@ class Attr:
         """
 
         return (
-            torch.empty(self.shape.concrete())
+            torch.empty(self.max_shape.concrete())
             .to(self.device.torch())
             .to(self.dtype.torch())
         )
@@ -84,7 +84,7 @@ class Attr:
         cls,
         device: devices.DeviceLike,
         dtype: dtypes.DTypeLike,
-        shape: shapes.ShapeLike,
+        max_shape: shapes.ShapeLike,
     ) -> typing.Self:
         """
         The convenient constructor for `Attr`.
@@ -92,7 +92,7 @@ class Attr:
         Args:
             device: Things that can be converted to `devices.Device`.
             dtype: Things that can be converted to `dtypes.DType`.
-            shape: Things that can be converted to `shapes.Shape`.
+            max_shape: Things that can be converted to `shapes.Shape`.
 
         Returns:
             An attribute instance.
@@ -101,7 +101,7 @@ class Attr:
         return cls(
             device=devices.Device.parse(device),
             dtype=dtypes.DType.parse(dtype),
-            shape=shapes.Shape.parse(shape),
+            max_shape=shapes.Shape.parse(max_shape),
         )
 
     @classmethod
@@ -110,7 +110,7 @@ class Attr:
 
         return cls.parse(
             device=tensor.device,
-            shape=tensor.shape,
+            max_shape=tensor.shape,
             dtype=tensor.dtype,
         )
 
@@ -118,14 +118,14 @@ class Attr:
 class AttrDict(typing.TypedDict):
     device: devices.DeviceLike
     dtype: dtypes.DTypeLike
-    shape: shapes.ShapeLike
+    max_shape: shapes.ShapeLike
 
 
 @typing.runtime_checkable
 class AttrProto(typing.Protocol):
     device: devices.DeviceLike
     dtype: dtypes.DTypeLike
-    shape: shapes.ShapeLike
+    max_shape: shapes.ShapeLike
 
 
 type AttrLike = Attr | AttrDict
@@ -140,7 +140,7 @@ def attr(item: AttrLike, /) -> Attr:
     if _is_attr_dict(item):
         return Attr.parse(
             device=item["device"],
-            shape=item["shape"],
+            max_shape=item["max_shape"],
             dtype=item["dtype"],
         )
 
@@ -148,7 +148,7 @@ def attr(item: AttrLike, /) -> Attr:
         return Attr.parse(
             device=item.device,
             dtype=item.dtype,
-            shape=item.shape,
+            max_shape=item.max_shape,
         )
 
     raise TypeError(f"Do not know how to handle {item=}, because it is malformed.")
@@ -164,7 +164,7 @@ def _is_attr_dict(item: object) -> typing.TypeGuard[AttrDict]:
         _ = Attr.parse(
             device=item["device"],
             dtype=item["dtype"],
-            shape=item["shape"],
+            max_shape=item["max_shape"],
         )
     except Exception:
         return False
@@ -296,7 +296,7 @@ class AttrTerm:
 
     @property
     def shape(self):
-        return self.attr.shape
+        return self.attr.max_shape
 
     def unpack(self) -> Attr:
         return self.attr

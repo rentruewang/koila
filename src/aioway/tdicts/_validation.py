@@ -2,7 +2,6 @@
 
 "Validation of data (`td.TensorDict`) against schema (`attrs.AttrSet`)."
 
-import numpy as np
 import tensordict as td
 import torch
 
@@ -46,31 +45,25 @@ def validate_attr(attr: tensors.Attr, tensor: torch.Tensor) -> None:
     Only check if `tensor` has the exact same dtype, shape, device as `attr`.
     """
 
-    validate_shape_matches(shape=attr.shape, tensor=tensor)
+    validate_shape_matches(max_shape=attr.max_shape, tensor=tensor)
     validate_device_matches(device=attr.device, tensor=tensor)
     validate_dtype_matches(dtype=attr.dtype, tensor=tensor)
 
 
-def validate_shape_matches(shape: tensors.Shape, tensor: torch.Tensor) -> None:
+def validate_shape_matches(max_shape: tensors.Shape, tensor: torch.Tensor) -> None:
     try:
-        _validate_shape_matches(shape, tensor)
+        _validate_shape_larger(max_shape, tensor)
     except ValueError:
         raise RuntimeError(
-            f"tensors.Shape of tensor {tensor.shape=} should match attr's {shape=}"
+            f"tensors.Shape of tensor {tensor.shape=} should match attr's {max_shape=}"
         )
 
 
-def _validate_shape_matches(shape: tensors.Shape, tensor: torch.Tensor) -> None:
+def _validate_shape_larger(max_shape: tensors.Shape, tensor: torch.Tensor) -> None:
     # Convert to numpy array s.t. we can elegantly formulate the verification.
-    left = np.array(shape)
-    right = tensor.shape
+    tensor_shape = tensors.Shape.parse(tensor.shape)
 
-    # Dimension mismatch.
-    if len(left) != len(right):
-        raise ValueError
-
-    # If == 1, matches anything, if >= 0, matches `tensor.shape`.
-    if np.any((left != right) & (left != 1)):
+    if tensor_shape.exceeds(max_shape):
         raise ValueError
 
 

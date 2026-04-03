@@ -28,7 +28,7 @@ _is_tuple_of_int = _typing.is_tuple_of(int)
 _is_list_of_int = _typing.is_list_of(int)
 
 
-@dcls.dataclass(frozen=True)
+@dcls.dataclass(frozen=True, eq=False)
 class Shape(cabc.Sequence[int]):
     """
     `Shape` represents a regular (non-jagged) array's dimensions,
@@ -37,20 +37,22 @@ class Shape(cabc.Sequence[int]):
     Right now, it represents the shape of a `Tensor` **outside** the batch dimension.
     """
 
-    dims: tuple[int, ...] = ()
+    dims: npt.NDArray[np.uint]
     """
     The dimensions
     """
 
     def __post_init__(self):
+
         if not self.valid():
             raise ValueError(self)
 
+        self.dims.flags.writeable = False
+
         LOGGER.debug("Shape created: %s", self)
 
-    @typing.override
-    def __hash__(self) -> int:
-        return hash(self.dims)
+    def __hash__(self):
+        return hash(self.dims.tobytes())
 
     @typing.override
     def __repr__(self) -> str:
@@ -61,23 +63,21 @@ class Shape(cabc.Sequence[int]):
         dims_str = ", ".join(map(str, self.dims))
         return f"[{dims_str}]"
 
-    @typing.override
     def __eq__(self, other: object) -> bool:
-        if isinstance(other, Shape):
-            return self.dims == other.dims
+        if (rhs := _cast_numpy_index(other)) is None:
+            return NotImplemented
 
-        if isinstance(other, torch.Size):
-            return other == self.dims
+        lhs = np.asarray(self)
+        return lhs.ndim == rhs.ndim and (lhs == rhs).all().item()
 
-        # Do the numpy check first as `isinstance` is cheaper than the following ones.
-        if isinstance(other, np.ndarray):
-            arr = np.array(self)
-            return arr.ndim == other.ndim and np.all(arr == other).item()
+    def exceeds(self, other: typing.Self):
+        if self.ndim != other.ndim:
+            raise ValueError
 
-        if _is_tuple_of_int(other) or _is_list_of_int(other):
-            return tuple(self.dims) == tuple(other)
+        lhs = np.asarray(self)
+        rhs = np.asarray(other)
 
-        return NotImplemented
+        return (lhs > rhs).any().item()
 
     @typing.override
     def __len__(self):
@@ -103,8 +103,8 @@ class Shape(cabc.Sequence[int]):
     def __iter__(self) -> cabc.Iterator[int]:
         return iter(self.dims)
 
-    def __array__(self) -> npt.NDArray:
-        return np.array(self.dims)
+    def __array__(self):
+        return self.dims
 
     def concrete(self) -> tuple[int, ...]:
         """
@@ -126,7 +126,7 @@ class Shape(cabc.Sequence[int]):
 
         LOGGER.debug("Checking if %s is a `Shape`", self)
 
-        return _typing.is_seq_of(int)(self.dims)
+        return np.isdtype(self.dims.dtype, "unsigned integer")
 
     def valid_dims(self, dims: list[int]) -> bool:
         """
@@ -203,9 +203,22 @@ class Shape(cabc.Sequence[int]):
             return dims
 
         if isinstance(dims, cabc.Iterable):
-            dims_tuple = tuple(dims)
+            dims_array = tuple(dims)
 
-            if _is_tuple_of_int(dims_tuple):
-                return cls(dims_tuple)
+            if _is_tuple_of_int(dims_array):
+                return cls(np.array(dims_array).astype("uint"))
 
         raise ValueError
+
+
+def _cast_numpy_index(obj: object) -> npt.NDArray[np.uint] | None:
+    """
+    Convert the object into a numpy array. Return `None` if it's not doable / not integral array.
+    """
+
+    array = np.asarray(obj)
+
+    if not np.isdtype(array.dtype, "integral"):
+        return None
+
+    return array.astype("uint")

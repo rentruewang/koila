@@ -109,12 +109,12 @@ def test_simple_nested_loop_join(
             a=tensors.Attr.parse(
                 device="cpu",
                 dtype="int64",
-                shape=[1],
+                max_shape=[1],
             ),
             b=tensors.Attr.parse(
                 device="cpu",
                 dtype="int64",
-                shape=[1],
+                max_shape=[1],
             ),
         ),
     )
@@ -124,12 +124,12 @@ def test_simple_nested_loop_join(
             a=tensors.Attr.parse(
                 device="cpu",
                 dtype="int64",
-                shape=[1],
+                max_shape=[1],
             ),
             c=tensors.Attr.parse(
                 device="cpu",
                 dtype="int64",
-                shape=[1],
+                max_shape=[1],
             ),
         ),
     )

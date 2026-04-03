@@ -89,7 +89,7 @@ def test_linear(linear: modules.Module, linear_input: torch.Tensor):
 def test_linear_preview(linear: modules.Module, linear_attr: tensors.Attr):
     result = linear.preview(linear_attr)
     assert isinstance(result, tensors.Attr)
-    assert result.shape == (7, 5)
+    assert result.max_shape == (7, 5)
 
 
 def test_identity(identity: modules.Module, linear_input: torch.Tensor):
@@ -101,7 +101,7 @@ def test_identity(identity: modules.Module, linear_input: torch.Tensor):
 def test_identity_preview(identity: modules.Module, linear_attr: tensors.Attr):
     result = identity.preview(linear_attr)
     assert isinstance(result, tensors.Attr)
-    assert result.shape == (7, 3)
+    assert result.max_shape == (7, 3)
 
 
 def test_conv2d_forward(conv2d: modules.Module, conv2d_input: torch.Tensor):
@@ -115,7 +115,7 @@ def test_conv2d_preview(conv2d: modules.Module, conv2d_input: torch.Tensor):
     ours = conv2d.preview(tensors.Attr.from_tensor(conv2d_input))
     theirs = conv2d.real_module(conv2d_input)
 
-    assert ours.shape == theirs.shape
+    assert ours.max_shape == theirs.shape
 
 
 def test_emb_forward(emb_input: torch.Tensor, emb: modules.Module):
@@ -126,5 +126,5 @@ def test_emb_forward(emb_input: torch.Tensor, emb: modules.Module):
 def test_emb_preview(emb_input: torch.Tensor, emb: modules.Module):
     preview = emb.preview(tensors.Attr.from_tensor(emb_input))
     real = emb.real_module(emb_input)
-    assert preview.shape == real.shape
+    assert preview.max_shape == real.shape
     assert preview.dtype == real.dtype

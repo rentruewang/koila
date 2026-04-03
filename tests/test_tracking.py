@@ -14,12 +14,12 @@ def enable_rich():
 
 @pytest.fixture
 def lhs():
-    return tensors.Attr.parse(dtype="int8", device="cpu", shape=[1, 2, 3])
+    return tensors.Attr.parse(dtype="int8", device="cpu", max_shape=[1, 2, 3])
 
 
 @pytest.fixture
 def rhs():
-    return tensors.Attr.parse(dtype="float16", device="cpu", shape=[1, 1, 3])
+    return tensors.Attr.parse(dtype="float16", device="cpu", max_shape=[1, 1, 3])
 
 
 def test_attr_binary(lhs: tensors.Attr, rhs: tensors.Attr):

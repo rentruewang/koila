@@ -12,15 +12,19 @@ from aioway.tdicts import _validation
 @pytest.fixture
 def schema() -> tdicts.AttrSet:
     return tdicts.AttrSet.from_values(
-        a=tensors.Attr.parse(
-            device="cpu",
-            dtype="int32",
-            shape=[1, 2, 3],
+        a=tensors.attr(
+            {
+                "device": "cpu",
+                "dtype": "int32",
+                "max_shape": [-1, 2, 3],
+            },
         ),
-        b=tensors.Attr.parse(
-            device="cpu",
-            dtype="float32",
-            shape=[1, 6],
+        b=tensors.attr(
+            {
+                "device": "cpu",
+                "dtype": "float32",
+                "max_shape": [-1, 6],
+            },
         ),
     )
 
@@ -64,8 +68,8 @@ def test_attrset_getitem(schema: tdicts.AttrSet):
     assert isinstance(schema["a"], tensors.Attr)
     assert isinstance(schema[["a", "b"]], tdicts.AttrSet)
     assert schema == schema[["a", "b"]]
-    assert isinstance(schema[[1, 2, 3]], tdicts.AttrSet)
-    assert isinstance(schema[np.array([1, 2, 3])], tdicts.AttrSet)
+    assert isinstance(schema[[-1, 2, 3]], tdicts.AttrSet)
+    assert isinstance(schema[np.array([-1, 2, 3])], tdicts.AttrSet)
 
 
 def test_validation_ok(schema: tdicts.AttrSet, valid_data: td.TensorDict) -> None:
@@ -76,8 +80,8 @@ def test_construction_of_attrset(valid_data: td.TensorDict):
     parsed = tdicts.tdict(valid_data)
     assert parsed.attrs == tdicts.attr_set(
         {
-            "a": tensors.Attr.parse(device="cpu", shape=[11, 2, 3], dtype="int32"),
-            "b": tensors.Attr.parse(device="cpu", shape=[11, 6], dtype="float32"),
+            "a": tensors.Attr.parse(device="cpu", max_shape=[11, 2, 3], dtype="int32"),
+            "b": tensors.Attr.parse(device="cpu", max_shape=[11, 6], dtype="float32"),
         }
     )
 

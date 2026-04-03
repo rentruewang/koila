@@ -8,7 +8,6 @@ import typing
 import torch
 
 from aioway import chunks, tdicts
-from aioway.chunks import vectors
 
 from . import sources, streams
 
