@@ -4,6 +4,7 @@ import typing
 from collections.abc import Mapping, Sequence
 from typing import Any
 
+from numpy import typing as npt
 from tensordict import TensorDict
 from torch import Tensor
 
@@ -20,6 +21,8 @@ def defer(value: float) -> float: ...
 def defer(value: slice) -> slice: ...
 @typing.overload
 def defer(value: None) -> None: ...
+@typing.overload
+def defer(value: npt.NDArray) -> TensorFn: ...
 @typing.overload
 def defer(value: Tensor | TensorFn) -> TensorFn: ...
 @typing.overload

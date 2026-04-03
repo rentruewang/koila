@@ -22,7 +22,7 @@ class FakeModeRc:
     Do "reference counting" for fake mode.
     """
 
-    mode: tsc.FakeTensorMode = dcls.field(default_factory=tsc.FakeTensorMode)
+    mode: tsc.FakeTensorMode
     "The fake mode instance that shall be entered."
 
     count: int = 0
@@ -45,7 +45,8 @@ class FakeModeRc:
         return self.count != 0
 
 
-_FAKE_MODE = FakeModeRc()
+_FAKE_MODE = tsc.FakeTensorMode(allow_non_fake_inputs=True)
+_FAKE_MODE_RC = FakeModeRc(_FAKE_MODE)
 
 
 def to_fake_tensor(tensor: torch.Tensor) -> tsc.FakeTensor:
@@ -62,7 +63,11 @@ def to_fake_tensor(tensor: torch.Tensor) -> tsc.FakeTensor:
 
 
 def to_fake_tensordict(tensordict: td.TensorDict) -> td.TensorDict:
-    return td.TensorDict({key: to_fake_tensor(val) for key, val in tensordict.items()})
+    result = td.TensorDict(
+        {key: to_fake_tensor(val) for key, val in tensordict.items()}
+    )
+    result.shape = tensordict.shape
+    return result
 
 
 def is_real_tensor(tensor: object) -> typing.TypeIs[torch.Tensor]:
@@ -88,8 +93,8 @@ def is_enabled() -> tsc.FakeTensorMode | None:
     This can be used in an `if` or a `with`.
     """
 
-    if _FAKE_MODE.active():
-        return _FAKE_MODE.mode
+    if _FAKE_MODE_RC.active():
+        return _FAKE_MODE_RC.mode
     else:
         return None
 
@@ -102,8 +107,8 @@ def enable():
     Since fake mode doesn't nest (it seems), if fake mode is already on, yield that.
     """
 
-    with _FAKE_MODE():
-        yield _FAKE_MODE.mode
+    with _FAKE_MODE_RC():
+        yield _FAKE_MODE_RC.mode
 
 
 def enable_func[**P, T](func: cabc.Callable[P, T]) -> cabc.Callable[P, T]:

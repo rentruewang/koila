@@ -19,21 +19,17 @@ class TensorDictDataFn(tdicts.TensorDictFn):
     def __init__(self, data: td.TensorDict) -> None:
         self.data = data
         self.data.auto_batch_size_()
+        assert self.data.ndim, self.data.shape
 
         super().__init__()
 
     @typing.override
     def do(self) -> td.TensorDict:
-        if not (mode := fake.is_enabled()):
-            return self.data
+        if fake.is_enabled():
+            return fake.to_fake_tensordict(self.data)
 
-        converter = mode.fake_tensor_converter
-        return td.TensorDict(
-            {
-                key: converter.from_real_tensor(mode, value)
-                for key, value in self.data.items()
-            }
-        )
+        else:
+            return self.data
 
     @typing.override
     def deps(self):
@@ -78,3 +74,20 @@ class LambdaTensorFn(tensors.TensorFn):
     @typing.override
     def deps(self):
         return (self.source,)
+
+
+@_common.dcls_no_eq
+class GatherTensorDictFn(tdicts.TensorDictFn):
+
+    source: tdicts.TensorDictFn
+    index: tensors.TensorFn
+
+    @typing.override
+    def do(self):
+        source = self.source.do()
+        index = self.index.do()
+        return source[index]
+
+    @typing.override
+    def deps(self):
+        return self.source, self.index

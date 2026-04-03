@@ -12,7 +12,7 @@ import torch
 
 from aioway import _typing, tdicts
 from aioway._tracking import logging
-from aioway.tdicts import _validation
+from aioway.tdicts import attrs
 
 from . import vectors
 
@@ -37,12 +37,6 @@ class Chunk(cabc.Mapping[str, vectors.Vector]):
 
     data: td.TensorDict
     "The underlying data."
-
-    attrs: tdicts.AttrSet
-    "The schema for the `Chunk`."
-
-    def __post_init__(self) -> None:
-        _validation.validate_schema(self.attrs, self.data)
 
     @typing.override
     def __len__(self) -> int:
@@ -71,7 +65,7 @@ class Chunk(cabc.Mapping[str, vectors.Vector]):
         return NotImplemented
 
     def __getitem__(self, key):
-        return self.fn()[key].compute()
+        return type(self)(self.fn()[key].do())
 
     @typing.override
     def __iter__(self) -> cabc.Iterator[str]:
@@ -82,11 +76,11 @@ class Chunk(cabc.Mapping[str, vectors.Vector]):
 
     @LOGGER.function("DEBUG")
     def select(self, *names: str):
-        return self.fn().select(*names).compute()
+        return self.fn().select(*names).do()
 
     @LOGGER.function("DEBUG")
     def column(self, col: str):
-        return self.fn().column(col).compute()
+        return self.fn()[col].do()
 
     @LOGGER.function("DEBUG")
     def rename(self, **renames: str):
@@ -121,6 +115,10 @@ class Chunk(cabc.Mapping[str, vectors.Vector]):
 
         return cls.from_data_schema(schema=schema, data=data)
 
+    @property
+    def attrs(self):
+        return attrs.attr_set(self.data)
+
     @classmethod
     def from_data_schema(
         cls, data: TensorDictLike, schema: tdicts.AttrSetLike
@@ -128,8 +126,7 @@ class Chunk(cabc.Mapping[str, vectors.Vector]):
         td = _as_tensordict(data)
         td.auto_batch_size_()
         td.auto_device_()
-        aset = tdicts.attr_set(schema)
-        return cls(data=td, attrs=aset)
+        return cls(data=td)
 
     @classmethod
     def from_mapping(cls, chunk: ChunkLike) -> typing.Self:

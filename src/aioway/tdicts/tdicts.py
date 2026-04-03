@@ -23,7 +23,7 @@ class TensorDictFn(fn.Fn[td.TensorDict], cabc.Mapping[str, tensors.TensorFn], ab
             fake_result = self.do()
 
         assert all(fake.is_fake_tensor(t) for t in fake_result.values())
-        self.__attrs = attrs.AttrSet.from_tensordict(fake_result)
+        self.__attrs = attrs.attr_set(fake_result)
 
     @typing.overload
     def __getitem__(self, key: str) -> tensors.TensorFn: ...
@@ -42,21 +42,22 @@ class TensorDictFn(fn.Fn[td.TensorDict], cabc.Mapping[str, tensors.TensorFn], ab
 
             return _functions.LambdaTensorFn(self, get_col)
 
-        if isinstance(key, slice | np.ndarray | torch.Tensor):
+        if isinstance(key, slice | np.ndarray | torch.Tensor) or _typing.is_list_of(
+            int
+        )(key):
 
             def get_rows(tdict: td.TensorDict) -> td.TensorDict:
                 return tdict[key]
 
             return _functions.LambdaTensorDictFn(self, get_rows)
 
+        if isinstance(key, tensors.TensorFn):
+            return _functions.GatherTensorDictFn(self, deferred_index)
+
         if _typing.is_list_of(str)(key):
+            return self.select(*key)
 
-            def select(tdict: td.TensorDict) -> td.TensorDict:
-                return tdict.select(*key)
-
-            return _functions.LambdaTensorDictFn(self, select)
-
-        raise TypeError(f"Does not handle {type(key)=}.")
+        raise TypeError(f"Does not handle {key=}, {type(key)=}.")
 
     @typing.override
     def __len__(self) -> int:
@@ -96,6 +97,14 @@ class TensorDictFn(fn.Fn[td.TensorDict], cabc.Mapping[str, tensors.TensorFn], ab
 
         return _functions.LambdaTensorDictFn(self, rename)
 
+    def select(self, *keys: str):
+        from . import _functions
+
+        def select(tdict: td.TensorDict) -> td.TensorDict:
+            return tdict.select(*keys)
+
+        return _functions.LambdaTensorDictFn(self, select)
+
     @classmethod
     def from_tensordict(cls, data: td.TensorDict) -> TensorDictFn:
         from . import _functions
@@ -103,11 +112,15 @@ class TensorDictFn(fn.Fn[td.TensorDict], cabc.Mapping[str, tensors.TensorFn], ab
         return _functions.TensorDictDataFn(data)
 
 
-def tdict(item: TensorDictFn | td.TensorDict) -> TensorDictFn:
+def tdict(item: TensorDictFn | td.TensorDict | cabc.Mapping) -> TensorDictFn:
     if isinstance(item, TensorDictFn):
         return item
 
     if isinstance(item, td.TensorDict):
         return TensorDictFn.from_tensordict(item)
+
+    if isinstance(item, cabc.Mapping):
+        tdict = td.TensorDict.from_any(item)
+        return TensorDictFn.from_tensordict(tdict)
 
     raise TypeError(f"Do not know how to handle {type(item)=}.")

@@ -93,7 +93,6 @@ class UFunc2Thunk(tensors.TensorFn):
     right: BinaryTensorFnRhs
 
     def __post_init__(self) -> None:
-        super().__init__()
 
         if not callable(self.func):
             raise TypeError
@@ -105,6 +104,8 @@ class UFunc2Thunk(tensors.TensorFn):
             self.right, tensors.TensorFn | torch.Tensor | int | float | bool
         ):
             raise TypeError
+
+        super().__init__()
 
     @typing.override
     def do(self) -> torch.Tensor:
