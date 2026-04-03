@@ -4,6 +4,7 @@
 
 import contextlib as ctxl
 import types
+import typing
 
 __all__ = [
     "AiowayError",
@@ -69,8 +70,6 @@ class GitHubTicketFiled(NotImplementedError):
     """
     The ticket is filed on GitHub, when encountered, show the URL.
     """
-
-    import typing
 
     REPO_URL: typing.ClassVar[str] = "https://github.com/rentruewang/aioway"
 

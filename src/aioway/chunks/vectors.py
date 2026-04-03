@@ -7,11 +7,8 @@ import typing
 
 import torch
 
-from aioway import _tensor_exprs, _typing, tensors
+from aioway import _typing, tensors
 from aioway._tracking import logging
-
-if typing.TYPE_CHECKING:
-    from . import exprs
 
 __all__ = ["Vector"]
 
@@ -28,15 +25,12 @@ class Vector:
 
     __match_args__ = "data", "attr"
 
-    def __init__(self, data: torch.Tensor, attr: tensors.Attr) -> None:
-        self._attr = attr
-        "The attribute that the `torch.Tensor` must satisfy."
-
+    def __init__(self, data: torch.Tensor) -> None:
         self._data = data
         "The underlying data."
 
     def __repr__(self):
-        return f"Vector(data={self._data}, attr={self._attr})"
+        return f"Vector({self.attr})"
 
     @LOGGER.function("DEBUG")
     def __neg__(self) -> typing.Self:
@@ -47,76 +41,74 @@ class Vector:
         return self.__op1(operator.invert)
 
     @LOGGER.function("DEBUG")
-    def __add__(self, other: exprs.VectorExprRhs) -> typing.Self:
+    def __add__(self, other: typing.Any) -> typing.Self:
         return self.__op2(other, operator.add)
 
     @LOGGER.function("DEBUG")
-    def __sub__(self, other: exprs.VectorExprRhs) -> typing.Self:
+    def __sub__(self, other: typing.Any) -> typing.Self:
         return self.__op2(other, operator.sub)
 
     @LOGGER.function("DEBUG")
-    def __mul__(self, other: exprs.VectorExprRhs) -> typing.Self:
+    def __mul__(self, other: typing.Any) -> typing.Self:
         return self.__op2(other, operator.mul)
 
     @LOGGER.function("DEBUG")
-    def __truediv__(self, other: exprs.VectorExprRhs) -> typing.Self:
+    def __truediv__(self, other: typing.Any) -> typing.Self:
         return self.__op2(other, operator.truediv)
 
     @LOGGER.function("DEBUG")
-    def __floordiv__(self, other: exprs.VectorExprRhs) -> typing.Self:
+    def __floordiv__(self, other: typing.Any) -> typing.Self:
         return self.__op2(other, operator.floordiv)
 
     @LOGGER.function("DEBUG")
-    def __mod__(self, other: exprs.VectorExprRhs) -> typing.Self:
+    def __mod__(self, other: typing.Any) -> typing.Self:
         return self.__op2(other, operator.mod)
 
     @LOGGER.function("DEBUG")
-    def __pow__(self, other: exprs.VectorExprRhs) -> typing.Self:
+    def __pow__(self, other: typing.Any) -> typing.Self:
         return self.__op2(other, operator.pow)
 
     @typing.no_type_check
     @LOGGER.function("DEBUG")
-    def __eq__(self, other: exprs.VectorExprRhs) -> typing.Self:
+    def __eq__(self, other: typing.Any) -> typing.Self:
         return self.__op2(other, operator.eq)
 
     @typing.no_type_check
     @LOGGER.function("DEBUG")
-    def __ne__(self, other: exprs.VectorExprRhs) -> typing.Self:
+    def __ne__(self, other: typing.Any) -> typing.Self:
         return self.__op2(other, operator.ne)
 
     @typing.no_type_check
     @LOGGER.function("DEBUG")
-    def __ge__(self, other: exprs.VectorExprRhs) -> typing.Self:
+    def __ge__(self, other: typing.Any) -> typing.Self:
         return self.__op2(other, operator.ge)
 
     @typing.no_type_check
     @LOGGER.function("DEBUG")
-    def __gt__(self, other: exprs.VectorExprRhs) -> typing.Self:
+    def __gt__(self, other: typing.Any) -> typing.Self:
         return self.__op2(other, operator.gt)
 
     @typing.no_type_check
     @LOGGER.function("DEBUG")
-    def __le__(self, other: exprs.VectorExprRhs) -> typing.Self:
+    def __le__(self, other: typing.Any) -> typing.Self:
         return self.__op2(other, operator.le)
 
     @typing.no_type_check
     @LOGGER.function("DEBUG")
-    def __lt__(self, other: exprs.VectorExprRhs) -> typing.Self:
+    def __lt__(self, other: typing.Any) -> typing.Self:
         return self.__op2(other, operator.lt)
 
-    def __op1(self, unop: _typing.AnyUFunc1) -> typing.Self:
-        return self.from_expr(unop(self.expr()))
+    def __op1(self, unop: typing.Any) -> typing.Self:
+        return self.from_fn(unop(self.fn()))
 
-    def __op2(
-        self, other: exprs.VectorExprRhs, binop: _typing.AnyUFunc2
-    ) -> typing.Self:
-        from . import exprs
+    def __op2(self, other: typing.Any, binop: _typing.AnyUFunc2) -> typing.Self:
+        pass
 
         match other:
             case Vector():
-                return self.from_expr(binop(self.expr(), other.expr()))
-            case exprs.VectorExpr() | float() | int() | bool():
-                return self.from_expr(binop(self.expr(), other))
+                return self.from_fn(binop(self.fn(), other.fn()))
+            case tensors.TensorFn() | float() | int() | bool():
+                return self.from_fn(binop(self.fn(), other))
 
         raise NotImplementedError
 
@@ -126,16 +118,11 @@ class Vector:
 
     def typeof(self) -> tensors.Attr:
         "Get the type information `tensors.Attr` of the `torch.Tensor` that this `Vector` represents."
-        return self._attr
+        return self.attr
 
-    def cpu(self):
+    def cpu(self) -> typing.Self:
         data = self._data.cpu()
-        attr = tensors.Attr.parse(
-            device="cpu",
-            shape=self._attr.shape,
-            dtype=self._attr.dtype,
-        )
-        return type(self)(data=data, attr=attr)
+        return type(self)(data=data)
 
     def numpy(self):
         return self.torch().cpu().numpy()
@@ -143,12 +130,8 @@ class Vector:
     def tolist(self):
         return self.torch().tolist()
 
-    def expr(self):
-        from . import exprs
-
-        return exprs.VectorExpr(
-            tensor=_tensor_exprs.SourceTensorExpr(self.torch()), attr=self.typeof()
-        )
+    def fn(self):
+        return tensors.TensorFn.from_tensor(self.data)
 
     @property
     def data(self):
@@ -156,9 +139,9 @@ class Vector:
 
     @property
     def attr(self):
-        return self._attr
+        return tensors.Attr.from_tensor(self.data)
 
     @classmethod
-    def from_expr(cls, expr: exprs.VectorExpr, /) -> typing.Self:
-        vec = expr.compute()
-        return cls(data=vec.data, attr=vec.attr)
+    def from_fn(cls, fn: tensors.TensorFn, /) -> typing.Self:
+        vec = fn.do()
+        return cls(data=vec.data)

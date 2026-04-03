@@ -5,7 +5,9 @@ from collections import abc as cabc
 
 import torch
 
-from aioway import _common, fn, tensors
+from aioway import _common, fn
+
+from . import tensors
 
 __all__ = ["UFunc1Thunk", "UFunc2Thunk", "GatherThunk"]
 
@@ -35,12 +37,15 @@ class AnyThunk(tensors.TensorFn):
         return _common.format_function(self.func, *self.args, **self.kwargs)
 
     @typing.override
-    def forward(self) -> torch.Tensor:
+    def do(self) -> torch.Tensor:
         args = [arg.do() for arg in self.args]
         kwargs = {key: val.do() for key, val in self.kwargs.items()}
         return self.func(*args, **kwargs)
 
     @typing.override
+    def deps(self):
+        return tuple(self._deps())
+
     def _deps(self) -> cabc.Iterator[fn.Fn[object]]:
         yield from self.args
         yield from self.kwargs.values()
@@ -65,13 +70,13 @@ class UFunc1Thunk(tensors.TensorFn):
             raise TypeError
 
     @typing.override
-    def forward(self) -> torch.Tensor:
+    def do(self) -> torch.Tensor:
         return self.func(self.arg.do())
 
     @typing.override
-    def _deps(self) -> cabc.Iterator[tensors.TensorFn]:
+    def deps(self):
         # If it's a primitive or `torch.Tensor`, do not recurse.
-        yield self.arg
+        return (self.arg,)
 
 
 type BinaryTensorFnRhs = tensors.TensorFn | torch.Tensor | int | float | bool
@@ -88,7 +93,6 @@ class UFunc2Thunk(tensors.TensorFn):
     right: BinaryTensorFnRhs
 
     def __post_init__(self) -> None:
-        super().__init__()
 
         if not callable(self.func):
             raise TypeError
@@ -101,8 +105,10 @@ class UFunc2Thunk(tensors.TensorFn):
         ):
             raise TypeError
 
+        super().__init__()
+
     @typing.override
-    def forward(self) -> torch.Tensor:
+    def do(self) -> torch.Tensor:
         left_do = self.left.do()
 
         match right := self.right:
@@ -112,7 +118,10 @@ class UFunc2Thunk(tensors.TensorFn):
                 return self.func(left_do, right)
 
     @typing.override
-    def _deps(self) -> cabc.Iterator[tensors.TensorFn]:
+    def deps(self):
+        return tuple(self._deps())
+
+    def _deps(self):
         # If it's a primitive or `torch.Tensor`, do not recurse.
         yield self.left
 
@@ -135,7 +144,7 @@ class GatherThunk(tensors.TensorFn):
             raise TypeError
 
     @typing.override
-    def forward(self) -> torch.Tensor:
+    def do(self) -> torch.Tensor:
         tensor = (
             self.tensor.do()
             if isinstance(self.tensor, tensors.TensorFn)
@@ -147,6 +156,9 @@ class GatherThunk(tensors.TensorFn):
         return tensor[index]
 
     @typing.override
+    def deps(self):
+        return tuple(self._deps())
+
     def _deps(self) -> cabc.Iterator[tensors.TensorFn]:
         if isinstance(self.tensor, tensors.TensorFn):
             yield self.tensor

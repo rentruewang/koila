@@ -14,9 +14,9 @@ import torch
 from aioway import _signs, _tracking, _typing, tensors
 from aioway._tracking import logging
 
-__all__ = ["AttrSet", "DTypeSet", "DeviceSet", "ShapeSet", "AttrSetLike"]
+__all__ = ["AttrSet", "DTypeSet", "DeviceSet", "ShapeSet", "AttrSetLike", "attr_set"]
 
-type AttrSetLike = AttrSet | dict[str, tensors.Attr]
+type AttrSetLike = AttrSet | td.TensorDict | dict[str, tensors.Attr]
 
 LOGGER = logging.get_logger(__name__)
 TRACKER = _tracking.get_tracker(lambda: AttrSet)
@@ -280,17 +280,6 @@ class AttrSet(_AttrSetBase[tensors.Attr]):
             {key: tensors.Attr.from_tensor(val) for key, val in data.items()}
         )
 
-    @classmethod
-    def parse(cls, schema: AttrSetLike):
-        if isinstance(schema, AttrSet):
-            return schema
-
-        _is_dict_of_attr = _typing.is_dict_of_str_to(tensors.Attr)
-        if _is_dict_of_attr(schema):
-            return cls.from_dict(schema)
-
-        raise TypeError(type(schema))
-
 
 @dcls.dataclass(frozen=True)
 class _AttrKeysView(cabc.KeysView[str]):
@@ -341,3 +330,23 @@ class _AttrKeysView(cabc.KeysView[str]):
     @property
     def keys(self) -> list[str]:
         return self.attrset.names
+
+
+def attr_set(schema: AttrSetLike) -> AttrSet:
+    """
+    The convenient constructor for `AttrSet`.
+    """
+
+    if isinstance(schema, AttrSet):
+        return schema
+
+    if isinstance(schema, td.TensorDict):
+        return AttrSet.from_tensordict(schema)
+
+    if _typing.is_dict_of_str_to(tensors.Attr)(schema):
+        return AttrSet.from_dict(schema)
+
+    raise TypeError(
+        f"We do not handle the {schema=}, "
+        f"because we can't handle its type {type(schema)}."
+    )

@@ -14,7 +14,7 @@ def tdict():
 
 @pytest.fixture
 def tdict_fn(tdict: td.TensorDict):
-    return tdicts.TensorDictFn.from_tensordict(tdict)
+    return tdicts.tdict(tdict)
 
 
 def _select_keys():

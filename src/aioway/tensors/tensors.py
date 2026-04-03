@@ -3,7 +3,6 @@
 import abc
 import operator
 import typing
-from collections import abc as cabc
 
 import torch
 
@@ -17,8 +16,12 @@ __all__ = ["TensorFn", "tensor"]
 class TensorFn(fn.Fn[torch.Tensor], abc.ABC):
     def __init__(self) -> None:
         super().__init__()
-        assert fake.is_fake_tensor(self._fake_result), type(self._fake_result)
-        self.__attr = attrs.Attr.from_tensor(self._fake_result)
+
+        with fake.enable():
+            fake_result = self.do()
+
+        assert fake.is_fake_tensor(fake_result), type(fake_result)
+        self.__attr = attrs.Attr.from_tensor(fake_result)
 
     def __len__(self) -> int:
         return self.attr.shape[0]
@@ -109,14 +112,14 @@ class TensorFn(fn.Fn[torch.Tensor], abc.ABC):
     def attr(self) -> attrs.Attr:
         return self.__attr
 
-    @abc.abstractmethod
     @typing.override
-    def forward(self) -> torch.Tensor:
+    @abc.abstractmethod
+    def do(self) -> torch.Tensor:
         raise NotImplementedError
 
-    @abc.abstractmethod
     @typing.override
-    def _deps(self) -> cabc.Iterator[fn.Fn]:
+    @abc.abstractmethod
+    def deps(self) -> tuple[fn.Fn[object], ...]:
         """
         Yields the dependent `fn.Fn`s.
         """

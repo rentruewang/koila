@@ -91,7 +91,13 @@ class Frame(datasets.Dataset, abc.ABC):
         arr: _typing.IntArray = np.asarray(it)
         arr = self._check_idx(arr)
 
-        if (item := self._getitem(arr)).attrs != self.attrs:
+        item = self._getitem(arr)
+
+        if (
+            False
+            or item.attrs.devices != self.attrs.devices
+            or item.attrs.dtypes != self.attrs.dtypes
+        ):
             raise ValueError(f"Attr mismatch for {item.attrs=} and {self.attrs=}.")
 
         return item

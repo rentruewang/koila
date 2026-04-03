@@ -8,6 +8,7 @@ import typing
 import torch
 
 from aioway import chunks, tdicts
+from aioway.chunks import vectors
 
 from . import sources, streams
 
@@ -109,7 +110,10 @@ class NestedLoopJoinStream(streams.Stream):
         lhs_select = lhs_batch[self.key]
         rhs_select = rhs_batch[self.key]
 
-        matrix = lhs_select.torch()[:, None] == rhs_select.torch()[None, :]
+        assert isinstance(lhs_select, chunks.Vector), type(lhs_select)
+        assert isinstance(rhs_select, chunks.Vector), type(rhs_select)
+
+        matrix = lhs_select.data[:, None] == rhs_select.data[None, :]
         l, r = torch.nonzero(matrix).T
         assert len(l) == len(r) == torch.sum(matrix)
         out = lhs_batch[l].zip(rhs_batch[r])

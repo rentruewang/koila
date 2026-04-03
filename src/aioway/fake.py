@@ -5,10 +5,15 @@ import dataclasses as dcls
 import typing
 from collections import abc as cabc
 
+import tensordict as td
 import torch
-from torch import _subclasses as _S
+from torch import _subclasses as tsc
+
+from aioway._tracking import logging
 
 __all__ = ["enable", "enable_func", "is_fake_tensor", "is_real_tensor"]
+
+LOGGER = logging.get_logger(__name__)
 
 
 @dcls.dataclass
@@ -17,7 +22,7 @@ class FakeModeRc:
     Do "reference counting" for fake mode.
     """
 
-    mode: _S.FakeTensorMode = dcls.field(default_factory=_S.FakeTensorMode)
+    mode: tsc.FakeTensorMode
     "The fake mode instance that shall be entered."
 
     count: int = 0
@@ -40,10 +45,11 @@ class FakeModeRc:
         return self.count != 0
 
 
-_FAKE_MODE = FakeModeRc()
+_FAKE_MODE = tsc.FakeTensorMode(allow_non_fake_inputs=True)
+_FAKE_MODE_RC = FakeModeRc(_FAKE_MODE)
 
 
-def to_fake_tensor(tensor: torch.Tensor) -> _S.FakeTensor:
+def to_fake_tensor(tensor: torch.Tensor) -> tsc.FakeTensor:
     """
     Move a possibly real tensor to a fake torch.Tensor
     """
@@ -56,6 +62,14 @@ def to_fake_tensor(tensor: torch.Tensor) -> _S.FakeTensor:
         return converter.from_real_tensor(mode, tensor)
 
 
+def to_fake_tensordict(tensordict: td.TensorDict) -> td.TensorDict:
+    result = td.TensorDict(
+        {key: to_fake_tensor(val) for key, val in tensordict.items()}
+    )
+    result.shape = tensordict.shape
+    return result
+
+
 def is_real_tensor(tensor: object) -> typing.TypeIs[torch.Tensor]:
     """
     Detect if a tensor is a normal tensor.
@@ -64,23 +78,23 @@ def is_real_tensor(tensor: object) -> typing.TypeIs[torch.Tensor]:
     return isinstance(tensor, torch.Tensor) and not is_fake_tensor(tensor)
 
 
-def is_fake_tensor(tensor: object) -> typing.TypeIs[_S.FakeTensor]:
+def is_fake_tensor(tensor: object) -> typing.TypeIs[tsc.FakeTensor]:
     """
     Detect if a tensor is a fake tensor.
     """
 
-    return isinstance(tensor, _S.FakeTensor)
+    return isinstance(tensor, tsc.FakeTensor)
 
 
-def is_enabled() -> _S.FakeTensorMode | None:
+def is_enabled() -> tsc.FakeTensorMode | None:
     """
     Get the current fake mode, is available.
 
     This can be used in an `if` or a `with`.
     """
 
-    if _FAKE_MODE.active():
-        return _FAKE_MODE.mode
+    if _FAKE_MODE_RC.active():
+        return _FAKE_MODE_RC.mode
     else:
         return None
 
@@ -93,8 +107,8 @@ def enable():
     Since fake mode doesn't nest (it seems), if fake mode is already on, yield that.
     """
 
-    with _FAKE_MODE():
-        yield _FAKE_MODE.mode
+    with _FAKE_MODE_RC():
+        yield _FAKE_MODE_RC.mode
 
 
 def enable_func[**P, T](func: cabc.Callable[P, T]) -> cabc.Callable[P, T]:
