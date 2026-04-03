@@ -86,7 +86,7 @@ class Chunk(cabc.Mapping[str, vectors.Vector]):
 
     @LOGGER.function("DEBUG")
     def column(self, col: str):
-        return vectors.Vector(self.fn()[col].do())
+        return vectors.Vector(self.fn()[col].forward())
 
     @LOGGER.function("DEBUG")
     def rename(self, **renames: str):

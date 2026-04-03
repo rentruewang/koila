@@ -30,16 +30,6 @@ class Fn[T](abc.ABC):
 
     __match_args__: typing.ClassVar[tuple[str, ...]]
 
-    def __init__(self) -> None:
-        super().__init__()
-
-        self.__state = FnState.PENDING
-
-    def __call__(self):
-        result = self.do()
-        self.__state = FnState.DONE
-        return result
-
     @abc.abstractmethod
     def do(self) -> T:
         """
@@ -65,12 +55,3 @@ class Fn[T](abc.ABC):
         "Whether or not the thunk is dependent on other thunks. If not, it's a leaf."
 
         return not self.deps()
-
-    @property
-    def state(self) -> FnState:
-        """
-        If `Fn` has been called, return `EVALUATED`.
-        Else return `PENDING`.
-        """
-
-        return self.__state

@@ -143,5 +143,5 @@ class Vector:
 
     @classmethod
     def from_fn(cls, fn: tensors.TensorFn, /) -> typing.Self:
-        vec = fn.do()
+        vec = fn.forward()
         return cls(data=vec.data)

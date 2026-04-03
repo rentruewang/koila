@@ -7,6 +7,8 @@ import pytest
 import torch
 
 from aioway import fake, tensors
+from aioway.chunks import vectors
+from aioway.tensors import attrs
 
 
 @pytest.fixture
@@ -67,12 +69,13 @@ def fake_mode():
 
 
 def test_left_normal(left_fn: tensors.TensorFn):
-    assert isinstance(left_fn.do(), torch.Tensor)
+    assert isinstance(left_fn.forward(), torch.Tensor)
 
 
 def test_left_attr(left_fn: tensors.TensorFn):
-    attr = left_fn.preview()
-    assert isinstance(attr, tensors.Attr)
+    tensor = left_fn.preview()
+    assert isinstance(tensor, torch.Tensor)
+    attr = tensors.attr(tensor)
     assert attr.max_shape == [3, 5]
     assert attr.device == "cpu"
     assert attr.dtype == "float"
@@ -86,10 +89,10 @@ def test_binary_ufunc(
     result = binop(left_fn, right_fn)
 
     assert isinstance(result, tensors.TensorFn)
-    assert isinstance(result.do(), torch.Tensor)
+    assert isinstance(result.forward(), torch.Tensor)
 
 
 def test_getitem(left_fn: tensors.TensorFn, index_fn: tensors.TensorFn):
     result = left_fn[index_fn]
     assert isinstance(result, tensors.TensorFn)
-    assert result.preview().max_shape == [2, 7, 5]
+    assert result.attr.max_shape == [2, 7, 5]

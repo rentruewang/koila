@@ -57,7 +57,7 @@ class LambdaTensorDictFn(tdicts.TensorDictFn):
 
 
 @_common.dcls_no_eq
-class LambdaTensorFn(tensors.BasicPreviewFn):
+class LambdaTensorFn(tensors.TensorFn):
     "The `fn.Fn` representing arbitrary computation on `td.TensorDict`."
 
     source: tdicts.TensorDictFn
@@ -67,7 +67,7 @@ class LambdaTensorFn(tensors.BasicPreviewFn):
         super().__init__()
 
     @typing.override
-    def do(self) -> torch.Tensor:
+    def forward(self) -> torch.Tensor:
         source = self.source.do()
         return self.function(source)
 
@@ -85,7 +85,7 @@ class GatherTensorDictFn(tdicts.TensorDictFn):
     @typing.override
     def do(self):
         source = self.source.do()
-        index = self.index.do()
+        index = self.index.forward()
         return source[index]
 
     @typing.override
