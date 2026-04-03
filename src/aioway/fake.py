@@ -6,9 +6,13 @@ import typing
 from collections import abc as cabc
 
 import torch
-from torch import _subclasses as _S
+from torch import _subclasses as tsc
+
+from aioway._tracking import logging
 
 __all__ = ["enable", "enable_func", "is_fake_tensor", "is_real_tensor"]
+
+LOGGER = logging.get_logger(__name__)
 
 
 @dcls.dataclass
@@ -17,7 +21,7 @@ class FakeModeRc:
     Do "reference counting" for fake mode.
     """
 
-    mode: _S.FakeTensorMode = dcls.field(default_factory=_S.FakeTensorMode)
+    mode: tsc.FakeTensorMode = dcls.field(default_factory=tsc.FakeTensorMode)
     "The fake mode instance that shall be entered."
 
     count: int = 0
@@ -43,7 +47,7 @@ class FakeModeRc:
 _FAKE_MODE = FakeModeRc()
 
 
-def to_fake_tensor(tensor: torch.Tensor) -> _S.FakeTensor:
+def to_fake_tensor(tensor: torch.Tensor) -> tsc.FakeTensor:
     """
     Move a possibly real tensor to a fake torch.Tensor
     """
@@ -64,15 +68,15 @@ def is_real_tensor(tensor: object) -> typing.TypeIs[torch.Tensor]:
     return isinstance(tensor, torch.Tensor) and not is_fake_tensor(tensor)
 
 
-def is_fake_tensor(tensor: object) -> typing.TypeIs[_S.FakeTensor]:
+def is_fake_tensor(tensor: object) -> typing.TypeIs[tsc.FakeTensor]:
     """
     Detect if a tensor is a fake tensor.
     """
 
-    return isinstance(tensor, _S.FakeTensor)
+    return isinstance(tensor, tsc.FakeTensor)
 
 
-def is_enabled() -> _S.FakeTensorMode | None:
+def is_enabled() -> tsc.FakeTensorMode | None:
     """
     Get the current fake mode, is available.
 

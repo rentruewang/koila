@@ -14,7 +14,7 @@ from aioway import _typing, tdicts
 from aioway._tracking import logging
 from aioway.tdicts import _validation
 
-from .. import vectors
+from . import vectors
 
 __all__ = ["Chunk"]
 
@@ -71,38 +71,33 @@ class Chunk(cabc.Mapping[str, vectors.Vector]):
         return NotImplemented
 
     def __getitem__(self, key):
-        return self.expr()[key].compute()
+        return self.fn()[key].compute()
 
     @typing.override
     def __iter__(self) -> cabc.Iterator[str]:
         return iter(self.attrs)
 
-    def expr(self):
-        from . import exprs
-
-        return exprs.ChunkExpr(
-            tensordict=_tensor_exprs.SourceTensorDictExpr(self.data),
-            attrs=self.attrs,
-        )
+    def fn(self):
+        return tdicts.tdict(self.data)
 
     @LOGGER.function("DEBUG")
     def select(self, *names: str):
-        return self.expr().select(*names).compute()
+        return self.fn().select(*names).compute()
 
     @LOGGER.function("DEBUG")
     def column(self, col: str):
-        return self.expr().column(col).compute()
+        return self.fn().column(col).compute()
 
     @LOGGER.function("DEBUG")
     def rename(self, **renames: str):
         if not renames:
             return self
 
-        return self.expr().rename(**renames).compute()
+        return self.fn().rename(**renames).do()
 
     @LOGGER.function("DEBUG")
     def zip(self, rhs: typing.Self):
-        return self.expr().zip(rhs).compute()
+        return self.fn().zip(rhs).do()
 
     @property
     def shape(self) -> torch.Size:
@@ -133,7 +128,7 @@ class Chunk(cabc.Mapping[str, vectors.Vector]):
         td = _as_tensordict(data)
         td.auto_batch_size_()
         td.auto_device_()
-        aset = tdicts.AttrSet.parse(schema)
+        aset = tdicts.attr_set(schema)
         return cls(data=td, attrs=aset)
 
     @classmethod

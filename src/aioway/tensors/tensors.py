@@ -20,8 +20,9 @@ class TensorFn(fn.Fn[torch.Tensor], abc.ABC):
 
         with tsc.FakeTensorMode():
             fake_result = self.do()
-            assert fake.is_fake_tensor(fake_result), type(fake_result)
-            self.__attr = attrs.Attr.from_tensor(fake_result)
+
+        assert fake.is_fake_tensor(fake_result), type(fake_result)
+        self.__attr = attrs.Attr.from_tensor(fake_result)
 
     def __len__(self) -> int:
         return self.attr.shape[0]

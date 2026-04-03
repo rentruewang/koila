@@ -5,6 +5,7 @@ import typing
 from collections import abc as cabc
 
 import tensordict as td
+import torch
 
 from aioway import _typing, fake, fn, tensors
 
@@ -16,8 +17,12 @@ __all__ = ["TensorDictFn", "tdict"]
 class TensorDictFn(fn.Fn[td.TensorDict], cabc.Mapping[str, tensors.TensorFn], abc.ABC):
     def __init__(self) -> None:
         super().__init__()
-        assert all(fake.is_fake_tensor(tensor) for tensor in self._fake_result.values())
-        self.__attrs = attrs.AttrSet.from_tensordict(self._fake_result)
+
+        with fake.enable():
+            fake_result = self.do()
+
+        assert all(fake.is_fake_tensor(t) for t in fake_result.values())
+        self.__attrs = attrs.AttrSet.from_tensordict(fake_result)
 
     @typing.overload
     def __getitem__(self, key: str) -> tensors.TensorFn: ...
@@ -27,15 +32,28 @@ class TensorDictFn(fn.Fn[td.TensorDict], cabc.Mapping[str, tensors.TensorFn], ab
 
     @typing.no_type_check
     def __getitem__(self, key):
-        if isinstance(key, str):
-            from . import _selections
+        from . import _functions
 
-            return _selections.GetItemFn(self, key)
+        if isinstance(key, str):
+
+            def get_col(tdict: td.TensorDict) -> torch.Tensor:
+                return tdict[key]
+
+            return _functions.LambdaTensorFn(self, get_col)
+
+        if isinstance(key, slice):
+
+            def get_rows(tdict: td.TensorDict):
+                return tdict[key]
+
+            return _functions.LambdaTensorDictFn(self, get_rows)
 
         if _typing.is_list_of(str)(key):
-            from . import _selections
 
-            return _selections.SelectFn(self, key)
+            def select(tdict: td.TensorDict) -> td.TensorDict:
+                return tdict.select(*key)
+
+            return _functions.LambdaTensorDictFn(self, select)
 
         raise TypeError(f"Does not handle {type(key)=}.")
 
@@ -60,18 +78,28 @@ class TensorDictFn(fn.Fn[td.TensorDict], cabc.Mapping[str, tensors.TensorFn], ab
 
     @abc.abstractmethod
     @typing.override
-    def _deps(self) -> cabc.Iterator[fn.Fn[typing.Any]]:
+    def deps(self) -> tuple[fn.Fn[typing.Any], ...]:
         raise NotImplementedError
 
     @property
     def attrs(self):
         return self.__attrs
 
+    def rename(self, **renames: str):
+        from . import _functions
+
+        def rename(tdict: td.TensorDict):
+            return td.TensorDict(
+                {renames.get(key, key): value for key, value in tdict.items()}
+            )
+
+        return _functions.LambdaTensorDictFn(self, rename)
+
     @classmethod
     def from_tensordict(cls, data: td.TensorDict) -> TensorDictFn:
-        from . import _data
+        from . import _functions
 
-        return _data.TensorDictDataFn(data)
+        return _functions.TensorDictDataFn(data)
 
 
 def tdict(item: TensorDictFn | td.TensorDict) -> TensorDictFn:

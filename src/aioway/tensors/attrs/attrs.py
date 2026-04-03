@@ -5,6 +5,7 @@
 import dataclasses as dcls
 import operator
 import typing
+from collections import abc as cabc
 
 import torch
 
@@ -112,6 +113,63 @@ class Attr:
             shape=tensor.shape,
             dtype=tensor.dtype,
         )
+
+
+class AttrDict(typing.TypedDict):
+    device: devices.DeviceLike
+    dtype: dtypes.DTypeLike
+    shape: shapes.ShapeLike
+
+
+@typing.runtime_checkable
+class AttrProto(typing.Protocol):
+    device: devices.DeviceLike
+    dtype: dtypes.DTypeLike
+    shape: shapes.ShapeLike
+
+
+type AttrLike = Attr | AttrDict
+
+
+def attr(item: AttrLike, /) -> Attr:
+    "The convenient constructor function for `Attr` to convert from similar types."
+
+    if isinstance(item, Attr):
+        return item
+
+    if _is_attr_dict(item):
+        return Attr.parse(
+            device=item["device"],
+            shape=item["shape"],
+            dtype=item["dtype"],
+        )
+
+    if isinstance(item, AttrProto):
+        return Attr.parse(
+            device=item.device,
+            dtype=item.dtype,
+            shape=item.shape,
+        )
+
+    raise TypeError(f"Do not know how to handle {item=}, because it is malformed.")
+
+
+@typing.no_type_check
+def _is_attr_dict(item: object) -> typing.TypeGuard[AttrDict]:
+
+    if not isinstance(item, cabc.Mapping):
+        return False
+
+    try:
+        _ = Attr.parse(
+            device=item["device"],
+            dtype=item["dtype"],
+            shape=item["shape"],
+        )
+    except Exception:
+        return False
+
+    return True
 
 
 @dcls.dataclass(frozen=True)

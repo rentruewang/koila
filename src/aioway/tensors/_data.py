@@ -25,12 +25,13 @@ class TensorDataFn(tensors.TensorFn):
 
     @typing.override
     def do(self):
-        if mode := fake.is_enabled():
-            converter = mode.fake_tensor_converter
-            return converter.from_real_tensor(mode, self.data)
 
-        else:
-            return self.data
+        data = self.data
+
+        if fake.is_enabled():
+            data = fake.to_fake_tensor(data)
+
+        return data
 
     @typing.override
     def deps(self):

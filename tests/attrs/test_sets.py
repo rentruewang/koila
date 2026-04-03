@@ -74,7 +74,7 @@ def test_validation_ok(schema: tdicts.AttrSet, valid_data: td.TensorDict) -> Non
 
 def test_construction_of_attrset(valid_data: td.TensorDict):
     parsed = tdicts.AttrSet.from_tensordict(valid_data)
-    assert parsed == tdicts.AttrSet.parse(
+    assert parsed == tdicts.attr_set(
         {
             "a": tensors.Attr.parse(device="cpu", shape=[11, 2, 3], dtype="int32"),
             "b": tensors.Attr.parse(device="cpu", shape=[11, 6], dtype="float32"),
