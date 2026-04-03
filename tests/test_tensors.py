@@ -35,7 +35,7 @@ def index():
 
 
 @pytest.fixture
-def index_fn(index):
+def index_fn(index: torch.Tensor):
     return tensors.TensorFn.from_tensor(index)
 
 

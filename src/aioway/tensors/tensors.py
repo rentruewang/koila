@@ -35,8 +35,11 @@ class TensorFn(fn.Fn[torch.Tensor], abc.ABC):
     def __len__(self) -> int:
         return self.preview().shape[0]
 
-    def __getitem__(self, key: typing.Any) -> TensorFn:
-        return GatherThunk(self, key)
+    def __getitem__(self, key: torch.Tensor | TensorFn) -> TensorFn:
+        if key.dtype != torch.bool:
+            return GatherThunk(self, key)
+        else:
+            return BooleanTensorThunk(self, key)
 
     def __invert__(self) -> TensorFn:
         return UFunc1Thunk(operator.invert, self)
