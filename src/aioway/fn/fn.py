@@ -2,11 +2,7 @@
 
 import abc
 import enum
-import functools
 import typing
-from collections import abc as cabc
-
-from aioway import fake
 
 __all__ = ["Fn", "FnState"]
 
@@ -17,7 +13,7 @@ class FnState(enum.Enum):
     PENDING = enum.auto()
     "The object is pending evaluation."
 
-    EVALUATED = enum.auto()
+    DONE = enum.auto()
     "The object is evaluated."
 
 
@@ -37,65 +33,44 @@ class Fn[T](abc.ABC):
     def __init__(self) -> None:
         super().__init__()
 
-        self._real_result: T | None = None
+        self.__state = FnState.PENDING
 
-        with fake.enable():
-            self._fake_result: T = self.forward()
-
-    @typing.final
-    def do(self) -> T:
-        """
-        Perform the computation.
-
-        If the result is previously stored, use the stored result.
-        If we are in fake mode, return the `FakeTensor` version.
-
-        Returns:
-            A `FakeTensor` if in fake mode, a `Tensor` otherwise.
-        """
-
-        if fake.is_enabled():
-            return self._fake_result
-
-        if self._real_result is None:
-            self._real_result = self.forward()
-
-        return self._real_result
+    def __call__(self):
+        result = self.do()
+        self.__state = FnState.DONE
+        return result
 
     @abc.abstractmethod
-    def forward(self) -> T:
+    def do(self) -> T:
         """
-        Do the `torch` related operations.
-        This would yield `Fake*` in fake mode, but real tensor in real mode.
+        Perform the computation that is represented by this `Fn`.
+
+        Should recursively call the dependent `Fn.do` functions.
         """
 
         raise NotImplementedError
 
-    @functools.cached_property
-    def deps(self):
-        "The depedent `Exec`s."
+    @abc.abstractmethod
+    def deps(self) -> tuple[Fn[typing.Any], ...]:
+        """
+        The `Fn`s that must be evaluated before we can evaluate the current `Fn`.
 
-        return tuple(self._deps())
+        Calling `do` on the current `Fn` would recursively
+        """
+
+        raise NotImplementedError
 
     @property
     def is_leaf(self) -> bool:
         "Whether or not the thunk is dependent on other thunks. If not, it's a leaf."
-        return not self.deps
 
-    @abc.abstractmethod
-    def _deps(self) -> cabc.Iterator[Fn[typing.Any]]:
-        """
-        Return the depedent thunks.
-        """
+        return not self.deps()
 
     @property
     def state(self) -> FnState:
         """
-        If `do` has been called, return `EVALUATED`.
+        If `Fn` has been called, return `EVALUATED`.
         Else return `PENDING`.
         """
 
-        if self._real_result is None:
-            return FnState.PENDING
-        else:
-            return FnState.EVALUATED
+        return self.__state

@@ -1,11 +1,12 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import typing
-from collections import abc as cabc
 
 import torch
 
-from aioway import _common, fake, fn, tensors
+from aioway import _common, fake
+
+from . import tensors
 
 __all__ = ["TensorDataFn"]
 
@@ -23,7 +24,7 @@ class TensorDataFn(tensors.TensorFn):
         _ = self.do()
 
     @typing.override
-    def forward(self):
+    def do(self):
         if mode := fake.is_enabled():
             converter = mode.fake_tensor_converter
             return converter.from_real_tensor(mode, self.data)
@@ -32,6 +33,5 @@ class TensorDataFn(tensors.TensorFn):
             return self.data
 
     @typing.override
-    def _deps(self) -> cabc.Iterator[fn.Fn[torch.Tensor]]:
-        return
-        yield
+    def deps(self):
+        return ()
