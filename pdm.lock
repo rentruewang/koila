@@ -5,7 +5,7 @@
 groups = ["default", "build", "debugging", "faiss", "ibis", "pre-commit", "tests"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:6ad73a304ff879079e7b7136842061744465e8b6bec079a6b936c8d237036868"
+content_hash = "sha256:f837b491447cff9de9a594b336acf02c986ffc9fe2d12daaa8b7655cf7beb32c"
 
 [[metadata.targets]]
 requires_python = ">=3.14,<3.15"
@@ -2259,6 +2259,21 @@ dependencies = [
 files = [
     {file = "pytest_randomly-4.0.1-py3-none-any.whl", hash = "sha256:e0dfad2fd4f35e07beff1e47c17fbafcf98f9bf4531fd369d9260e2f858bfcb7"},
     {file = "pytest_randomly-4.0.1.tar.gz", hash = "sha256:174e57bb12ac2c26f3578188490bd333f0e80620c3f47340158a86eca0593cd8"},
+]
+
+[[package]]
+name = "pytest-testmon"
+version = "2.2.0"
+requires_python = ">=3.10"
+summary = "selects tests affected by changed files and methods"
+groups = ["tests"]
+dependencies = [
+    "coverage<8,>=6",
+    "pytest<10,>=5",
+]
+files = [
+    {file = "pytest_testmon-2.2.0-py3-none-any.whl", hash = "sha256:2604ca44a54d61a2e830d9ce828b41a837075e4ebc1f81b148add8e90d34815b"},
+    {file = "pytest_testmon-2.2.0.tar.gz", hash = "sha256:01f488e955ed0e0049777bee598bf1f647dd524e06f544c31a24e68f8d775a51"},
 ]
 
 [[package]]
