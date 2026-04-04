@@ -9,7 +9,7 @@ from collections import abc as cabc
 
 import torch
 
-from aioway import chunks, tdicts
+from aioway import chunks, schemas
 
 from . import streams
 
@@ -106,7 +106,7 @@ class ApplyStream(MapStream):
     Compute the output of `__next__` based on the input.
     """
 
-    schema: cabc.Callable[[tdicts.AttrSet], tdicts.AttrSet]
+    schema: cabc.Callable[[schemas.AttrSet], schemas.AttrSet]
 
     @typing.override
     def _apply(self, batch: chunks.Chunk) -> chunks.Chunk:
@@ -114,7 +114,7 @@ class ApplyStream(MapStream):
 
     @property
     @typing.override
-    def attrs(self) -> tdicts.AttrSet:
+    def attrs(self) -> schemas.AttrSet:
         return self.schema(self.source.attrs)
 
 
@@ -150,7 +150,7 @@ class FuncFilterStream(MapStream):
 
     @property
     @typing.override
-    def attrs(self) -> tdicts.AttrSet:
+    def attrs(self) -> schemas.AttrSet:
         return self.source.attrs
 
 
@@ -171,7 +171,7 @@ class ProjectStream(MapStream):
 
     @property
     @typing.override
-    def attrs(self) -> tdicts.AttrSet:
+    def attrs(self) -> schemas.AttrSet:
         return self.source.attrs.select(*self.subset)
 
 
@@ -192,5 +192,5 @@ class RenameStream(MapStream):
 
     @property
     @typing.override
-    def attrs(self) -> tdicts.AttrSet:
+    def attrs(self) -> schemas.AttrSet:
         return self.source.attrs.rename(**self.renames)

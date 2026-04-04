@@ -4,7 +4,7 @@ import pytest
 import torch
 from torch import nn
 
-from aioway import modules, tensors
+from aioway import modules, schemas
 
 
 @pytest.fixture
@@ -24,7 +24,7 @@ def linear_input():
 
 @pytest.fixture
 def linear_attr(linear_input: torch.Tensor):
-    return tensors.Attr.from_tensor(linear_input)
+    return schemas.Attr.from_tensor(linear_input)
 
 
 @pytest.fixture
@@ -86,9 +86,9 @@ def test_linear(linear: modules.Module, linear_input: torch.Tensor):
     assert result.shape == (7, 5)
 
 
-def test_linear_preview(linear: modules.Module, linear_attr: tensors.Attr):
+def test_linear_preview(linear: modules.Module, linear_attr: schemas.Attr):
     result = linear.preview(linear_attr)
-    assert isinstance(result, tensors.Attr)
+    assert isinstance(result, schemas.Attr)
     assert result.shape == (7, 5)
 
 
@@ -98,9 +98,9 @@ def test_identity(identity: modules.Module, linear_input: torch.Tensor):
     assert result.shape == (7, 3)
 
 
-def test_identity_preview(identity: modules.Module, linear_attr: tensors.Attr):
+def test_identity_preview(identity: modules.Module, linear_attr: schemas.Attr):
     result = identity.preview(linear_attr)
-    assert isinstance(result, tensors.Attr)
+    assert isinstance(result, schemas.Attr)
     assert result.shape == (7, 3)
 
 
@@ -112,7 +112,7 @@ def test_conv2d_forward(conv2d: modules.Module, conv2d_input: torch.Tensor):
 
 
 def test_conv2d_preview(conv2d: modules.Module, conv2d_input: torch.Tensor):
-    ours = conv2d.preview(tensors.Attr.from_tensor(conv2d_input))
+    ours = conv2d.preview(schemas.Attr.from_tensor(conv2d_input))
     theirs = conv2d.real_module(conv2d_input)
 
     assert ours.shape == theirs.shape
@@ -124,7 +124,7 @@ def test_emb_forward(emb_input: torch.Tensor, emb: modules.Module):
 
 
 def test_emb_preview(emb_input: torch.Tensor, emb: modules.Module):
-    preview = emb.preview(tensors.Attr.from_tensor(emb_input))
+    preview = emb.preview(schemas.Attr.from_tensor(emb_input))
     real = emb.real_module(emb_input)
     assert preview.shape == real.shape
     assert preview.dtype == real.dtype

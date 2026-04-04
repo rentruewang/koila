@@ -4,7 +4,7 @@
 import pytest
 import tensordict as td
 
-from aioway import tdicts, tensors
+from aioway import fn
 
 
 @pytest.fixture
@@ -14,7 +14,7 @@ def tdict():
 
 @pytest.fixture
 def tdict_fn(tdict: td.TensorDict):
-    return tdicts.tdict(tdict)
+    return fn.tdict(tdict)
 
 
 def _select_keys():
@@ -30,20 +30,21 @@ def select_keys(request):
 
 
 def test_select(
-    tdict_fn: tdicts.TensorDictFn, tdict: td.TensorDict, select_keys: list[str]
+    tdict_fn: fn.TensorDictFn, tdict: td.TensorDict, select_keys: list[str]
 ):
     result = tdict_fn[select_keys].do()
     assert (result == tdict.select(*select_keys)).all()
 
 
-def test_keys(tdict_fn: tdicts.TensorDictFn):
+def test_keys(tdict_fn: fn.TensorDictFn):
     assert set(tdict_fn.keys()) == {"a", "b"}
 
 
-def test_getitem(tdict_fn: tdicts.TensorDictFn):
-    assert isinstance(tdict_fn["a"], tensors.TensorFn)
+def test_getitem(tdict_fn: fn.TensorDictFn):
+    assert isinstance(tdict_fn["a"], fn.TensorFn)
 
 
-def test_getitem_fail(tdict_fn: tdicts.TensorDictFn):
+def test_getitem_fail(tdict_fn: fn.TensorDictFn):
+    assert "g" not in tdict_fn.keys()
     with pytest.raises(KeyError):
         tdict_fn["g"]

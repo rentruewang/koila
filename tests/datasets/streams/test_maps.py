@@ -6,7 +6,7 @@ from collections import abc as cabc
 
 import pytest
 
-from aioway import chunks, datasets, tdicts
+from aioway import chunks, datasets
 
 
 @dcls.dataclass
@@ -28,7 +28,7 @@ class SaveLastMapStream(datasets.MapStream):
         return batch
 
     @property
-    def attrs(self) -> tdicts.AttrSet:
+    def attrs(self) -> meta.AttrSet:
         return self.source.attrs
 
     @property
@@ -56,7 +56,6 @@ def map_stream(request: pytest.FixtureRequest, save_last: SaveLastMapStream):
 
 
 def _pred_filter_builder(source):
-    pytest.xfail("Boolean tensor must be handled separately.")
     return datasets.FuncFilterStream(
         source=source,
         predicate=lambda t: (t["f1d"] > 0).torch(),

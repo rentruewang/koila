@@ -11,12 +11,14 @@ import numpy as np
 import tensordict as td
 import torch
 
-from aioway import _signs, _tracking, _typing, tensors
+from aioway import _signs, _tracking, _typing
 from aioway._tracking import logging
+
+from . import attrs, devices, dtypes, shapes
 
 __all__ = ["AttrSet", "DTypeSet", "DeviceSet", "ShapeSet", "AttrSetLike", "attr_set"]
 
-type AttrSetLike = AttrSet | td.TensorDict | dict[str, tensors.Attr]
+type AttrSetLike = AttrSet | td.TensorDict | dict[str, attrs.Attr]
 
 LOGGER = logging.get_logger(__name__)
 TRACKER = _tracking.get_tracker(lambda: AttrSet)
@@ -66,6 +68,11 @@ class _AttrSetBase[T](cabc.Mapping[str, T]):
     @typing.override
     def __iter__(self) -> cabc.Iterator[str]:
         return (attr.name for attr in self.attrs)
+
+    @typing.overload
+    def __getitem__(self, key: str) -> T: ...
+    @typing.overload
+    def __getitem__(self, key: list[str]) -> typing.Self: ...
 
     def __getitem__(self, key):
         if isinstance(key, str):
@@ -117,37 +124,37 @@ class _AttrSetBase[T](cabc.Mapping[str, T]):
         )
 
 
-class DTypeSet(_AttrSetBase[tensors.DType]):
+class DTypeSet(_AttrSetBase[dtypes.DType]):
     @classmethod
     @typing.override
-    def from_dict(cls, attrs: cabc.Mapping[str, tensors.DTypeLike], /) -> typing.Self:
-        converted = {key: tensors.DType.parse(dt) for key, dt in attrs.items()}
+    def from_dict(cls, attrs: cabc.Mapping[str, dtypes.DTypeLike], /) -> typing.Self:
+        converted = {key: dtypes.DType.parse(dt) for key, dt in attrs.items()}
         return super().from_dict(converted)
 
 
-class DeviceSet(_AttrSetBase[tensors.Device]):
+class DeviceSet(_AttrSetBase[devices.Device]):
     @classmethod
     @typing.override
-    def from_dict(cls, attrs: cabc.Mapping[str, tensors.DeviceLike]) -> typing.Self:
-        converted = {key: tensors.Device.parse(dev) for key, dev in attrs.items()}
+    def from_dict(cls, attrs: cabc.Mapping[str, devices.DeviceLike]) -> typing.Self:
+        converted = {key: devices.Device.parse(dev) for key, dev in attrs.items()}
         return super().from_dict(converted)
 
 
-class ShapeSet(_AttrSetBase[tensors.Shape]):
+class ShapeSet(_AttrSetBase[shapes.Shape]):
     @classmethod
     @typing.override
-    def from_dict(cls, attrs: cabc.Mapping[str, tensors.ShapeLike]) -> typing.Self:
-        converted = {key: tensors.Shape.parse(dev) for key, dev in attrs.items()}
+    def from_dict(cls, attrs: cabc.Mapping[str, shapes.ShapeLike]) -> typing.Self:
+        converted = {key: shapes.Shape.parse(dev) for key, dev in attrs.items()}
         return super().from_dict(converted)
 
 
-class AttrSet(_AttrSetBase[tensors.Attr]):
+class AttrSet(_AttrSetBase[attrs.Attr]):
     """
-    The collection of `tensors.Attr`s. This is the data type for a `td.TensorDict`.
+    The collection of `attrs.Attr`s. This is the data type for a `td.TensorDict`.
     """
 
     @typing.overload
-    def __getitem__(self, idx: str) -> tensors.Attr: ...
+    def __getitem__(self, idx: str) -> attrs.Attr: ...
 
     @typing.overload
     def __getitem__(
@@ -164,7 +171,7 @@ class AttrSet(_AttrSetBase[tensors.Attr]):
         return self.__getitem_batch(idx)
 
     def __getitem_str(self, idx: str):
-        signature = _signs.Signature(AttrSet, str, tensors.Attr)
+        signature = _signs.Signature(AttrSet, str, attrs.Attr)
         with TRACKER(name="__getitem__", signature=signature):
             return super().__getitem__(idx)
 
@@ -223,13 +230,14 @@ class AttrSet(_AttrSetBase[tensors.Attr]):
         return [col.attr.device for col in self.attrs]
 
     @classmethod
+    @typing.no_type_check
     def from_fields(
         cls,
         *,
         names: cabc.Sequence[str],
-        shapes: cabc.Sequence[tensors.ShapeLike],
-        dtypes: cabc.Sequence[tensors.DTypeLike],
-        devices: cabc.Sequence[tensors.DeviceLike],
+        shapes: cabc.Sequence[shapes.ShapeLike],
+        dtypes: cabc.Sequence[dtypes.DTypeLike],
+        devices: cabc.Sequence[devices.DeviceLike],
     ) -> typing.Self:
         "Create an `AttrSet` from a set of seuqences of attributes of same length."
 
@@ -240,7 +248,7 @@ class AttrSet(_AttrSetBase[tensors.Attr]):
             )
 
         mapping = {
-            name: tensors.Attr.parse(device=device, dtype=dtype, shape=shape)
+            name: attrs.attr({"device": device, "dtype": dtype, "shape": shape})
             for name, device, dtype, shape in zip(names, devices, dtypes, shapes)
         }
 
@@ -265,7 +273,7 @@ class AttrSet(_AttrSetBase[tensors.Attr]):
         names_list = list(shapes_keys)
         dtypes_list = [dtypes[key] for key in names_list]
         devices_list = [devices[key] for key in names_list]
-        shapes_list = [shapes[key] for key in names_list]
+        shapes_list = [shapes.__getitem__(key) for key in names_list]
 
         return cls.from_fields(
             names=names_list,
@@ -276,9 +284,7 @@ class AttrSet(_AttrSetBase[tensors.Attr]):
 
     @classmethod
     def from_tensordict(cls, data: td.TensorDict, /) -> typing.Self:
-        return cls.from_dict(
-            {key: tensors.Attr.from_tensor(val) for key, val in data.items()}
-        )
+        return cls.from_dict({key: attrs.attr(val) for key, val in data.items()})
 
 
 @dcls.dataclass(frozen=True)
@@ -343,7 +349,7 @@ def attr_set(schema: AttrSetLike) -> AttrSet:
     if isinstance(schema, td.TensorDict):
         return AttrSet.from_tensordict(schema)
 
-    if _typing.is_dict_of_str_to(tensors.Attr)(schema):
+    if _typing.is_dict_of_str_to(attrs.Attr)(schema):
         return AttrSet.from_dict(schema)
 
     raise TypeError(

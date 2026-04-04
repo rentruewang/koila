@@ -1,22 +1,19 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-"Validation of data (`td.TensorDict`) against schema (`attrs.AttrSet`)."
+"Validation of data (`td.TensorDict`) against schema (`meta.AttrSet`)."
 
-import numpy as np
 import tensordict as td
 import torch
 
-from aioway import tensors
+from aioway import schemas
 from aioway._tracking import logging
-
-from . import attrs
 
 __all__ = ["validate_schema", "validate_attr"]
 
 LOGGER = logging.get_logger(__name__)
 
 
-def validate_schema(attrs: attrs.AttrSet, data: td.TensorDict) -> None:
+def validate_schema(attrs: schemas.AttrSet, data: td.TensorDict) -> None:
     """
     Validate `data` against `attrs`.
 
@@ -39,50 +36,45 @@ def validate_schema(attrs: attrs.AttrSet, data: td.TensorDict) -> None:
         validate_attr(attr=attrs[key], tensor=data[key])
 
 
-def validate_attr(attr: tensors.Attr, tensor: torch.Tensor) -> None:
+def validate_attr(attr: schemas.Attr, tensor: torch.Tensor) -> None:
     """
     Validate `tensor` against `attr`.
 
     Only check if `tensor` has the exact same dtype, shape, device as `attr`.
     """
 
-    validate_shape_matches(shape=attr.shape, tensor=tensor)
+    validate_shape_larger(max_shape=attr.shape, tensor=tensor)
     validate_device_matches(device=attr.device, tensor=tensor)
     validate_dtype_matches(dtype=attr.dtype, tensor=tensor)
 
 
-def validate_shape_matches(shape: tensors.Shape, tensor: torch.Tensor) -> None:
+def validate_shape_larger(max_shape: schemas.Shape, tensor: torch.Tensor) -> None:
+
     try:
-        _validate_shape_matches(shape, tensor)
+        _validate_shape_larger(max_shape, tensor)
     except ValueError:
         raise RuntimeError(
-            f"tensors.Shape of tensor {tensor.shape=} should match attr's {shape=}"
+            f"attrs.Shape of tensor {tensor.shape=} should match attr's {max_shape=}"
         )
 
 
-def _validate_shape_matches(shape: tensors.Shape, tensor: torch.Tensor) -> None:
+def _validate_shape_larger(max_shape: schemas.Shape, tensor: torch.Tensor) -> None:
     # Convert to numpy array s.t. we can elegantly formulate the verification.
-    left = np.array(shape)
-    right = tensor.shape
+    tensor_shape = schemas.Shape.parse(tensor.shape)
 
-    # Dimension mismatch.
-    if len(left) != len(right):
-        raise ValueError
-
-    # If == 1, matches anything, if >= 0, matches `tensor.shape`.
-    if np.any((left != right) & (left != 1)):
+    if tensor_shape.exceeds(max_shape):
         raise ValueError
 
 
-def validate_dtype_matches(dtype: tensors.DType, tensor: torch.Tensor) -> None:
+def validate_dtype_matches(dtype: schemas.DType, tensor: torch.Tensor) -> None:
     if dtype != tensor.dtype:
         raise RuntimeError(
-            f"tensors.DType of tensor {tensor.dtype=} should match attr's {dtype=}"
+            f"meta.DType of tensor {tensor.dtype=} should match attr's {dtype=}"
         )
 
 
-def validate_device_matches(device: tensors.Device, tensor: torch.Tensor) -> None:
+def validate_device_matches(device: schemas.Device, tensor: torch.Tensor) -> None:
     if device != tensor.device:
         raise RuntimeError(
-            f"tensors.Device of tensor {tensor.device=} should match attr's {device=}"
+            f"meta.Device of tensor {tensor.device=} should match attr's {device=}"
         )

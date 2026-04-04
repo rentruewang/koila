@@ -6,7 +6,7 @@ from collections import abc as cabc
 import pytest
 import torch
 
-from aioway import fake, tensors
+from aioway import fake, fn, schemas
 
 
 @pytest.fixture
@@ -21,12 +21,12 @@ def right():
 
 @pytest.fixture
 def left_fn(left: torch.Tensor):
-    return tensors.TensorFn.from_tensor(left)
+    return fn.TensorFn.from_tensor(left)
 
 
 @pytest.fixture
 def right_fn(right: torch.Tensor):
-    return tensors.TensorFn.from_tensor(right)
+    return fn.TensorFn.from_tensor(right)
 
 
 @pytest.fixture
@@ -35,8 +35,8 @@ def index():
 
 
 @pytest.fixture
-def index_fn(index):
-    return tensors.TensorFn.from_tensor(index)
+def index_fn(index: torch.Tensor):
+    return fn.TensorFn.from_tensor(index)
 
 
 @pytest.fixture(
@@ -66,40 +66,31 @@ def fake_mode():
         yield f
 
 
-def test_left_normal(left_fn: tensors.TensorFn):
-    assert isinstance(left_fn.do(), torch.Tensor)
+def test_left_normal(left_fn: fn.TensorFn):
+    assert isinstance(left_fn.forward(), torch.Tensor)
 
 
-def test_left_fake_forward(left_fn: tensors.TensorFn):
-    with fake.enable():
-        assert fake.is_fake_tensor(left_fn.do())
-
-
-def test_left_fake_do(left_fn: tensors.TensorFn):
-    with fake.enable():
-        assert fake.is_fake_tensor(left_fn.do())
-
-
-def test_left_attr(left_fn: tensors.TensorFn):
-    attr = left_fn.attr
-    assert isinstance(attr, tensors.Attr)
+def test_left_attr(left_fn: fn.TensorFn):
+    tensor = left_fn.preview()
+    assert isinstance(tensor, torch.Tensor)
+    attr = schemas.attr(tensor)
     assert attr.shape == [3, 5]
     assert attr.device == "cpu"
     assert attr.dtype == "float"
 
 
 def test_binary_ufunc(
-    left_fn: tensors.TensorFn,
-    right_fn: tensors.TensorFn,
-    binop: cabc.Callable[[tensors.TensorFn, tensors.TensorFn], tensors.TensorFn],
+    left_fn: fn.TensorFn,
+    right_fn: fn.TensorFn,
+    binop: cabc.Callable[[fn.TensorFn, fn.TensorFn], fn.TensorFn],
 ):
     result = binop(left_fn, right_fn)
 
-    assert isinstance(result, tensors.TensorFn)
-    assert isinstance(result.do(), torch.Tensor)
+    assert isinstance(result, fn.TensorFn)
+    assert isinstance(result.forward(), torch.Tensor)
 
 
-def test_getitem(left_fn: tensors.TensorFn, index_fn: tensors.TensorFn):
+def test_getitem(left_fn: fn.TensorFn, index_fn: fn.TensorFn):
     result = left_fn[index_fn]
-    assert isinstance(result, tensors.TensorFn)
+    assert isinstance(result, fn.TensorFn)
     assert result.attr.shape == [2, 7, 5]

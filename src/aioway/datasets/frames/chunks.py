@@ -10,7 +10,7 @@ import numpy as np
 
 from aioway import _typing
 from aioway import chunks as _chunks
-from aioway import tdicts
+from aioway import schemas
 
 from . import frames
 
@@ -40,7 +40,7 @@ class ChunkFrame(frames.Frame):
 
     @property
     @typing.override
-    def attrs(self) -> tdicts.AttrSet:
+    def attrs(self) -> schemas.AttrSet:
         return self.data.attrs
 
 
@@ -52,7 +52,7 @@ class ChunkListFrame(frames.Frame):
     This means that it is non-distributed, and volatile.
     """
 
-    _chunks: list[_chunks.Chunk] = dcls.field(default_factory=list)
+    _chunks_list: list[_chunks.Chunk] = dcls.field(default_factory=list)
     """
     The `list` of `_chunks.Chunk`s.
     The data must all have the same keys and data types (#100),
@@ -61,22 +61,20 @@ class ChunkListFrame(frames.Frame):
 
     def __post_init__(self) -> None:
         is_list_of_chunks = _typing.is_list_of(_chunks.Chunk)
-        if not is_list_of_chunks(self._chunks):
+        if not is_list_of_chunks(self._chunks_list):
             raise ValueError(
-                f"Expected a list of `_chunks.Chunk`s. Got {self._chunks=}"
+                f"Expected a list of `_chunks.Chunk`s. Got {self._chunks_list=}"
             )
 
     @typing.override
     def __len__(self) -> int:
         return self._cumsum_len[-1]
 
-    @typing.no_type_check
     def append(self, td: _chunks.Chunk, /) -> None:
-        self._chunks.append(td)
+        self._chunks_list.append(td)
 
-    @typing.no_type_check
     def pop(self) -> _chunks.Chunk:
-        return self._chunks.pop()
+        return self._chunks_list.pop()
 
     @typing.override
     @typing.no_type_check
@@ -93,7 +91,7 @@ class ChunkListFrame(frames.Frame):
         idx_in_part: _typing.IntArray = idx - prior_elements[td_idx]
 
         # `_chunks.Chunk` that each index would correspond to.
-        td_for_idx: list[_chunks.Chunk] = [self._chunks[t] for t in td_idx]
+        td_for_idx: list[_chunks.Chunk] = [self._chunks_list[t] for t in td_idx]
 
         assert len(idx_in_part) == len(td_for_idx)
 
@@ -108,16 +106,16 @@ class ChunkListFrame(frames.Frame):
 
     @property
     def _cumsum_len(self) -> _typing.IntArray:
-        return np.cumsum([len(d) for d in self._chunks])
+        return np.cumsum([len(d) for d in self._chunks_list])
 
     @property
     @typing.override
-    def attrs(self) -> tdicts.AttrSet:
+    def attrs(self) -> schemas.AttrSet:
         return self._attrs
 
     @functools.cached_property
     def _attrs(self):
-        attrs = {chunk.attrs for chunk in self._chunks}
+        attrs = {chunk.attrs for chunk in self._chunks_list}
 
         if len(attrs) == 1:
             [attr] = attrs

@@ -2,7 +2,11 @@
 
 import abc
 import enum
+import functools
 import typing
+from collections import abc as cabc
+
+from aioway import fake
 
 __all__ = ["Fn", "FnState"]
 
@@ -30,24 +34,54 @@ class Fn[T](abc.ABC):
 
     __match_args__: typing.ClassVar[tuple[str, ...]]
 
-    def __init__(self) -> None:
-        super().__init__()
-
-        self.__state = FnState.PENDING
-
-    def __call__(self):
-        result = self.do()
-        self.__state = FnState.DONE
-        return result
-
-    @abc.abstractmethod
+    @typing.final
     def do(self) -> T:
         """
         Perform the computation that is represented by this `Fn`.
 
-        Should recursively call the dependent `Fn.do` functions.
+        This is the public function that parent `Fn`s should call,
+        when the want to request the values of an `Fn`.
+
+        It handles caching in the normal case, so repeated calling the function means that
+        the expensive computation (defined within `forward`) would only be called once.
+
+        When fake mode is enabled, it calls `preview` for a fake tensor,
+        which is a preview for the normal computation to save computation cost.
+
+        The reason this is modal with `fake.is_enabled()` as a toggle,
+        to make sure `preview` and `forward` can use the same codepath as much as possible,
+        in the default case `preview` is `forward` with fake mode on.
         """
 
+        if fake.is_enabled():
+            return self.preview()
+
+        else:
+            return self.__forward_cache()
+
+    @fake.enable_func
+    def preview(self) -> T:
+        """
+        The `preview` function generates a "preview" for the `Tensor` that would be generated.
+        Should recursively call the dependent `Fn.do` functions.
+
+        The result type (`FakeTensor`) is used as a worst case analysis of the original `Tensor`.
+
+        In most cases (non leaf operators), this method is just a clone of `forward`,
+        which is the default implementation of this function.
+
+        In the following cases it must be modified:
+
+        1. Source tensors, `forward` won't be `FakeTensor`, so conversion is needed.
+        2. Operators that cannot be supported by `torch` e.g. boolean  masking.
+        """
+
+        result = self.forward()
+        assert fake.is_fake_tensor(result)
+        return result
+
+    @abc.abstractmethod
+    def forward(self) -> T:
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -66,11 +100,46 @@ class Fn[T](abc.ABC):
 
         return not self.deps()
 
-    @property
-    def state(self) -> FnState:
-        """
-        If `Fn` has been called, return `EVALUATED`.
-        Else return `PENDING`.
-        """
+    @functools.cached_property
+    def __forward_cache(self):
+        return FnCache(self.forward)
 
-        return self.__state
+    @property
+    def done(self) -> bool:
+        return self.__forward_cache.is_hit
+
+
+_PENDING = object()
+"The object signifying a status of pending. This is a `object()` s.t. `FnCache` can store `None`."
+
+
+@typing.final
+class FnCache[T]:
+    """
+    The cacher for `TensorFn.forward`.
+
+    The reason we use this boilerplate over directly using `functools.cache`,
+    `functools.cached_property`, or having a saved `.__result` member for instance,
+    is because this is the least assuming.
+
+    `functools.cache` assumes that `self` is hashable.
+    `functools.cached_property` cannot inspect whether we have evaluated it or not.
+    `.__result` member assumes subclass calls `__init__` properly.
+
+    Since this is saved in a `functools.cached_property`, it can be used on unhashable types,
+    yet support inspecting whether we called it or not, and does not need to call `__init__`.
+    """
+
+    def __init__(self, func: cabc.Callable[[], T]) -> None:
+        self._result: object = _PENDING
+        self._func = func
+
+    def __call__(self) -> T:
+        if self._result is _PENDING:
+            self._result = self._func()
+
+        return typing.cast(T, self._result)
+
+    @property
+    def is_hit(self):
+        return self._result is not _PENDING

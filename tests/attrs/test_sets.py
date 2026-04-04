@@ -5,22 +5,26 @@ import pytest
 import tensordict as td
 import torch
 
-from aioway import chunks, tdicts, tensors
-from aioway.tdicts import _validation
+from aioway import chunks, fn, schemas
+from aioway.fn import _validation
 
 
 @pytest.fixture
-def schema() -> tdicts.AttrSet:
-    return tdicts.AttrSet.from_values(
-        a=tensors.Attr.parse(
-            device="cpu",
-            dtype="int32",
-            shape=[1, 2, 3],
+def schema() -> schemas.AttrSet:
+    return schemas.AttrSet.from_values(
+        a=schemas.attr(
+            {
+                "device": "cpu",
+                "dtype": "int32",
+                "shape": [-1, 2, 3],
+            },
         ),
-        b=tensors.Attr.parse(
-            device="cpu",
-            dtype="float32",
-            shape=[1, 6],
+        b=schemas.attr(
+            {
+                "device": "cpu",
+                "dtype": "float32",
+                "shape": [-1, 6],
+            },
         ),
     )
 
@@ -60,35 +64,35 @@ def invalid_data(request: pytest.FixtureRequest) -> td.TensorDict:
     return request.param
 
 
-def test_attrset_getitem(schema: tdicts.AttrSet):
-    assert isinstance(schema["a"], tensors.Attr)
-    assert isinstance(schema[["a", "b"]], tdicts.AttrSet)
+def test_attrset_getitem(schema: schemas.AttrSet):
+    assert isinstance(schema["a"], schemas.Attr)
+    assert isinstance(schema[["a", "b"]], schemas.AttrSet)
     assert schema == schema[["a", "b"]]
-    assert isinstance(schema[[1, 2, 3]], tdicts.AttrSet)
-    assert isinstance(schema[np.array([1, 2, 3])], tdicts.AttrSet)
+    assert isinstance(schema[[-1, 2, 3]], schemas.AttrSet)
+    assert isinstance(schema[np.array([-1, 2, 3])], schemas.AttrSet)
 
 
-def test_validation_ok(schema: tdicts.AttrSet, valid_data: td.TensorDict) -> None:
+def test_validation_ok(schema: schemas.AttrSet, valid_data: td.TensorDict) -> None:
     _validation.validate_schema(schema, valid_data)
 
 
 def test_construction_of_attrset(valid_data: td.TensorDict):
-    parsed = tdicts.tdict(valid_data)
-    assert parsed.attrs == tdicts.attr_set(
+    parsed = fn.tdict(valid_data)
+    assert parsed.attrs == schemas.attr_set(
         {
-            "a": tensors.Attr.parse(device="cpu", shape=[11, 2, 3], dtype="int32"),
-            "b": tensors.Attr.parse(device="cpu", shape=[11, 6], dtype="float32"),
+            "a": schemas.Attr.parse(device="cpu", shape=[11, 2, 3], dtype="int32"),
+            "b": schemas.Attr.parse(device="cpu", shape=[11, 6], dtype="float32"),
         }
     )
 
 
-def test_validation_fail(schema: tdicts.AttrSet, invalid_data: td.TensorDict):
+def test_validation_fail(schema: schemas.AttrSet, invalid_data: td.TensorDict):
     with pytest.raises(RuntimeError):
         _validation.validate_schema(schema, invalid_data)
 
 
 @pytest.fixture
-def block(schema: tdicts.AttrSet, valid_data: td.TensorDict) -> chunks.Chunk:
+def block(schema: schemas.AttrSet, valid_data: td.TensorDict) -> chunks.Chunk:
     return chunks.Chunk.from_data_schema(data=valid_data, schema=schema)
 
 
