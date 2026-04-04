@@ -10,7 +10,7 @@ import tensordict
 import tensordict as td
 import torch
 
-from aioway import _typing, schemas, tensors
+from aioway import _typing, fn, schemas
 from aioway._tracking import logging
 
 from . import vectors
@@ -77,7 +77,7 @@ class Chunk(cabc.Mapping[str, vectors.Vector]):
         return iter(self.attrs)
 
     def fn(self):
-        return tensors.tdict(self.data)
+        return fn.tdict(self.data)
 
     @LOGGER.function("DEBUG")
     def select(self, *names: str):

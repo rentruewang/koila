@@ -7,7 +7,7 @@ import typing
 
 import torch
 
-from aioway import _typing, schemas, tensors
+from aioway import _typing, fn, schemas
 from aioway._tracking import logging
 
 __all__ = ["Vector"]
@@ -99,16 +99,16 @@ class Vector:
         return self.__op2(other, operator.lt)
 
     def __op1(self, unop: typing.Any) -> typing.Self:
-        return self.from_fn(unop(self.fn()))
+        return _from_fn(unop(self.fn()))
 
     def __op2(self, other: typing.Any, binop: _typing.AnyUFunc2) -> typing.Self:
         pass
 
         match other:
             case Vector():
-                return self.from_fn(binop(self.fn(), other.fn()))
-            case tensors.TensorFn() | float() | int() | bool():
-                return self.from_fn(binop(self.fn(), other))
+                return _from_fn(binop(self.fn(), other.fn()))
+            case fn.TensorFn() | float() | int() | bool():
+                return _from_fn(binop(self.fn(), other))
 
         raise NotImplementedError
 
@@ -131,7 +131,7 @@ class Vector:
         return self.torch().tolist()
 
     def fn(self):
-        return tensors.TensorFn.from_tensor(self.data)
+        return fn.TensorFn.from_tensor(self.data)
 
     @property
     def data(self):
@@ -141,7 +141,7 @@ class Vector:
     def attr(self):
         return schemas.attr(self.data)
 
-    @classmethod
-    def from_fn(cls, fn: tensors.TensorFn, /) -> typing.Self:
-        vec = fn.forward()
-        return cls(data=vec.data)
+
+def _from_fn(func: fn.TensorFn, /):
+    vec = func.do()
+    return Vector(data=vec.data)

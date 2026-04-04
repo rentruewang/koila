@@ -5,8 +5,8 @@ import pytest
 import tensordict as td
 import torch
 
-from aioway import chunks, schemas, tensors
-from aioway.tensors import _validation
+from aioway import chunks, fn, schemas
+from aioway.fn import _validation
 
 
 @pytest.fixture
@@ -77,7 +77,7 @@ def test_validation_ok(schema: schemas.AttrSet, valid_data: td.TensorDict) -> No
 
 
 def test_construction_of_attrset(valid_data: td.TensorDict):
-    parsed = tensors.tdict(valid_data)
+    parsed = fn.tdict(valid_data)
     assert parsed.attrs == schemas.attr_set(
         {
             "a": schemas.Attr.parse(device="cpu", shape=[11, 2, 3], dtype="int32"),

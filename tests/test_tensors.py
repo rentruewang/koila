@@ -6,7 +6,7 @@ from collections import abc as cabc
 import pytest
 import torch
 
-from aioway import fake, schemas, tensors
+from aioway import fake, fn, schemas
 
 
 @pytest.fixture
@@ -21,12 +21,12 @@ def right():
 
 @pytest.fixture
 def left_fn(left: torch.Tensor):
-    return tensors.TensorFn.from_tensor(left)
+    return fn.TensorFn.from_tensor(left)
 
 
 @pytest.fixture
 def right_fn(right: torch.Tensor):
-    return tensors.TensorFn.from_tensor(right)
+    return fn.TensorFn.from_tensor(right)
 
 
 @pytest.fixture
@@ -36,7 +36,7 @@ def index():
 
 @pytest.fixture
 def index_fn(index: torch.Tensor):
-    return tensors.TensorFn.from_tensor(index)
+    return fn.TensorFn.from_tensor(index)
 
 
 @pytest.fixture(
@@ -66,11 +66,11 @@ def fake_mode():
         yield f
 
 
-def test_left_normal(left_fn: tensors.TensorFn):
+def test_left_normal(left_fn: fn.TensorFn):
     assert isinstance(left_fn.forward(), torch.Tensor)
 
 
-def test_left_attr(left_fn: tensors.TensorFn):
+def test_left_attr(left_fn: fn.TensorFn):
     tensor = left_fn.preview()
     assert isinstance(tensor, torch.Tensor)
     attr = schemas.attr(tensor)
@@ -80,17 +80,17 @@ def test_left_attr(left_fn: tensors.TensorFn):
 
 
 def test_binary_ufunc(
-    left_fn: tensors.TensorFn,
-    right_fn: tensors.TensorFn,
-    binop: cabc.Callable[[tensors.TensorFn, tensors.TensorFn], tensors.TensorFn],
+    left_fn: fn.TensorFn,
+    right_fn: fn.TensorFn,
+    binop: cabc.Callable[[fn.TensorFn, fn.TensorFn], fn.TensorFn],
 ):
     result = binop(left_fn, right_fn)
 
-    assert isinstance(result, tensors.TensorFn)
+    assert isinstance(result, fn.TensorFn)
     assert isinstance(result.forward(), torch.Tensor)
 
 
-def test_getitem(left_fn: tensors.TensorFn, index_fn: tensors.TensorFn):
+def test_getitem(left_fn: fn.TensorFn, index_fn: fn.TensorFn):
     result = left_fn[index_fn]
-    assert isinstance(result, tensors.TensorFn)
+    assert isinstance(result, fn.TensorFn)
     assert result.attr.shape == [2, 7, 5]
