@@ -5,7 +5,7 @@
 import tensordict as td
 import torch
 
-from aioway import meta
+from aioway import schemas
 from aioway._tracking import logging
 
 __all__ = ["validate_schema", "validate_attr"]
@@ -13,7 +13,7 @@ __all__ = ["validate_schema", "validate_attr"]
 LOGGER = logging.get_logger(__name__)
 
 
-def validate_schema(attrs: meta.AttrSet, data: td.TensorDict) -> None:
+def validate_schema(attrs: schemas.AttrSet, data: td.TensorDict) -> None:
     """
     Validate `data` against `attrs`.
 
@@ -36,7 +36,7 @@ def validate_schema(attrs: meta.AttrSet, data: td.TensorDict) -> None:
         validate_attr(attr=attrs[key], tensor=data[key])
 
 
-def validate_attr(attr: meta.Attr, tensor: torch.Tensor) -> None:
+def validate_attr(attr: schemas.Attr, tensor: torch.Tensor) -> None:
     """
     Validate `tensor` against `attr`.
 
@@ -48,7 +48,7 @@ def validate_attr(attr: meta.Attr, tensor: torch.Tensor) -> None:
     validate_dtype_matches(dtype=attr.dtype, tensor=tensor)
 
 
-def validate_shape_larger(max_shape: meta.Shape, tensor: torch.Tensor) -> None:
+def validate_shape_larger(max_shape: schemas.Shape, tensor: torch.Tensor) -> None:
 
     try:
         _validate_shape_larger(max_shape, tensor)
@@ -58,22 +58,22 @@ def validate_shape_larger(max_shape: meta.Shape, tensor: torch.Tensor) -> None:
         )
 
 
-def _validate_shape_larger(max_shape: meta.Shape, tensor: torch.Tensor) -> None:
+def _validate_shape_larger(max_shape: schemas.Shape, tensor: torch.Tensor) -> None:
     # Convert to numpy array s.t. we can elegantly formulate the verification.
-    tensor_shape = meta.Shape.parse(tensor.shape)
+    tensor_shape = schemas.Shape.parse(tensor.shape)
 
     if tensor_shape.exceeds(max_shape):
         raise ValueError
 
 
-def validate_dtype_matches(dtype: meta.DType, tensor: torch.Tensor) -> None:
+def validate_dtype_matches(dtype: schemas.DType, tensor: torch.Tensor) -> None:
     if dtype != tensor.dtype:
         raise RuntimeError(
             f"meta.DType of tensor {tensor.dtype=} should match attr's {dtype=}"
         )
 
 
-def validate_device_matches(device: meta.Device, tensor: torch.Tensor) -> None:
+def validate_device_matches(device: schemas.Device, tensor: torch.Tensor) -> None:
     if device != tensor.device:
         raise RuntimeError(
             f"meta.Device of tensor {tensor.device=} should match attr's {device=}"

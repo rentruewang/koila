@@ -8,7 +8,7 @@ import functools
 import typing
 from collections import abc as cabc
 
-from aioway import chunks, meta
+from aioway import chunks, schemas
 
 from .. import datasets
 
@@ -96,7 +96,7 @@ class Stream(cabc.Iterator[chunks.Chunk], datasets.Dataset, abc.ABC):
 
     @property
     @abc.abstractmethod
-    def attrs(self) -> meta.AttrSet:
+    def attrs(self) -> schemas.AttrSet:
         """
         The schema for the current `Stream`.
         """

@@ -8,7 +8,7 @@ import typing
 
 import numpy as np
 
-from aioway import _typing, chunks, meta
+from aioway import _typing, chunks, schemas
 
 from .. import datasets
 
@@ -107,7 +107,7 @@ class Frame(datasets.Dataset, abc.ABC):
 
     @property
     @abc.abstractmethod
-    def attrs(self) -> meta.AttrSet:
+    def attrs(self) -> schemas.AttrSet:
         "The schema of the current frame."
 
         raise NotImplementedError

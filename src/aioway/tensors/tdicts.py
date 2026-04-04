@@ -8,7 +8,7 @@ import numpy as np
 import tensordict as td
 import torch
 
-from aioway import _common, _typing, fake, fn, meta
+from aioway import _common, _typing, fake, fn, schemas
 
 from . import tensors
 
@@ -23,7 +23,7 @@ class TensorDictFn(fn.Fn[td.TensorDict], cabc.Mapping[str, tensors.TensorFn], ab
             fake_result = self.do()
 
         assert all(fake.is_fake_tensor(t) for t in fake_result.values())
-        self.__attrs = meta.attr_set(fake_result)
+        self.__attrs = schemas.attr_set(fake_result)
 
     @typing.overload
     def __getitem__(self, key: str) -> tensors.TensorFn: ...

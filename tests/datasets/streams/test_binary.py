@@ -6,7 +6,7 @@ from collections import abc as cabc
 import pytest
 import torch
 
-from aioway import chunks, datasets, meta
+from aioway import chunks, datasets, schemas
 
 
 @pytest.fixture
@@ -106,12 +106,12 @@ def test_simple_nested_loop_join(
     left = chunks.Chunk.from_data_schema(
         data={"a": torch.tensor([1, 3, 2, 2]), "b": torch.tensor([4, 10, 5, 6])},
         schema=dict(
-            a=meta.Attr.parse(
+            a=schemas.Attr.parse(
                 device="cpu",
                 dtype="int64",
                 shape=[1],
             ),
-            b=meta.Attr.parse(
+            b=schemas.Attr.parse(
                 device="cpu",
                 dtype="int64",
                 shape=[1],
@@ -121,12 +121,12 @@ def test_simple_nested_loop_join(
     right = chunks.Chunk.from_data_schema(
         data={"a": torch.tensor([1, 3, 2, 2]), "c": torch.tensor([7, 11, 8, 9])},
         schema=dict(
-            a=meta.Attr.parse(
+            a=schemas.Attr.parse(
                 device="cpu",
                 dtype="int64",
                 shape=[1],
             ),
-            c=meta.Attr.parse(
+            c=schemas.Attr.parse(
                 device="cpu",
                 dtype="int64",
                 shape=[1],

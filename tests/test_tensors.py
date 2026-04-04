@@ -6,7 +6,7 @@ from collections import abc as cabc
 import pytest
 import torch
 
-from aioway import fake, meta, tensors
+from aioway import fake, schemas, tensors
 
 
 @pytest.fixture
@@ -73,7 +73,7 @@ def test_left_normal(left_fn: tensors.TensorFn):
 def test_left_attr(left_fn: tensors.TensorFn):
     tensor = left_fn.preview()
     assert isinstance(tensor, torch.Tensor)
-    attr = meta.attr(tensor)
+    attr = schemas.attr(tensor)
     assert attr.shape == [3, 5]
     assert attr.device == "cpu"
     assert attr.dtype == "float"

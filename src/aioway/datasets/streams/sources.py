@@ -11,7 +11,7 @@ from collections import abc as cabc
 
 from torch.utils import data
 
-from aioway import _typing, chunks, meta
+from aioway import _typing, chunks, schemas
 from aioway._tracking import logging
 
 from .. import frames
@@ -123,7 +123,7 @@ class CacheStream(BoundedStream):
 
     @property
     @typing.override
-    def attrs(self) -> meta.AttrSet:
+    def attrs(self) -> schemas.AttrSet:
         return self.stream.attrs
 
 
@@ -149,11 +149,11 @@ class ListStream(BoundedStream):
 
     @property
     @typing.override
-    def attrs(self) -> meta.AttrSet:
+    def attrs(self) -> schemas.AttrSet:
         return self._schema
 
     @functools.cached_property
-    def _schema(self) -> meta.AttrSet:
+    def _schema(self) -> schemas.AttrSet:
         schemas = {chunk.attrs for chunk in self.sequence}
 
         if len(schemas) == 1:
@@ -231,7 +231,7 @@ class FrameStream(streams.Stream):
 
     @property
     @typing.override
-    def attrs(self) -> meta.AttrSet:
+    def attrs(self) -> schemas.AttrSet:
         return self.frame.attrs
 
     @functools.cached_property
