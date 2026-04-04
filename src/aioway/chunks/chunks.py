@@ -64,6 +64,8 @@ class Chunk(cabc.Mapping[str, vectors.Vector]):
         return NotImplemented
 
     def __getitem__(self, key):
+        if isinstance(key, vectors.Vector):
+            key = key.data
         result = self.fn()[key].do()
 
         if isinstance(key, str):

@@ -32,17 +32,23 @@ class TensorDictFn(fn.Fn[td.TensorDict], cabc.Mapping[str, tensors.TensorFn], ab
 
             return LambdaTensorFn(self, get_col)
 
-        if isinstance(key, slice | np.ndarray | torch.Tensor) or _typing.is_list_of(
-            int
-        )(key):
+        if (
+            False
+            or isinstance(key, slice | np.ndarray)
+            or _typing.is_list_of(int)(key)
+            or (isinstance(key, torch.Tensor) and key.dtype != torch.bool)
+        ):
 
             def get_rows(tdict: td.TensorDict) -> td.TensorDict:
                 return tdict[key]
 
             return LambdaTensorDictFn(self, get_rows)
 
+        if isinstance(key, torch.Tensor) and key.dtype == torch.bool:
+            return BooleanIndexTensorDictFn(self, key)
+
         if isinstance(key, tensors.TensorFn):
-            return GatherTensorDictFn(self, deferred_index)
+            return GatherTensorDictFn(self, key)
 
         if _typing.is_list_of(str)(key):
             return self.select(*key)
@@ -187,17 +193,34 @@ class LambdaTensorFn(tensors.TensorFn):
 class GatherTensorDictFn(TensorDictFn):
 
     source: TensorDictFn
-    index: tensors.TensorFn
+    index: tensors.TensorFn | torch.Tensor
 
     @typing.override
     def forward(self) -> td.TensorDict:
-        source = self.source.do()
-        index = self.index.do()
+        from . import de
+
+        source = de.eager(self.source)
+        index = de.eager(self.index)
         return source[index]
 
     @typing.override
-    def deps(self):
-        return self.source, self.index
+    def deps(self) -> tuple[fn.Fn[typing.Any], ...]:
+        return tuple(self._deps())
+
+    def _deps(self):
+        if isinstance(self.source, TensorDictFn):
+            yield self.source
+
+        if isinstance(self.index, tensors.TensorFn):
+            yield self.index
+
+
+@_common.dcls_no_eq
+class BooleanIndexTensorDictFn(GatherTensorDictFn):
+
+    @typing.override
+    def preview(self) -> td.TensorDict:
+        return self.source.preview()
 
 
 @_common.dcls_no_eq
