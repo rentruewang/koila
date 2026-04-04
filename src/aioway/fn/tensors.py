@@ -114,6 +114,9 @@ class TensorFn(fn.Fn[torch.Tensor], abc.ABC):
 
 
 def tensor(data: TensorFn | torch.Tensor) -> TensorFn:
+    """
+    This is the convenient constructor for `TensorFn`.
+    """
 
     if isinstance(data, TensorFn):
         return data
@@ -294,7 +297,8 @@ class BooleanTensorThunk(GatherThunk):
         return tensor_attr[index_attr]
 
 
-def _as_fake(tensor: torch.Tensor | TensorFn):
+@typing.no_type_check
+def _as_fake(tensor: torch.Tensor | TensorFn) -> tsc.FakeTensor:
     if isinstance(tensor, torch.Tensor):
         return fake.to_fake_tensor(tensor)
     else:
