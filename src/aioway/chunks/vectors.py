@@ -7,7 +7,7 @@ import typing
 
 import torch
 
-from aioway import _typing, tensors
+from aioway import _typing, meta, tensors
 from aioway._tracking import logging
 
 __all__ = ["Vector"]
@@ -20,7 +20,7 @@ type VectorRhs = Vector | torch.Tensor | int | float | bool
 
 class Vector:
     """
-    A `Vector` is a `torch.Tensor` plus its `tensors.Attr`.
+    A `Vector` is a `torch.Tensor` plus its `meta.Attr`.
     """
 
     __match_args__ = "data", "attr"
@@ -116,8 +116,8 @@ class Vector:
         "Get the `torch.Tensor` data that this `Vector` contains."
         return self._data
 
-    def typeof(self) -> tensors.Attr:
-        "Get the type information `tensors.Attr` of the `torch.Tensor` that this `Vector` represents."
+    def typeof(self) -> meta.Attr:
+        "Get the type information `meta.Attr` of the `torch.Tensor` that this `Vector` represents."
         return self.attr
 
     def cpu(self) -> typing.Self:
@@ -139,7 +139,7 @@ class Vector:
 
     @property
     def attr(self):
-        return tensors.Attr.from_tensor(self.data)
+        return meta.attr(self.data)
 
     @classmethod
     def from_fn(cls, fn: tensors.TensorFn, /) -> typing.Self:

@@ -5,9 +5,8 @@
 import tensordict as td
 import torch
 
+from aioway import meta
 from aioway._tracking import logging
-
-from . import meta
 
 __all__ = ["validate_schema", "validate_attr"]
 

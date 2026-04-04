@@ -28,7 +28,7 @@ class SaveLastMapStream(datasets.MapStream):
         return batch
 
     @property
-    def attrs(self) -> tensors.AttrSet:
+    def attrs(self) -> meta.AttrSet:
         return self.source.attrs
 
     @property

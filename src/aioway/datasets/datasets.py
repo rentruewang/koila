@@ -7,7 +7,7 @@ import dataclasses as dcls
 import typing
 from collections import abc as cabc
 
-from aioway import tensors
+from aioway import meta
 
 __all__ = ["Dataset", "DatasetColumnView", "DatasetSelectView", "DatasetViewTypes"]
 
@@ -47,7 +47,7 @@ class Dataset(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def attrs(self) -> tensors.AttrSet:
+    def attrs(self) -> meta.AttrSet:
         "All datasets have the metadta `attrs` present."
 
         raise NotImplementedError
@@ -124,7 +124,7 @@ class DatasetColumnView[T: Dataset = Dataset](DatasetView[T], abc.ABC):
 
     @property
     @typing.final
-    def attr(self) -> tensors.Attr:
+    def attr(self) -> meta.Attr:
         return self.dset.attrs.column(self.col)
 
     @classmethod
@@ -151,7 +151,7 @@ class DatasetSelectView[T: Dataset = Dataset](Dataset, DatasetView[T], abc.ABC):
 
     @property
     @typing.final
-    def attrs(self) -> tensors.AttrSet:
+    def attrs(self) -> meta.AttrSet:
         return self.dset.attrs.select(*self.cols)
 
     @typing.final
@@ -181,7 +181,7 @@ class DatasetViewTypes[T: Dataset](typing.NamedTuple):
     "The type used to construct `.select` views."
 
 
-def _assert_column_in_dataset(col: str, attrs: tensors.AttrSet) -> None:
+def _assert_column_in_dataset(col: str, attrs: meta.AttrSet) -> None:
     if col in attrs.keys():
         return
 

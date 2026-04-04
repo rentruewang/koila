@@ -9,9 +9,7 @@ from collections import abc as cabc
 import torch
 from torch import _subclasses as tsc
 
-from aioway import _common, fake, fn
-
-from . import attrs
+from aioway import _common, fake, fn, meta
 
 __all__ = ["TensorFn", "tensor"]
 
@@ -143,7 +141,7 @@ class TensorFn(fn.Fn[torch.Tensor], abc.ABC):
 
     @property
     def attr(self):
-        return attrs.attr(self.__get_fake_or_computed())
+        return meta.attr(self.__get_fake_or_computed())
 
     def __get_fake_or_computed(self):
         "If `forward` has already been called, return it. Else return `preview`."

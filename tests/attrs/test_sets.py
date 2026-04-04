@@ -5,21 +5,21 @@ import pytest
 import tensordict as td
 import torch
 
-from aioway import chunks, tensors
+from aioway import chunks, meta, tensors
 from aioway.tensors import _validation
 
 
 @pytest.fixture
-def schema() -> tensors.AttrSet:
-    return tensors.AttrSet.from_values(
-        a=tensors.attr(
+def schema() -> meta.AttrSet:
+    return meta.AttrSet.from_values(
+        a=meta.attr(
             {
                 "device": "cpu",
                 "dtype": "int32",
                 "shape": [-1, 2, 3],
             },
         ),
-        b=tensors.attr(
+        b=meta.attr(
             {
                 "device": "cpu",
                 "dtype": "float32",
@@ -64,35 +64,35 @@ def invalid_data(request: pytest.FixtureRequest) -> td.TensorDict:
     return request.param
 
 
-def test_attrset_getitem(schema: tensors.AttrSet):
-    assert isinstance(schema["a"], tensors.Attr)
-    assert isinstance(schema[["a", "b"]], tensors.AttrSet)
+def test_attrset_getitem(schema: meta.AttrSet):
+    assert isinstance(schema["a"], meta.Attr)
+    assert isinstance(schema[["a", "b"]], meta.AttrSet)
     assert schema == schema[["a", "b"]]
-    assert isinstance(schema[[-1, 2, 3]], tensors.AttrSet)
-    assert isinstance(schema[np.array([-1, 2, 3])], tensors.AttrSet)
+    assert isinstance(schema[[-1, 2, 3]], meta.AttrSet)
+    assert isinstance(schema[np.array([-1, 2, 3])], meta.AttrSet)
 
 
-def test_validation_ok(schema: tensors.AttrSet, valid_data: td.TensorDict) -> None:
+def test_validation_ok(schema: meta.AttrSet, valid_data: td.TensorDict) -> None:
     _validation.validate_schema(schema, valid_data)
 
 
 def test_construction_of_attrset(valid_data: td.TensorDict):
     parsed = tensors.tdict(valid_data)
-    assert parsed.attrs == tensors.attr_set(
+    assert parsed.attrs == meta.attr_set(
         {
-            "a": tensors.Attr.parse(device="cpu", shape=[11, 2, 3], dtype="int32"),
-            "b": tensors.Attr.parse(device="cpu", shape=[11, 6], dtype="float32"),
+            "a": meta.Attr.parse(device="cpu", shape=[11, 2, 3], dtype="int32"),
+            "b": meta.Attr.parse(device="cpu", shape=[11, 6], dtype="float32"),
         }
     )
 
 
-def test_validation_fail(schema: tensors.AttrSet, invalid_data: td.TensorDict):
+def test_validation_fail(schema: meta.AttrSet, invalid_data: td.TensorDict):
     with pytest.raises(RuntimeError):
         _validation.validate_schema(schema, invalid_data)
 
 
 @pytest.fixture
-def block(schema: tensors.AttrSet, valid_data: td.TensorDict) -> chunks.Chunk:
+def block(schema: meta.AttrSet, valid_data: td.TensorDict) -> chunks.Chunk:
     return chunks.Chunk.from_data_schema(data=valid_data, schema=schema)
 
 

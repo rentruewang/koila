@@ -8,7 +8,7 @@ from collections import abc as cabc
 import torch
 from torch import nn
 
-from aioway import _signs, _tracking, fake, tensors
+from aioway import _signs, _tracking, fake, meta
 from aioway._tracking import logging
 
 __all__ = ["Module"]
@@ -42,22 +42,22 @@ class Module[**P, T: nn.Module]:
     def real_module(self) -> T:
         return self._module(*self._args, **self._kwargs)
 
-    def preview(self, attr: tensors.Attr, /) -> tensors.Attr:
+    def preview(self, attr: meta.Attr, /) -> meta.Attr:
         """
         Transforms the input attribute into an attribute describing the output.
 
-        Returns `NotImplemented` when the input `tensors.Attr` is incompatible (usually device and dtype).
+        Returns `NotImplemented` when the input `meta.Attr` is incompatible (usually device and dtype).
         """
 
-        with self._tracker()("preview", _signs.Signature(tensors.Attr, tensors.Attr)):
+        with self._tracker()("preview", _signs.Signature(meta.Attr, meta.Attr)):
             return self._preview(attr)
 
     @fake.enable_func
-    def _preview(self, attr: tensors.Attr) -> tensors.Attr:
+    def _preview(self, attr: meta.Attr) -> meta.Attr:
         tensor = attr.to_tensor()
         result: torch.Tensor = self.fake_module(tensor)
         assert fake.is_fake_tensor(result), "Function is running under fake mode."
-        return tensors.Attr.from_tensor(result)
+        return meta.Attr.from_tensor(result)
 
     def forward(self, tensor: torch.Tensor) -> torch.Tensor:
         """

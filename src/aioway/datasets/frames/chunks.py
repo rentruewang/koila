@@ -10,7 +10,7 @@ import numpy as np
 
 from aioway import _typing
 from aioway import chunks as _chunks
-from aioway import tensors
+from aioway import meta
 
 from . import frames
 
@@ -40,7 +40,7 @@ class ChunkFrame(frames.Frame):
 
     @property
     @typing.override
-    def attrs(self) -> tensors.AttrSet:
+    def attrs(self) -> meta.AttrSet:
         return self.data.attrs
 
 
@@ -112,7 +112,7 @@ class ChunkListFrame(frames.Frame):
 
     @property
     @typing.override
-    def attrs(self) -> tensors.AttrSet:
+    def attrs(self) -> meta.AttrSet:
         return self._attrs
 
     @functools.cached_property

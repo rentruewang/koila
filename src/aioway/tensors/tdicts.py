@@ -8,9 +8,9 @@ import numpy as np
 import tensordict as td
 import torch
 
-from aioway import _common, _typing, fake, fn
+from aioway import _common, _typing, fake, fn, meta
 
-from . import meta, tensors
+from . import tensors
 
 __all__ = ["TensorDictFn", "tdict"]
 
@@ -201,7 +201,7 @@ class GatherTensorDictFn(TensorDictFn):
     @typing.override
     def do(self):
         source = self.source.do()
-        index = self.index.forward()
+        index = self.index.do()
         return source[index]
 
     @typing.override
