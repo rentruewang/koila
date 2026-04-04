@@ -218,3 +218,4 @@ __marimo__/
 # Custom gitignore
 /.vscode/
 .DS_Store
+/.testmondata*
