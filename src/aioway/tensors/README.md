@@ -1,4 +1,4 @@
-# `TensorFn`s
+# `TensorFn`s and `TensorDictFn`s.
 
 `TensorFn` are `Fn`s (delayed computation)'s `Tensor` version.
 

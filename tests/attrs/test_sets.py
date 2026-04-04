@@ -5,13 +5,13 @@ import pytest
 import tensordict as td
 import torch
 
-from aioway import chunks, tdicts, tensors
-from aioway.tdicts import _validation
+from aioway import chunks, tensors
+from aioway.tensors import _validation
 
 
 @pytest.fixture
-def schema() -> tdicts.AttrSet:
-    return tdicts.AttrSet.from_values(
+def schema() -> tensors.AttrSet:
+    return tensors.AttrSet.from_values(
         a=tensors.attr(
             {
                 "device": "cpu",
@@ -64,21 +64,21 @@ def invalid_data(request: pytest.FixtureRequest) -> td.TensorDict:
     return request.param
 
 
-def test_attrset_getitem(schema: tdicts.AttrSet):
+def test_attrset_getitem(schema: tensors.AttrSet):
     assert isinstance(schema["a"], tensors.Attr)
-    assert isinstance(schema[["a", "b"]], tdicts.AttrSet)
+    assert isinstance(schema[["a", "b"]], tensors.AttrSet)
     assert schema == schema[["a", "b"]]
-    assert isinstance(schema[[-1, 2, 3]], tdicts.AttrSet)
-    assert isinstance(schema[np.array([-1, 2, 3])], tdicts.AttrSet)
+    assert isinstance(schema[[-1, 2, 3]], tensors.AttrSet)
+    assert isinstance(schema[np.array([-1, 2, 3])], tensors.AttrSet)
 
 
-def test_validation_ok(schema: tdicts.AttrSet, valid_data: td.TensorDict) -> None:
+def test_validation_ok(schema: tensors.AttrSet, valid_data: td.TensorDict) -> None:
     _validation.validate_schema(schema, valid_data)
 
 
 def test_construction_of_attrset(valid_data: td.TensorDict):
-    parsed = tdicts.tdict(valid_data)
-    assert parsed.attrs == tdicts.attr_set(
+    parsed = tensors.tdict(valid_data)
+    assert parsed.attrs == tensors.attr_set(
         {
             "a": tensors.Attr.parse(device="cpu", shape=[11, 2, 3], dtype="int32"),
             "b": tensors.Attr.parse(device="cpu", shape=[11, 6], dtype="float32"),
@@ -86,13 +86,13 @@ def test_construction_of_attrset(valid_data: td.TensorDict):
     )
 
 
-def test_validation_fail(schema: tdicts.AttrSet, invalid_data: td.TensorDict):
+def test_validation_fail(schema: tensors.AttrSet, invalid_data: td.TensorDict):
     with pytest.raises(RuntimeError):
         _validation.validate_schema(schema, invalid_data)
 
 
 @pytest.fixture
-def block(schema: tdicts.AttrSet, valid_data: td.TensorDict) -> chunks.Chunk:
+def block(schema: tensors.AttrSet, valid_data: td.TensorDict) -> chunks.Chunk:
     return chunks.Chunk.from_data_schema(data=valid_data, schema=schema)
 
 

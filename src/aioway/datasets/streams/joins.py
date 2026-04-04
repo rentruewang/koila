@@ -7,7 +7,7 @@ import typing
 
 import torch
 
-from aioway import chunks, tdicts
+from aioway import chunks, tensors
 
 from . import sources, streams
 
@@ -37,7 +37,7 @@ class ZipStream(streams.Stream):
 
     @property
     @typing.override
-    def attrs(self) -> tdicts.AttrSet:
+    def attrs(self) -> tensors.AttrSet:
         return self.left.attrs | self.right.attrs
 
     @typing.override
@@ -94,7 +94,7 @@ class NestedLoopJoinStream(streams.Stream):
 
     @property
     @typing.override
-    def attrs(self) -> tdicts.AttrSet:
+    def attrs(self) -> tensors.AttrSet:
         return self.left.attrs | self.right.attrs
 
     @typing.override

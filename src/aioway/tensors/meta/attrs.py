@@ -23,7 +23,7 @@ TRACKER = _tracking.get_tracker(lambda: Attr)
 @dcls.dataclass(frozen=True)
 class Attr:
     """
-    The "type' for a `torch.Tensor`, describing everything we want to know about it.
+    The "type" for a `torch.Tensor`, describing everything we want to know about it.
     """
 
     device: devices.Device

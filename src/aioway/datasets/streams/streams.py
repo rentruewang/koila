@@ -8,7 +8,7 @@ import functools
 import typing
 from collections import abc as cabc
 
-from aioway import chunks, tdicts
+from aioway import chunks, tensors
 
 from .. import datasets
 
@@ -96,7 +96,7 @@ class Stream(cabc.Iterator[chunks.Chunk], datasets.Dataset, abc.ABC):
 
     @property
     @abc.abstractmethod
-    def attrs(self) -> tdicts.AttrSet:
+    def attrs(self) -> tensors.AttrSet:
         """
         The schema for the current `Stream`.
         """

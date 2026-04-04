@@ -8,8 +8,7 @@ from numpy import typing as npt
 from tensordict import TensorDict
 from torch import Tensor
 
-from aioway.tdicts import TensorDictFn
-from aioway.tensors import TensorFn
+from aioway.tensors import TensorDictFn, TensorFn
 
 @typing.overload
 def defer(value: bool) -> bool: ...

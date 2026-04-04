@@ -10,9 +10,8 @@ import tensordict
 import tensordict as td
 import torch
 
-from aioway import _typing, tdicts
+from aioway import _typing, tensors
 from aioway._tracking import logging
-from aioway.tdicts import attrs
 
 from . import vectors
 
@@ -78,7 +77,7 @@ class Chunk(cabc.Mapping[str, vectors.Vector]):
         return iter(self.attrs)
 
     def fn(self):
-        return tdicts.tdict(self.data)
+        return tensors.tdict(self.data)
 
     @LOGGER.function("DEBUG")
     def select(self, *names: str):
@@ -126,11 +125,11 @@ class Chunk(cabc.Mapping[str, vectors.Vector]):
 
     @property
     def attrs(self):
-        return attrs.attr_set(self.data)
+        return tensors.attr_set(self.data)
 
     @classmethod
     def from_data_schema(
-        cls, data: TensorDictLike, schema: tdicts.AttrSetLike
+        cls, data: TensorDictLike, schema: tensors.AttrSetLike
     ) -> typing.Self:
         td = _as_tensordict(data)
         td.auto_batch_size_()

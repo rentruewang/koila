@@ -6,7 +6,7 @@ from collections import abc as cabc
 
 import pytest
 
-from aioway import chunks, datasets, tdicts
+from aioway import chunks, datasets
 
 
 @dcls.dataclass
@@ -28,7 +28,7 @@ class SaveLastMapStream(datasets.MapStream):
         return batch
 
     @property
-    def attrs(self) -> tdicts.AttrSet:
+    def attrs(self) -> tensors.AttrSet:
         return self.source.attrs
 
     @property

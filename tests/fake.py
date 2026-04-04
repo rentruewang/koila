@@ -5,7 +5,7 @@ import tensordict as td
 import torch
 from torch import cuda
 
-from aioway import chunks, tdicts, tensors
+from aioway import chunks, tensors
 
 
 def cpu_and_maybe_cuda() -> list[str]:
@@ -38,7 +38,7 @@ def chunk_ok(*, size: int, device: str) -> chunks.Chunk:
         batch_size=size,
         device=device,
     )
-    schema = tdicts.AttrSet.from_values(
+    schema = tensors.AttrSet.from_values(
         f1d=tensors.Attr.parse(
             device="cpu",
             shape=[1],
