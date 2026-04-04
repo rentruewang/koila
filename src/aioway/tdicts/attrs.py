@@ -216,7 +216,7 @@ class AttrSet(_AttrSetBase[tensors.Attr]):
 
     @functools.cached_property
     def shapes(self):
-        return [col.attr.max_shape for col in self.attrs]
+        return [col.attr.shape for col in self.attrs]
 
     @functools.cached_property
     def devices(self):
@@ -240,7 +240,7 @@ class AttrSet(_AttrSetBase[tensors.Attr]):
             )
 
         mapping = {
-            name: tensors.Attr.parse(device=device, dtype=dtype, max_shape=shape)
+            name: tensors.Attr.parse(device=device, dtype=dtype, shape=shape)
             for name, device, dtype, shape in zip(names, devices, dtypes, shapes)
         }
 

@@ -150,6 +150,10 @@ class TensorFn(fn.Fn[torch.Tensor], abc.ABC):
             return self.__result
 
     @property
+    def shape(self):
+        return self.attr.shape
+
+    @property
     def device(self):
         return self.attr.device
 

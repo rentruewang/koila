@@ -74,7 +74,7 @@ def test_left_attr(left_fn: tensors.TensorFn):
     tensor = left_fn.preview()
     assert isinstance(tensor, torch.Tensor)
     attr = tensors.attr(tensor)
-    assert attr.max_shape == [3, 5]
+    assert attr.shape == [3, 5]
     assert attr.device == "cpu"
     assert attr.dtype == "float"
 
@@ -93,4 +93,4 @@ def test_binary_ufunc(
 def test_getitem(left_fn: tensors.TensorFn, index_fn: tensors.TensorFn):
     result = left_fn[index_fn]
     assert isinstance(result, tensors.TensorFn)
-    assert result.attr.max_shape == [2, 7, 5]
+    assert result.attr.shape == [2, 7, 5]

@@ -36,7 +36,7 @@ class Attr:
     The data type for the column.
     """
 
-    max_shape: shapes.Shape
+    shape: shapes.Shape
     """
     The shape of individual items in the column.
     """
@@ -48,13 +48,13 @@ class Attr:
         if not isinstance(self.dtype, dtypes.DType):
             raise TypeError(type(self.dtype))
 
-        if not isinstance(self.max_shape, shapes.Shape):
-            raise TypeError(type(self.max_shape))
+        if not isinstance(self.shape, shapes.Shape):
+            raise TypeError(type(self.shape))
 
     def __repr__(self):
         return repr(
             {
-                "max_shape": self.max_shape,
+                "shape": self.shape,
                 "dtype": self.dtype,
                 "device": self.device,
             }
@@ -67,7 +67,7 @@ class Attr:
         """
 
         return (
-            torch.empty(self.max_shape.concrete())
+            torch.empty(self.shape.concrete())
             .to(self.device.torch())
             .to(self.dtype.torch())
         )
@@ -77,7 +77,7 @@ class Attr:
         cls,
         device: devices.DeviceLike,
         dtype: dtypes.DTypeLike,
-        max_shape: shapes.ShapeLike,
+        shape: shapes.ShapeLike,
     ) -> typing.Self:
         """
         The convenient constructor for `Attr`.
@@ -85,7 +85,7 @@ class Attr:
         Args:
             device: Things that can be converted to `devices.Device`.
             dtype: Things that can be converted to `dtypes.DType`.
-            max_shape: Things that can be converted to `shapes.Shape`.
+            shape: Things that can be converted to `shapes.Shape`.
 
         Returns:
             An attribute instance.
@@ -94,7 +94,7 @@ class Attr:
         return cls(
             device=devices.Device.parse(device),
             dtype=dtypes.DType.parse(dtype),
-            max_shape=shapes.Shape.parse(max_shape),
+            shape=shapes.Shape.parse(shape),
         )
 
     @classmethod
@@ -103,7 +103,7 @@ class Attr:
 
         return cls.parse(
             device=tensor.device,
-            max_shape=tensor.shape,
+            shape=tensor.shape,
             dtype=tensor.dtype,
         )
 
@@ -111,14 +111,14 @@ class Attr:
 class AttrDict(typing.TypedDict):
     device: devices.DeviceLike
     dtype: dtypes.DTypeLike
-    max_shape: shapes.ShapeLike
+    shape: shapes.ShapeLike
 
 
 @typing.runtime_checkable
 class AttrProto(typing.Protocol):
     device: devices.DeviceLike
     dtype: dtypes.DTypeLike
-    max_shape: shapes.ShapeLike
+    shape: shapes.ShapeLike
 
 
 type AttrLike = Attr | AttrDict | torch.Tensor
@@ -136,7 +136,7 @@ def attr(item: AttrLike, /) -> Attr:
     if _is_attr_dict(item):
         return Attr.parse(
             device=item["device"],
-            max_shape=item["max_shape"],
+            shape=item["shape"],
             dtype=item["dtype"],
         )
 
@@ -144,7 +144,7 @@ def attr(item: AttrLike, /) -> Attr:
         return Attr.parse(
             device=item.device,
             dtype=item.dtype,
-            max_shape=item.max_shape,
+            shape=item.shape,
         )
 
     raise TypeError(f"Do not know how to handle {item=}, because it is malformed.")
@@ -160,7 +160,7 @@ def _is_attr_dict(item: object) -> typing.TypeGuard[AttrDict]:
         _ = Attr.parse(
             device=item["device"],
             dtype=item["dtype"],
-            max_shape=item["max_shape"],
+            shape=item["shape"],
         )
     except Exception:
         return False

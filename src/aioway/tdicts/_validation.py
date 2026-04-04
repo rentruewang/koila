@@ -45,12 +45,13 @@ def validate_attr(attr: tensors.Attr, tensor: torch.Tensor) -> None:
     Only check if `tensor` has the exact same dtype, shape, device as `attr`.
     """
 
-    validate_shape_matches(max_shape=attr.max_shape, tensor=tensor)
+    validate_shape_larger(max_shape=attr.shape, tensor=tensor)
     validate_device_matches(device=attr.device, tensor=tensor)
     validate_dtype_matches(dtype=attr.dtype, tensor=tensor)
 
 
-def validate_shape_matches(max_shape: tensors.Shape, tensor: torch.Tensor) -> None:
+def validate_shape_larger(max_shape: tensors.Shape, tensor: torch.Tensor) -> None:
+
     try:
         _validate_shape_larger(max_shape, tensor)
     except ValueError:
