@@ -9,7 +9,9 @@ from collections import abc as cabc
 import torch
 from torch import _subclasses as tsc
 
-from aioway import _common, fake, fn, schemas
+from aioway import _common, fake, schemas
+
+from . import fn
 
 __all__ = ["TensorFn", "tensor"]
 

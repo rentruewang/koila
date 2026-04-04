@@ -8,9 +8,9 @@ import numpy as np
 import tensordict as td
 import torch
 
-from aioway import _common, _typing, fake, fn, schemas
+from aioway import _common, _typing, fake, schemas
 
-from . import tensors
+from . import fn, tensors
 
 __all__ = ["TensorDictFn", "tdict"]
 
