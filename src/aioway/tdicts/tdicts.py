@@ -8,7 +8,7 @@ import numpy as np
 import tensordict as td
 import torch
 
-from aioway import _typing, fake, fn, tensors
+from aioway import _common, _typing, fake, fn, tensors
 
 from . import attrs
 
@@ -33,15 +33,13 @@ class TensorDictFn(fn.Fn[td.TensorDict], cabc.Mapping[str, tensors.TensorFn], ab
 
     @typing.no_type_check
     def __getitem__(self, key):
-        from . import _functions
-
         if isinstance(key, str):
             self.__check_keys(key)
 
             def get_col(tdict: td.TensorDict) -> torch.Tensor:
                 return tdict[key]
 
-            return _functions.LambdaTensorFn(self, get_col)
+            return LambdaTensorFn(self, get_col)
 
         if isinstance(key, slice | np.ndarray | torch.Tensor) or _typing.is_list_of(
             int
@@ -50,10 +48,10 @@ class TensorDictFn(fn.Fn[td.TensorDict], cabc.Mapping[str, tensors.TensorFn], ab
             def get_rows(tdict: td.TensorDict) -> td.TensorDict:
                 return tdict[key]
 
-            return _functions.LambdaTensorDictFn(self, get_rows)
+            return LambdaTensorDictFn(self, get_rows)
 
         if isinstance(key, tensors.TensorFn):
-            return _functions.GatherTensorDictFn(self, deferred_index)
+            return GatherTensorDictFn(self, deferred_index)
 
         if _typing.is_list_of(str)(key):
             return self.select(*key)
@@ -89,29 +87,23 @@ class TensorDictFn(fn.Fn[td.TensorDict], cabc.Mapping[str, tensors.TensorFn], ab
         return self.__attrs
 
     def rename(self, **renames: str):
-        from . import _functions
-
         def rename(tdict: td.TensorDict):
             return td.TensorDict(
                 {renames.get(key, key): value for key, value in tdict.items()}
             )
 
-        return _functions.LambdaTensorDictFn(self, rename)
+        return LambdaTensorDictFn(self, rename)
 
     def select(self, *keys: str):
-        from . import _functions
-
         self.__check_keys(*keys)
 
         def select(tdict: td.TensorDict) -> td.TensorDict:
             return tdict.select(*keys)
 
-        return _functions.LambdaTensorDictFn(self, select)
+        return LambdaTensorDictFn(self, select)
 
     def zip(self, other: TensorDictFn, /):
-        from . import _functions
-
-        return _functions.MergeTensorDictFn(self, other)
+        return MergeTensorDictFn(self, other)
 
     def __check_keys(self, *keys: str):
         for key in keys:
@@ -120,9 +112,7 @@ class TensorDictFn(fn.Fn[td.TensorDict], cabc.Mapping[str, tensors.TensorFn], ab
 
     @classmethod
     def from_tensordict(cls, data: td.TensorDict) -> TensorDictFn:
-        from . import _functions
-
-        return _functions.TensorDictDataFn(data)
+        return TensorDictDataFn(data)
 
 
 def tdict(item: TensorDictFn | td.TensorDict | cabc.Mapping) -> TensorDictFn:
@@ -137,3 +127,100 @@ def tdict(item: TensorDictFn | td.TensorDict | cabc.Mapping) -> TensorDictFn:
         return TensorDictFn.from_tensordict(tdict)
 
     raise TypeError(f"Do not know how to handle {type(item)=}.")
+
+
+class TensorDictDataFn(TensorDictFn):
+    "The `fn.Fn` representing a plain `td.TensorDict`."
+
+    def __init__(self, data: td.TensorDict) -> None:
+        self.data = data
+        self.data.auto_batch_size_()
+        assert self.data.ndim, self.data.shape
+
+        super().__init__()
+
+    @typing.override
+    def do(self) -> td.TensorDict:
+        if fake.is_enabled():
+            return fake.to_fake_tensordict(self.data)
+
+        else:
+            return self.data
+
+    @typing.override
+    def deps(self):
+        return ()
+
+
+@_common.dcls_no_eq
+class LambdaTensorDictFn(TensorDictFn):
+    "The `fn.Fn` representing arbitrary computation on `td.TensorDict`."
+
+    source: TensorDictFn
+    function: cabc.Callable[[td.TensorDict], td.TensorDict]
+
+    def __post_init__(self) -> None:
+        super().__init__()
+
+    @typing.override
+    def do(self) -> td.TensorDict:
+        source = self.source.do()
+        return self.function(source)
+
+    @typing.override
+    def deps(self):
+        return (self.source,)
+
+
+@_common.dcls_no_eq
+class LambdaTensorFn(tensors.TensorFn):
+    "The `fn.Fn` representing arbitrary computation on `td.TensorDict`."
+
+    source: TensorDictFn
+    function: cabc.Callable[[td.TensorDict], torch.Tensor]
+
+    def __post_init__(self) -> None:
+        super().__init__()
+
+    @typing.override
+    def forward(self) -> torch.Tensor:
+        source = self.source.do()
+        return self.function(source)
+
+    @typing.override
+    def deps(self):
+        return (self.source,)
+
+
+@_common.dcls_no_eq
+class GatherTensorDictFn(TensorDictFn):
+
+    source: TensorDictFn
+    index: tensors.TensorFn
+
+    @typing.override
+    def do(self):
+        source = self.source.do()
+        index = self.index.forward()
+        return source[index]
+
+    @typing.override
+    def deps(self):
+        return self.source, self.index
+
+
+@_common.dcls_no_eq
+class MergeTensorDictFn(TensorDictFn):
+
+    left: TensorDictFn
+    right: TensorDictFn
+
+    @typing.override
+    def do(self):
+        left = self.left.do()
+        right = self.right.do()
+        return td.merge_tensordicts(left, right)
+
+    @typing.override
+    def deps(self):
+        return self.left, self.right

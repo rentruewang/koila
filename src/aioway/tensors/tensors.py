@@ -1,6 +1,7 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import abc
+import functools
 import operator
 import typing
 from collections import abc as cabc
@@ -26,20 +27,19 @@ class TensorFn(fn.Fn[torch.Tensor], abc.ABC):
 
     1. `do()`: Evaluate and generate the `Tensor`.
     2. `deps()`: The dependent `Fn`, that will be evaluated during `do()`.
-    3. `attr()`: The (eager) description of the tensor computation.
+    3. `preview()`: The (eager) description of the tensor computation.
     """
-
-    def __init__(self):
-        self.__result: torch.Tensor | None = None
 
     def __len__(self) -> int:
         return self.preview().shape[0]
 
     def __getitem__(self, key: torch.Tensor | TensorFn) -> TensorFn:
-        if key.dtype != torch.bool:
-            return GatherThunk(self, key)
-        else:
+        # Spcial case handling for boolean tensors
+        # because `FakeTensor` does not support boolean masking.
+        if key.dtype == torch.bool:
             return BooleanTensorThunk(self, key)
+
+        return GatherThunk(self, key)
 
     def __invert__(self) -> TensorFn:
         return UFunc1Thunk(operator.invert, self)
@@ -100,15 +100,17 @@ class TensorFn(fn.Fn[torch.Tensor], abc.ABC):
 
         When fake mode is enabled, it calls `preview` for a fake tensor,
         which is a preview for the normal computation to save computation cost.
+
+        The reason this is modal with `fake.is_enabled()` as a toggle,
+        to make sure `preview` and `forward` can use the same codepath as much as possible,
+        in the default case `preview` is `forward` with fake mode on.
         """
 
         if fake.is_enabled():
             return self.preview()
 
-        if self.__result is None:
-            self.__result = self.forward()
-
-        return self.__result
+        else:
+            return self.__forward_cache()
 
     @fake.enable_func
     def preview(self) -> tsc.FakeTensor:
@@ -144,10 +146,16 @@ class TensorFn(fn.Fn[torch.Tensor], abc.ABC):
         return attrs.attr(self.__get_fake_or_computed())
 
     def __get_fake_or_computed(self):
-        if self.__result is None:
-            return self.preview()
+        "If `forward` has already been called, return it. Else return `preview`."
+
+        if self.__forward_cache.is_hit:
+            return self.__forward_cache()
         else:
-            return self.__result
+            return self.preview()
+
+    @functools.cached_property
+    def __forward_cache(self):
+        return _TensorFnCache(self.forward)
 
     @property
     def shape(self):
@@ -175,6 +183,38 @@ def tensor(data: TensorFn | torch.Tensor) -> TensorFn:
         return TensorDataFn(data)
 
     raise TypeError(f"Do not know how to handle {type(data)=}.")
+
+
+@typing.final
+class _TensorFnCache:
+    """
+    The cacher for `TensorFn.forward`.
+
+    The reason we use this boilerplate over directly using `functools.cache`,
+    `functools.cached_property`, or having a saved `.__result` member for instance,
+    is because this is the least assuming.
+
+    `functools.cache` assumes that `self` is hashable.
+    `functools.cached_property` cannot inspect whether we have evaluated it or not.
+    `.__result` member assumes subclass calls `__init__` properly.
+
+    Since this is saved in a `functools.cached_property`, it can be used on unhashable types,
+    yet support inspecting whether we called it or not, and does not need to call `__init__`.
+    """
+
+    def __init__(self, func: cabc.Callable[[], torch.Tensor]) -> None:
+        self._result: torch.Tensor | None = None
+        self._func = func
+
+    def __call__(self) -> torch.Tensor:
+        if self._result is None:
+            self._result = self._func()
+
+        return self._result
+
+    @property
+    def is_hit(self):
+        return self._result is not None
 
 
 @_common.dcls_no_eq
@@ -330,6 +370,9 @@ class BooleanTensorThunk(GatherThunk):
     def __post_init__(self):
         if not self.index.dtype != torch.bool:
             raise ValueError
+
+        if self.tensor.shape != self.index.shape:
+            raise ValueError(f"{self.tensor.shape=}, {self.index.shape=}.")
 
     @typing.override
     def preview(self) -> tsc.FakeTensor:

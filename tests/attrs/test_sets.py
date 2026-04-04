@@ -16,14 +16,14 @@ def schema() -> tdicts.AttrSet:
             {
                 "device": "cpu",
                 "dtype": "int32",
-                "max_shape": [-1, 2, 3],
+                "shape": [-1, 2, 3],
             },
         ),
         b=tensors.attr(
             {
                 "device": "cpu",
                 "dtype": "float32",
-                "max_shape": [-1, 6],
+                "shape": [-1, 6],
             },
         ),
     )

@@ -147,7 +147,9 @@ def attr(item: AttrLike, /) -> Attr:
             shape=item.shape,
         )
 
-    raise TypeError(f"Do not know how to handle {item=}, because it is malformed.")
+    raise TypeError(
+        f"Do not know how to handle {item=}, {type(item)=}, because it is malformed."
+    )
 
 
 @typing.no_type_check
