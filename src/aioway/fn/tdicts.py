@@ -16,15 +16,6 @@ __all__ = ["TensorDictFn", "tdict"]
 
 
 class TensorDictFn(fn.Fn[td.TensorDict], cabc.Mapping[str, tensors.TensorFn], abc.ABC):
-    def __init__(self) -> None:
-        super().__init__()
-
-        with fake.enable():
-            fake_result = self.do()
-
-        assert all(fake.is_fake_tensor(t) for t in fake_result.values())
-        self.__attrs = schemas.attr_set(fake_result)
-
     @typing.overload
     def __getitem__(self, key: str) -> tensors.TensorFn: ...
 
@@ -84,7 +75,7 @@ class TensorDictFn(fn.Fn[td.TensorDict], cabc.Mapping[str, tensors.TensorFn], ab
 
     @property
     def attrs(self):
-        return self.__attrs
+        return schemas.attr_set(self.preview())
 
     def rename(self, **renames: str):
         def rename(tdict: td.TensorDict):
@@ -140,12 +131,12 @@ class TensorDictDataFn(TensorDictFn):
         super().__init__()
 
     @typing.override
-    def do(self) -> td.TensorDict:
-        if fake.is_enabled():
-            return fake.to_fake_tensordict(self.data)
+    def preview(self) -> td.TensorDict:
+        return fake.to_fake_tensordict(self.data)
 
-        else:
-            return self.data
+    @typing.override
+    def forward(self) -> td.TensorDict:
+        return self.data
 
     @typing.override
     def deps(self):
@@ -163,7 +154,7 @@ class LambdaTensorDictFn(TensorDictFn):
         super().__init__()
 
     @typing.override
-    def do(self) -> td.TensorDict:
+    def forward(self) -> td.TensorDict:
         source = self.source.do()
         return self.function(source)
 
@@ -199,7 +190,7 @@ class GatherTensorDictFn(TensorDictFn):
     index: tensors.TensorFn
 
     @typing.override
-    def do(self):
+    def forward(self) -> td.TensorDict:
         source = self.source.do()
         index = self.index.do()
         return source[index]
@@ -216,7 +207,7 @@ class MergeTensorDictFn(TensorDictFn):
     right: TensorDictFn
 
     @typing.override
-    def do(self):
+    def forward(self):
         left = self.left.do()
         right = self.right.do()
         return td.merge_tensordicts(left, right)
