@@ -112,6 +112,11 @@ class TensorFn(fn.Fn[torch.Tensor], abc.ABC):
     def from_tensor(cls, data: torch.Tensor, /) -> TensorFn:
         return TensorDataFn(data)
 
+    @typing.override
+    def _name(self) -> str:
+        name = type(self).__name__
+        return f"{name}[{self.shape},{self.dtype!r},{self.device}]"
+
 
 def tensor(data: TensorFn | torch.Tensor) -> TensorFn:
     """
