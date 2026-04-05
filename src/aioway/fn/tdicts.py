@@ -78,11 +78,6 @@ class TensorDictFn(Fn[td.TensorDict], cabc.Mapping[str, TensorFn], abc.ABC):
     def keys(self):
         return self.attrs.keys()
 
-    @abc.abstractmethod
-    @typing.override
-    def deps(self) -> tuple[Fn[typing.Any], ...]:
-        raise NotImplementedError
-
     @property
     def attrs(self):
         return attr_set(self.preview())
@@ -223,10 +218,7 @@ class GatherTensorDictFn(TensorDictFn):
         return source[index]
 
     @typing.override
-    def deps(self) -> tuple[Fn[typing.Any], ...]:
-        return tuple(self._deps())
-
-    def _deps(self):
+    def deps(self) -> cabc.Generator[Fn[typing.Any]]:
         if isinstance(self.source, TensorDictFn):
             yield self.source
 

@@ -89,11 +89,6 @@ class TensorFn(Fn[torch.Tensor], abc.ABC):
     def __le__(self, other: typing.Any) -> TensorFn:
         return UFunc2Thunk(operator.le, self, other)
 
-    @typing.override
-    @abc.abstractmethod
-    def deps(self) -> tuple[Fn[object], ...]:
-        raise NotImplementedError
-
     @property
     def attr(self):
         return attr(self.forward() if self.done else self.preview())
@@ -197,9 +192,6 @@ class AnyThunk(TensorFn):
 
     @typing.override
     def deps(self):
-        return tuple(self._deps())
-
-    def _deps(self) -> cabc.Iterator[Fn[object]]:
         yield from self.args
         yield from self.kwargs.values()
 
@@ -228,8 +220,7 @@ class UFunc1Thunk(TensorFn):
 
     @typing.override
     def deps(self):
-        # If it's a primitive or `torch.Tensor`, do not recurse.
-        return (self.arg,)
+        yield self.arg
 
 
 type BinaryTensorFnRhs = TensorFn | torch.Tensor | int | float | bool
@@ -270,9 +261,6 @@ class UFunc2Thunk(TensorFn):
 
     @typing.override
     def deps(self):
-        return tuple(self._deps())
-
-    def _deps(self):
         # If it's a primitive or `torch.Tensor`, do not recurse.
         yield self.left
 
@@ -302,9 +290,6 @@ class GatherThunk(TensorFn):
 
     @typing.override
     def deps(self):
-        return tuple(self._deps())
-
-    def _deps(self) -> cabc.Iterator[TensorFn]:
         if isinstance(self.tensor, TensorFn):
             yield self.tensor
 
@@ -363,7 +348,3 @@ class TensorDataFn(TensorFn):
     @typing.override
     def forward(self) -> torch.Tensor:
         return self.data
-
-    @typing.override
-    def deps(self):
-        return ()
