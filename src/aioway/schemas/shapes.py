@@ -138,6 +138,9 @@ class Shape(cabc.Sequence[int]):
         # Make the dims positive.
         return [d % len(self) for d in dims]
 
+    def numel(self) -> int:
+        return np.prod(self.dims).item()
+
     @property
     def ndim(self) -> int:
         """
