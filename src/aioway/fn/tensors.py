@@ -98,6 +98,22 @@ class TensorFn(Fn[torch.Tensor], abc.ABC):
     def attr(self):
         return attr(self.forward() if self.done else self.preview())
 
+    def item(self):
+        if not self.numel() == 1:
+            # Error message copied from `torch`.
+            raise RuntimeError(
+                f"a `TensorFn` with {self.numel()} elements cannot be converted to scalar"
+            )
+
+        return self.do().item()
+
+    @property
+    def requires_grad(self) -> bool:
+        return self.preview().requires_grad
+
+    def numel(self) -> int:
+        return self.attr.shape.numel()
+
     @property
     def shape(self):
         return self.attr.shape
