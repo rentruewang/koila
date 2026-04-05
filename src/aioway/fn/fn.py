@@ -59,7 +59,7 @@ class Fn[T](abc.ABC):
         else:
             return self.__forward_cache()
 
-    @ctx.enable_func
+    @ctx.fake_mode_func
     def preview(self) -> T:
         """
         The `preview` function generates a "preview" for the `Tensor` that would be generated.

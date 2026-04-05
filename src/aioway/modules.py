@@ -34,7 +34,7 @@ class Module[**P, T: nn.Module]:
         self._kwargs = kwargs
 
     @functools.cached_property
-    @ctx.enable_func
+    @ctx.fake_mode_func
     def fake_module(self) -> T:
         return self._module(*self._args, **self._kwargs)
 
@@ -52,7 +52,7 @@ class Module[**P, T: nn.Module]:
         with self._tracker()("preview", _signs.Signature(schemas.Attr, schemas.Attr)):
             return self._preview(attr)
 
-    @ctx.enable_func
+    @ctx.fake_mode_func
     def _preview(self, attr: schemas.Attr) -> schemas.Attr:
         tensor = attr.to_tensor()
         result: torch.Tensor = self.fake_module(tensor)

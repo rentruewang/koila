@@ -62,7 +62,7 @@ def binop(request):
 
 @pytest.fixture
 def fake_mode():
-    with ctx.enable() as f:
+    with ctx.fake_mode() as f:
         yield f
 
 
