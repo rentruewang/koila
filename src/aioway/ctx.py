@@ -95,7 +95,7 @@ def is_fake_tensor(tensor: object) -> typing.TypeIs[tsc.FakeTensor]:
     return isinstance(tensor, tsc.FakeTensor)
 
 
-def is_enabled() -> tsc.FakeTensorMode | None:
+def enabled_fake_mode() -> tsc.FakeTensorMode | None:
     """
     Get the current fake mode, is available.
 
