@@ -8,7 +8,7 @@ import numpy as np
 from numpy import typing as npt
 
 from .. import frames
-from . import ops
+from .ops import IndexPlan
 
 __all__ = ["Index", "IndexContext"]
 
@@ -51,7 +51,7 @@ class Index(abc.ABC):
     The context of the `Index`.
     """
 
-    def __call__(self, op: ops.IndexPlan, value: npt.ArrayLike) -> npt.NDArray:
+    def __call__(self, op: IndexPlan, value: npt.ArrayLike) -> npt.NDArray:
         arr = np.array(value)
         _, *dims = arr.shape
 
@@ -63,7 +63,7 @@ class Index(abc.ABC):
         return self.search(op, arr)
 
     @abc.abstractmethod
-    def search(self, op: ops.IndexPlan, value: npt.NDArray, /) -> npt.NDArray: ...
+    def search(self, op: IndexPlan, value: npt.NDArray, /) -> npt.NDArray: ...
 
     @property
     @abc.abstractmethod

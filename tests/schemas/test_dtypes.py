@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 import torch
 
-from aioway import schemas
+from aioway.schemas import DType
 
 
 @dcls.dataclass(frozen=True)
@@ -18,10 +18,10 @@ class _CaseChecker:
 
     @property
     def dtype(self):
-        return schemas.DType.parse(self.original)
+        return DType.parse(self.original)
 
     def check(self):
-        assert isinstance(self.dtype, schemas.DType)
+        assert isinstance(self.dtype, DType)
         assert self.dtype.family == self.family
         assert self.dtype.bits == self.bits
         assert self.dtype == self.original

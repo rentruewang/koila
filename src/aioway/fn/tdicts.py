@@ -8,16 +8,21 @@ import numpy as np
 import tensordict as td
 import torch
 
-from aioway import _common, _typing, ctx, schemas
+from aioway._common import dcls_no_eq_no_repr
+from aioway._typing import is_list_of
+from aioway.ctx import to_fake_tensordict
+from aioway.schemas import attr_set
 
-from . import fn, tensors
+from .de import eager
+from .fn import Fn
+from .tensors import TensorFn
 
 __all__ = ["TensorDictFn", "tdict"]
 
 
-class TensorDictFn(fn.Fn[td.TensorDict], cabc.Mapping[str, tensors.TensorFn], abc.ABC):
+class TensorDictFn(Fn[td.TensorDict], cabc.Mapping[str, TensorFn], abc.ABC):
     @typing.overload
-    def __getitem__(self, key: str) -> tensors.TensorFn: ...
+    def __getitem__(self, key: str) -> TensorFn: ...
 
     @typing.overload
     def __getitem__(self, key: list[str]) -> TensorDictFn: ...
@@ -35,7 +40,7 @@ class TensorDictFn(fn.Fn[td.TensorDict], cabc.Mapping[str, tensors.TensorFn], ab
         if (
             False
             or isinstance(key, slice | np.ndarray)
-            or _typing.is_list_of(int)(key)
+            or is_list_of(int)(key)
             or (isinstance(key, torch.Tensor) and key.dtype != torch.bool)
         ):
 
@@ -47,10 +52,10 @@ class TensorDictFn(fn.Fn[td.TensorDict], cabc.Mapping[str, tensors.TensorFn], ab
         if isinstance(key, torch.Tensor) and key.dtype == torch.bool:
             return BooleanIndexTensorDictFn(self, key)
 
-        if isinstance(key, tensors.TensorFn):
+        if isinstance(key, TensorFn):
             return GatherTensorDictFn(self, key)
 
-        if _typing.is_list_of(str)(key):
+        if is_list_of(str)(key):
             return self.select(*key)
 
         raise TypeError(f"Does not handle {key=}, {type(key)=}.")
@@ -76,12 +81,12 @@ class TensorDictFn(fn.Fn[td.TensorDict], cabc.Mapping[str, tensors.TensorFn], ab
 
     @abc.abstractmethod
     @typing.override
-    def deps(self) -> tuple[fn.Fn[typing.Any], ...]:
+    def deps(self) -> tuple[Fn[typing.Any], ...]:
         raise NotImplementedError
 
     @property
     def attrs(self):
-        return schemas.attr_set(self.preview())
+        return attr_set(self.preview())
 
     def rename(self, **renames: str):
         def rename(tdict: td.TensorDict):
@@ -142,7 +147,7 @@ def tdict(item: TensorDictFn | td.TensorDict | cabc.Mapping) -> TensorDictFn:
 
 
 class TensorDictDataFn(TensorDictFn):
-    "The `fn.Fn` representing a plain `td.TensorDict`."
+    "The `Fn` representing a plain `td.TensorDict`."
 
     def __init__(self, data: td.TensorDict) -> None:
         self.data = data
@@ -153,7 +158,7 @@ class TensorDictDataFn(TensorDictFn):
 
     @typing.override
     def preview(self) -> td.TensorDict:
-        return ctx.to_fake_tensordict(self.data)
+        return to_fake_tensordict(self.data)
 
     @typing.override
     def forward(self) -> td.TensorDict:
@@ -164,9 +169,9 @@ class TensorDictDataFn(TensorDictFn):
         return ()
 
 
-@_common.dcls_no_eq_no_repr
+@dcls_no_eq_no_repr
 class LambdaTensorDictFn(TensorDictFn):
-    "The `fn.Fn` representing arbitrary computation on `td.TensorDict`."
+    "The `Fn` representing arbitrary computation on `td.TensorDict`."
 
     source: TensorDictFn
     function: cabc.Callable[[td.TensorDict], td.TensorDict]
@@ -184,9 +189,9 @@ class LambdaTensorDictFn(TensorDictFn):
         return (self.source,)
 
 
-@_common.dcls_no_eq_no_repr
-class LambdaTensorFn(tensors.TensorFn):
-    "The `fn.Fn` representing arbitrary computation on `td.TensorDict`."
+@dcls_no_eq_no_repr
+class LambdaTensorFn(TensorFn):
+    "The `Fn` representing arbitrary computation on `td.TensorDict`."
 
     source: TensorDictFn
     function: cabc.Callable[[td.TensorDict], torch.Tensor]
@@ -204,33 +209,33 @@ class LambdaTensorFn(tensors.TensorFn):
         return (self.source,)
 
 
-@_common.dcls_no_eq_no_repr
+@dcls_no_eq_no_repr
 class GatherTensorDictFn(TensorDictFn):
 
     source: TensorDictFn
-    index: tensors.TensorFn | torch.Tensor
+    index: TensorFn | torch.Tensor
 
     @typing.override
     def forward(self) -> td.TensorDict:
-        from . import de
+        pass
 
-        source = de.eager(self.source)
-        index = de.eager(self.index)
+        source = eager(self.source)
+        index = eager(self.index)
         return source[index]
 
     @typing.override
-    def deps(self) -> tuple[fn.Fn[typing.Any], ...]:
+    def deps(self) -> tuple[Fn[typing.Any], ...]:
         return tuple(self._deps())
 
     def _deps(self):
         if isinstance(self.source, TensorDictFn):
             yield self.source
 
-        if isinstance(self.index, tensors.TensorFn):
+        if isinstance(self.index, TensorFn):
             yield self.index
 
 
-@_common.dcls_no_eq_no_repr
+@dcls_no_eq_no_repr
 class BooleanIndexTensorDictFn(GatherTensorDictFn):
 
     @typing.override
@@ -238,7 +243,7 @@ class BooleanIndexTensorDictFn(GatherTensorDictFn):
         return self.source.preview()
 
 
-@_common.dcls_no_eq_no_repr
+@dcls_no_eq_no_repr
 class MergeTensorDictFn(TensorDictFn):
 
     left: TensorDictFn

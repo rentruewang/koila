@@ -3,7 +3,7 @@
 import pytest
 import torch
 
-from aioway import schemas
+from aioway.schemas import Device
 
 
 def _cpus():
@@ -13,13 +13,13 @@ def _cpus():
 
 @pytest.fixture(params=_cpus())
 def cpu(request: pytest.FixtureRequest):
-    return schemas.Device.parse(request.param)
+    return Device.parse(request.param)
 
 
-def test_eq(cpu: schemas.Device):
+def test_eq(cpu: Device):
     assert cpu == "cpu"
-    assert cpu == schemas.Device.parse("cpu")
+    assert cpu == Device.parse("cpu")
 
 
-def test_no_fail(cpu: schemas.Device):
+def test_no_fail(cpu: Device):
     assert cpu != object()

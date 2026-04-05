@@ -8,9 +8,11 @@ import functools
 import typing
 from collections import abc as cabc
 
-from aioway import chunks, schemas
+from aioway.chunks import Chunk
+from aioway.schemas import AttrSet
 
 from .. import datasets
+from .views import StreamColumnView, StreamSelectView
 
 __all__ = ["Stream", "StreamState", "Stream", "Stream", "Stream"]
 
@@ -42,7 +44,7 @@ class StreamState:
 
 
 @dcls.dataclass(frozen=True)
-class Stream(cabc.Iterator[chunks.Chunk], datasets.Dataset, abc.ABC):
+class Stream(cabc.Iterator[Chunk], datasets.Dataset, abc.ABC):
     """
     `Stream` produces a stream of batches of data, in the form of `TensorDict`s,
     everytime `__next__` is called on it, a `TensorDict` is yielded.
@@ -68,7 +70,7 @@ class Stream(cabc.Iterator[chunks.Chunk], datasets.Dataset, abc.ABC):
 
     @typing.final
     @typing.override
-    def __next__(self) -> chunks.Chunk:
+    def __next__(self) -> Chunk:
         """
         `__next__` allows `Stream`s to be used in `for` loops.
         """
@@ -96,7 +98,7 @@ class Stream(cabc.Iterator[chunks.Chunk], datasets.Dataset, abc.ABC):
 
     @property
     @abc.abstractmethod
-    def attrs(self) -> schemas.AttrSet:
+    def attrs(self) -> AttrSet:
         """
         The schema for the current `Stream`.
         """
@@ -104,9 +106,9 @@ class Stream(cabc.Iterator[chunks.Chunk], datasets.Dataset, abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def _next(self) -> chunks.Chunk:
+    def _next(self) -> Chunk:
         """
-        Compute the next batch (a `chunks.Chunk`).
+        Compute the next batch (a `Chunk`).
 
         An exception raised here would be translated to `StopIteration`.
 
@@ -156,8 +158,6 @@ class Stream(cabc.Iterator[chunks.Chunk], datasets.Dataset, abc.ABC):
     @classmethod
     @typing.override
     def view_types(cls):
-        from . import views
-
         return datasets.DatasetViewTypes(
-            column=views.StreamColumnView, select=views.StreamSelectView
+            column=StreamColumnView, select=StreamSelectView
         )

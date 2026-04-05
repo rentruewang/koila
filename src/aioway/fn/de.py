@@ -11,7 +11,9 @@ import tensordict as td
 import torch
 from numpy import typing as npt
 
-from . import fn, tdicts, tensors
+from .fn import Fn
+from .tdicts import TensorDictFn, tdict
+from .tensors import TensorFn, tensor
 
 __all__ = ["defer", "eager"]
 
@@ -41,42 +43,42 @@ def defer(value: None, /) -> None: ...
 
 
 @typing.overload
-def defer(value: npt.NDArray, /) -> tensors.TensorFn: ...
+def defer(value: npt.NDArray, /) -> TensorFn: ...
 
 
 @typing.overload
-def defer(value: torch.Tensor | tensors.TensorFn, /) -> tensors.TensorFn: ...
+def defer(value: torch.Tensor | TensorFn, /) -> TensorFn: ...
 
 
 @typing.overload
-def defer(value: td.TensorDict | tdicts.TensorDictFn, /) -> tdicts.TensorDictFn: ...
+def defer(value: td.TensorDict | TensorDictFn, /) -> TensorDictFn: ...
 
 
 @typing.overload
-def defer(value: cabc.Sequence[Any], /) -> tensors.TensorFn: ...
+def defer(value: cabc.Sequence[Any], /) -> TensorFn: ...
 
 
 @typing.overload
-def defer(value: cabc.Mapping[str, Any], /) -> tdicts.TensorDictFn: ...
+def defer(value: cabc.Mapping[str, Any], /) -> TensorDictFn: ...
 
 
 @typing.no_type_check
 def defer(value, /):
 
     match value:
-        case None | int() | float() | bool() | slice() | str() | fn.Fn():
+        case None | int() | float() | bool() | slice() | str() | Fn():
             return value
         case torch.Tensor():
-            return tensors.tensor(value)
+            return tensor(value)
         case td.TensorDict():
-            return tdicts.tdict(value)
+            return tdict(value)
         case np.ndarray() | cabc.Sequence():
             return defer(torch.tensor(value))
         case cabc.Mapping():
             return defer(td.TensorDict(value))
 
     if isinstance(value, cabc.Mapping):
-        return tdicts.tdict(td.TensorDict.from_any(value))
+        return tdict(td.TensorDict.from_any(value))
 
     raise TypeError(f"We do not know how to handle: {value=}, {type(value)=}")
 
@@ -110,11 +112,11 @@ def eager(value: torch.Tensor, /) -> torch.Tensor: ...
 
 
 @typing.overload
-def eager[T](value: fn.Fn[T], /) -> T: ...
+def eager[T](value: Fn[T], /) -> T: ...
 
 
 @typing.overload
-def eager(value: tdicts.TensorDictFn, /) -> td.TensorDict: ...
+def eager(value: TensorDictFn, /) -> td.TensorDict: ...
 
 
 def eager(value, /):
@@ -131,7 +133,7 @@ def eager(value, /):
             | td.TensorDict()
         ):
             return value
-        case fn.Fn():
+        case Fn():
             return value.do()
 
     raise TypeError(f"We do not know how to handle: {value=}, {type(value)=}")

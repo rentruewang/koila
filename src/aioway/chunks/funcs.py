@@ -5,9 +5,9 @@
 import tensordict as td
 import torch
 
-from aioway._tracking import logging
+from aioway._tracking.logging import get_logger
 
-LOGGER = logging.get_logger(__name__)
+LOGGER = get_logger(__name__)
 
 
 def to_tensor(td: td.TensorDict) -> torch.Tensor:

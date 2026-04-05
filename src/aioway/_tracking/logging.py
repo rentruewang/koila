@@ -10,7 +10,7 @@ from collections import abc as cabc
 
 from rich import logging as rlogging
 
-from aioway import _common
+from aioway._common import format_function
 
 __all__ = ["enable_log", "enable_rich_log", "Logger", "get_logger"]
 
@@ -143,7 +143,7 @@ class _CallAndLog[**P, T]:
     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> T:
         "Call and log."
 
-        formatted = _common.format_function(self.func, *args, **kwargs)
+        formatted = format_function(self.func, *args, **kwargs)
         self.log("%s", formatted)
         result = self.func(*args, **kwargs)
         self.log("%s -> %s", formatted, result)

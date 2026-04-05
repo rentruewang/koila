@@ -1,6 +1,6 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-"The `streams.Stream` that records past histories and supports random access."
+"The `Stream` that records past histories and supports random access."
 
 import abc
 import dataclasses as dcls
@@ -11,11 +11,13 @@ from collections import abc as cabc
 
 from torch.utils import data
 
-from aioway import _typing, chunks, schemas
-from aioway._tracking import logging
+from aioway._tracking.logging import get_logger
+from aioway._typing import is_list_of
+from aioway.chunks import Chunk
+from aioway.schemas import AttrSet
 
 from .. import frames
-from . import streams
+from .streams import Stream
 
 __all__ = [
     "BoundedStream",
@@ -25,18 +27,18 @@ __all__ = [
     "FrameStreamLoader",
 ]
 
-LOGGER = logging.get_logger(__name__)
+LOGGER = get_logger(__name__)
 
 
 @dcls.dataclass(frozen=True)
-class BoundedStream(streams.Stream, abc.ABC):
+class BoundedStream(Stream, abc.ABC):
     """
     A stream with `__len__` and `__getitem__`.
     """
 
     @abc.abstractmethod
     def __len__(self) -> int:
-        "The number of batches saved in the current `streams.Stream`."
+        "The number of batches saved in the current `Stream`."
 
         raise NotImplementedError
 
@@ -44,13 +46,13 @@ class BoundedStream(streams.Stream, abc.ABC):
         if isinstance(key, int):
             return self._getitem_int(key)
 
-        if isinstance(key, str) or _typing.is_list_of(str)(key):
-            return streams.Stream.__getitem__(self, key)
+        if isinstance(key, str) or is_list_of(str)(key):
+            return Stream.__getitem__(self, key)
 
         raise TypeError(f"Do not know how to handle {type(key)=}.")
 
     @abc.abstractmethod
-    def _getitem_int(self, idx: int) -> chunks.Chunk:
+    def _getitem_int(self, idx: int) -> Chunk:
         """
         Get individual items. Does not support slice input.
 
@@ -58,7 +60,7 @@ class BoundedStream(streams.Stream, abc.ABC):
             idx: An integer. Must be in the range `[-len(self), len(self))`.
 
         Returns:
-            The `chunks.Chunk` batch.
+            The `Chunk` batch.
         """
 
 
@@ -68,11 +70,11 @@ class CacheStream(BoundedStream):
     Exhaust the input stream, store it into a cache for repeating access.
     """
 
-    stream: streams.Stream
+    stream: Stream
     "The input stream."
 
-    saved: list[chunks.Chunk] = dcls.field(default_factory=list)
-    "The cache for the input `streams.Stream`."
+    saved: list[Chunk] = dcls.field(default_factory=list)
+    "The cache for the input `Stream`."
 
     @typing.override
     def __iter__(self) -> typing.Self:
@@ -87,7 +89,7 @@ class CacheStream(BoundedStream):
         return self.saved[idx]
 
     @typing.override
-    def _next(self) -> chunks.Chunk:
+    def _next(self) -> Chunk:
         LOGGER.debug(
             "Executing `__iter__` for `CacheStream`. self.idx=%s, stream.idx=%s",
             self.idx,
@@ -123,15 +125,15 @@ class CacheStream(BoundedStream):
 
     @property
     @typing.override
-    def attrs(self) -> schemas.AttrSet:
+    def attrs(self) -> AttrSet:
         return self.stream.attrs
 
 
 @dcls.dataclass(frozen=True)
 class ListStream(BoundedStream):
-    "A `streams.Stream` backed by a list of `TensorDict`."
+    "A `Stream` backed by a list of `TensorDict`."
 
-    sequence: cabc.Sequence[chunks.Chunk]
+    sequence: cabc.Sequence[Chunk]
     "List of chunks."
 
     @typing.override
@@ -139,7 +141,7 @@ class ListStream(BoundedStream):
         return self.size
 
     @typing.override
-    def _getitem_int(self, idx: int) -> chunks.Chunk:
+    def _getitem_int(self, idx: int) -> Chunk:
         return self.sequence[idx]
 
     @property
@@ -149,11 +151,11 @@ class ListStream(BoundedStream):
 
     @property
     @typing.override
-    def attrs(self) -> schemas.AttrSet:
+    def attrs(self) -> AttrSet:
         return self._schema
 
     @functools.cached_property
-    def _schema(self) -> schemas.AttrSet:
+    def _schema(self) -> AttrSet:
         schemas = {chunk.attrs for chunk in self.sequence}
 
         if len(schemas) == 1:
@@ -163,7 +165,7 @@ class ListStream(BoundedStream):
         raise ValueError("Chunks should have the same schema.")
 
     @typing.override
-    def _next(self) -> chunks.Chunk:
+    def _next(self) -> Chunk:
         if self.idx < self.size:
             return self[self.idx]
         else:
@@ -194,9 +196,9 @@ class FrameStreamLoader:
 
 
 @dcls.dataclass(frozen=True)
-class FrameStream(streams.Stream):
+class FrameStream(Stream):
     """
-    A `streams.Stream` backed by a `frames.Frame`.
+    A `Stream` backed by a `frames.Frame`.
     """
 
     frame: frames.Frame
@@ -208,7 +210,7 @@ class FrameStream(streams.Stream):
     """
 
     @typing.override
-    def _next(self) -> chunks.Chunk:
+    def _next(self) -> Chunk:
         try:
             return self._get_batch(self.idx)
         except IndexError as ie:
@@ -231,7 +233,7 @@ class FrameStream(streams.Stream):
 
     @property
     @typing.override
-    def attrs(self) -> schemas.AttrSet:
+    def attrs(self) -> AttrSet:
         return self.frame.attrs
 
     @functools.cached_property
@@ -241,7 +243,7 @@ class FrameStream(streams.Stream):
         rounding = math.floor if drop_last else math.ceil
         return rounding(len(self.frame) / batch_size)
 
-    def _get_batch(self, idx: int) -> chunks.Chunk:
+    def _get_batch(self, idx: int) -> Chunk:
         batch_size = self.options.batch_size
 
         if not -self.size <= idx < self.size:

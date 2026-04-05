@@ -8,14 +8,16 @@ from collections import abc as cabc
 import torch
 from torch import _subclasses as tsc
 
-from aioway import _common, ctx, schemas
+from aioway._common import dcls_no_eq_no_repr, format_function
+from aioway.ctx import to_fake_tensor
+from aioway.schemas import attr
 
-from . import fn
+from .fn import Fn
 
 __all__ = ["TensorFn", "tensor"]
 
 
-class TensorFn(fn.Fn[torch.Tensor], abc.ABC):
+class TensorFn(Fn[torch.Tensor], abc.ABC):
     """
     `TensorFn` is the `Fn` that would produce a `Tensor`.
 
@@ -89,12 +91,12 @@ class TensorFn(fn.Fn[torch.Tensor], abc.ABC):
 
     @typing.override
     @abc.abstractmethod
-    def deps(self) -> tuple[fn.Fn[object], ...]:
+    def deps(self) -> tuple[Fn[object], ...]:
         raise NotImplementedError
 
     @property
     def attr(self):
-        return schemas.attr(self.forward() if self.done else self.preview())
+        return attr(self.forward() if self.done else self.preview())
 
     @property
     def shape(self):
@@ -131,29 +133,29 @@ def tensor(data: TensorFn | torch.Tensor) -> TensorFn:
     raise TypeError(f"Do not know how to handle {type(data)=}.")
 
 
-@_common.dcls_no_eq_no_repr
+@dcls_no_eq_no_repr
 class AnyThunk(TensorFn):
     "Represents some computation that is deferred."
 
     __match_args__ = "func", "args", "kwargs"
 
     func: cabc.Callable[..., torch.Tensor]
-    args: tuple[fn.Fn[typing.Any], ...]
-    kwargs: dict[str, fn.Fn[typing.Any]]
+    args: tuple[Fn[typing.Any], ...]
+    kwargs: dict[str, Fn[typing.Any]]
 
     def __post_init__(self) -> None:
         super().__init__()
 
         for arg in self.args:
-            if not isinstance(arg, fn.Fn):
+            if not isinstance(arg, Fn):
                 raise TypeError(f"{arg} is not a `Thunk`.")
 
         for key, value in self.kwargs.items():
-            if not isinstance(value, fn.Fn):
+            if not isinstance(value, Fn):
                 raise TypeError(f"{key}={value} is not a `Thunk`")
 
     def __repr__(self) -> str:
-        return _common.format_function(self.func, *self.args, **self.kwargs)
+        return format_function(self.func, *self.args, **self.kwargs)
 
     @typing.override
     def forward(self) -> torch.Tensor:
@@ -165,12 +167,12 @@ class AnyThunk(TensorFn):
     def deps(self):
         return tuple(self._deps())
 
-    def _deps(self) -> cabc.Iterator[fn.Fn[object]]:
+    def _deps(self) -> cabc.Iterator[Fn[object]]:
         yield from self.args
         yield from self.kwargs.values()
 
 
-@_common.dcls_no_eq_no_repr
+@dcls_no_eq_no_repr
 class UFunc1Thunk(TensorFn):
     """
     Thunk for unary function.
@@ -201,7 +203,7 @@ class UFunc1Thunk(TensorFn):
 type BinaryTensorFnRhs = TensorFn | torch.Tensor | int | float | bool
 
 
-@_common.dcls_no_eq_no_repr
+@dcls_no_eq_no_repr
 class UFunc2Thunk(TensorFn):
     """
     Thunk for binary function.
@@ -246,7 +248,7 @@ class UFunc2Thunk(TensorFn):
             yield right
 
 
-@_common.dcls_no_eq_no_repr
+@dcls_no_eq_no_repr
 class GatherThunk(TensorFn):
     tensor: TensorFn | torch.Tensor
     index: TensorFn | torch.Tensor
@@ -278,7 +280,7 @@ class GatherThunk(TensorFn):
             yield self.index
 
 
-@_common.dcls_no_eq_no_repr
+@dcls_no_eq_no_repr
 class BooleanTensorThunk(GatherThunk):
 
     def __post_init__(self):
@@ -304,7 +306,7 @@ class BooleanTensorThunk(GatherThunk):
 @typing.no_type_check
 def _as_fake(tensor: torch.Tensor | TensorFn) -> tsc.FakeTensor:
     if isinstance(tensor, torch.Tensor):
-        return ctx.to_fake_tensor(tensor)
+        return to_fake_tensor(tensor)
     else:
         return tensor.preview()
 
@@ -316,15 +318,15 @@ def _maybe_forward(tensor: torch.Tensor | TensorFn):
         return tensor.forward()
 
 
-@_common.dcls_no_eq_no_repr
+@dcls_no_eq_no_repr
 class TensorDataFn(TensorFn):
-    "The `fn.Fn` representing a plain `torch.Tensor`."
+    "The `Fn` representing a plain `torch.Tensor`."
 
     data: torch.Tensor
 
     @typing.override
     def preview(self):
-        return ctx.to_fake_tensor(self.data)
+        return to_fake_tensor(self.data)
 
     @typing.override
     def forward(self) -> torch.Tensor:

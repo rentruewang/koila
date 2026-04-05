@@ -6,36 +6,36 @@ from collections import abc as cabc
 
 import pytest
 
-from aioway import symbols
+from aioway.symbols import ColSymbol, SourceSymbol
 
 
 @pytest.fixture
-def a() -> symbols.SourceSymbol:
-    return symbols.SourceSymbol("a", "cde")
+def a() -> SourceSymbol:
+    return SourceSymbol("a", "cde")
 
 
 @pytest.fixture
-def b() -> symbols.SourceSymbol:
-    return symbols.SourceSymbol("b", "cde")
+def b() -> SourceSymbol:
+    return SourceSymbol("b", "cde")
 
 
 @pytest.fixture
-def c(a: symbols.SourceSymbol):
+def c(a: SourceSymbol):
     return a["c"]
 
 
 @pytest.fixture
-def d(a: symbols.SourceSymbol):
+def d(a: SourceSymbol):
     return a["d"]
 
 
 @pytest.fixture
-def e(b: symbols.SourceSymbol):
+def e(b: SourceSymbol):
     return b["e"]
 
 
 @pytest.fixture(params="cde")
-def col_expr(request: pytest.FixtureRequest) -> symbols.ColSymbol:
+def col_expr(request: pytest.FixtureRequest) -> ColSymbol:
     return request.getfixturevalue(request.param)
 
 
@@ -111,8 +111,8 @@ def test_binray_ufunc_repr(
 def test_binary_ufunc_type(
     c: str, e: str, op: cabc.Callable[[typing.Any, typing.Any], typing.Any]
 ) -> None:
-    assert isinstance(expr := op(c, e), symbols.ColSymbol), type(expr)
-    assert isinstance(expr := op(e, c), symbols.ColSymbol), type(expr)
+    assert isinstance(expr := op(c, e), ColSymbol), type(expr)
+    assert isinstance(expr := op(e, c), ColSymbol), type(expr)
 
 
 @pytest.mark.parametrize(
@@ -123,7 +123,7 @@ def test_binary_ufunc_type(
     ],
 )
 def test_prefix_op_repr(
-    col_expr: symbols.ColSymbol,
+    col_expr: ColSymbol,
     op: str,
     func: cabc.Callable[[typing.Any, typing.Any], typing.Any],
 ):

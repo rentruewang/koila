@@ -8,12 +8,14 @@ import typing
 
 import numpy as np
 
-from aioway import _typing, chunks, schemas
+from aioway._typing import BatchIndex, IntArray, is_list_of
+from aioway.chunks import Chunk
+from aioway.schemas import AttrSet
 
 from .. import datasets
 
 if typing.TYPE_CHECKING:
-    from . import views
+    from .views import FrameColumnView, FrameSelectView
 
 __all__ = ["Frame"]
 
@@ -24,10 +26,10 @@ class Frame(datasets.Dataset, abc.ABC):
     `Frame` represents a set of heterogenious data stored in memory,
     it is one of the main physical abstractions in `aioway` to represent eager computation.
 
-    Think of it as a normal `Sequence` of `chunks.Chunk`,
+    Think of it as a normal `Sequence` of `Chunk`,
     where computation happens eagerly, imperatively, and the result is stored in memory.
 
-    Each `chunks.Chunk` retrieved from `Frame` is a minibatch of data.
+    Each `Chunk` retrieved from `Frame` is a minibatch of data.
 
     Similar to `datasets.Dataset`, but only allows retrieving a batch at a time.
     To get a single item, retrieve a batch of size 1.
@@ -44,13 +46,13 @@ class Frame(datasets.Dataset, abc.ABC):
         """
 
     @typing.overload
-    def __getitem__(self, idx: _typing.BatchIndex, /) -> chunks.Chunk: ...
+    def __getitem__(self, idx: BatchIndex, /) -> Chunk: ...
 
     @typing.overload
-    def __getitem__(self, idx: str, /) -> views.FrameColumnView: ...
+    def __getitem__(self, idx: str, /) -> FrameColumnView: ...
 
     @typing.overload
-    def __getitem__(self, idx: list[str], /) -> views.FrameSelectView: ...
+    def __getitem__(self, idx: list[str], /) -> FrameSelectView: ...
 
     @typing.no_type_check
     def __getitem__(self, idx, /):
@@ -73,7 +75,7 @@ class Frame(datasets.Dataset, abc.ABC):
         if isinstance(idx, str):
             return self.column(idx)
 
-        if _typing.is_list_of(str)(idx):
+        if is_list_of(str)(idx):
             return self.select(*idx)
 
         if not _is_table_index(idx):
@@ -82,13 +84,13 @@ class Frame(datasets.Dataset, abc.ABC):
         # If slice, convert to `range(len(self))[idx]`.
         # This will be the same length as the output list,
         # so it's ok that `NDArray` is less efficient than `slice`.
-        it: range | list[int] | _typing.IntArray
+        it: range | list[int] | IntArray
         if isinstance(idx, slice):
             it = range(len(self))[idx]
         else:
             it = idx
 
-        arr: _typing.IntArray = np.asarray(it)
+        arr: IntArray = np.asarray(it)
         arr = self._check_idx(arr)
 
         item = self._getitem(arr)
@@ -107,13 +109,13 @@ class Frame(datasets.Dataset, abc.ABC):
 
     @property
     @abc.abstractmethod
-    def attrs(self) -> schemas.AttrSet:
+    def attrs(self) -> AttrSet:
         "The schema of the current frame."
 
         raise NotImplementedError
 
     @abc.abstractmethod
-    def _getitem(self, idx: _typing.IntArray, /) -> chunks.Chunk:
+    def _getitem(self, idx: IntArray, /) -> Chunk:
         """
         The implementation of `__getitem__`.
 
@@ -129,13 +131,11 @@ class Frame(datasets.Dataset, abc.ABC):
     @classmethod
     @typing.override
     def view_types(cls):
-        from . import views
+        from .views import FrameColumnView, FrameSelectView
 
-        return datasets.DatasetViewTypes(
-            column=views.FrameColumnView, select=views.FrameSelectView
-        )
+        return datasets.DatasetViewTypes(column=FrameColumnView, select=FrameSelectView)
 
-    def _check_idx(self, idx: _typing.IntArray, /) -> _typing.IntArray:
+    def _check_idx(self, idx: IntArray, /) -> IntArray:
         "Check if the index is valid, and then remap the index to be positive."
 
         length = len(self)
@@ -148,7 +148,7 @@ class Frame(datasets.Dataset, abc.ABC):
         return idx % length
 
 
-def _is_table_index(idx: typing.Any) -> typing.TypeIs[_typing.BatchIndex]:
+def _is_table_index(idx: typing.Any) -> typing.TypeIs[BatchIndex]:
     "Check if the `idx` passed in is a valid type."
 
     # Check if it's a valid slice.

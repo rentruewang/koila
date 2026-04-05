@@ -5,8 +5,7 @@ import pytest
 import torch
 from numpy import random as np_rand
 
-from aioway import chunks
-from tests import fake
+from aioway.chunks import Chunk
 
 
 @pytest.fixture(params=fake.cpu_and_maybe_cuda(), scope="session")
@@ -40,7 +39,7 @@ def test_chunk_getitem_size(device: str, batch: int) -> None:
     assert len(block[torch_idx]) == (torch_idx > 0).sum()
 
     # Int index in torch.
-    indexed: chunks.Chunk = block[torch.arange(len(torch_idx))[torch_idx]]
+    indexed: Chunk = block[torch.arange(len(torch_idx))[torch_idx]]
     assert len(indexed) == (torch_idx > 0).sum().item()
 
     # Bool index in numpy.

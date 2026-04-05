@@ -9,13 +9,13 @@ import typing
 
 import lark
 
-from aioway._tracking import logging
+from aioway._tracking.logging import get_logger
 
-from . import _common
+from ._common import lark_transformer_dcls, parse_and_transform_later
 
 __all__ = ["TypeList"]
 
-LOGGER = logging.get_logger(__name__)
+LOGGER = get_logger(__name__)
 
 
 class TypeList:
@@ -60,7 +60,7 @@ class TypeList:
 
     @classmethod
     def parse(cls, text: str, /, **types: type) -> typing.Self:
-        return _common.parse_and_transform_later(
+        return parse_and_transform_later(
             parser=_param_list_lark_parser,
             transformer=ParamListTransformer,
             text=text,
@@ -86,7 +86,7 @@ def _param_list_lark_parser():
     return lark.Lark(_PARAM_LIST_GRAMMAR, start="param_list")
 
 
-@_common.lark_transformer_dcls
+@lark_transformer_dcls
 class ParamListTransformer(lark.Transformer):
     _mapping: dict[str, type] = dcls.field(default_factory=dict)
 

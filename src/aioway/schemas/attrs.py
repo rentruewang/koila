@@ -8,16 +8,18 @@ from collections import abc as cabc
 
 import torch
 
-from aioway import _tracking
-from aioway._tracking import logging
+from aioway._tracking import get_tracker
+from aioway._tracking.logging import get_logger
 
-from . import devices, dtypes, shapes
+from .devices import Device, DeviceLike
+from .dtypes import DType, DTypeLike
+from .shapes import Shape, ShapeLike
 
 __all__ = ["Attr", "attr"]
 
 
-LOGGER = logging.get_logger(__name__)
-TRACKER = _tracking.get_tracker(lambda: Attr)
+LOGGER = get_logger(__name__)
+TRACKER = get_tracker(lambda: Attr)
 
 
 @dcls.dataclass(frozen=True)
@@ -26,29 +28,29 @@ class Attr:
     The "type" for a `torch.Tensor`, describing everything we want to know about it.
     """
 
-    device: devices.Device
+    device: Device
     """
     The device for the column.
     """
 
-    dtype: dtypes.DType
+    dtype: DType
     """
     The data type for the column.
     """
 
-    shape: shapes.Shape
+    shape: Shape
     """
     The shape of individual items in the column.
     """
 
     def __post_init__(self) -> None:
-        if not isinstance(self.device, devices.Device):
+        if not isinstance(self.device, Device):
             raise TypeError(type(self.device))
 
-        if not isinstance(self.dtype, dtypes.DType):
+        if not isinstance(self.dtype, DType):
             raise TypeError(type(self.dtype))
 
-        if not isinstance(self.shape, shapes.Shape):
+        if not isinstance(self.shape, Shape):
             raise TypeError(type(self.shape))
 
     @typing.override
@@ -70,26 +72,26 @@ class Attr:
     @classmethod
     def parse(
         cls,
-        device: devices.DeviceLike,
-        dtype: dtypes.DTypeLike,
-        shape: shapes.ShapeLike,
+        device: DeviceLike,
+        dtype: DTypeLike,
+        shape: ShapeLike,
     ) -> typing.Self:
         """
         The convenient constructor for `Attr`.
 
         Args:
-            device: Things that can be converted to `devices.Device`.
-            dtype: Things that can be converted to `dtypes.DType`.
-            shape: Things that can be converted to `shapes.Shape`.
+            device: Things that can be converted to `Device`.
+            dtype: Things that can be converted to `DType`.
+            shape: Things that can be converted to `Shape`.
 
         Returns:
             An attribute instance.
         """
 
         return cls(
-            device=devices.Device.parse(device),
-            dtype=dtypes.DType.parse(dtype),
-            shape=shapes.Shape.parse(shape),
+            device=Device.parse(device),
+            dtype=DType.parse(dtype),
+            shape=Shape.parse(shape),
         )
 
     @classmethod
@@ -104,16 +106,16 @@ class Attr:
 
 
 class AttrDict(typing.TypedDict):
-    device: devices.DeviceLike
-    dtype: dtypes.DTypeLike
-    shape: shapes.ShapeLike
+    device: DeviceLike
+    dtype: DTypeLike
+    shape: ShapeLike
 
 
 @typing.runtime_checkable
 class AttrProto(typing.Protocol):
-    device: devices.DeviceLike
-    dtype: dtypes.DTypeLike
-    shape: shapes.ShapeLike
+    device: DeviceLike
+    dtype: DTypeLike
+    shape: ShapeLike
 
 
 type AttrLike = Attr | AttrDict | torch.Tensor

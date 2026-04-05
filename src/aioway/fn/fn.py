@@ -6,7 +6,7 @@ import functools
 import typing
 from collections import abc as cabc
 
-from aioway import ctx
+from aioway.ctx import enabled_fake_mode, fake_mode_func, is_fake_tensor
 
 __all__ = ["Fn", "FnState"]
 
@@ -57,13 +57,13 @@ class Fn[T](abc.ABC):
         in the default case `preview` is `forward` with fake mode on.
         """
 
-        if ctx.enabled_fake_mode():
+        if enabled_fake_mode():
             return self.preview()
 
         else:
             return self.__forward_cache()
 
-    @ctx.fake_mode_func
+    @fake_mode_func
     def preview(self) -> T:
         """
         The `preview` function generates a "preview" for the `Tensor` that would be generated.
@@ -81,7 +81,7 @@ class Fn[T](abc.ABC):
         """
 
         result = self.forward()
-        assert ctx.is_fake_tensor(result)
+        assert is_fake_tensor(result)
         return result
 
     @abc.abstractmethod

@@ -8,13 +8,14 @@ import numpy as np
 import torch
 from numpy import typing as npt
 
-from aioway import _tracking, _typing
-from aioway._tracking import logging
+from aioway._tracking import get_tracker
+from aioway._tracking.logging import get_logger
+from aioway._typing import is_list_of, is_tuple_of
 
 __all__ = ["ShapeLike", "Shape"]
 
-LOGGER = logging.get_logger(__name__)
-TRACKER = _tracking.get_tracker(lambda: Shape)
+LOGGER = get_logger(__name__)
+TRACKER = get_tracker(lambda: Shape)
 
 type _PrimitiveNumber = float | int | bool
 type _IntArrayLike = tuple[int, ...] | list[int] | npt.NDArray[np.int_]
@@ -24,8 +25,8 @@ type ShapeLike = int | cabc.Iterable[int] | Shape
 "Types convertible to `Shape`s. Note that `int` can be converted as well."
 
 
-_is_tuple_of_int = _typing.is_tuple_of(int)
-_is_list_of_int = _typing.is_list_of(int)
+_is_tuple_of_int = is_tuple_of(int)
+_is_list_of_int = is_list_of(int)
 
 
 @dcls.dataclass(frozen=True, eq=False)
@@ -128,7 +129,7 @@ class Shape(cabc.Sequence[int]):
         Validate the dimensions amongst the shapes.
         """
 
-        is_list_of_int = _typing.is_list_of(int)
+        is_list_of_int = is_list_of(int)
         length = len(self)
 
         return is_list_of_int(dims) and (max(dims) >= length or min(dims) < -length)

@@ -8,13 +8,14 @@ import typing
 
 import lark
 
-from aioway._tracking import logging
+from aioway._tracking.logging import get_logger
 
-from . import _common, tlists
+from ._common import lark_transformer_dcls, parse_and_transform_later
+from .tlists import ParamListTransformer, TypeList
 
 __all__ = ["Signature"]
 
-LOGGER = logging.get_logger(__name__)
+LOGGER = get_logger(__name__)
 
 
 class Signature:
@@ -30,7 +31,7 @@ class Signature:
     def __init__(self, *types: type | types.GenericAlias) -> None:
         *param_types, ret = types
 
-        self._param_types = tlists.TypeList(*param_types)
+        self._param_types = TypeList(*param_types)
 
         if not isinstance(ret, type):
             raise TypeError(
@@ -56,7 +57,7 @@ class Signature:
         return hash((self.param_types, self.return_type))
 
     @property
-    def param_types(self) -> tlists.TypeList:
+    def param_types(self) -> TypeList:
         "The parameters of the signature."
 
         return self._param_types
@@ -69,7 +70,7 @@ class Signature:
 
     @classmethod
     def parse(cls, text: str, /, **types: type) -> typing.Self:
-        return _common.parse_and_transform_later(
+        return parse_and_transform_later(
             parser=_signature_lark_parser,
             transformer=SignatureTransformer,
             text=text,
@@ -78,12 +79,12 @@ class Signature:
 
 _SIGNATURE_LIST_GRAMMAR = r"""
 signature: param_list "->" VAR_NAME
-""" + tlists.TypeList.parsing_grammar()
+""" + TypeList.parsing_grammar()
 
 
-@_common.lark_transformer_dcls
-class SignatureTransformer(tlists.ParamListTransformer):
-    def signature(self, param_list: tlists.TypeList, result: str):
+@lark_transformer_dcls
+class SignatureTransformer(ParamListTransformer):
+    def signature(self, param_list: TypeList, result: str):
         return Signature(*param_list, self._mapping[result])
 
 
