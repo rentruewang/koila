@@ -14,7 +14,6 @@ from aioway._tracking.logging import get_logger
 from aioway.ctx import enabled_fake_mode, fake_mode_func
 
 from .de import defer, eager
-from .fn import Fn
 from .tensors import TensorFn
 
 __all__ = ["ModuleFn", "FakableModule"]
@@ -70,12 +69,9 @@ class ModuleFn[**P, M: nn.Module](TensorFn):
     module: FakableModule[P, M]
 
     @typing.override
-    def deps(self) -> tuple[Fn[object], ...]:
-        return tuple(self._deps())
-
-    def _deps(self):
+    def deps(self):
         yield self.tensor
-        yield from self.params_fn()
+        yield from self._params_fn()
 
     @typing.override
     def forward(self) -> torch.Tensor:
@@ -83,11 +79,8 @@ class ModuleFn[**P, M: nn.Module](TensorFn):
         module = self.module.module
         return module(tensor)
 
-    def parameters(self) -> cabc.Generator[nn.Parameter]:
-        yield from self.module.parameters()
-
-    def params_fn(self):
-        for param in self.parameters():
+    def _params_fn(self):
+        for param in self.module.parameters():
             yield defer(param)
 
     @classmethod
