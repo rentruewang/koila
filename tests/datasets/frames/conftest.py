@@ -9,17 +9,18 @@ from aioway.datasets import (
     FrameStream,
     FrameStreamLoader,
 )
+from tests.fake import chunk_ok
 
 
 def block_table(device: str, batch_size: int, data_size: int):
-    block = fake.chunk_ok(size=data_size, device=device)
+    block = chunk_ok(size=data_size, device=device)
     return ChunkFrame(block)
 
 
 def list_table(device: str, batch_size: int, data_size: int):
     return ChunkListFrame(
         [
-            fake.chunk_ok(size=batch_size, device=device)
+            chunk_ok(size=batch_size, device=device)
             for _ in range(0, data_size, batch_size)
         ]
     )

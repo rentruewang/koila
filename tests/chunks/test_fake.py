@@ -6,29 +6,30 @@ import torch
 from numpy import random as np_rand
 
 from aioway.chunks import Chunk
+from tests.fake import batch_sizes, chunk_ok, cpu_and_maybe_cuda
 
 
-@pytest.fixture(params=fake.cpu_and_maybe_cuda(), scope="session")
+@pytest.fixture(params=cpu_and_maybe_cuda(), scope="session")
 def device(request: pytest.FixtureRequest) -> str:
     return request.param
 
 
-@pytest.fixture(params=fake.batch_sizes(), scope="module")
+@pytest.fixture(params=batch_sizes(), scope="module")
 def batch(request: pytest.FixtureRequest) -> int:
     return request.param
 
 
 def test_chunk_init_success(device: str, batch: int) -> None:
-    _ = fake.chunk_ok(device=device, size=batch)
+    _ = chunk_ok(device=device, size=batch)
 
 
 def test_chunk_len(device: str, batch: int) -> None:
-    block = fake.chunk_ok(device=device, size=batch)
+    block = chunk_ok(device=device, size=batch)
     assert len(block) == batch
 
 
 def test_chunk_getitem_size(device: str, batch: int) -> None:
-    block = fake.chunk_ok(device=device, size=batch)
+    block = chunk_ok(device=device, size=batch)
 
     assert len(block[batch - 1 : batch]) == 1
     assert len(block[[0]]) == 1
@@ -51,5 +52,5 @@ def test_chunk_getitem_size(device: str, batch: int) -> None:
 
 
 def test_chunk_keys(device: str, batch: int) -> None:
-    block = fake.chunk_ok(device=device, size=batch)
+    block = chunk_ok(device=device, size=batch)
     assert set(block.keys()) == {"f1d", "f2d", "i1d", "i2d"}

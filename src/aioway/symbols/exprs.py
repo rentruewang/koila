@@ -6,24 +6,6 @@ from collections import abc as cabc
 
 from aioway._tracking.logging import get_logger
 
-from .getters import GetItemSymbol, SelectSymbol
-from .ufuncs import (
-    AddColSymbol,
-    EqColSymbol,
-    ExpColSymbol,
-    FloorDivColSymbol,
-    GeColSymbol,
-    GtColSymbol,
-    InvColSymbol,
-    LeColSymbol,
-    LtColSymbol,
-    MultColSymbol,
-    NeColSymbol,
-    NegColSymbol,
-    SubColSymbol,
-    TrueDivColSymbol,
-)
-
 __all__ = ["Symbol", "ColSymbol", "TableSymbol"]
 
 LOGGER = get_logger(__name__)
@@ -48,38 +30,56 @@ class ColSymbol(Symbol, abc.ABC):
 
     @typing.final
     def __invert__(self):
+        from .ufuncs import InvColSymbol
+
         return InvColSymbol(self)
 
     @typing.final
     def __neg__(self):
+        from .ufuncs import NegColSymbol
+
         return NegColSymbol(self)
 
     @typing.final
     def __add__(self, other: ColSymbol):
+        from .ufuncs import AddColSymbol
+
         return AddColSymbol(self, other)
 
     @typing.final
     def __sub__(self, other: ColSymbol):
+        from .ufuncs import SubColSymbol
+
         return SubColSymbol(self, other)
 
     @typing.final
     def __mul__(self, other: ColSymbol):
+        from .ufuncs import MultColSymbol
+
         return MultColSymbol(self, other)
 
     @typing.final
     def __truediv__(self, other: ColSymbol):
+        from .ufuncs import TrueDivColSymbol
+
         return TrueDivColSymbol(self, other)
 
     @typing.final
     def __floordiv__(self, other: ColSymbol):
+        from .ufuncs import FloorDivColSymbol
+
         return FloorDivColSymbol(self, other)
 
     @typing.final
     def __pow__(self, other: ColSymbol):
+        from .ufuncs import ExpColSymbol
+
         return ExpColSymbol(self, other)
 
     @typing.final
     def __eq__(self, other: object):
+        from .ufuncs import EqColSymbol
+
         if isinstance(other, ColSymbol):
             return EqColSymbol(self, other)
 
@@ -87,6 +87,8 @@ class ColSymbol(Symbol, abc.ABC):
 
     @typing.final
     def __ne__(self, other: object):
+        from .ufuncs import NeColSymbol
+
         if isinstance(other, ColSymbol):
             return NeColSymbol(self, other)
 
@@ -94,18 +96,26 @@ class ColSymbol(Symbol, abc.ABC):
 
     @typing.final
     def __gt__(self, other: ColSymbol):
+        from .ufuncs import GtColSymbol
+
         return GtColSymbol(self, other)
 
     @typing.final
     def __ge__(self, other: ColSymbol):
+        from .ufuncs import GeColSymbol
+
         return GeColSymbol(self, other)
 
     @typing.final
     def __lt__(self, other: ColSymbol):
+        from .ufuncs import LtColSymbol
+
         return LtColSymbol(self, other)
 
     @typing.final
     def __le__(self, other: ColSymbol):
+        from .ufuncs import LeColSymbol
+
         return LeColSymbol(self, other)
 
 
@@ -137,7 +147,11 @@ class TableSymbol(Symbol, abc.ABC):
     def keys(self) -> cabc.KeysView[str]: ...
 
     def column(self, key: str) -> ColSymbol:
+        from .getters import GetItemSymbol
+
         return GetItemSymbol(table=self, column=key)
 
     def select(self, *keys: str) -> TableSymbol:
+        from .getters import SelectSymbol
+
         return SelectSymbol(table=self, columns=keys)

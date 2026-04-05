@@ -13,7 +13,6 @@ from aioway._typing import is_list_of
 from aioway.ctx import to_fake_tensordict
 from aioway.schemas import attr_set
 
-from .de import eager
 from .fn import Fn
 from .tensors import TensorFn
 
@@ -217,7 +216,7 @@ class GatherTensorDictFn(TensorDictFn):
 
     @typing.override
     def forward(self) -> td.TensorDict:
-        pass
+        from .de import eager
 
         source = eager(self.source)
         index = eager(self.index)

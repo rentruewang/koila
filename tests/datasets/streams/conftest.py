@@ -5,11 +5,12 @@
 import pytest
 
 from aioway.datasets import ChunkFrame, Frame, FrameStream, FrameStreamLoader
+from tests.fake import chunk_ok, concat_ok, unionable_ok
 
 
 @pytest.fixture
 def block_table(device: str, data_size: int) -> ChunkFrame:
-    block = fake.chunk_ok(size=data_size, device=device)
+    block = chunk_ok(size=data_size, device=device)
     return ChunkFrame(data=block)
 
 
@@ -23,7 +24,7 @@ def table_stream(block_table: Frame, batch_size: int) -> FrameStream:
 
 @pytest.fixture
 def concat_frame(device: str, data_size: int) -> ChunkFrame:
-    block = fake.concat_ok(size=data_size, device=device)
+    block = concat_ok(size=data_size, device=device)
     return ChunkFrame(data=block)
 
 
@@ -39,7 +40,7 @@ def concat_stream(concat_frame: Frame, batch_size: int) -> FrameStream:
 def joinable_frame(device: str, data_size: int) -> ChunkFrame:
     "`Frame` for joining on the RHS."
 
-    block = fake.unionable_ok(size=data_size, device=device)
+    block = unionable_ok(size=data_size, device=device)
     return ChunkFrame(data=block)
 
 

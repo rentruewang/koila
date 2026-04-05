@@ -104,8 +104,6 @@ class Vector:
         return _from_fn(unop(self.fn()))
 
     def __op2(self, other: typing.Any, binop: AnyUFunc2) -> typing.Self:
-        pass
-
         match other:
             case Vector():
                 return _from_fn(binop(self.fn(), other.fn()))

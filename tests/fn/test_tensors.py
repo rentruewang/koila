@@ -6,7 +6,6 @@ from collections import abc as cabc
 import pytest
 import torch
 
-from aioway.ctx import fake_mode
 from aioway.fn import TensorFn
 from aioway.schemas import attr
 
@@ -62,12 +61,6 @@ def binop(request):
     return request.param
 
 
-@pytest.fixture
-def fake_mode():
-    with fake_mode() as f:
-        yield f
-
-
 def test_left_normal(left_fn: TensorFn):
     assert isinstance(left_fn.forward(), torch.Tensor)
 
@@ -75,10 +68,10 @@ def test_left_normal(left_fn: TensorFn):
 def test_left_attr(left_fn: TensorFn):
     tensor = left_fn.preview()
     assert isinstance(tensor, torch.Tensor)
-    attr = attr(tensor)
-    assert attr.shape == [3, 5]
-    assert attr.device == "cpu"
-    assert attr.dtype == "float"
+    a = attr(tensor)
+    assert a.shape == [3, 5]
+    assert a.device == "cpu"
+    assert a.dtype == "float"
 
 
 def test_binary_ufunc(

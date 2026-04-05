@@ -12,7 +12,6 @@ from aioway.chunks import Chunk
 from aioway.schemas import AttrSet
 
 from .. import datasets
-from .views import StreamColumnView, StreamSelectView
 
 __all__ = ["Stream", "StreamState", "Stream", "Stream", "Stream"]
 
@@ -158,6 +157,8 @@ class Stream(cabc.Iterator[Chunk], datasets.Dataset, abc.ABC):
     @classmethod
     @typing.override
     def view_types(cls):
+        from .views import StreamColumnView, StreamSelectView
+
         return datasets.DatasetViewTypes(
             column=StreamColumnView, select=StreamSelectView
         )
