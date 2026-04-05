@@ -98,14 +98,30 @@ class TensorFn(Fn[torch.Tensor], abc.ABC):
     def attr(self):
         return attr(self.forward() if self.done else self.preview())
 
+    @property
+    def grad(self):
+        return self.do().grad
+
+    def backward(self):
+        """
+        Do a simple backward pass.
+        Only available on a scalar.
+        The arguments are not yet supported.
+        """
+
+        self._assert_scalar()
+        self.do().backward()
+
     def item(self):
+        self._assert_scalar()
+        return self.do().item()
+
+    def _assert_scalar(self):
         if not self.numel() == 1:
             # Error message copied from `torch`.
             raise RuntimeError(
                 f"a `TensorFn` with {self.numel()} elements cannot be converted to scalar"
             )
-
-        return self.do().item()
 
     @property
     def requires_grad(self) -> bool:

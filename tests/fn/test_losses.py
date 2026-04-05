@@ -35,3 +35,9 @@ def loss_fn(request: pytest.FixtureRequest, input: TensorFn, target: TensorFn):
 def test_loss_fn(loss_fn: LossFn):
     assert isinstance(loss_fn.shape, Shape)
     assert loss_fn.shape.numel() == 1
+
+
+def test_backward_fn(loss_fn: LossFn, input: TensorFn, target: TensorFn):
+    loss_fn.backward()
+    assert input.grad is not None
+    assert target.grad is None
