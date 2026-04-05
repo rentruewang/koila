@@ -105,7 +105,7 @@ class Fn[T](abc.ABC):
                 yield from obj.deps()
 
     @typing.final
-    def parameters(self, deps: bool) -> cabc.Generator[torch.Tensor]:
+    def parameters(self, deps: bool = True) -> cabc.Generator[torch.Tensor]:
         """
         Yield all the dependent parameters of `self`.
 

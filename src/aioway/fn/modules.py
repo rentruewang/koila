@@ -74,7 +74,8 @@ class ModuleFn[**P, M: nn.Module](TensorFn):
         module = self.module.module
         return module(tensor)
 
-    def _params_self(self):
+    @typing.override
+    def _params_self(self) -> cabc.Generator[torch.Tensor]:
         yield from self.module.parameters()
 
     @classmethod
