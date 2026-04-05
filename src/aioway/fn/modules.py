@@ -36,7 +36,7 @@ class FakableModule[**P, M: nn.Module]:
         self._args = args
         self._kwargs = kwargs
 
-    def __call__(self, tensor: torch.Tensor | tensors.TensorFn, /):
+    def __call__(self, tensor: torch.Tensor | tensors.TensorFn, /) -> torch.Tensor:
         tensor = de.eager(tensor)
         return self.module(tensor)
 
@@ -64,7 +64,7 @@ class ModuleFn[**P, M: nn.Module](tensors.TensorFn):
     """
 
     tensor: tensors.TensorFn
-    builder: FakableModule[P, M]
+    module: FakableModule[P, M]
 
     @typing.override
     def deps(self) -> tuple[fn.Fn[object], ...]:
@@ -77,12 +77,18 @@ class ModuleFn[**P, M: nn.Module](tensors.TensorFn):
     @typing.override
     def forward(self) -> torch.Tensor:
         tensor = self.tensor.do()
-        module = self.builder.module
+        module = self.module.module
         return module(tensor)
 
     def parameters(self) -> cabc.Generator[nn.Parameter]:
-        yield from self.builder.parameters()
+        yield from self.module.parameters()
 
     def params_fn(self):
         for param in self.parameters():
             yield de.defer(param)
+
+    @classmethod
+    def build(
+        cls, tensor: torch.Tensor | tensors.TensorFn, module: FakableModule
+    ) -> typing.Self:
+        return cls(tensor=de.defer(tensor), module=module)
