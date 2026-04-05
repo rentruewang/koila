@@ -4,7 +4,8 @@ import pytest
 import torch
 from torch import nn
 
-from aioway import modules, schemas
+from aioway import schemas
+from aioway.fn import modules
 
 
 @pytest.fixture
