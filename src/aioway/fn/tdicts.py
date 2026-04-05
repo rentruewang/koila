@@ -149,7 +149,7 @@ class TensorDictDataFn(TensorDictFn):
         return ()
 
 
-@_common.dcls_no_eq
+@_common.dcls_no_eq_no_repr
 class LambdaTensorDictFn(TensorDictFn):
     "The `fn.Fn` representing arbitrary computation on `td.TensorDict`."
 
@@ -169,7 +169,7 @@ class LambdaTensorDictFn(TensorDictFn):
         return (self.source,)
 
 
-@_common.dcls_no_eq
+@_common.dcls_no_eq_no_repr
 class LambdaTensorFn(tensors.TensorFn):
     "The `fn.Fn` representing arbitrary computation on `td.TensorDict`."
 
@@ -189,7 +189,7 @@ class LambdaTensorFn(tensors.TensorFn):
         return (self.source,)
 
 
-@_common.dcls_no_eq
+@_common.dcls_no_eq_no_repr
 class GatherTensorDictFn(TensorDictFn):
 
     source: TensorDictFn
@@ -215,7 +215,7 @@ class GatherTensorDictFn(TensorDictFn):
             yield self.index
 
 
-@_common.dcls_no_eq
+@_common.dcls_no_eq_no_repr
 class BooleanIndexTensorDictFn(GatherTensorDictFn):
 
     @typing.override
@@ -223,7 +223,7 @@ class BooleanIndexTensorDictFn(GatherTensorDictFn):
         return self.source.preview()
 
 
-@_common.dcls_no_eq
+@_common.dcls_no_eq_no_repr
 class MergeTensorDictFn(TensorDictFn):
 
     left: TensorDictFn

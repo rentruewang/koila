@@ -34,6 +34,10 @@ class Fn[T](abc.ABC):
 
     __match_args__: typing.ClassVar[tuple[str, ...]]
 
+    def __repr__(self):
+        name = self._name()
+        return f"{name}<{self.state}>"
+
     @typing.final
     def do(self) -> T:
         """
@@ -106,7 +110,22 @@ class Fn[T](abc.ABC):
 
     @property
     def done(self) -> bool:
+        "Whether or not this is done."
+
         return self.__forward_cache.is_hit
+
+    @property
+    def state(self) -> FnState:
+        "The state of the `Fn`. Would be an instance of `FnState` enum."
+
+        return FnState.DONE if self.done else FnState.PENDING
+
+    def _name(self) -> str:
+        """
+        The name of the `Fn` used in `repr`.
+        """
+
+        return type(self).__name__
 
 
 _PENDING = object()
@@ -141,5 +160,7 @@ class FnCache[T]:
         return typing.cast(T, self._result)
 
     @property
-    def is_hit(self):
+    def is_hit(self) -> bool:
+        "Returns if the cache is previously called."
+
         return self._result is not _PENDING
