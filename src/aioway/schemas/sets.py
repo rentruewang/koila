@@ -45,7 +45,7 @@ class _AttrSetBase[T](cabc.Mapping[str, T]):
     Most likely will change in the future.
     """
 
-    attrs: tuple[_AttrItem[T], ...] = ()
+    attr_items: tuple[_AttrItem[T], ...] = ()
     """
     The data backing the `AttrSet`. Must be sorted.
     """
@@ -63,11 +63,11 @@ class _AttrSetBase[T](cabc.Mapping[str, T]):
 
     @typing.override
     def __len__(self) -> int:
-        return len(self.attrs)
+        return len(self.attr_items)
 
     @typing.override
     def __iter__(self) -> cabc.Iterator[str]:
-        return (attr.name for attr in self.attrs)
+        return (attr.name for attr in self.attr_items)
 
     @typing.overload
     def __getitem__(self, key: str) -> T: ...
@@ -93,14 +93,14 @@ class _AttrSetBase[T](cabc.Mapping[str, T]):
             raise KeyError(key)
 
         assert 0 <= idx < len(self)
-        return self.attrs[idx].attr
+        return self.attr_items[idx].attr
 
     def select(self, *keys: str) -> typing.Self:
         return type(self).from_dict({key: self[key] for key in keys})
 
     @functools.cached_property
     def _repr_string(self):
-        kvs = (f"{k}:{v}" for k, v in self.attrs)
+        kvs = (f"{k}:{v}" for k, v in self.attr_items)
         return "{" + ", ".join(kvs) + "}"
 
     @functools.cached_property
@@ -109,17 +109,19 @@ class _AttrSetBase[T](cabc.Mapping[str, T]):
 
     @functools.cached_property
     def names(self):
-        return [col.name for col in self.attrs]
+        return [col.name for col in self.attr_items]
 
     @classmethod
-    def from_values(cls, **attrs: T) -> typing.Self:
-        return cls.from_dict(attrs)
+    def from_values(cls, **mapping: T) -> typing.Self:
+        return cls.from_dict(mapping)
 
     @classmethod
-    def from_dict(cls, attrs: cabc.Mapping[str, T], /) -> typing.Self:
+    def from_dict(cls, mapping: cabc.Mapping[str, T], /) -> typing.Self:
         return cls(
             tuple(
-                sorted(_AttrItem(name=name, attr=attr) for name, attr in attrs.items())
+                sorted(
+                    _AttrItem(name=name, attr=attr) for name, attr in mapping.items()
+                )
             )
         )
 
@@ -127,24 +129,24 @@ class _AttrSetBase[T](cabc.Mapping[str, T]):
 class DTypeSet(_AttrSetBase[dtypes.DType]):
     @classmethod
     @typing.override
-    def from_dict(cls, attrs: cabc.Mapping[str, dtypes.DTypeLike], /) -> typing.Self:
-        converted = {key: dtypes.DType.parse(dt) for key, dt in attrs.items()}
+    def from_dict(cls, mapping: cabc.Mapping[str, dtypes.DTypeLike], /) -> typing.Self:
+        converted = {key: dtypes.DType.parse(dt) for key, dt in mapping.items()}
         return super().from_dict(converted)
 
 
 class DeviceSet(_AttrSetBase[devices.Device]):
     @classmethod
     @typing.override
-    def from_dict(cls, attrs: cabc.Mapping[str, devices.DeviceLike]) -> typing.Self:
-        converted = {key: devices.Device.parse(dev) for key, dev in attrs.items()}
+    def from_dict(cls, mapping: cabc.Mapping[str, devices.DeviceLike]) -> typing.Self:
+        converted = {key: devices.Device.parse(dev) for key, dev in mapping.items()}
         return super().from_dict(converted)
 
 
 class ShapeSet(_AttrSetBase[shapes.Shape]):
     @classmethod
     @typing.override
-    def from_dict(cls, attrs: cabc.Mapping[str, shapes.ShapeLike]) -> typing.Self:
-        converted = {key: shapes.Shape.parse(dev) for key, dev in attrs.items()}
+    def from_dict(cls, mapping: cabc.Mapping[str, shapes.ShapeLike]) -> typing.Self:
+        converted = {key: shapes.Shape.parse(dev) for key, dev in mapping.items()}
         return super().from_dict(converted)
 
 
@@ -192,24 +194,27 @@ class AttrSet(_AttrSetBase[attrs.Attr]):
             return super().__getitem__(idx)
 
         names = self.names
-        devices = self.devices
-        shapes = self.shapes
-        dtypes = self.dtypes
+        device_list = self.device_list
+        shape_list = self.shape_list
+        dtype_list = self.dtype_list
 
         if isinstance(idx, int):
-            new_shape = [shape[1:] for shape in shapes]
+            new_shape = [shape[1:] for shape in shape_list]
 
         elif isinstance(idx, slice | np.ndarray | torch.Tensor):
-            new_shape = shapes[:]
+            new_shape = shape_list[:]
 
         elif isinstance(idx, list) and all(isinstance(i, int) for i in idx):
-            new_shape = shapes[:]
+            new_shape = shape_list[:]
 
         else:
             raise TypeError(type(idx))
 
         return self.from_fields(
-            names=names, devices=devices, dtypes=dtypes, shapes=new_shape
+            names=names,
+            device_list=device_list,
+            dtype_list=dtype_list,
+            shape_list=new_shape,
         )
 
     def rename(self, **renames: str):
@@ -218,16 +223,16 @@ class AttrSet(_AttrSetBase[attrs.Attr]):
         )
 
     @functools.cached_property
-    def dtypes(self):
-        return [col.attr.dtype for col in self.attrs]
+    def dtype_list(self):
+        return [col.attr.dtype for col in self.attr_items]
 
     @functools.cached_property
-    def shapes(self):
-        return [col.attr.shape for col in self.attrs]
+    def shape_list(self):
+        return [col.attr.shape for col in self.attr_items]
 
     @functools.cached_property
-    def devices(self):
-        return [col.attr.device for col in self.attrs]
+    def device_list(self):
+        return [col.attr.device for col in self.attr_items]
 
     @classmethod
     @typing.no_type_check
@@ -235,51 +240,53 @@ class AttrSet(_AttrSetBase[attrs.Attr]):
         cls,
         *,
         names: cabc.Sequence[str],
-        shapes: cabc.Sequence[shapes.ShapeLike],
-        dtypes: cabc.Sequence[dtypes.DTypeLike],
-        devices: cabc.Sequence[devices.DeviceLike],
+        shape_list: cabc.Sequence[shapes.ShapeLike],
+        dtype_list: cabc.Sequence[dtypes.DTypeLike],
+        device_list: cabc.Sequence[devices.DeviceLike],
     ) -> typing.Self:
         "Create an `AttrSet` from a set of seuqences of attributes of same length."
 
-        if not (len(names) == len(shapes) == len(dtypes) == len(devices)):
+        if not (len(names) == len(shape_list) == len(dtype_list) == len(device_list)):
             raise ValueError(
                 "Should all have the same length. "
-                f"Got {len(names)=}, {len(shapes)=}, {len(dtypes)=}, {len(devices)=}."
+                f"Got {len(names)=}, {len(shape_list)=}, {len(dtype_list)=}, {len(device_list)=}."
             )
 
         mapping = {
             name: attrs.attr({"device": device, "dtype": dtype, "shape": shape})
-            for name, device, dtype, shape in zip(names, devices, dtypes, shapes)
+            for name, device, dtype, shape in zip(
+                names, device_list, dtype_list, shape_list
+            )
         }
 
         return cls.from_dict(mapping)
 
     @classmethod
     def from_sets(
-        cls, *, shapes: ShapeSet, dtypes: DTypeSet, devices: DeviceSet
+        cls, *, shape_set: ShapeSet, dtype_set: DTypeSet, device_set: DeviceSet
     ) -> typing.Self:
         "Create an `AttrSet` from `*Set` types. Keys should match."
 
-        shapes_keys = shapes.keys()
-        dtypes_keys = dtypes.keys()
-        devices_keys = devices.keys()
+        shape_keys = shape_set.keys()
+        dtype_keys = dtype_set.keys()
+        device_keys = device_set.keys()
 
-        if not (shapes_keys == dtypes_keys == devices_keys):
+        if not (shape_keys == dtype_keys == device_keys):
             raise ValueError(
                 "All sets should have the same keys. "
-                f"Got shapes={shapes_keys}, devices={devices_keys}, dtypes={dtypes_keys}"
+                f"Got shapes={shape_keys}, devices={device_keys}, dtypes={dtype_keys}"
             )
 
-        names_list = list(shapes_keys)
-        dtypes_list = [dtypes[key] for key in names_list]
-        devices_list = [devices[key] for key in names_list]
-        shapes_list = [shapes.__getitem__(key) for key in names_list]
+        names_list = list(shape_keys)
+        dtype_list = [dtype_set[key] for key in names_list]
+        device_list = [device_set[key] for key in names_list]
+        shape_list = [shape_set.__getitem__(key) for key in names_list]
 
         return cls.from_fields(
             names=names_list,
-            dtypes=dtypes_list,
-            devices=devices_list,
-            shapes=shapes_list,
+            dtype_list=dtype_list,
+            device_list=device_list,
+            shape_list=shape_list,
         )
 
     @classmethod

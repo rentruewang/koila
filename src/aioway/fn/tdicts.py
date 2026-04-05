@@ -109,7 +109,7 @@ class TensorDictFn(fn.Fn[td.TensorDict], cabc.Mapping[str, tensors.TensorFn], ab
 
     @property
     def shape(self):
-        return self.attrs.shapes
+        return self.attrs.shape_list
 
     @typing.override
     def _name(self) -> str:

@@ -76,8 +76,8 @@ class Stream(cabc.Iterator[chunks.Chunk], datasets.Dataset, abc.ABC):
         result = self._next()
         if (
             False
-            or result.attrs.dtypes != self.attrs.dtypes
-            or result.attrs.devices != self.attrs.devices
+            or result.attrs.dtype_list != self.attrs.dtype_list
+            or result.attrs.device_list != self.attrs.device_list
         ):
             raise TypeError(f"Schema mismatch: {result.attrs=}, {self.attrs=}.")
 

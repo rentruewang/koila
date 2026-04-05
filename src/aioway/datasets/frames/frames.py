@@ -95,8 +95,8 @@ class Frame(datasets.Dataset, abc.ABC):
 
         if (
             False
-            or item.attrs.devices != self.attrs.devices
-            or item.attrs.dtypes != self.attrs.dtypes
+            or item.attrs.device_list != self.attrs.device_list
+            or item.attrs.dtype_list != self.attrs.dtype_list
         ):
             raise ValueError(f"Attr mismatch for {item.attrs=} and {self.attrs=}.")
 

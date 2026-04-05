@@ -113,10 +113,10 @@ class Chunk(cabc.Mapping[str, vectors.Vector]):
         if not chunks:
             raise ValueError("Given an empty sequence. Not sure what to do.")
 
-        if len({tuple(chunk.attrs.devices) for chunk in chunks}) != 1:
+        if len({tuple(chunk.attrs.device_list) for chunk in chunks}) != 1:
             raise ValueError("Chunks should have the same devices before joining.")
 
-        if len({tuple(chunk.attrs.dtypes) for chunk in chunks}) != 1:
+        if len({tuple(chunk.attrs.dtype_list) for chunk in chunks}) != 1:
             raise ValueError("Chunks should have the same dtypes before joining.")
 
         schema = chunks[0].attrs
