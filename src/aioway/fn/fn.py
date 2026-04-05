@@ -6,7 +6,7 @@ import functools
 import typing
 from collections import abc as cabc
 
-from aioway import fake
+from aioway import ctx
 
 __all__ = ["Fn", "FnState"]
 
@@ -34,6 +34,10 @@ class Fn[T](abc.ABC):
 
     __match_args__: typing.ClassVar[tuple[str, ...]]
 
+    def __repr__(self):
+        name = self._name()
+        return f"{name}<{self.state}>"
+
     @typing.final
     def do(self) -> T:
         """
@@ -53,13 +57,13 @@ class Fn[T](abc.ABC):
         in the default case `preview` is `forward` with fake mode on.
         """
 
-        if fake.is_enabled():
+        if ctx.is_enabled():
             return self.preview()
 
         else:
             return self.__forward_cache()
 
-    @fake.enable_func
+    @ctx.fake_mode_func
     def preview(self) -> T:
         """
         The `preview` function generates a "preview" for the `Tensor` that would be generated.
@@ -77,7 +81,7 @@ class Fn[T](abc.ABC):
         """
 
         result = self.forward()
-        assert fake.is_fake_tensor(result)
+        assert ctx.is_fake_tensor(result)
         return result
 
     @abc.abstractmethod
@@ -106,7 +110,22 @@ class Fn[T](abc.ABC):
 
     @property
     def done(self) -> bool:
+        "Whether or not this is done."
+
         return self.__forward_cache.is_hit
+
+    @property
+    def state(self) -> FnState:
+        "The state of the `Fn`. Would be an instance of `FnState` enum."
+
+        return FnState.DONE if self.done else FnState.PENDING
+
+    def _name(self) -> str:
+        """
+        The name of the `Fn` used in `repr`.
+        """
+
+        return type(self).__name__
 
 
 _PENDING = object()
@@ -141,5 +160,7 @@ class FnCache[T]:
         return typing.cast(T, self._result)
 
     @property
-    def is_hit(self):
+    def is_hit(self) -> bool:
+        "Returns if the cache is previously called."
+
         return self._result is not _PENDING

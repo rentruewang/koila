@@ -8,7 +8,7 @@ from collections import abc as cabc
 import torch
 from torch import _subclasses as tsc
 
-from aioway import _common, fake, schemas
+from aioway import _common, ctx, schemas
 
 from . import fn
 
@@ -112,6 +112,10 @@ class TensorFn(fn.Fn[torch.Tensor], abc.ABC):
     def from_tensor(cls, data: torch.Tensor, /) -> TensorFn:
         return TensorDataFn(data)
 
+    @typing.override
+    def _name(self) -> str:
+        return f"{self.__class__.__name__}{self.attr}"
+
 
 def tensor(data: TensorFn | torch.Tensor) -> TensorFn:
     """
@@ -127,7 +131,7 @@ def tensor(data: TensorFn | torch.Tensor) -> TensorFn:
     raise TypeError(f"Do not know how to handle {type(data)=}.")
 
 
-@_common.dcls_no_eq
+@_common.dcls_no_eq_no_repr
 class AnyThunk(TensorFn):
     "Represents some computation that is deferred."
 
@@ -166,7 +170,7 @@ class AnyThunk(TensorFn):
         yield from self.kwargs.values()
 
 
-@_common.dcls_no_eq
+@_common.dcls_no_eq_no_repr
 class UFunc1Thunk(TensorFn):
     """
     Thunk for unary function.
@@ -197,7 +201,7 @@ class UFunc1Thunk(TensorFn):
 type BinaryTensorFnRhs = TensorFn | torch.Tensor | int | float | bool
 
 
-@_common.dcls_no_eq
+@_common.dcls_no_eq_no_repr
 class UFunc2Thunk(TensorFn):
     """
     Thunk for binary function.
@@ -242,7 +246,7 @@ class UFunc2Thunk(TensorFn):
             yield right
 
 
-@_common.dcls_no_eq
+@_common.dcls_no_eq_no_repr
 class GatherThunk(TensorFn):
     tensor: TensorFn | torch.Tensor
     index: TensorFn | torch.Tensor
@@ -274,7 +278,7 @@ class GatherThunk(TensorFn):
             yield self.index
 
 
-@_common.dcls_no_eq
+@_common.dcls_no_eq_no_repr
 class BooleanTensorThunk(GatherThunk):
 
     def __post_init__(self):
@@ -300,7 +304,7 @@ class BooleanTensorThunk(GatherThunk):
 @typing.no_type_check
 def _as_fake(tensor: torch.Tensor | TensorFn) -> tsc.FakeTensor:
     if isinstance(tensor, torch.Tensor):
-        return fake.to_fake_tensor(tensor)
+        return ctx.to_fake_tensor(tensor)
     else:
         return tensor.preview()
 
@@ -312,7 +316,7 @@ def _maybe_forward(tensor: torch.Tensor | TensorFn):
         return tensor.forward()
 
 
-@_common.dcls_no_eq
+@_common.dcls_no_eq_no_repr
 class TensorDataFn(TensorFn):
     "The `fn.Fn` representing a plain `torch.Tensor`."
 
@@ -320,7 +324,7 @@ class TensorDataFn(TensorFn):
 
     @typing.override
     def preview(self):
-        return fake.to_fake_tensor(self.data)
+        return ctx.to_fake_tensor(self.data)
 
     @typing.override
     def forward(self) -> torch.Tensor:

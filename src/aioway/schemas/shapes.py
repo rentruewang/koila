@@ -56,12 +56,7 @@ class Shape(cabc.Sequence[int]):
 
     @typing.override
     def __repr__(self) -> str:
-        return str(self)
-
-    @typing.override
-    def __str__(self) -> str:
-        dims_str = ", ".join(map(str, self.dims))
-        return f"[{dims_str}]"
+        return "(" + "x".join(map(str, self.dims)) + ")"
 
     def __eq__(self, other: object) -> bool:
         if (rhs := _cast_numpy_index(other)) is None:

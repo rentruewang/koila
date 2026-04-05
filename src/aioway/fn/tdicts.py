@@ -8,7 +8,7 @@ import numpy as np
 import tensordict as td
 import torch
 
-from aioway import _common, _typing, fake, schemas
+from aioway import _common, _typing, ctx, schemas
 
 from . import fn, tensors
 
@@ -107,6 +107,21 @@ class TensorDictFn(fn.Fn[td.TensorDict], cabc.Mapping[str, tensors.TensorFn], ab
             if key not in self.keys():
                 raise KeyError(key)
 
+    @property
+    def shape(self):
+        return self.attrs.shapes
+
+    @typing.override
+    def _name(self) -> str:
+        def components():
+            yield self.__class__.__name__
+            yield "{"
+            for key, val in self.attrs.items():
+                yield f"{key}:{val}"
+            yield "}"
+
+        return "".join(components())
+
     @classmethod
     def from_tensordict(cls, data: td.TensorDict) -> TensorDictFn:
         return TensorDictDataFn(data)
@@ -138,7 +153,7 @@ class TensorDictDataFn(TensorDictFn):
 
     @typing.override
     def preview(self) -> td.TensorDict:
-        return fake.to_fake_tensordict(self.data)
+        return ctx.to_fake_tensordict(self.data)
 
     @typing.override
     def forward(self) -> td.TensorDict:
@@ -149,7 +164,7 @@ class TensorDictDataFn(TensorDictFn):
         return ()
 
 
-@_common.dcls_no_eq
+@_common.dcls_no_eq_no_repr
 class LambdaTensorDictFn(TensorDictFn):
     "The `fn.Fn` representing arbitrary computation on `td.TensorDict`."
 
@@ -169,7 +184,7 @@ class LambdaTensorDictFn(TensorDictFn):
         return (self.source,)
 
 
-@_common.dcls_no_eq
+@_common.dcls_no_eq_no_repr
 class LambdaTensorFn(tensors.TensorFn):
     "The `fn.Fn` representing arbitrary computation on `td.TensorDict`."
 
@@ -189,7 +204,7 @@ class LambdaTensorFn(tensors.TensorFn):
         return (self.source,)
 
 
-@_common.dcls_no_eq
+@_common.dcls_no_eq_no_repr
 class GatherTensorDictFn(TensorDictFn):
 
     source: TensorDictFn
@@ -215,7 +230,7 @@ class GatherTensorDictFn(TensorDictFn):
             yield self.index
 
 
-@_common.dcls_no_eq
+@_common.dcls_no_eq_no_repr
 class BooleanIndexTensorDictFn(GatherTensorDictFn):
 
     @typing.override
@@ -223,7 +238,7 @@ class BooleanIndexTensorDictFn(GatherTensorDictFn):
         return self.source.preview()
 
 
-@_common.dcls_no_eq
+@_common.dcls_no_eq_no_repr
 class MergeTensorDictFn(TensorDictFn):
 
     left: TensorDictFn

@@ -1,5 +1,7 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
+"A bunch of context managers controlling the fake mode."
+
 import contextlib as ctxl
 import dataclasses as dcls
 import typing
@@ -11,7 +13,14 @@ from torch import _subclasses as tsc
 
 from aioway._tracking import logging
 
-__all__ = ["enable", "enable_func", "is_fake_tensor", "is_real_tensor"]
+__all__ = [
+    "fake_mode",
+    "fake_mode_func",
+    "is_fake_tensor",
+    "is_real_tensor",
+    "to_fake_tensor",
+    "to_fake_tensordict",
+]
 
 LOGGER = logging.get_logger(__name__)
 
@@ -57,7 +66,7 @@ def to_fake_tensor(tensor: torch.Tensor) -> tsc.FakeTensor:
     if is_fake_tensor(tensor):
         return tensor
 
-    with enable() as mode:
+    with fake_mode() as mode:
         converter = mode.fake_tensor_converter
         return converter.from_real_tensor(mode, tensor)
 
@@ -100,7 +109,7 @@ def is_enabled() -> tsc.FakeTensorMode | None:
 
 
 @ctxl.contextmanager
-def enable():
+def fake_mode():
     """
     Enable `torch`'s fake mode s.t. we can do symbolic processing easily.
 
@@ -111,13 +120,13 @@ def enable():
         yield _FAKE_MODE_RC.mode
 
 
-def enable_func[**P, T](func: cabc.Callable[P, T]) -> cabc.Callable[P, T]:
+def fake_mode_func[**P, T](func: cabc.Callable[P, T]) -> cabc.Callable[P, T]:
     """
     Decorator on a function, s.t. when the function is being called, fake mode is enabled.
     """
 
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
-        with enable():
+        with fake_mode():
             return func(*args, **kwargs)
 
     wrapper.__qualname__ = func.__qualname__

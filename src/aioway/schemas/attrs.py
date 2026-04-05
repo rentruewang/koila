@@ -51,14 +51,9 @@ class Attr:
         if not isinstance(self.shape, shapes.Shape):
             raise TypeError(type(self.shape))
 
-    def __repr__(self):
-        return repr(
-            {
-                "shape": self.shape,
-                "dtype": self.dtype,
-                "device": self.device,
-            }
-        )
+    @typing.override
+    def __repr__(self) -> str:
+        return f"[{self.shape},{self.dtype},{self.device}]"
 
     def to_tensor(self):
         """

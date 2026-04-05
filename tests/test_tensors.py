@@ -6,7 +6,7 @@ from collections import abc as cabc
 import pytest
 import torch
 
-from aioway import fake, fn, schemas
+from aioway import ctx, fn, schemas
 
 
 @pytest.fixture
@@ -62,7 +62,7 @@ def binop(request):
 
 @pytest.fixture
 def fake_mode():
-    with fake.enable() as f:
+    with ctx.fake_mode() as f:
         yield f
 
 

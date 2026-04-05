@@ -8,7 +8,7 @@ from collections import abc as cabc
 import torch
 from torch import nn
 
-from aioway import _signs, _tracking, fake, schemas
+from aioway import _signs, _tracking, ctx, schemas
 from aioway._tracking import logging
 
 __all__ = ["Module"]
@@ -34,7 +34,7 @@ class Module[**P, T: nn.Module]:
         self._kwargs = kwargs
 
     @functools.cached_property
-    @fake.enable_func
+    @ctx.fake_mode_func
     def fake_module(self) -> T:
         return self._module(*self._args, **self._kwargs)
 
@@ -52,11 +52,11 @@ class Module[**P, T: nn.Module]:
         with self._tracker()("preview", _signs.Signature(schemas.Attr, schemas.Attr)):
             return self._preview(attr)
 
-    @fake.enable_func
+    @ctx.fake_mode_func
     def _preview(self, attr: schemas.Attr) -> schemas.Attr:
         tensor = attr.to_tensor()
         result: torch.Tensor = self.fake_module(tensor)
-        assert fake.is_fake_tensor(result), "Function is running under fake mode."
+        assert ctx.is_fake_tensor(result), "Function is running under fake mode."
         return schemas.Attr.from_tensor(result)
 
     def forward(self, tensor: torch.Tensor) -> torch.Tensor:
