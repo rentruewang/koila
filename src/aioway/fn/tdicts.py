@@ -107,6 +107,21 @@ class TensorDictFn(fn.Fn[td.TensorDict], cabc.Mapping[str, tensors.TensorFn], ab
             if key not in self.keys():
                 raise KeyError(key)
 
+    @property
+    def shape(self):
+        return self.attrs.shapes
+
+    @typing.override
+    def _name(self) -> str:
+        def components():
+            yield self.__class__.__name__
+            yield "{"
+            for key, val in self.attrs.items():
+                yield f"{key}:{val}"
+            yield "}"
+
+        return "".join(components())
+
     @classmethod
     def from_tensordict(cls, data: td.TensorDict) -> TensorDictFn:
         return TensorDictDataFn(data)

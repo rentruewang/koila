@@ -114,8 +114,7 @@ class TensorFn(fn.Fn[torch.Tensor], abc.ABC):
 
     @typing.override
     def _name(self) -> str:
-        name = type(self).__name__
-        return f"{name}[{self.shape},{self.dtype!r},{self.device}]"
+        return f"{self.__class__.__name__}{self.attr}"
 
 
 def tensor(data: TensorFn | torch.Tensor) -> TensorFn:
