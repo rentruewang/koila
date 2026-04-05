@@ -1,5 +1,7 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
+"A bunch of context managers controlling the fake mode."
+
 import contextlib as ctxl
 import dataclasses as dcls
 import typing

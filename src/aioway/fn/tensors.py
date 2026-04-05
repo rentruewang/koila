@@ -8,7 +8,7 @@ from collections import abc as cabc
 import torch
 from torch import _subclasses as tsc
 
-from aioway import _common, fake, schemas
+from aioway import _common, ctx, schemas
 
 from . import fn
 
@@ -300,7 +300,7 @@ class BooleanTensorThunk(GatherThunk):
 @typing.no_type_check
 def _as_fake(tensor: torch.Tensor | TensorFn) -> tsc.FakeTensor:
     if isinstance(tensor, torch.Tensor):
-        return fake.to_fake_tensor(tensor)
+        return ctx.to_fake_tensor(tensor)
     else:
         return tensor.preview()
 
@@ -320,7 +320,7 @@ class TensorDataFn(TensorFn):
 
     @typing.override
     def preview(self):
-        return fake.to_fake_tensor(self.data)
+        return ctx.to_fake_tensor(self.data)
 
     @typing.override
     def forward(self) -> torch.Tensor:

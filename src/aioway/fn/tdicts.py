@@ -8,7 +8,7 @@ import numpy as np
 import tensordict as td
 import torch
 
-from aioway import _common, _typing, fake, schemas
+from aioway import _common, _typing, ctx, schemas
 
 from . import fn, tensors
 
@@ -138,7 +138,7 @@ class TensorDictDataFn(TensorDictFn):
 
     @typing.override
     def preview(self) -> td.TensorDict:
-        return fake.to_fake_tensordict(self.data)
+        return ctx.to_fake_tensordict(self.data)
 
     @typing.override
     def forward(self) -> td.TensorDict:
