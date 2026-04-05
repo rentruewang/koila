@@ -3,7 +3,8 @@
 import abc
 import typing
 
-from . import _common, exprs
+from ._common import symbol_dataclass
+from .exprs import ColSymbol
 
 __all__ = [
     "UFuncSymColSymbol1",
@@ -25,9 +26,9 @@ __all__ = [
 ]
 
 
-@_common.symbol_dataclass
-class UFuncSymColSymbol1(exprs.ColSymbol, abc.ABC):
-    source: exprs.ColSymbol
+@symbol_dataclass
+class UFuncSymColSymbol1(ColSymbol, abc.ABC):
+    source: ColSymbol
 
     @typing.override
     def __str__(self) -> str:
@@ -40,12 +41,12 @@ class UFuncSymColSymbol1(exprs.ColSymbol, abc.ABC):
         raise NotImplementedError
 
 
-@_common.symbol_dataclass
-class UFuncSymColSymbol2(exprs.ColSymbol, abc.ABC):
-    left: exprs.ColSymbol
+@symbol_dataclass
+class UFuncSymColSymbol2(ColSymbol, abc.ABC):
+    left: ColSymbol
     "The lhs of the expression. Must be `ColSymSymbol` because it corresponds to `self`."
 
-    right: exprs.ColSymbol | int | float | bool
+    right: ColSymbol | int | float | bool
     "The rhs of the expression. Can be either `ColSymSymbol` or primitive types."
 
     @typing.override
@@ -59,7 +60,7 @@ class UFuncSymColSymbol2(exprs.ColSymbol, abc.ABC):
         raise NotImplementedError
 
 
-@_common.symbol_dataclass
+@symbol_dataclass
 class InvColSymbol(UFuncSymColSymbol1):
 
     @typing.override
@@ -67,7 +68,7 @@ class InvColSymbol(UFuncSymColSymbol1):
         return "~"
 
 
-@_common.symbol_dataclass
+@symbol_dataclass
 class NegColSymbol(UFuncSymColSymbol1):
 
     @typing.override
@@ -75,7 +76,7 @@ class NegColSymbol(UFuncSymColSymbol1):
         return "-"
 
 
-@_common.symbol_dataclass
+@symbol_dataclass
 class AddColSymbol(UFuncSymColSymbol2):
 
     @typing.override
@@ -83,7 +84,7 @@ class AddColSymbol(UFuncSymColSymbol2):
         return "+"
 
 
-@_common.symbol_dataclass
+@symbol_dataclass
 class SubColSymbol(UFuncSymColSymbol2):
 
     @typing.override
@@ -91,7 +92,7 @@ class SubColSymbol(UFuncSymColSymbol2):
         return "-"
 
 
-@_common.symbol_dataclass
+@symbol_dataclass
 class MultColSymbol(UFuncSymColSymbol2):
 
     @typing.override
@@ -99,7 +100,7 @@ class MultColSymbol(UFuncSymColSymbol2):
         return "*"
 
 
-@_common.symbol_dataclass
+@symbol_dataclass
 class TrueDivColSymbol(UFuncSymColSymbol2):
 
     @typing.override
@@ -107,7 +108,7 @@ class TrueDivColSymbol(UFuncSymColSymbol2):
         return "/"
 
 
-@_common.symbol_dataclass
+@symbol_dataclass
 class FloorDivColSymbol(UFuncSymColSymbol2):
 
     @typing.override
@@ -115,7 +116,7 @@ class FloorDivColSymbol(UFuncSymColSymbol2):
         return "//"
 
 
-@_common.symbol_dataclass
+@symbol_dataclass
 class ExpColSymbol(UFuncSymColSymbol2):
 
     @typing.override
@@ -123,7 +124,7 @@ class ExpColSymbol(UFuncSymColSymbol2):
         return "**"
 
 
-@_common.symbol_dataclass
+@symbol_dataclass
 class EqColSymbol(UFuncSymColSymbol2):
 
     @typing.override
@@ -131,7 +132,7 @@ class EqColSymbol(UFuncSymColSymbol2):
         return "=="
 
 
-@_common.symbol_dataclass
+@symbol_dataclass
 class NeColSymbol(UFuncSymColSymbol2):
 
     @typing.override
@@ -139,7 +140,7 @@ class NeColSymbol(UFuncSymColSymbol2):
         return "!="
 
 
-@_common.symbol_dataclass
+@symbol_dataclass
 class GeColSymbol(UFuncSymColSymbol2):
 
     @typing.override
@@ -147,7 +148,7 @@ class GeColSymbol(UFuncSymColSymbol2):
         return ">="
 
 
-@_common.symbol_dataclass
+@symbol_dataclass
 class LeColSymbol(UFuncSymColSymbol2):
 
     @typing.override
@@ -155,7 +156,7 @@ class LeColSymbol(UFuncSymColSymbol2):
         return "<="
 
 
-@_common.symbol_dataclass
+@symbol_dataclass
 class GtColSymbol(UFuncSymColSymbol2):
 
     @typing.override
@@ -163,7 +164,7 @@ class GtColSymbol(UFuncSymColSymbol2):
         return ">"
 
 
-@_common.symbol_dataclass
+@symbol_dataclass
 class LtColSymbol(UFuncSymColSymbol2):
 
     @typing.override

@@ -1,31 +1,33 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
-"The binary `streams.Stream`s that consumes 2 `streams.Stream`s."
+"The binary `Stream`s that consumes 2 `Stream`s."
 
 import dataclasses as dcls
 import typing
 
 import torch
 
-from aioway import chunks, schemas
+from aioway.chunks import Chunk, Vector
+from aioway.schemas import AttrSet
 
-from . import sources, streams
+from .sources import CacheStream
+from .streams import Stream, StreamState
 
 __all__ = ["ZipStream", "NestedLoopJoinStream"]
 
 
 @dcls.dataclass(frozen=True)
-class ZipStream(streams.Stream):
+class ZipStream(Stream):
     """
     `ZipStream` is similar to what `zip` does.
     """
 
-    left: streams.Stream
+    left: Stream
     """
     The LHS stream.
     """
 
-    right: streams.Stream
+    right: Stream
     """
     The RHS stream.
     """
@@ -37,11 +39,11 @@ class ZipStream(streams.Stream):
 
     @property
     @typing.override
-    def attrs(self) -> schemas.AttrSet:
+    def attrs(self) -> AttrSet:
         return self.left.attrs | self.right.attrs
 
     @typing.override
-    def _next(self) -> chunks.Chunk:
+    def _next(self) -> Chunk:
         # Either one of those may raise `StopIteration`, at which point it is done.
         left_batch = next(self.left)
         right_batch = next(self.right)
@@ -54,15 +56,15 @@ class ZipStream(streams.Stream):
 
 
 @dcls.dataclass
-class NestedState(streams.StreamState):
-    lhs_batch: chunks.Chunk | None = None
+class NestedState(StreamState):
+    lhs_batch: Chunk | None = None
 
     # It is necessary to save the last batch for the LHS,
     # as it would be paired with multiple RHS batches.
 
 
 @dcls.dataclass(frozen=True)
-class NestedLoopJoinStream(streams.Stream):
+class NestedLoopJoinStream(Stream):
     """
     This is a stream that combines 2 input streams in a nested-loop matter,
     as in `[[x, y] for x in left for y in right if x.key == y.key]`.
@@ -70,14 +72,14 @@ class NestedLoopJoinStream(streams.Stream):
     The end result would be merged with `tensordict.merge_tensordicts`.
     """
 
-    left: streams.Stream
+    left: Stream
     """
     LHS is a normal stream. Will only be iterated over once.
     """
 
-    right: sources.CacheStream
+    right: CacheStream
     """
-    RHS is a `streams.Stream` supporting index access, thus requiring materialization.
+    RHS is a `Stream` supporting index access, thus requiring materialization.
     """
 
     key: str
@@ -94,7 +96,7 @@ class NestedLoopJoinStream(streams.Stream):
 
     @property
     @typing.override
-    def attrs(self) -> schemas.AttrSet:
+    def attrs(self) -> AttrSet:
         return self.left.attrs | self.right.attrs
 
     @typing.override
@@ -102,15 +104,15 @@ class NestedLoopJoinStream(streams.Stream):
         return self.left, self.right
 
     @typing.override
-    def _next(self) -> chunks.Chunk:
+    def _next(self) -> Chunk:
         lhs_batch = self._get_lhs()
         rhs_batch = self._get_rhs()
 
         lhs_select = lhs_batch[self.key]
         rhs_select = rhs_batch[self.key]
 
-        assert isinstance(lhs_select, chunks.Vector), type(lhs_select)
-        assert isinstance(rhs_select, chunks.Vector), type(rhs_select)
+        assert isinstance(lhs_select, Vector), type(lhs_select)
+        assert isinstance(rhs_select, Vector), type(rhs_select)
 
         matrix = lhs_select.data[:, None] == rhs_select.data[None, :]
         l, r = torch.nonzero(matrix).T
@@ -119,14 +121,14 @@ class NestedLoopJoinStream(streams.Stream):
         assert len(out) == torch.sum(matrix)
         return out
 
-    def _get_lhs(self) -> chunks.Chunk:
+    def _get_lhs(self) -> Chunk:
         # Clear cache and re-evalaute.
         if self._right_idx == 0:
             self.state.lhs_batch = next(self.left)
         assert self.state.lhs_batch
         return self.state.lhs_batch
 
-    def _get_rhs(self) -> chunks.Chunk:
+    def _get_rhs(self) -> Chunk:
         if self.idx < self.right.size:
             out = next(self.right)
             assert out is self.right[self._right_idx]

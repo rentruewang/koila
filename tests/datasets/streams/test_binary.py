@@ -6,67 +6,71 @@ from collections import abc as cabc
 import pytest
 import torch
 
-from aioway import chunks, datasets, schemas
+from aioway.chunks import Chunk
+from aioway.datasets import (
+    CacheStream,
+    ListStream,
+    NestedLoopJoinStream,
+    Stream,
+    ZipStream,
+)
+from aioway.schemas import Attr
 
 
 @pytest.fixture
-def lhs_stream(concat_stream: datasets.Stream) -> datasets.CacheStream:
-    return datasets.CacheStream(concat_stream)
+def lhs_stream(concat_stream: Stream) -> CacheStream:
+    return CacheStream(concat_stream)
 
 
 @pytest.fixture
-def rhs_stream(joinable_stream: datasets.Stream) -> datasets.CacheStream:
-    return datasets.CacheStream(joinable_stream)
+def rhs_stream(joinable_stream: Stream) -> CacheStream:
+    return CacheStream(joinable_stream)
 
 
-def test_lhs_stream_length(concat_stream: datasets.Stream, lhs_stream: datasets.Stream):
+def test_lhs_stream_length(concat_stream: Stream, lhs_stream: Stream):
     assert concat_stream.size == lhs_stream.size
 
 
-def test_rhs_stream_length(
-    joinable_stream: datasets.Stream, rhs_stream: datasets.CacheStream
-):
+def test_rhs_stream_length(joinable_stream: Stream, rhs_stream: CacheStream):
     assert joinable_stream.size == rhs_stream.size
 
 
 @pytest.fixture
 def binary_stream(
     request: pytest.FixtureRequest,
-    lhs_stream: datasets.Stream,
-    rhs_stream: datasets.CacheStream,
+    lhs_stream: Stream,
+    rhs_stream: CacheStream,
 ):
     "An indirect fixture that takes in a builder function and outputs a stream."
 
-    builder: cabc.Callable[[datasets.Stream, datasets.Stream], datasets.Stream] = (
-        request.param
-    )
+    builder: cabc.Callable[[Stream, Stream], Stream] = request.param
 
     if not callable(builder):
         raise TypeError("Indirect fixture `binary_stream` only accepts functions.")
 
     result = builder(lhs_stream, rhs_stream)
-    assert isinstance(result, datasets.Stream)
+    assert isinstance(result, Stream)
     return result
 
 
-def _zip_builder(lhs_stream: datasets.Stream, rhs_stream: datasets.CacheStream):
-    return datasets.ZipStream(left=lhs_stream, right=rhs_stream)
+def _zip_builder(lhs_stream: Stream, rhs_stream: CacheStream):
+    return ZipStream(left=lhs_stream, right=rhs_stream)
 
 
 @pytest.mark.parametrize("binary_stream", [_zip_builder], indirect=True)
 def test_zip_input_len(
-    binary_stream: datasets.Stream,
-    concat_stream: datasets.Stream,
-    rhs_stream: datasets.CacheStream,
+    binary_stream: Stream,
+    concat_stream: Stream,
+    rhs_stream: CacheStream,
 ):
     assert min(concat_stream.size, rhs_stream.size) == binary_stream.size
 
 
 @pytest.mark.parametrize("binary_stream", [_zip_builder], indirect=True)
 def test_zip(
-    binary_stream: datasets.Stream,
-    lhs_stream: datasets.Stream,
-    rhs_stream: datasets.Stream,
+    binary_stream: Stream,
+    lhs_stream: Stream,
+    rhs_stream: Stream,
 ):
     assert not lhs_stream.started
     assert not rhs_stream.started
@@ -79,15 +83,15 @@ def test_zip(
         assert result == concat
 
 
-def _join_builder(lhs_stream: datasets.Stream, rhs_stream: datasets.CacheStream):
-    return datasets.NestedLoopJoinStream(left=lhs_stream, right=rhs_stream, key="i1d")
+def _join_builder(lhs_stream: Stream, rhs_stream: CacheStream):
+    return NestedLoopJoinStream(left=lhs_stream, right=rhs_stream, key="i1d")
 
 
 @pytest.mark.parametrize("binary_stream", [_join_builder], indirect=True)
 def test_join_input_len(
-    binary_stream: datasets.Stream,
-    lhs_stream: datasets.Stream,
-    rhs_stream: datasets.CacheStream,
+    binary_stream: Stream,
+    lhs_stream: Stream,
+    rhs_stream: CacheStream,
 ):
     assert binary_stream.size == lhs_stream.size * rhs_stream.size
 
@@ -101,32 +105,32 @@ def test_join_input_len(
     ],
 )
 def test_simple_nested_loop_join(
-    to_slice: cabc.Callable[[chunks.Chunk], list[chunks.Chunk]],
+    to_slice: cabc.Callable[[Chunk], list[Chunk]],
 ):
-    left = chunks.Chunk.from_data_schema(
+    left = Chunk.from_data_schema(
         data={"a": torch.tensor([1, 3, 2, 2]), "b": torch.tensor([4, 10, 5, 6])},
         schema=dict(
-            a=schemas.Attr.parse(
+            a=Attr.parse(
                 device="cpu",
                 dtype="int64",
                 shape=[1],
             ),
-            b=schemas.Attr.parse(
+            b=Attr.parse(
                 device="cpu",
                 dtype="int64",
                 shape=[1],
             ),
         ),
     )
-    right = chunks.Chunk.from_data_schema(
+    right = Chunk.from_data_schema(
         data={"a": torch.tensor([1, 3, 2, 2]), "c": torch.tensor([7, 11, 8, 9])},
         schema=dict(
-            a=schemas.Attr.parse(
+            a=Attr.parse(
                 device="cpu",
                 dtype="int64",
                 shape=[1],
             ),
-            c=schemas.Attr.parse(
+            c=Attr.parse(
                 device="cpu",
                 dtype="int64",
                 shape=[1],
@@ -134,20 +138,20 @@ def test_simple_nested_loop_join(
         ),
     )
 
-    left_stream = datasets.ListStream(to_slice(left))
-    right_stream = datasets.ListStream(to_slice(right))
+    left_stream = ListStream(to_slice(left))
+    right_stream = ListStream(to_slice(right))
 
-    out = chunks.Chunk.cat(
+    out = Chunk.cat(
         list(
-            datasets.NestedLoopJoinStream(
+            NestedLoopJoinStream(
                 left_stream,
-                datasets.CacheStream(right_stream),
+                CacheStream(right_stream),
                 key="a",
             )
         )
     )
 
-    def sort_by_abc(td: chunks.Chunk):
+    def sort_by_abc(td: Chunk):
         for key in "cba":
             indices = torch.argsort(td[key].torch(), stable=True)
             td = td[indices]
@@ -162,24 +166,24 @@ def test_simple_nested_loop_join(
 
 @pytest.mark.parametrize("binary_stream", [_join_builder], indirect=True)
 def test_join_equal_as_original(
-    binary_stream: datasets.Stream,
-    lhs_stream: datasets.Stream,
-    rhs_stream: datasets.CacheStream,
+    binary_stream: Stream,
+    lhs_stream: Stream,
+    rhs_stream: CacheStream,
 ):
-    block_frame_block = chunks.Chunk.cat(list(lhs_stream))
-    joinable_frame_block = chunks.Chunk.cat(list(rhs_stream))
+    block_frame_block = Chunk.cat(list(lhs_stream))
+    joinable_frame_block = Chunk.cat(list(rhs_stream))
 
     # Performing the join here.
-    results: list[chunks.Chunk] = list(binary_stream)
+    results: list[Chunk] = list(binary_stream)
     assert len(results), "The binary stream is empty."
-    answer_items = chunks.Chunk.cat(results)["i1d"]
+    answer_items = Chunk.cat(results)["i1d"]
 
-    # Do it at once, using `datasets.ListStream` as it yields everything in 1 batch.
-    ground_truth = chunks.Chunk.cat(
+    # Do it at once, using `ListStream` as it yields everything in 1 batch.
+    ground_truth = Chunk.cat(
         list(
-            datasets.NestedLoopJoinStream(
-                left=datasets.ListStream([block_frame_block]),
-                right=datasets.CacheStream(datasets.ListStream([joinable_frame_block])),
+            NestedLoopJoinStream(
+                left=ListStream([block_frame_block]),
+                right=CacheStream(ListStream([joinable_frame_block])),
                 key="i1d",
             )
         )
@@ -193,16 +197,16 @@ def test_join_equal_as_original(
 
 @pytest.mark.parametrize("binary_stream", [_join_builder], indirect=True)
 def test_match_functionally(
-    binary_stream: datasets.Stream,
-    lhs_stream: datasets.Stream,
-    rhs_stream: datasets.CacheStream,
+    binary_stream: Stream,
+    lhs_stream: Stream,
+    rhs_stream: CacheStream,
 ):
-    block_frame_block = chunks.Chunk.cat(list(lhs_stream))
-    joinable_frame_block = chunks.Chunk.cat(list(rhs_stream))
+    block_frame_block = Chunk.cat(list(lhs_stream))
+    joinable_frame_block = Chunk.cat(list(rhs_stream))
 
     # Performing the join here.
     results = list(binary_stream)
-    answer_items = chunks.Chunk.cat(results)["i1d"]
+    answer_items = Chunk.cat(results)["i1d"]
 
     answer_count = collections.Counter(answer_items.tolist())
 
@@ -224,13 +228,13 @@ def test_match_functionally(
     indirect=True,
 )
 def test_binary_stream_in_list(
-    binary_stream: datasets.NestedLoopJoinStream | datasets.ZipStream,
+    binary_stream: NestedLoopJoinStream | ZipStream,
 ):
     assert binary_stream.size, "The binary stream is empty."
 
     assert binary_stream.idx == 0, "Pre iteration stream's index starts with 0."
 
-    batches: list[chunks.Chunk] = []
+    batches: list[Chunk] = []
     for idx, batch in enumerate(binary_stream, start=1):
         # Ensure that the input is also exhausted.
         assert idx == binary_stream.idx

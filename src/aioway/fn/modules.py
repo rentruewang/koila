@@ -9,14 +9,17 @@ from collections import abc as cabc
 import torch
 from torch import nn
 
-from aioway import _common, ctx
-from aioway._tracking import logging
+from aioway._common import dcls_no_eq_no_repr
+from aioway._tracking.logging import get_logger
+from aioway.ctx import enabled_fake_mode, fake_mode_func
 
-from . import de, fn, tensors
+from .de import defer, eager
+from .fn import Fn
+from .tensors import TensorFn
 
 __all__ = ["ModuleFn", "FakableModule"]
 
-LOGGER = logging.get_logger(__name__)
+LOGGER = get_logger(__name__)
 
 
 class FakableModule[**P, M: nn.Module]:
@@ -36,12 +39,12 @@ class FakableModule[**P, M: nn.Module]:
         self._args = args
         self._kwargs = kwargs
 
-    def __call__(self, tensor: torch.Tensor | tensors.TensorFn, /) -> torch.Tensor:
-        tensor = de.eager(tensor)
+    def __call__(self, tensor: torch.Tensor | TensorFn, /) -> torch.Tensor:
+        tensor = eager(tensor)
         return self.module(tensor)
 
     @functools.cached_property
-    @ctx.fake_mode_func
+    @fake_mode_func
     def fake(self) -> M:
         return self._module(*self._args, **self._kwargs)
 
@@ -51,23 +54,23 @@ class FakableModule[**P, M: nn.Module]:
 
     @property
     def module(self):
-        return self.fake if ctx.enabled_fake_mode() else self.real
+        return self.fake if enabled_fake_mode() else self.real
 
     def parameters(self) -> cabc.Generator[nn.Parameter]:
         yield from self.module.parameters()
 
 
-@_common.dcls_no_eq_no_repr
-class ModuleFn[**P, M: nn.Module](tensors.TensorFn):
+@dcls_no_eq_no_repr
+class ModuleFn[**P, M: nn.Module](TensorFn):
     """
     `ModuleFn` informs us how `nn.Module` would behave without initializing it.
     """
 
-    tensor: tensors.TensorFn
+    tensor: TensorFn
     module: FakableModule[P, M]
 
     @typing.override
-    def deps(self) -> tuple[fn.Fn[object], ...]:
+    def deps(self) -> tuple[Fn[object], ...]:
         return tuple(self._deps())
 
     def _deps(self):
@@ -85,10 +88,10 @@ class ModuleFn[**P, M: nn.Module](tensors.TensorFn):
 
     def params_fn(self):
         for param in self.parameters():
-            yield de.defer(param)
+            yield defer(param)
 
     @classmethod
     def build(
-        cls, tensor: torch.Tensor | tensors.TensorFn, module: FakableModule
+        cls, tensor: torch.Tensor | TensorFn, module: FakableModule
     ) -> typing.Self:
-        return cls(tensor=de.defer(tensor), module=module)
+        return cls(tensor=defer(tensor), module=module)

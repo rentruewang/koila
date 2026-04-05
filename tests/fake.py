@@ -5,7 +5,8 @@ import tensordict as td
 import torch
 from torch import cuda
 
-from aioway import chunks, schemas
+from aioway.chunks import Chunk
+from aioway.schemas import Attr, AttrSet
 
 
 def cpu_and_maybe_cuda() -> list[str]:
@@ -27,7 +28,7 @@ def batch_sizes():
     yield 1024
 
 
-def chunk_ok(*, size: int, device: str) -> chunks.Chunk:
+def chunk_ok(*, size: int, device: str) -> Chunk:
     data = td.TensorDict(
         {
             "f1d": torch.randn(size),
@@ -38,29 +39,29 @@ def chunk_ok(*, size: int, device: str) -> chunks.Chunk:
         batch_size=size,
         device=device,
     )
-    schema = schemas.AttrSet.from_values(
-        f1d=schemas.Attr.parse(
+    schema = AttrSet.from_values(
+        f1d=Attr.parse(
             device="cpu",
             shape=[1],
             dtype="float32",
         ),
-        f2d=schemas.Attr.parse(
+        f2d=Attr.parse(
             device="cpu",
             shape=[1, 32],
             dtype="float32",
         ),
-        i1d=schemas.Attr.parse(
+        i1d=Attr.parse(
             device="cpu",
             shape=[1],
             dtype="int64",
         ),
-        i2d=schemas.Attr.parse(
+        i2d=Attr.parse(
             device="cpu",
             shape=[1, 32],
             dtype="int64",
         ),
     )
-    return chunks.Chunk.from_data_schema(data=data, schema=schema)
+    return Chunk.from_data_schema(data=data, schema=schema)
 
 
 def unionable_ok(*, size: int, device: str):

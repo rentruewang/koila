@@ -2,19 +2,25 @@
 
 import pytest
 
-from aioway import datasets
-from tests import fake
+from aioway.datasets import (
+    ChunkFrame,
+    ChunkListFrame,
+    Frame,
+    FrameStream,
+    FrameStreamLoader,
+)
+from tests.fake import chunk_ok
 
 
 def block_table(device: str, batch_size: int, data_size: int):
-    block = fake.chunk_ok(size=data_size, device=device)
-    return datasets.ChunkFrame(block)
+    block = chunk_ok(size=data_size, device=device)
+    return ChunkFrame(block)
 
 
 def list_table(device: str, batch_size: int, data_size: int):
-    return datasets.ChunkListFrame(
+    return ChunkListFrame(
         [
-            fake.chunk_ok(size=batch_size, device=device)
+            chunk_ok(size=batch_size, device=device)
             for _ in range(0, data_size, batch_size)
         ]
     )
@@ -23,13 +29,13 @@ def list_table(device: str, batch_size: int, data_size: int):
 @pytest.fixture(params=[block_table, list_table])
 def frame(
     request: pytest.FixtureRequest, device: str, batch_size: int, data_size: int
-) -> datasets.Frame:
+) -> Frame:
     return request.param(device=device, batch_size=batch_size, data_size=data_size)
 
 
 @pytest.fixture
-def table_stream(frame: datasets.Frame, batch_size: int):
-    return datasets.FrameStream(
+def table_stream(frame: Frame, batch_size: int):
+    return FrameStream(
         frame,
-        datasets.FrameStreamLoader(batch_size=batch_size),
+        FrameStreamLoader(batch_size=batch_size),
     )

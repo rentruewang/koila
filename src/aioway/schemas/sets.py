@@ -11,17 +11,22 @@ import numpy as np
 import tensordict as td
 import torch
 
-from aioway import _signs, _tracking, _typing
-from aioway._tracking import logging
+from aioway._signs import Signature
+from aioway._tracking import get_tracker
+from aioway._tracking.logging import get_logger
+from aioway._typing import is_dict_of_str_to, is_list_of
 
-from . import attrs, devices, dtypes, shapes
+from .attrs import Attr, attr
+from .devices import Device, DeviceLike
+from .dtypes import DType, DTypeLike
+from .shapes import Shape, ShapeLike
 
 __all__ = ["AttrSet", "DTypeSet", "DeviceSet", "ShapeSet", "AttrSetLike", "attr_set"]
 
-type AttrSetLike = AttrSet | td.TensorDict | dict[str, attrs.Attr]
+type AttrSetLike = AttrSet | td.TensorDict | dict[str, Attr]
 
-LOGGER = logging.get_logger(__name__)
-TRACKER = _tracking.get_tracker(lambda: AttrSet)
+LOGGER = get_logger(__name__)
+TRACKER = get_tracker(lambda: AttrSet)
 
 
 class _AttrItem[T](typing.NamedTuple):
@@ -45,7 +50,7 @@ class _AttrSetBase[T](cabc.Mapping[str, T]):
     Most likely will change in the future.
     """
 
-    attrs: tuple[_AttrItem[T], ...] = ()
+    attr_items: tuple[_AttrItem[T], ...] = ()
     """
     The data backing the `AttrSet`. Must be sorted.
     """
@@ -63,11 +68,11 @@ class _AttrSetBase[T](cabc.Mapping[str, T]):
 
     @typing.override
     def __len__(self) -> int:
-        return len(self.attrs)
+        return len(self.attr_items)
 
     @typing.override
     def __iter__(self) -> cabc.Iterator[str]:
-        return (attr.name for attr in self.attrs)
+        return (attr.name for attr in self.attr_items)
 
     @typing.overload
     def __getitem__(self, key: str) -> T: ...
@@ -78,7 +83,7 @@ class _AttrSetBase[T](cabc.Mapping[str, T]):
         if isinstance(key, str):
             return self.column(key)
 
-        if _typing.is_list_of(str)(key):
+        if is_list_of(str)(key):
             return self.select(*key)
 
         raise KeyError
@@ -93,14 +98,14 @@ class _AttrSetBase[T](cabc.Mapping[str, T]):
             raise KeyError(key)
 
         assert 0 <= idx < len(self)
-        return self.attrs[idx].attr
+        return self.attr_items[idx].attr
 
     def select(self, *keys: str) -> typing.Self:
         return type(self).from_dict({key: self[key] for key in keys})
 
     @functools.cached_property
     def _repr_string(self):
-        kvs = (f"{k}:{v}" for k, v in self.attrs)
+        kvs = (f"{k}:{v}" for k, v in self.attr_items)
         return "{" + ", ".join(kvs) + "}"
 
     @functools.cached_property
@@ -109,52 +114,54 @@ class _AttrSetBase[T](cabc.Mapping[str, T]):
 
     @functools.cached_property
     def names(self):
-        return [col.name for col in self.attrs]
+        return [col.name for col in self.attr_items]
 
     @classmethod
-    def from_values(cls, **attrs: T) -> typing.Self:
-        return cls.from_dict(attrs)
+    def from_values(cls, **mapping: T) -> typing.Self:
+        return cls.from_dict(mapping)
 
     @classmethod
-    def from_dict(cls, attrs: cabc.Mapping[str, T], /) -> typing.Self:
+    def from_dict(cls, mapping: cabc.Mapping[str, T], /) -> typing.Self:
         return cls(
             tuple(
-                sorted(_AttrItem(name=name, attr=attr) for name, attr in attrs.items())
+                sorted(
+                    _AttrItem(name=name, attr=attr) for name, attr in mapping.items()
+                )
             )
         )
 
 
-class DTypeSet(_AttrSetBase[dtypes.DType]):
+class DTypeSet(_AttrSetBase[DType]):
     @classmethod
     @typing.override
-    def from_dict(cls, attrs: cabc.Mapping[str, dtypes.DTypeLike], /) -> typing.Self:
-        converted = {key: dtypes.DType.parse(dt) for key, dt in attrs.items()}
+    def from_dict(cls, mapping: cabc.Mapping[str, DTypeLike], /) -> typing.Self:
+        converted = {key: DType.parse(dt) for key, dt in mapping.items()}
         return super().from_dict(converted)
 
 
-class DeviceSet(_AttrSetBase[devices.Device]):
+class DeviceSet(_AttrSetBase[Device]):
     @classmethod
     @typing.override
-    def from_dict(cls, attrs: cabc.Mapping[str, devices.DeviceLike]) -> typing.Self:
-        converted = {key: devices.Device.parse(dev) for key, dev in attrs.items()}
+    def from_dict(cls, mapping: cabc.Mapping[str, DeviceLike]) -> typing.Self:
+        converted = {key: Device.parse(dev) for key, dev in mapping.items()}
         return super().from_dict(converted)
 
 
-class ShapeSet(_AttrSetBase[shapes.Shape]):
+class ShapeSet(_AttrSetBase[Shape]):
     @classmethod
     @typing.override
-    def from_dict(cls, attrs: cabc.Mapping[str, shapes.ShapeLike]) -> typing.Self:
-        converted = {key: shapes.Shape.parse(dev) for key, dev in attrs.items()}
+    def from_dict(cls, mapping: cabc.Mapping[str, ShapeLike]) -> typing.Self:
+        converted = {key: Shape.parse(dev) for key, dev in mapping.items()}
         return super().from_dict(converted)
 
 
-class AttrSet(_AttrSetBase[attrs.Attr]):
+class AttrSet(_AttrSetBase[Attr]):
     """
-    The collection of `attrs.Attr`s. This is the data type for a `td.TensorDict`.
+    The collection of `Attr`s. This is the data type for a `td.TensorDict`.
     """
 
     @typing.overload
-    def __getitem__(self, idx: str) -> attrs.Attr: ...
+    def __getitem__(self, idx: str) -> Attr: ...
 
     @typing.overload
     def __getitem__(
@@ -165,51 +172,54 @@ class AttrSet(_AttrSetBase[attrs.Attr]):
         if isinstance(idx, str):
             return self.__getitem_str(idx)
 
-        if _typing.is_list_of(str)(idx):
+        if is_list_of(str)(idx):
             return self.__getitem_list_str(idx)
 
         return self.__getitem_batch(idx)
 
     def __getitem_str(self, idx: str):
-        signature = _signs.Signature(AttrSet, str, attrs.Attr)
+        signature = Signature(AttrSet, str, Attr)
         with TRACKER(name="__getitem__", signature=signature):
             return super().__getitem__(idx)
 
     def __getitem_list_str(self, idx: list[str]):
-        signature = _signs.Signature(AttrSet, list[str], AttrSet)
+        signature = Signature(AttrSet, list[str], AttrSet)
         with TRACKER(name="__getitem__", signature=signature):
             return super().__getitem__(idx)
 
     def __getitem_batch(self, idx):
         with TRACKER(
-            name="__getitem__", signature=_signs.Signature(AttrSet, type(idx), AttrSet)
+            name="__getitem__", signature=Signature(AttrSet, type(idx), AttrSet)
         ):
             return self.__getitem_batch_impl(idx)
 
     def __getitem_batch_impl(self, idx):
 
-        if isinstance(idx, str) or _typing.is_list_of(str)(idx):
+        if isinstance(idx, str) or is_list_of(str)(idx):
             return super().__getitem__(idx)
 
         names = self.names
-        devices = self.devices
-        shapes = self.shapes
-        dtypes = self.dtypes
+        device_list = self.device_list
+        shape_list = self.shape_list
+        dtype_list = self.dtype_list
 
         if isinstance(idx, int):
-            new_shape = [shape[1:] for shape in shapes]
+            new_shape = [shape[1:] for shape in shape_list]
 
         elif isinstance(idx, slice | np.ndarray | torch.Tensor):
-            new_shape = shapes[:]
+            new_shape = shape_list[:]
 
         elif isinstance(idx, list) and all(isinstance(i, int) for i in idx):
-            new_shape = shapes[:]
+            new_shape = shape_list[:]
 
         else:
             raise TypeError(type(idx))
 
         return self.from_fields(
-            names=names, devices=devices, dtypes=dtypes, shapes=new_shape
+            names=names,
+            device_list=device_list,
+            dtype_list=dtype_list,
+            shape_list=new_shape,
         )
 
     def rename(self, **renames: str):
@@ -218,16 +228,16 @@ class AttrSet(_AttrSetBase[attrs.Attr]):
         )
 
     @functools.cached_property
-    def dtypes(self):
-        return [col.attr.dtype for col in self.attrs]
+    def dtype_list(self):
+        return [col.attr.dtype for col in self.attr_items]
 
     @functools.cached_property
-    def shapes(self):
-        return [col.attr.shape for col in self.attrs]
+    def shape_list(self):
+        return [col.attr.shape for col in self.attr_items]
 
     @functools.cached_property
-    def devices(self):
-        return [col.attr.device for col in self.attrs]
+    def device_list(self):
+        return [col.attr.device for col in self.attr_items]
 
     @classmethod
     @typing.no_type_check
@@ -235,56 +245,58 @@ class AttrSet(_AttrSetBase[attrs.Attr]):
         cls,
         *,
         names: cabc.Sequence[str],
-        shapes: cabc.Sequence[shapes.ShapeLike],
-        dtypes: cabc.Sequence[dtypes.DTypeLike],
-        devices: cabc.Sequence[devices.DeviceLike],
+        shape_list: cabc.Sequence[ShapeLike],
+        dtype_list: cabc.Sequence[DTypeLike],
+        device_list: cabc.Sequence[DeviceLike],
     ) -> typing.Self:
         "Create an `AttrSet` from a set of seuqences of attributes of same length."
 
-        if not (len(names) == len(shapes) == len(dtypes) == len(devices)):
+        if not (len(names) == len(shape_list) == len(dtype_list) == len(device_list)):
             raise ValueError(
                 "Should all have the same length. "
-                f"Got {len(names)=}, {len(shapes)=}, {len(dtypes)=}, {len(devices)=}."
+                f"Got {len(names)=}, {len(shape_list)=}, {len(dtype_list)=}, {len(device_list)=}."
             )
 
         mapping = {
-            name: attrs.attr({"device": device, "dtype": dtype, "shape": shape})
-            for name, device, dtype, shape in zip(names, devices, dtypes, shapes)
+            name: attr({"device": device, "dtype": dtype, "shape": shape})
+            for name, device, dtype, shape in zip(
+                names, device_list, dtype_list, shape_list
+            )
         }
 
         return cls.from_dict(mapping)
 
     @classmethod
     def from_sets(
-        cls, *, shapes: ShapeSet, dtypes: DTypeSet, devices: DeviceSet
+        cls, *, shape_set: ShapeSet, dtype_set: DTypeSet, device_set: DeviceSet
     ) -> typing.Self:
         "Create an `AttrSet` from `*Set` types. Keys should match."
 
-        shapes_keys = shapes.keys()
-        dtypes_keys = dtypes.keys()
-        devices_keys = devices.keys()
+        shape_keys = shape_set.keys()
+        dtype_keys = dtype_set.keys()
+        device_keys = device_set.keys()
 
-        if not (shapes_keys == dtypes_keys == devices_keys):
+        if not (shape_keys == dtype_keys == device_keys):
             raise ValueError(
                 "All sets should have the same keys. "
-                f"Got shapes={shapes_keys}, devices={devices_keys}, dtypes={dtypes_keys}"
+                f"Got shapes={shape_keys}, devices={device_keys}, dtypes={dtype_keys}"
             )
 
-        names_list = list(shapes_keys)
-        dtypes_list = [dtypes[key] for key in names_list]
-        devices_list = [devices[key] for key in names_list]
-        shapes_list = [shapes.__getitem__(key) for key in names_list]
+        names_list = list(shape_keys)
+        dtype_list = [dtype_set[key] for key in names_list]
+        device_list = [device_set[key] for key in names_list]
+        shape_list = [shape_set.__getitem__(key) for key in names_list]
 
         return cls.from_fields(
             names=names_list,
-            dtypes=dtypes_list,
-            devices=devices_list,
-            shapes=shapes_list,
+            dtype_list=dtype_list,
+            device_list=device_list,
+            shape_list=shape_list,
         )
 
     @classmethod
     def from_tensordict(cls, data: td.TensorDict, /) -> typing.Self:
-        return cls.from_dict({key: attrs.attr(val) for key, val in data.items()})
+        return cls.from_dict({key: attr(val) for key, val in data.items()})
 
 
 @dcls.dataclass(frozen=True)
@@ -349,7 +361,7 @@ def attr_set(schema: AttrSetLike) -> AttrSet:
     if isinstance(schema, td.TensorDict):
         return AttrSet.from_tensordict(schema)
 
-    if _typing.is_dict_of_str_to(attrs.Attr)(schema):
+    if is_dict_of_str_to(Attr)(schema):
         return AttrSet.from_dict(schema)
 
     raise TypeError(

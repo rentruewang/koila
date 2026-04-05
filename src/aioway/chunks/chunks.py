@@ -10,23 +10,25 @@ import tensordict
 import tensordict as td
 import torch
 
-from aioway import _typing, fn, schemas
-from aioway._tracking import logging
+from aioway._tracking.logging import get_logger
+from aioway._typing import is_dict_of_str_to
+from aioway.fn import tdict
+from aioway.schemas import AttrSetLike, attr_set
 
-from . import vectors
+from .vectors import Vector
 
 __all__ = ["Chunk"]
 
-LOGGER = logging.get_logger(__name__)
+LOGGER = get_logger(__name__)
 
 
 type TensorDictLike = td.TensorDict | dict[str, torch.Tensor]
-type ChunkLike = Chunk | dict[str, vectors.Vector]
+type ChunkLike = Chunk | dict[str, Vector]
 
 
 @typing.final
 @dcls.dataclass(frozen=True)
-class Chunk(cabc.Mapping[str, vectors.Vector]):
+class Chunk(cabc.Mapping[str, Vector]):
     """
     A `Chunk` represents a batch of data, following a specific scheam.
 
@@ -64,13 +66,13 @@ class Chunk(cabc.Mapping[str, vectors.Vector]):
         return NotImplemented
 
     def __getitem__(self, key):
-        if isinstance(key, vectors.Vector):
+        if isinstance(key, Vector):
             key = key.data
         result = self.fn()[key].do()
 
         if isinstance(key, str):
             assert isinstance(result, torch.Tensor)
-            return vectors.Vector(result)
+            return Vector(result)
         else:
             return type(self)(result)
 
@@ -79,7 +81,7 @@ class Chunk(cabc.Mapping[str, vectors.Vector]):
         return iter(self.attrs)
 
     def fn(self):
-        return fn.tdict(self.data)
+        return tdict(self.data)
 
     @LOGGER.function("DEBUG")
     def select(self, *names: str):
@@ -87,7 +89,7 @@ class Chunk(cabc.Mapping[str, vectors.Vector]):
 
     @LOGGER.function("DEBUG")
     def column(self, col: str):
-        return vectors.Vector(self.fn()[col].forward())
+        return Vector(self.fn()[col].forward())
 
     @LOGGER.function("DEBUG")
     def rename(self, **renames: str):
@@ -113,10 +115,10 @@ class Chunk(cabc.Mapping[str, vectors.Vector]):
         if not chunks:
             raise ValueError("Given an empty sequence. Not sure what to do.")
 
-        if len({tuple(chunk.attrs.devices) for chunk in chunks}) != 1:
+        if len({tuple(chunk.attrs.device_list) for chunk in chunks}) != 1:
             raise ValueError("Chunks should have the same devices before joining.")
 
-        if len({tuple(chunk.attrs.dtypes) for chunk in chunks}) != 1:
+        if len({tuple(chunk.attrs.dtype_list) for chunk in chunks}) != 1:
             raise ValueError("Chunks should have the same dtypes before joining.")
 
         schema = chunks[0].attrs
@@ -127,12 +129,10 @@ class Chunk(cabc.Mapping[str, vectors.Vector]):
 
     @property
     def attrs(self):
-        return schemas.attr_set(self.data)
+        return attr_set(self.data)
 
     @classmethod
-    def from_data_schema(
-        cls, data: TensorDictLike, schema: schemas.AttrSetLike
-    ) -> typing.Self:
+    def from_data_schema(cls, data: TensorDictLike, schema: AttrSetLike) -> typing.Self:
         td = _as_tensordict(data)
         td.auto_batch_size_()
         td.auto_device_()
@@ -155,7 +155,7 @@ def _as_tensordict(data: TensorDictLike, /) -> td.TensorDict:
     if isinstance(data, td.TensorDict):
         return data
 
-    _is_dict_of_tensor = _typing.is_dict_of_str_to(torch.Tensor)
+    _is_dict_of_tensor = is_dict_of_str_to(torch.Tensor)
     if _is_dict_of_tensor(data):
         return td.TensorDict(data)
 
@@ -163,6 +163,6 @@ def _as_tensordict(data: TensorDictLike, /) -> td.TensorDict:
 
 
 @typing.no_type_check
-def _is_mapping_of_vector(obj) -> typing.TypeGuard[dict[str, vectors.Vector]]:
+def _is_mapping_of_vector(obj) -> typing.TypeGuard[dict[str, Vector]]:
     # Wrapper function because `mypy` doesn't do well with abstract type guards.
-    return _typing.is_dict_of_str_to(vectors.Vector)(obj)
+    return is_dict_of_str_to(Vector)(obj)

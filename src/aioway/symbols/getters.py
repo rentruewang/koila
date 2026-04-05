@@ -5,16 +5,17 @@
 import typing
 from collections import abc as cabc
 
-from aioway import _typing
+from aioway._typing import SeqKeysView
 
-from . import _common, exprs
+from ._common import symbol_dataclass
+from .exprs import ColSymbol, TableSymbol
 
 __all__ = ["SourceSymbol", "SelectSymbol", "GetItemSymbol"]
 
 
 @typing.final
-@_common.symbol_dataclass
-class SourceSymbol(exprs.TableSymbol):
+@symbol_dataclass
+class SourceSymbol(TableSymbol):
     name: str
     "The table's name. Matches the table names given in the `subs` method."
 
@@ -25,12 +26,12 @@ class SourceSymbol(exprs.TableSymbol):
         return self.name
 
     def keys(self) -> cabc.KeysView[str]:
-        return _typing.SeqKeysView(self.columns)
+        return SeqKeysView(self.columns)
 
 
-@_common.symbol_dataclass
-class SelectSymbol(exprs.TableSymbol):
-    table: exprs.TableSymbol
+@symbol_dataclass
+class SelectSymbol(TableSymbol):
+    table: TableSymbol
     "The source to the selection."
 
     columns: cabc.Sequence[str]
@@ -42,14 +43,14 @@ class SelectSymbol(exprs.TableSymbol):
 
     @typing.override
     def keys(self) -> cabc.KeysView[str]:
-        return _typing.SeqKeysView(self.columns)
+        return SeqKeysView(self.columns)
 
 
-@_common.symbol_dataclass
-class GetItemSymbol(exprs.ColSymbol):
+@symbol_dataclass
+class GetItemSymbol(ColSymbol):
     "Perform the `__getitem__` operation. Select one of the keys."
 
-    table: exprs.TableSymbol
+    table: TableSymbol
     """
     The table expression that the column would operate on.
     """

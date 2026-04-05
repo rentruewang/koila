@@ -5,37 +5,38 @@
 import dataclasses as dcls
 import typing
 
-from aioway import _typing, chunks
+from aioway._typing import BatchIndex, IntArray
+from aioway.chunks import Chunk, Vector
 
 from .. import datasets
-from . import frames
+from .frames import Frame
 
 __all__ = ["FrameColumnView", "FrameSelectView"]
 
 
 @dcls.dataclass(frozen=True)
-class FrameColumnView(datasets.DatasetColumnView[frames.Frame]):
+class FrameColumnView(datasets.DatasetColumnView[Frame]):
     """
-    A column reference to a `frames.Frame`.
-    Performs `__getitem__` on a `frames.Frame`, then select the column.
+    A column reference to a `Frame`.
+    Performs `__getitem__` on a `Frame`, then select the column.
     """
 
     def __len__(self) -> int:
         return len(self.dset)
 
-    def __getitem__(self, idx: _typing.BatchIndex, /) -> chunks.Vector:
+    def __getitem__(self, idx: BatchIndex, /) -> Vector:
         batch = self.dset[idx]
         return batch[self.col]
 
     @classmethod
-    def from_column(cls, dataset: frames.Frame, /, column: str) -> typing.Self:
+    def from_column(cls, dataset: Frame, /, column: str) -> typing.Self:
         return cls(dataset, column)
 
 
 @dcls.dataclass(frozen=True)
-class FrameSelectView(datasets.DatasetSelectView[frames.Frame], frames.Frame):
+class FrameSelectView(datasets.DatasetSelectView[Frame], Frame):
     """
-    A selection view on the `frames.Frame`.
+    A selection view on the `Frame`.
     """
 
     COLUMN_TYPE = FrameColumnView
@@ -45,10 +46,10 @@ class FrameSelectView(datasets.DatasetSelectView[frames.Frame], frames.Frame):
         return len(self.dset)
 
     @typing.override
-    def _getitem(self, idx: _typing.IntArray, /) -> chunks.Chunk:
+    def _getitem(self, idx: IntArray, /) -> Chunk:
         items = self.dset[idx]
         return items.select(*self.cols)
 
     @classmethod
-    def from_columns(cls, dataset: frames.Frame, /, *columns: str) -> typing.Self:
+    def from_columns(cls, dataset: Frame, /, *columns: str) -> typing.Self:
         return cls(dataset, columns)

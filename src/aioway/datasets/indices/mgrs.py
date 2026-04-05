@@ -7,7 +7,8 @@ from collections import abc as cabc
 from numpy import typing as npt
 
 from .. import frames
-from . import indices, ops
+from .indices import Index
+from .ops import IndexPlan
 
 __all__ = ["MultiPlanIndex"]
 
@@ -23,9 +24,9 @@ class MultiPlanIndex:
 
     mgr: IndexManager
     columns: MultiCol
-    indices: dict[type[ops.IndexPlan], indices.Index]
+    indices: dict[type[IndexPlan], Index]
 
-    def __call__(self, op: ops.IndexPlan, value: npt.NDArray) -> npt.NDArray:
+    def __call__(self, op: IndexPlan, value: npt.NDArray) -> npt.NDArray:
         index = self.indices[type(op)]
         return index(op=op, value=value)
 
@@ -36,8 +37,8 @@ class _ColTypeIndex(typing.NamedTuple):
     """
 
     cols: MultiCol
-    ops: type[ops.IndexPlan]
-    idx: indices.Index
+    ops: type[IndexPlan]
+    idx: Index
 
 
 @typing.final

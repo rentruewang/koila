@@ -7,12 +7,14 @@ import typing
 
 import torch
 
-from aioway import _typing, fn, schemas
-from aioway._tracking import logging
+from aioway._tracking.logging import get_logger
+from aioway._typing import AnyUFunc2
+from aioway.fn import TensorFn
+from aioway.schemas import Attr, attr
 
 __all__ = ["Vector"]
 
-LOGGER = logging.get_logger(__name__)
+LOGGER = get_logger(__name__)
 
 
 type VectorRhs = Vector | torch.Tensor | int | float | bool
@@ -101,13 +103,11 @@ class Vector:
     def __op1(self, unop: typing.Any) -> typing.Self:
         return _from_fn(unop(self.fn()))
 
-    def __op2(self, other: typing.Any, binop: _typing.AnyUFunc2) -> typing.Self:
-        pass
-
+    def __op2(self, other: typing.Any, binop: AnyUFunc2) -> typing.Self:
         match other:
             case Vector():
                 return _from_fn(binop(self.fn(), other.fn()))
-            case fn.TensorFn() | float() | int() | bool():
+            case TensorFn() | float() | int() | bool():
                 return _from_fn(binop(self.fn(), other))
 
         raise NotImplementedError
@@ -116,7 +116,7 @@ class Vector:
         "Get the `torch.Tensor` data that this `Vector` contains."
         return self._data
 
-    def typeof(self) -> schemas.Attr:
+    def typeof(self) -> Attr:
         "Get the type information `meta.Attr` of the `torch.Tensor` that this `Vector` represents."
         return self.attr
 
@@ -131,7 +131,7 @@ class Vector:
         return self.torch().tolist()
 
     def fn(self):
-        return fn.TensorFn.from_tensor(self.data)
+        return TensorFn.from_tensor(self.data)
 
     @property
     def data(self):
@@ -139,9 +139,9 @@ class Vector:
 
     @property
     def attr(self):
-        return schemas.attr(self.data)
+        return attr(self.data)
 
 
-def _from_fn(func: fn.TensorFn, /):
+def _from_fn(func: TensorFn, /):
     vec = func.do()
     return Vector(data=vec.data)

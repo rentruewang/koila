@@ -7,7 +7,7 @@ import dataclasses as dcls
 import typing
 from collections import abc as cabc
 
-from aioway import schemas
+from aioway.schemas import Attr, AttrSet
 
 __all__ = ["Dataset", "DatasetColumnView", "DatasetSelectView", "DatasetViewTypes"]
 
@@ -47,7 +47,7 @@ class Dataset(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def attrs(self) -> schemas.AttrSet:
+    def attrs(self) -> AttrSet:
         "All datasets have the metadta `attrs` present."
 
         raise NotImplementedError
@@ -124,7 +124,7 @@ class DatasetColumnView[T: Dataset = Dataset](DatasetView[T], abc.ABC):
 
     @property
     @typing.final
-    def attr(self) -> schemas.Attr:
+    def attr(self) -> Attr:
         return self.dset.attrs.column(self.col)
 
     @classmethod
@@ -151,7 +151,7 @@ class DatasetSelectView[T: Dataset = Dataset](Dataset, DatasetView[T], abc.ABC):
 
     @property
     @typing.final
-    def attrs(self) -> schemas.AttrSet:
+    def attrs(self) -> AttrSet:
         return self.dset.attrs.select(*self.cols)
 
     @typing.final
@@ -181,7 +181,7 @@ class DatasetViewTypes[T: Dataset](typing.NamedTuple):
     "The type used to construct `.select` views."
 
 
-def _assert_column_in_dataset(col: str, attrs: schemas.AttrSet) -> None:
+def _assert_column_in_dataset(col: str, attrs: AttrSet) -> None:
     if col in attrs.keys():
         return
 

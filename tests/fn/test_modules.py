@@ -4,17 +4,17 @@ import pytest
 import torch
 from torch import nn
 
-from aioway.fn import modules
+from aioway.fn.modules import FakableModule, ModuleFn
 
 
 @pytest.fixture
 def linear():
-    return modules.FakableModule(nn.Linear, in_features=3, out_features=5, bias=True)
+    return FakableModule(nn.Linear, in_features=3, out_features=5, bias=True)
 
 
 @pytest.fixture
 def identity():
-    return modules.FakableModule(nn.Identity)
+    return FakableModule(nn.Identity)
 
 
 @pytest.fixture
@@ -23,8 +23,8 @@ def linear_input():
 
 
 @pytest.fixture
-def linear_fn(linear: modules.FakableModule, linear_input: torch.Tensor):
-    return modules.ModuleFn.build(tensor=linear_input, module=linear)
+def linear_fn(linear: FakableModule, linear_input: torch.Tensor):
+    return ModuleFn.build(tensor=linear_input, module=linear)
 
 
 @pytest.fixture
@@ -54,7 +54,7 @@ def kernel_size(request: pytest.FixtureRequest):
 
 @pytest.fixture
 def conv2d(dilation: int, padding: int, stride: int, kernel_size: int):
-    return modules.FakableModule(
+    return FakableModule(
         nn.Conv2d,
         in_channels=5,
         out_channels=13,
@@ -66,18 +66,18 @@ def conv2d(dilation: int, padding: int, stride: int, kernel_size: int):
 
 
 @pytest.fixture
-def conv2d_fn(conv2d: modules.FakableModule, conv2d_input: torch.Tensor):
-    return modules.ModuleFn.build(tensor=conv2d_input, module=conv2d)
+def conv2d_fn(conv2d: FakableModule, conv2d_input: torch.Tensor):
+    return ModuleFn.build(tensor=conv2d_input, module=conv2d)
 
 
 @pytest.fixture
 def emb():
-    return modules.FakableModule(nn.Embedding, num_embeddings=3, embedding_dim=5)
+    return FakableModule(nn.Embedding, num_embeddings=3, embedding_dim=5)
 
 
 @pytest.fixture
-def emb_fn(emb: modules.FakableModule, emb_input: torch.Tensor):
-    return modules.ModuleFn.build(tensor=emb_input, module=emb)
+def emb_fn(emb: FakableModule, emb_input: torch.Tensor):
+    return ModuleFn.build(tensor=emb_input, module=emb)
 
 
 def _emb_inputs():
@@ -90,16 +90,16 @@ def emb_input(request: pytest.FixtureRequest):
     return request.param
 
 
-def test_linear(linear: modules.FakableModule, linear_input: torch.Tensor):
+def test_linear(linear: FakableModule, linear_input: torch.Tensor):
     result = linear(linear_input)
     assert isinstance(result, torch.Tensor)
     assert result.shape == (7, 5)
 
 
 def test_linear_fn(
-    linear: modules.FakableModule,
+    linear: FakableModule,
     linear_input: torch.Tensor,
-    linear_fn: modules.ModuleFn,
+    linear_fn: ModuleFn,
 ):
     result = linear(linear_input)
     assert result.shape == linear_fn.shape
@@ -107,13 +107,13 @@ def test_linear_fn(
     assert result.dtype == linear_fn.dtype
 
 
-def test_identity(identity: modules.FakableModule, linear_input: torch.Tensor):
+def test_identity(identity: FakableModule, linear_input: torch.Tensor):
     result = identity(linear_input)
     assert isinstance(result, torch.Tensor)
     assert result.shape == (7, 3)
 
 
-def test_conv2d_forward(conv2d: modules.FakableModule, conv2d_input: torch.Tensor):
+def test_conv2d_forward(conv2d: FakableModule, conv2d_input: torch.Tensor):
     ours = conv2d(conv2d_input)
     theirs = conv2d.real(conv2d_input)
 
@@ -121,9 +121,9 @@ def test_conv2d_forward(conv2d: modules.FakableModule, conv2d_input: torch.Tenso
 
 
 def test_conv2d_fn(
-    conv2d: modules.FakableModule,
+    conv2d: FakableModule,
     conv2d_input: torch.Tensor,
-    conv2d_fn: modules.ModuleFn,
+    conv2d_fn: ModuleFn,
 ):
     result = conv2d(conv2d_input)
     assert result.shape == conv2d_fn.shape
@@ -131,15 +131,15 @@ def test_conv2d_fn(
     assert result.dtype == conv2d_fn.dtype
 
 
-def test_emb_forward(emb_input: torch.Tensor, emb: modules.FakableModule):
+def test_emb_forward(emb_input: torch.Tensor, emb: FakableModule):
     assert emb(emb_input).shape == emb.real(emb_input).shape
     assert emb(emb_input).dtype == emb.real(emb_input).dtype
 
 
 def test_linear_fn(
-    emb: modules.FakableModule,
+    emb: FakableModule,
     emb_input: torch.Tensor,
-    emb_fn: modules.ModuleFn,
+    emb_fn: ModuleFn,
 ):
     result = emb(emb_input)
     assert result.shape == emb_fn.shape

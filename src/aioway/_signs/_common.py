@@ -6,11 +6,11 @@ from collections import abc as cabc
 
 import lark
 
-from aioway._tracking import logging
+from aioway._tracking.logging import get_logger
 
 __all__ = ["lark_transformer_dcls", "parse_and_transform_later"]
 
-LOGGER = logging.get_logger(__name__)
+LOGGER = get_logger(__name__)
 
 
 @typing.dataclass_transform(frozen_default=True)
