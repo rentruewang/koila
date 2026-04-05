@@ -57,7 +57,7 @@ class Fn[T](abc.ABC):
         in the default case `preview` is `forward` with fake mode on.
         """
 
-        if ctx.is_enabled():
+        if ctx.enabled_fake_mode():
             return self.preview()
 
         else:
