@@ -3,5 +3,6 @@
 from . import _validation
 from .de import *
 from .fn import *
+from .losses import *
 from .tdicts import *
 from .tensors import *

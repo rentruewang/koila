@@ -107,6 +107,10 @@ class TensorFn(Fn[torch.Tensor], abc.ABC):
 
         return self.do().item()
 
+    @property
+    def requires_grad(self) -> bool:
+        return self.preview().requires_grad
+
     def numel(self) -> int:
         return self.attr.shape.numel()
 

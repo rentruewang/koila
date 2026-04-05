@@ -60,7 +60,7 @@ class Shape(cabc.Sequence[int]):
         return "(" + "x".join(map(str, self.dims)) + ")"
 
     def __eq__(self, other: object) -> bool:
-        if (rhs := _cast_numpy_index(other)) is None:
+        if (rhs := _as_int_arr(other)) is None:
             return NotImplemented
 
         lhs = np.asarray(self)
@@ -210,7 +210,7 @@ class Shape(cabc.Sequence[int]):
         raise ValueError
 
 
-def _cast_numpy_index(obj: object) -> npt.NDArray[np.uint] | None:
+def _as_int_arr(obj: object) -> npt.NDArray[np.uint] | None:
     """
     Convert the object into a numpy array. Return `None` if it's not doable / not integral array.
     """
