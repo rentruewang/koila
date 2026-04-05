@@ -69,19 +69,13 @@ class ModuleFn[**P, M: nn.Module](TensorFn):
     module: FakableModule[P, M]
 
     @typing.override
-    def deps(self):
-        yield self.tensor
-        yield from self._params_fn()
-
-    @typing.override
     def forward(self) -> torch.Tensor:
         tensor = self.tensor.do()
         module = self.module.module
         return module(tensor)
 
-    def _params_fn(self):
-        for param in self.module.parameters():
-            yield defer(param)
+    def _params_self(self):
+        yield from self.module.parameters()
 
     @classmethod
     def build(
