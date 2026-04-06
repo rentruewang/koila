@@ -86,6 +86,7 @@ def test_backward_fn(
     assert input.grad is not None
     assert target.grad is None
     assert (input.grad == trainable_param.grad).all()
+    assert input.do() is trainable_param
 
 
 def test_optim_zero_grad(
@@ -98,6 +99,7 @@ def test_optim_zero_grad(
     loss_fn.backward()
     optimizer.zero_grad()
     assert input.grad is target.grad is None
+    assert input.do() is trainable_param
 
 
 def test_optim_step(
