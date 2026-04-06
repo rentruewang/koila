@@ -6,6 +6,8 @@ import functools
 import typing
 from collections import abc as cabc
 
+import torch
+
 from aioway.ctx import enabled_fake_mode, fake_mode_func, is_fake_tensor
 
 __all__ = ["Fn", "FnState"]
@@ -24,6 +26,8 @@ class FnState(enum.Enum):
 class Fn[T](abc.ABC):
     """
     `Fn`s represent computation that shall be done later.
+    Right now, `Fn` acts as an lazy version / augmentation of fake mode,
+    patching some unsupported operations with worst case scenario (e.g. bool masking).
 
     Like Haskell's thunks, once evaluated,
     the value is stored in the `Fn` itself and never re-evaluated.
@@ -88,21 +92,52 @@ class Fn[T](abc.ABC):
     def forward(self) -> T:
         raise NotImplementedError
 
-    @abc.abstractmethod
-    def deps(self) -> tuple[Fn[typing.Any], ...]:
+    def deps(self) -> cabc.Generator[Fn[typing.Any]]:
         """
         The `Fn`s that must be evaluated before we can evaluate the current `Fn`.
 
-        Calling `do` on the current `Fn` would recursively
+        Calling `do` on the current `Fn` would recursively call those.
         """
 
-        raise NotImplementedError
+        # Inspect the fields of the `Fn`.
+        # If sub-`Fn`s are found, also yield from those.
+        for obj in self.__dict__.values():
+            if isinstance(obj, Fn):
+                yield obj
+                yield from obj.deps()
 
-    @property
-    def is_leaf(self) -> bool:
-        "Whether or not the thunk is dependent on other thunks. If not, it's a leaf."
+    @typing.final
+    def parameters(self, deps: bool = True) -> cabc.Generator[torch.Tensor]:
+        """
+        Yield all the dependent parameters of `self`.
 
-        return not self.deps()
+        Args:
+            deps: If `True`, also yield the parameters from the dependent `Fn`s.
+
+        Yields:
+            The dependent tensors that are sources.
+            Tensors that will be fake in fake mode.
+        """
+
+        yield from self._params_self()
+
+        if not deps:
+            return
+
+        # Parameter `deps` is `True`, recursively get the data.
+        for dep in self.deps():
+            yield from dep.parameters(True)
+
+    def _params_self(self) -> cabc.Generator[torch.Tensor]:
+        """
+        Yield parameters of `self`.
+
+        The default implementation yields nothing,
+        so subclasses should overwrite it if it is a source.
+        """
+
+        return
+        yield
 
     @functools.cached_property
     def __forward_cache(self):

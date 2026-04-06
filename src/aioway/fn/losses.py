@@ -31,10 +31,6 @@ class LossFn[**P, M: nn.Module](TensorFn):
             raise AssertionError("The loss function does not output a scalar.")
 
     @typing.override
-    def deps(self):
-        return self.input, self.target
-
-    @typing.override
     def forward(self) -> torch.Tensor:
         input = self.input.do()
         target = self.target.do()

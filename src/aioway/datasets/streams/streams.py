@@ -11,7 +11,7 @@ from collections import abc as cabc
 from aioway.chunks import Chunk
 from aioway.schemas import AttrSet
 
-from .. import datasets
+from ..datasets import Dataset, DatasetViewTypes
 
 __all__ = ["Stream", "StreamState", "Stream", "Stream", "Stream"]
 
@@ -43,7 +43,7 @@ class StreamState:
 
 
 @dcls.dataclass(frozen=True)
-class Stream(cabc.Iterator[Chunk], datasets.Dataset, abc.ABC):
+class Stream(cabc.Iterator[Chunk], Dataset, abc.ABC):
     """
     `Stream` produces a stream of batches of data, in the form of `TensorDict`s,
     everytime `__next__` is called on it, a `TensorDict` is yielded.
@@ -159,6 +159,4 @@ class Stream(cabc.Iterator[Chunk], datasets.Dataset, abc.ABC):
     def view_types(cls):
         from .views import StreamColumnView, StreamSelectView
 
-        return datasets.DatasetViewTypes(
-            column=StreamColumnView, select=StreamSelectView
-        )
+        return DatasetViewTypes(column=StreamColumnView, select=StreamSelectView)

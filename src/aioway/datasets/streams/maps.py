@@ -36,7 +36,7 @@ class MapStream(Stream, abc.ABC):
 
     These traits are shared in this base class.
 
-    .. note::
+    Note:
         Though having a 1-1 input to output batch count, this is considered to be a `flat_map`,
         where each input row can correspond to one or multiple or 0 rows, in the same minibatch.
     """
@@ -96,10 +96,11 @@ class ApplyStream(MapStream):
 
     The full loop would be something like:
 
-    .. code-block:: python
 
-        for batch in self.source:
-            yield self.apply(batch)
+    ```python
+    for batch in self.source:
+        yield self.apply(batch)
+    ```
     """
 
     apply: cabc.Callable[[Chunk], Chunk]
@@ -127,10 +128,10 @@ class FuncFilterStream(MapStream):
     The input is being used to generate predicate,
     and the output of predicate must be a boolean `torch.Tensor` of the same length as the input.
 
-    .. code-block:: python
-
-        for batch in self.source:
-            yield batch[self.predicate(batch)]
+    ```python
+    for batch in self.source:
+        yield batch[self.predicate(batch)]
+    ```
     """
 
     predicate: cabc.Callable[[Chunk], torch.Tensor]

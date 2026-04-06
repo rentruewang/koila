@@ -89,11 +89,6 @@ class TensorFn(Fn[torch.Tensor], abc.ABC):
     def __le__(self, other: typing.Any) -> TensorFn:
         return UFunc2Thunk(operator.le, self, other)
 
-    @typing.override
-    @abc.abstractmethod
-    def deps(self) -> tuple[Fn[object], ...]:
-        raise NotImplementedError
-
     @property
     def attr(self):
         return attr(self.forward() if self.done else self.preview())
@@ -197,9 +192,6 @@ class AnyThunk(TensorFn):
 
     @typing.override
     def deps(self):
-        return tuple(self._deps())
-
-    def _deps(self) -> cabc.Iterator[Fn[object]]:
         yield from self.args
         yield from self.kwargs.values()
 
@@ -226,11 +218,6 @@ class UFunc1Thunk(TensorFn):
     def forward(self) -> torch.Tensor:
         return self.func(self.arg.forward())
 
-    @typing.override
-    def deps(self):
-        # If it's a primitive or `torch.Tensor`, do not recurse.
-        return (self.arg,)
-
 
 type BinaryTensorFnRhs = TensorFn | torch.Tensor | int | float | bool
 
@@ -256,8 +243,6 @@ class UFunc2Thunk(TensorFn):
         if not isinstance(self.right, TensorFn | torch.Tensor | int | float | bool):
             raise TypeError
 
-        super().__init__()
-
     @typing.override
     def forward(self) -> torch.Tensor:
         left_do = self.left.forward()
@@ -267,17 +252,6 @@ class UFunc2Thunk(TensorFn):
                 return self.func(left_do, right.forward())
             case _:
                 return self.func(left_do, right)
-
-    @typing.override
-    def deps(self):
-        return tuple(self._deps())
-
-    def _deps(self):
-        # If it's a primitive or `torch.Tensor`, do not recurse.
-        yield self.left
-
-        if isinstance(right := self.right, TensorFn):
-            yield right
 
 
 @dcls_no_eq_no_repr
@@ -299,17 +273,6 @@ class GatherThunk(TensorFn):
         )
         index = self.index.forward() if isinstance(self.index, TensorFn) else self.index
         return tensor[index]
-
-    @typing.override
-    def deps(self):
-        return tuple(self._deps())
-
-    def _deps(self) -> cabc.Iterator[TensorFn]:
-        if isinstance(self.tensor, TensorFn):
-            yield self.tensor
-
-        if isinstance(self.index, TensorFn):
-            yield self.index
 
 
 @dcls_no_eq_no_repr
@@ -365,5 +328,5 @@ class TensorDataFn(TensorFn):
         return self.data
 
     @typing.override
-    def deps(self):
-        return ()
+    def _params_self(self) -> cabc.Generator[torch.Tensor]:
+        yield self.data

@@ -6,7 +6,7 @@ from collections import abc as cabc
 
 from numpy import typing as npt
 
-from .. import frames
+from ..frames import Frame
 from .indices import Index
 from .ops import IndexPlan
 
@@ -49,7 +49,7 @@ class IndexManager(cabc.Mapping[MultiCol, MultiPlanIndex]):
     providing some additional utility to make the API easy to use.
     """
 
-    frame: frames.Frame
+    frame: Frame
     """
     The framem for which the `IndexManager` manages indices.
     """

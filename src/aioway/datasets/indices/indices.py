@@ -7,7 +7,7 @@ from collections import abc as cabc
 import numpy as np
 from numpy import typing as npt
 
-from .. import frames
+from ..frames import Frame
 from .ops import IndexPlan
 
 __all__ = ["Index", "IndexContext"]
@@ -19,9 +19,9 @@ class IndexContext:
     The indexing information for looking upu an index.
     """
 
-    frame: frames.Frame
+    frame: Frame
     """
-    The `frames.Frame` to apply the index on.
+    The `Frame` to apply the index on.
     """
 
     columns: cabc.Sequence[str]

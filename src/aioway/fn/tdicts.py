@@ -78,11 +78,6 @@ class TensorDictFn(Fn[td.TensorDict], cabc.Mapping[str, TensorFn], abc.ABC):
     def keys(self):
         return self.attrs.keys()
 
-    @abc.abstractmethod
-    @typing.override
-    def deps(self) -> tuple[Fn[typing.Any], ...]:
-        raise NotImplementedError
-
     @property
     def attrs(self):
         return attr_set(self.preview())
@@ -164,8 +159,9 @@ class TensorDictDataFn(TensorDictFn):
         return self.data
 
     @typing.override
-    def deps(self):
-        return ()
+    @typing.no_type_check
+    def _params_self(self) -> cabc.Generator[torch.Tensor]:
+        yield from self.data.values()
 
 
 @dcls_no_eq_no_repr
@@ -183,10 +179,6 @@ class LambdaTensorDictFn(TensorDictFn):
         source = self.source.do()
         return self.function(source)
 
-    @typing.override
-    def deps(self):
-        return (self.source,)
-
 
 @dcls_no_eq_no_repr
 class LambdaTensorFn(TensorFn):
@@ -203,10 +195,6 @@ class LambdaTensorFn(TensorFn):
         source = self.source.do()
         return self.function(source)
 
-    @typing.override
-    def deps(self):
-        return (self.source,)
-
 
 @dcls_no_eq_no_repr
 class GatherTensorDictFn(TensorDictFn):
@@ -221,17 +209,6 @@ class GatherTensorDictFn(TensorDictFn):
         source = eager(self.source)
         index = eager(self.index)
         return source[index]
-
-    @typing.override
-    def deps(self) -> tuple[Fn[typing.Any], ...]:
-        return tuple(self._deps())
-
-    def _deps(self):
-        if isinstance(self.source, TensorDictFn):
-            yield self.source
-
-        if isinstance(self.index, TensorFn):
-            yield self.index
 
 
 @dcls_no_eq_no_repr
@@ -253,7 +230,3 @@ class MergeTensorDictFn(TensorDictFn):
         left = self.left.do()
         right = self.right.do()
         return td.merge_tensordicts(left, right)
-
-    @typing.override
-    def deps(self):
-        return self.left, self.right
