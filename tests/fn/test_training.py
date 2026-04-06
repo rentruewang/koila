@@ -18,13 +18,23 @@ def _loss_fns():
 
 
 @pytest.fixture
-def input():
-    return defer(torch.randn(7, 3).requires_grad_())
+def trainable_param():
+    return torch.randn(7, 3).requires_grad_()
 
 
 @pytest.fixture
-def target():
-    return defer(torch.randn(7, 3))
+def input(trainable_param: torch.Tensor):
+    return defer(trainable_param)
+
+
+@pytest.fixture
+def target_param(trainable_param: torch.Tensor):
+    return torch.randn_like(trainable_param)
+
+
+@pytest.fixture
+def target(target_param: torch.Tensor):
+    return defer(target_param)
 
 
 @pytest.fixture(params=_loss_fns())
@@ -66,14 +76,24 @@ def test_loss_fn(loss_fn: LossFn):
     assert loss_fn.shape.numel() == 1
 
 
-def test_backward_fn(loss_fn: LossFn, input: TensorFn, target: TensorFn):
+def test_backward_fn(
+    loss_fn: LossFn,
+    input: TensorFn,
+    target: TensorFn,
+    trainable_param: torch.Tensor,
+):
     loss_fn.backward()
     assert input.grad is not None
     assert target.grad is None
+    assert (input.grad == trainable_param.grad).all()
 
 
 def test_optim_zero_grad(
-    optimizer: OptimFn, loss_fn: LossFn, input: TensorFn, target: TensorFn
+    optimizer: OptimFn,
+    loss_fn: LossFn,
+    input: TensorFn,
+    target: TensorFn,
+    trainable_param: torch.Tensor,
 ):
     loss_fn.backward()
     optimizer.zero_grad()
@@ -81,10 +101,19 @@ def test_optim_zero_grad(
 
 
 def test_optim_step(
-    optimizer: OptimFn, loss_fn: LossFn, input: TensorFn, target: TensorFn
+    optimizer: OptimFn,
+    loss_fn: LossFn,
+    trainable_param: torch.Tensor,
+    target_param: torch.Tensor,
 ):
-    original = input.data
+    original = trainable_param.clone()
     optimizer.zero_grad()
+    assert trainable_param.grad is None
     loss_fn.backward()
+    assert trainable_param.grad is not None
     optimizer.step()
-    assert torch.all((input.data == original))
+
+    # Test if optimization step did happen.
+    updated = trainable_param != original
+    no_update_needed = trainable_param == target_param
+    assert (updated | no_update_needed).all()
