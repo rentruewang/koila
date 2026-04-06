@@ -117,5 +117,5 @@ def test_optim_step(
 
     # Test if optimization step did happen.
     updated = trainable_param != original
-    no_update_needed = trainable_param == target_param
-    assert (updated | no_update_needed).all()
+    no_grad = trainable_param.grad == 0
+    assert (updated | no_grad).all()
