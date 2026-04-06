@@ -12,7 +12,7 @@ from aioway._typing import BatchIndex, IntArray, is_list_of
 from aioway.chunks import Chunk
 from aioway.schemas import AttrSet
 
-from .. import datasets
+from ..datasets import Dataset, DatasetViewTypes
 
 if typing.TYPE_CHECKING:
     from .views import FrameColumnView, FrameSelectView
@@ -21,7 +21,7 @@ __all__ = ["Frame"]
 
 
 @dcls.dataclass(frozen=True)
-class Frame(datasets.Dataset, abc.ABC):
+class Frame(Dataset, abc.ABC):
     """
     `Frame` represents a set of heterogenious data stored in memory,
     it is one of the main physical abstractions in `aioway` to represent eager computation.
@@ -31,7 +31,7 @@ class Frame(datasets.Dataset, abc.ABC):
 
     Each `Chunk` retrieved from `Frame` is a minibatch of data.
 
-    Similar to `datasets.Dataset`, but only allows retrieving a batch at a time.
+    Similar to `Dataset`, but only allows retrieving a batch at a time.
     To get a single item, retrieve a batch of size 1.
 
     For simplicity of API, this class does not support `__getitem__(int)`,
@@ -133,7 +133,7 @@ class Frame(datasets.Dataset, abc.ABC):
     def view_types(cls):
         from .views import FrameColumnView, FrameSelectView
 
-        return datasets.DatasetViewTypes(column=FrameColumnView, select=FrameSelectView)
+        return DatasetViewTypes(column=FrameColumnView, select=FrameSelectView)
 
     def _check_idx(self, idx: IntArray, /) -> IntArray:
         "Check if the index is valid, and then remap the index to be positive."

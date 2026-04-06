@@ -16,7 +16,7 @@ from aioway._typing import is_list_of
 from aioway.chunks import Chunk
 from aioway.schemas import AttrSet
 
-from .. import frames
+from ..frames import Frame
 from .streams import Stream
 
 __all__ = [
@@ -179,7 +179,7 @@ class ListStream(BoundedStream):
 @dcls.dataclass(frozen=True)
 class FrameStreamLoader:
     """
-    The optoins for `data.DataLoader` on `frames.Frame` in `FrameStream`.
+    The optoins for `data.DataLoader` on `Frame` in `FrameStream`.
     """
 
     batch_size: int = 1
@@ -198,11 +198,11 @@ class FrameStreamLoader:
 @dcls.dataclass(frozen=True)
 class FrameStream(Stream):
     """
-    A `Stream` backed by a `frames.Frame`.
+    A `Stream` backed by a `Frame`.
     """
 
-    frame: frames.Frame
-    "The underlying `frames.Frame`."
+    frame: Frame
+    "The underlying `Frame`."
 
     options: FrameStreamLoader
     """

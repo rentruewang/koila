@@ -8,14 +8,14 @@ from collections import abc as cabc
 
 from aioway.chunks import Chunk, Vector
 
-from .. import datasets
+from ..datasets import DatasetColumnView, DatasetSelectView
 from .streams import Stream
 
 __all__ = ["StreamColumnView", "StreamSelectView"]
 
 
 @dcls.dataclass(frozen=True)
-class StreamColumnView(cabc.Iterator[Vector], datasets.DatasetColumnView[Stream]):
+class StreamColumnView(cabc.Iterator[Vector], DatasetColumnView[Stream]):
     """
     A column reference (on a stream).
     Performs `__next__` and yield `Vector`s.
@@ -34,7 +34,7 @@ class StreamColumnView(cabc.Iterator[Vector], datasets.DatasetColumnView[Stream]
 
 
 @dcls.dataclass(frozen=True)
-class StreamSelectView(datasets.DatasetSelectView[Stream], Stream):
+class StreamSelectView(DatasetSelectView[Stream], Stream):
     """
     The view generated when calling `Stream.select`.
     """

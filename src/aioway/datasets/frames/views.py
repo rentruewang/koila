@@ -8,14 +8,14 @@ import typing
 from aioway._typing import BatchIndex, IntArray
 from aioway.chunks import Chunk, Vector
 
-from .. import datasets
+from ..datasets import DatasetColumnView, DatasetSelectView
 from .frames import Frame
 
 __all__ = ["FrameColumnView", "FrameSelectView"]
 
 
 @dcls.dataclass(frozen=True)
-class FrameColumnView(datasets.DatasetColumnView[Frame]):
+class FrameColumnView(DatasetColumnView[Frame]):
     """
     A column reference to a `Frame`.
     Performs `__getitem__` on a `Frame`, then select the column.
@@ -34,7 +34,7 @@ class FrameColumnView(datasets.DatasetColumnView[Frame]):
 
 
 @dcls.dataclass(frozen=True)
-class FrameSelectView(datasets.DatasetSelectView[Frame], Frame):
+class FrameSelectView(DatasetSelectView[Frame], Frame):
     """
     A selection view on the `Frame`.
     """
