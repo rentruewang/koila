@@ -26,6 +26,8 @@ class FnState(enum.Enum):
 class Fn[T](abc.ABC):
     """
     `Fn`s represent computation that shall be done later.
+    Right now, `Fn` acts as an lazy version / augmentation of fake mode,
+    patching some unsupported operations with worst case scenario (e.g. bool masking).
 
     Like Haskell's thunks, once evaluated,
     the value is stored in the `Fn` itself and never re-evaluated.
