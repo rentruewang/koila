@@ -102,12 +102,7 @@ def test_optim_zero_grad(
     assert input.do() is trainable_param
 
 
-def test_optim_step(
-    optimizer: OptimFn,
-    loss_fn: LossFn,
-    trainable_param: torch.Tensor,
-    target_param: torch.Tensor,
-):
+def test_optim_step(optimizer: OptimFn, loss_fn: LossFn, trainable_param: torch.Tensor):
     original = trainable_param.clone()
     optimizer.zero_grad()
     assert trainable_param.grad is None
