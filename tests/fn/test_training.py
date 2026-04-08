@@ -82,7 +82,7 @@ def test_backward_fn(
     target: TensorFn,
     trainable_param: torch.Tensor,
 ):
-    loss_fn.backward()
+    loss_fn.backward().do()
     assert input.grad is not None
     assert target.grad is None
     assert (input.grad == trainable_param.grad).all()
@@ -96,7 +96,7 @@ def test_optim_zero_grad(
     target: TensorFn,
     trainable_param: torch.Tensor,
 ):
-    loss_fn.backward()
+    loss_fn.backward().do()
     optimizer.zero_grad()
     assert input.grad is target.grad is None
     assert input.do() is trainable_param
@@ -106,7 +106,7 @@ def test_optim_step(optimizer: OptimFn, loss_fn: LossFn, trainable_param: torch.
     original = trainable_param.clone()
     optimizer.zero_grad()
     assert trainable_param.grad is None
-    loss_fn.backward()
+    loss_fn.backward().do()
     assert trainable_param.grad is not None
     optimizer.step()
 

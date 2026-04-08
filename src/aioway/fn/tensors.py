@@ -99,24 +99,16 @@ class TensorFn(Fn[torch.Tensor], abc.ABC):
 
     def backward(self):
         """
-        Do a simple backward pass.
-        Only available on a scalar.
+        Do a simple backward pass. Only available on a scalar.
+
         The arguments are not yet supported.
         """
 
-        self._assert_scalar()
-        self.do().backward()
+        return BackwardFn(self)
 
     def item(self):
-        self._assert_scalar()
+        _assert_scalar(self)
         return self.do().item()
-
-    def _assert_scalar(self):
-        if not self.numel() == 1:
-            # Error message copied from `torch`.
-            raise RuntimeError(
-                f"a `TensorFn` with {self.numel()} elements cannot be converted to scalar"
-            )
 
     @property
     def requires_grad(self) -> bool:
@@ -144,6 +136,14 @@ class TensorFn(Fn[torch.Tensor], abc.ABC):
     @typing.override
     def _name(self) -> str:
         return f"{self.__class__.__name__}{self.attr}"
+
+
+def _assert_scalar(t: TensorFn):
+    if not t.numel() == 1:
+        # Error message copied from `torch`.
+        raise RuntimeError(
+            f"a `TensorFn` with {t.numel()} elements cannot be converted to scalar"
+        )
 
 
 def tensor(data: TensorFn | torch.Tensor) -> TensorFn:
@@ -330,3 +330,19 @@ class TensorDataFn(TensorFn):
     @typing.override
     def _params_self(self) -> cabc.Generator[torch.Tensor]:
         yield self.data
+
+
+@dcls_no_eq_no_repr
+class BackwardFn(Fn[None]):
+    loss: TensorFn
+
+    def __post_init__(self):
+        _assert_scalar(self.loss)
+
+    @typing.override
+    def forward(self) -> None:
+        self.loss.do().backward()
+
+    @typing.override
+    def _name(self) -> str:
+        return f"Backaward<{self.loss!r}>"
