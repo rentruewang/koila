@@ -46,8 +46,18 @@ class Optim[O: optim.Optimizer]:
 
 @dcls_no_eq
 class OptimFn[O: optim.Optimizer](Fn[None]):
+    """
+    The `Fn` that stores `torch.optim.Optimizer` methods.
+
+    Since right now we only support `zero_grad()` and `step()`,
+    the `function` signature is made to be `(Optimizer) -> None`.
+    """
+
     optimizer: optim.Optimizer
+    "The optimizer that is stored."
+
     function: cabc.Callable[[optim.Optimizer], None]
+    "The function that will be called in `forward`."
 
     @typing.override
     def forward(self) -> None:
