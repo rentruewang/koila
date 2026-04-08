@@ -8,7 +8,7 @@ from collections import abc as cabc
 
 import torch
 
-from aioway.ctx import enabled_fake_mode, fake_mode_func, is_fake_tensor
+from aioway.ctx import enabled_fake_mode, fake_mode_func
 
 __all__ = ["Fn", "FnState"]
 
@@ -84,9 +84,7 @@ class Fn[T](abc.ABC):
         2. Operators that cannot be supported by `torch` e.g. boolean  masking.
         """
 
-        result = self.forward()
-        assert is_fake_tensor(result)
-        return result
+        return self.forward()
 
     @abc.abstractmethod
     def forward(self) -> T:
