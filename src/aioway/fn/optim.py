@@ -8,9 +8,11 @@ from collections import abc as cabc
 import torch
 from torch import optim
 
+from aioway._common import dcls_no_eq
+
 from .fn import Fn
 
-__all__ = ["OptimFn"]
+__all__ = ["Optim"]
 
 
 class OptimType(typing.Protocol):
@@ -19,9 +21,9 @@ class OptimType(typing.Protocol):
     ) -> optim.Optimizer: ...
 
 
-class OptimFn[O: optim.Optimizer](Fn[None]):
+class Optim[O: optim.Optimizer]:
     """
-    The optimizer `Fn`, used to do the step operation.
+    The wrapper type that generates optimizer related `Fn`, used to do the step operation.
 
     The init signature follows closly from `torch.optim.*` optimizers,
     having `lr` and `params` as input (to pass into `params`).
@@ -33,18 +35,20 @@ class OptimFn[O: optim.Optimizer](Fn[None]):
         params: cabc.Iterable[torch.Tensor],
         lr: float,
     ) -> None:
-        self._optimizer = optim_cls(params=params, lr=lr)
+        self._opt = optim_cls(params=params, lr=lr)
+
+    def zero_grad(self):
+        return OptimFn(self._opt, lambda opt: opt.zero_grad())
+
+    def step(self):
+        return OptimFn(self._opt, lambda opt: opt.step())
+
+
+@dcls_no_eq
+class OptimFn[O: optim.Optimizer](Fn[None]):
+    optimizer: optim.Optimizer
+    function: cabc.Callable[[optim.Optimizer], None]
 
     @typing.override
     def forward(self) -> None:
-        """
-        Calls `.step()`, should do nothing in fake mode.
-        """
-
-        self.step()
-
-    def zero_grad(self):
-        self._optimizer.zero_grad()
-
-    def step(self) -> None:
-        self._optimizer.step()
+        return self.function(self.optimizer)

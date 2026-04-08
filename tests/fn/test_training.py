@@ -5,7 +5,7 @@ import torch
 from torch import nn, optim
 from torch.nn import functional as F
 
-from aioway.fn import LossFn, OptimFn, TensorFn, defer
+from aioway.fn import LossFn, Optim, TensorFn, defer
 from aioway.schemas import Shape
 
 
@@ -68,7 +68,7 @@ def lr(request: pytest.FixtureRequest):
 
 @pytest.fixture
 def optimizer(optim_type: type[optim.Optimizer], loss_fn: LossFn, lr: float):
-    return OptimFn(optim_cls=optim_type, params=loss_fn.parameters(), lr=lr)
+    return Optim(optim_cls=optim_type, params=loss_fn.parameters(), lr=lr)
 
 
 def test_loss_fn(loss_fn: LossFn):
@@ -90,25 +90,25 @@ def test_backward_fn(
 
 
 def test_optim_zero_grad(
-    optimizer: OptimFn,
+    optimizer: Optim,
     loss_fn: LossFn,
     input: TensorFn,
     target: TensorFn,
     trainable_param: torch.Tensor,
 ):
     loss_fn.backward().do()
-    optimizer.zero_grad()
+    optimizer.zero_grad().do()
     assert input.grad is target.grad is None
     assert input.do() is trainable_param
 
 
-def test_optim_step(optimizer: OptimFn, loss_fn: LossFn, trainable_param: torch.Tensor):
+def test_optim_step(optimizer: Optim, loss_fn: LossFn, trainable_param: torch.Tensor):
     original = trainable_param.clone()
-    optimizer.zero_grad()
+    optimizer.zero_grad().do()
     assert trainable_param.grad is None
     loss_fn.backward().do()
     assert trainable_param.grad is not None
-    optimizer.step()
+    optimizer.step().do()
 
     # Test if optimization step did happen.
     updated = trainable_param != original
