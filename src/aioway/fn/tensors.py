@@ -48,6 +48,12 @@ class TensorFn(Fn[torch.Tensor], abc.ABC):
     def __neg__(self) -> TensorFn:
         return UFunc1Thunk(operator.neg, self)
 
+    def __matmul__(self, other: typing.Any) -> TensorFn:
+        return MatMulThunk(self, other)
+
+    def __rmatmul__(self, other: typing.Any) -> TensorFn:
+        return MatMulThunk(other, self)
+
     def __add__(self, other: typing.Any) -> TensorFn:
         return UFunc2Thunk(operator.add, self, other)
 
@@ -255,6 +261,29 @@ class UFunc2Thunk(TensorFn):
 
 
 @dcls_no_eq_no_repr
+class MatMulThunk(TensorFn):
+    "The thunk that do matmul. This cannot be constructed if `left @ right` is invalid."
+
+    left: TensorFn | torch.Tensor
+    "The lhs of `matmul`."
+
+    right: TensorFn | torch.Tensor
+    "The rhs of `matmul`."
+
+    def forward(self) -> torch.Tensor:
+        """
+        Do a matmul.
+        """
+
+        from .de import eager
+
+        left = eager(self.left)
+        right = eager(self.right)
+
+        return left @ right
+
+
+@dcls_no_eq_no_repr
 class GatherThunk(TensorFn):
     tensor: TensorFn | torch.Tensor
     index: TensorFn | torch.Tensor
@@ -263,15 +292,15 @@ class GatherThunk(TensorFn):
         super().__init__()
 
         # One of them should be `TensorFn`.
-        if not isinstance(self.tensor, TensorFn) and isinstance(self.index, TensorFn):
+        if all(not isinstance(t, TensorFn) for t in [self.tensor, self.index]):
             raise TypeError
 
     @typing.override
     def forward(self) -> torch.Tensor:
-        tensor = (
-            self.tensor.forward() if isinstance(self.tensor, TensorFn) else self.tensor
-        )
-        index = self.index.forward() if isinstance(self.index, TensorFn) else self.index
+        from .de import eager
+
+        tensor = eager(self.tensor)
+        index = eager(self.index)
         return tensor[index]
 
 
