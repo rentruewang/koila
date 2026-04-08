@@ -65,6 +65,17 @@ def test_left_normal(left_fn: TensorFn):
     assert isinstance(left_fn.forward(), torch.Tensor)
 
 
+def test_matmul(left_fn: TensorFn):
+    out = left_fn @ torch.randn(5, 7)
+    assert out.shape == [3, 7]
+    assert out.do().shape == out.shape
+
+
+def test_matmul_fail(left_fn: TensorFn):
+    with pytest.raises(ValueError):
+        left_fn @ torch.randn(11, 13)
+
+
 def test_left_attr(left_fn: TensorFn):
     tensor = left_fn.preview()
     assert isinstance(tensor, torch.Tensor)

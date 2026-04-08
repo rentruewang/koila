@@ -270,6 +270,13 @@ class MatMulThunk(TensorFn):
     right: TensorFn | torch.Tensor
     "The rhs of `matmul`."
 
+    def __post_init__(self) -> None:
+        # Trigger `preview()` s.t. if matmul failed, an error would be raised.
+        try:
+            _ = self.preview()
+        except RuntimeError:
+            raise ValueError(f"{self.left=} @ {self.right=} failed.")
+
     def forward(self) -> torch.Tensor:
         """
         Do a matmul.
