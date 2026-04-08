@@ -88,6 +88,18 @@ class Fn[T](abc.ABC):
 
     @abc.abstractmethod
     def forward(self) -> T:
+        """
+        Perform the computation.
+        """
+
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def time_cost(self):
+        """
+        Return the time cost (in big O notation).
+        """
+
         raise NotImplementedError
 
     def deps(self) -> cabc.Generator[Fn[typing.Any]]:

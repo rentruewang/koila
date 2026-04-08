@@ -1,5 +1,7 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
+"The `TensorFn` class is a lazy version of `torch.Tensor`, tracking computation."
+
 import abc
 import operator
 import typing
