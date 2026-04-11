@@ -4,6 +4,7 @@
 
 import dataclasses as dcls
 import functools
+import logging
 import typing
 from collections import abc as cabc
 
@@ -11,10 +12,8 @@ import numpy as np
 import tensordict as td
 import torch
 
+from aioway._common import get_tracker, is_dict_of_str_to, is_list_of
 from aioway._signs import Signature
-from aioway._tracking import get_tracker
-from aioway._tracking.logging import get_logger
-from aioway._typing import is_dict_of_str_to, is_list_of
 
 from .attrs import Attr, attr
 from .devices import Device, DeviceLike
@@ -23,10 +22,11 @@ from .shapes import Shape, ShapeLike
 
 __all__ = ["AttrSet", "DTypeSet", "DeviceSet", "ShapeSet", "AttrSetLike", "attr_set"]
 
-type AttrSetLike = AttrSet | td.TensorDict | dict[str, Attr]
 
-LOGGER = get_logger(__name__)
+LOGGER = logging.getLogger(__name__)
 TRACKER = get_tracker(lambda: AttrSet)
+
+type AttrSetLike = AttrSet | td.TensorDict | dict[str, Attr]
 
 
 class _AttrItem[T](typing.NamedTuple):

@@ -1,16 +1,15 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import dataclasses as dcls
+import logging
 import typing
 from collections import abc as cabc
 
 import lark
 
-from aioway._tracking.logging import get_logger
-
 __all__ = ["lark_transformer_dcls", "parse_and_transform_later"]
 
-LOGGER = get_logger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 @typing.dataclass_transform(frozen_default=True)

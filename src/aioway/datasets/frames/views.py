@@ -5,7 +5,7 @@
 import dataclasses as dcls
 import typing
 
-from aioway._typing import BatchIndex, IntArray
+from aioway._common import BatchIndex, IntArray
 from aioway.chunks import Chunk, Vector
 
 from ..datasets import DatasetColumnView, DatasetSelectView

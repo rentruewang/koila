@@ -5,14 +5,14 @@
 import abc
 import dataclasses as dcls
 import functools
+import logging
 import math
 import typing
 from collections import abc as cabc
 
 from torch.utils import data
 
-from aioway._tracking.logging import get_logger
-from aioway._typing import is_list_of
+from aioway._common import is_list_of
 from aioway.chunks import Chunk
 from aioway.schemas import AttrSet
 
@@ -27,7 +27,7 @@ __all__ = [
     "FrameStreamLoader",
 ]
 
-LOGGER = get_logger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 @dcls.dataclass(frozen=True)

@@ -4,18 +4,17 @@
 
 import dataclasses as dcls
 import functools
+import logging
 import types
 import typing
 
 import lark
 
-from aioway._tracking.logging import get_logger
-
 from ._common import lark_transformer_dcls, parse_and_transform_later
 
 __all__ = ["TypeList"]
 
-LOGGER = get_logger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 class TypeList:

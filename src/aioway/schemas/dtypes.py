@@ -3,18 +3,18 @@
 "The implementation for dtypes, supports different backends."
 
 import functools
+import logging
 import re
 import typing
 
 import numpy as np
 import torch
 
-from aioway._tracking import get_tracker
-from aioway._tracking.logging import get_logger
+from aioway._common import get_tracker
 
 __all__ = ["DType", "DTypeLike"]
 
-LOGGER = get_logger(__name__)
+LOGGER = logging.getLogger(__name__)
 TRACKER = get_tracker(lambda: DType)
 
 type DTypeFamily = typing.Literal["int", "float", "bool"]

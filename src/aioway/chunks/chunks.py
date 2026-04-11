@@ -3,15 +3,14 @@
 "Chunk is a heterogenious collection of in-memory tensor batches."
 
 import dataclasses as dcls
+import logging
 import typing
 from collections import abc as cabc
 
-import tensordict
 import tensordict as td
 import torch
 
-from aioway._tracking.logging import get_logger
-from aioway._typing import is_dict_of_str_to
+from aioway._common import is_dict_of_str_to
 from aioway.fn import tdict
 from aioway.schemas import AttrSetLike, attr_set
 
@@ -19,7 +18,7 @@ from .vectors import Vector
 
 __all__ = ["Chunk"]
 
-LOGGER = get_logger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 type TensorDictLike = td.TensorDict | dict[str, torch.Tensor]
@@ -50,7 +49,6 @@ class Chunk(cabc.Mapping[str, Vector]):
         return f"{self.attrs!r}({len(self)})"
 
     @typing.override
-    @LOGGER.function("DEBUG")
     def __eq__(self, rhs: object) -> bool:
         # Check if schema and data are both equal.
         if isinstance(rhs, Chunk):
@@ -83,22 +81,18 @@ class Chunk(cabc.Mapping[str, Vector]):
     def fn(self):
         return tdict(self.data)
 
-    @LOGGER.function("DEBUG")
     def select(self, *names: str):
         return Chunk(self.fn().select(*names).do())
 
-    @LOGGER.function("DEBUG")
     def column(self, col: str):
         return Vector(self.fn()[col].forward())
 
-    @LOGGER.function("DEBUG")
     def rename(self, **renames: str):
         if not renames:
             return self
 
         return Chunk(self.fn().rename(**renames).do())
 
-    @LOGGER.function("DEBUG")
     def zip(self, rhs: typing.Self):
         return Chunk(self.fn().zip(rhs.fn()).do())
 
@@ -110,7 +104,6 @@ class Chunk(cabc.Mapping[str, Vector]):
         return self.data
 
     @classmethod
-    @LOGGER.function("DEBUG")
     def cat(cls, chunks: cabc.Sequence[typing.Self]) -> typing.Self:
         if not chunks:
             raise ValueError("Given an empty sequence. Not sure what to do.")

@@ -8,7 +8,7 @@ import typing
 
 import numpy as np
 
-from aioway._typing import BatchIndex, IntArray, is_list_of
+from aioway._common import BatchIndex, IntArray, is_list_of
 from aioway.chunks import Chunk
 from aioway.schemas import AttrSet
 

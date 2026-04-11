@@ -8,8 +8,7 @@ import numpy as np
 import tensordict as td
 import torch
 
-from aioway._common import dcls_no_eq_no_repr
-from aioway._typing import is_list_of
+from aioway._common import dcls_no_eq_no_repr, is_list_of
 from aioway.ctx import to_fake_tensordict
 from aioway.schemas import attr_set
 

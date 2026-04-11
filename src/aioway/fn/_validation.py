@@ -2,15 +2,16 @@
 
 "Validation of data (`td.TensorDict`) against schema (`meta.AttrSet`)."
 
+import logging
+
 import tensordict as td
 import torch
 
-from aioway._tracking.logging import get_logger
 from aioway.schemas import Attr, AttrSet, Device, DType, Shape
 
 __all__ = ["validate_schema", "validate_attr"]
 
-LOGGER = get_logger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 def validate_schema(attrs: AttrSet, data: td.TensorDict) -> None:

@@ -5,7 +5,7 @@
 import typing
 from collections import abc as cabc
 
-from aioway._typing import SeqKeysView
+from aioway._common import SeqKeysView
 
 from ._common import symbol_dataclass
 from .exprs import ColSymbol, TableSymbol

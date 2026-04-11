@@ -1,6 +1,7 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import dataclasses as dcls
+import logging
 import typing
 from collections import abc as cabc
 
@@ -8,13 +9,11 @@ import numpy as np
 import torch
 from numpy import typing as npt
 
-from aioway._tracking import get_tracker
-from aioway._tracking.logging import get_logger
-from aioway._typing import is_list_of, is_tuple_of
+from aioway._common import get_tracker, is_list_of, is_tuple_of
 
 __all__ = ["ShapeLike", "Shape"]
 
-LOGGER = get_logger(__name__)
+LOGGER = logging.getLogger(__name__)
 TRACKER = get_tracker(lambda: Shape)
 
 type _PrimitiveNumber = float | int | bool
