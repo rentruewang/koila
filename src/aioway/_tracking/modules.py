@@ -4,10 +4,9 @@
 
 import contextlib as ctxl
 import dataclasses as dcls
+import logging
 import typing
 from collections import abc as cabc
-
-from .logging import get_logger
 
 if typing.TYPE_CHECKING:
     from aioway._signs import Signature
@@ -16,7 +15,7 @@ __all__ = ["get_tracker"]
 
 
 # The global API logger.
-LOGGER = get_logger("aioway.__api__")
+LOGGER = logging.getLogger("aioway.__api__")
 
 
 def _logging_enter(info: ModuleMethodInfo) -> None:

@@ -2,19 +2,19 @@
 
 "`Vector` is a homogenious array of values."
 
+import logging
 import operator
 import typing
 
 import torch
 
-from aioway._tracking.logging import get_logger
 from aioway._typing import AnyUFunc2
 from aioway.fn import TensorFn
 from aioway.schemas import Attr, attr
 
 __all__ = ["Vector"]
 
-LOGGER = get_logger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 type VectorRhs = Vector | torch.Tensor | int | float | bool
@@ -34,69 +34,54 @@ class Vector:
     def __repr__(self):
         return f"Vector({self.attr})"
 
-    @LOGGER.function("DEBUG")
     def __neg__(self) -> typing.Self:
         return self.__op1(operator.neg)
 
-    @LOGGER.function("DEBUG")
     def __invert__(self) -> typing.Self:
         return self.__op1(operator.invert)
 
-    @LOGGER.function("DEBUG")
     def __add__(self, other: typing.Any) -> typing.Self:
         return self.__op2(other, operator.add)
 
-    @LOGGER.function("DEBUG")
     def __sub__(self, other: typing.Any) -> typing.Self:
         return self.__op2(other, operator.sub)
 
-    @LOGGER.function("DEBUG")
     def __mul__(self, other: typing.Any) -> typing.Self:
         return self.__op2(other, operator.mul)
 
-    @LOGGER.function("DEBUG")
     def __truediv__(self, other: typing.Any) -> typing.Self:
         return self.__op2(other, operator.truediv)
 
-    @LOGGER.function("DEBUG")
     def __floordiv__(self, other: typing.Any) -> typing.Self:
         return self.__op2(other, operator.floordiv)
 
-    @LOGGER.function("DEBUG")
     def __mod__(self, other: typing.Any) -> typing.Self:
         return self.__op2(other, operator.mod)
 
-    @LOGGER.function("DEBUG")
     def __pow__(self, other: typing.Any) -> typing.Self:
         return self.__op2(other, operator.pow)
 
     @typing.no_type_check
-    @LOGGER.function("DEBUG")
     def __eq__(self, other: typing.Any) -> typing.Self:
         return self.__op2(other, operator.eq)
 
     @typing.no_type_check
-    @LOGGER.function("DEBUG")
     def __ne__(self, other: typing.Any) -> typing.Self:
         return self.__op2(other, operator.ne)
 
     @typing.no_type_check
-    @LOGGER.function("DEBUG")
     def __ge__(self, other: typing.Any) -> typing.Self:
         return self.__op2(other, operator.ge)
 
     @typing.no_type_check
-    @LOGGER.function("DEBUG")
     def __gt__(self, other: typing.Any) -> typing.Self:
         return self.__op2(other, operator.gt)
 
     @typing.no_type_check
-    @LOGGER.function("DEBUG")
     def __le__(self, other: typing.Any) -> typing.Self:
         return self.__op2(other, operator.le)
 
     @typing.no_type_check
-    @LOGGER.function("DEBUG")
     def __lt__(self, other: typing.Any) -> typing.Self:
         return self.__op2(other, operator.lt)
 

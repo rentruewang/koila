@@ -3,13 +3,13 @@
 "Schema is a collection of metadata describing the 'type' of data."
 
 import dataclasses as dcls
+import logging
 import typing
 from collections import abc as cabc
 
 import torch
 
 from aioway._tracking import get_tracker
-from aioway._tracking.logging import get_logger
 
 from .devices import Device, DeviceLike
 from .dtypes import DType, DTypeLike
@@ -18,7 +18,7 @@ from .shapes import Shape, ShapeLike
 __all__ = ["Attr", "attr"]
 
 
-LOGGER = get_logger(__name__)
+LOGGER = logging.getLogger(__name__)
 TRACKER = get_tracker(lambda: Attr)
 
 

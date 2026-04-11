@@ -3,6 +3,7 @@
 "The preview module protocol definition."
 
 import functools
+import logging
 import typing
 from collections import abc as cabc
 
@@ -10,7 +11,6 @@ import torch
 from torch import nn
 
 from aioway._common import dcls_no_eq_no_repr
-from aioway._tracking.logging import get_logger
 from aioway.ctx import enabled_fake_mode, fake_mode_func
 
 from .de import defer, eager
@@ -18,7 +18,7 @@ from .tensors import TensorFn
 
 __all__ = ["ModuleFn", "FakableModule"]
 
-LOGGER = get_logger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 class FakableModule[**P, M: nn.Module]:

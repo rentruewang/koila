@@ -1,14 +1,13 @@
 # Copyright (c) AIoWay Authors - All Rights Reserved
 
 import abc
+import logging
 import typing
 from collections import abc as cabc
 
-from aioway._tracking.logging import get_logger
-
 __all__ = ["Symbol", "ColSymbol", "TableSymbol"]
 
-LOGGER = get_logger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 class Symbol(abc.ABC):

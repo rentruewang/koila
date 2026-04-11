@@ -2,12 +2,12 @@
 
 "Some additional functions on `td.TensorDict`s."
 
+import logging
+
 import tensordict as td
 import torch
 
-from aioway._tracking.logging import get_logger
-
-LOGGER = get_logger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 def to_tensor(td: td.TensorDict) -> torch.Tensor:

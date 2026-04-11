@@ -4,14 +4,13 @@
 
 import contextlib as ctxl
 import dataclasses as dcls
+import logging
 import typing
 from collections import abc as cabc
 
 import tensordict as td
 import torch
 from torch import _subclasses as tsc
-
-from aioway._tracking.logging import get_logger
 
 __all__ = [
     "fake_mode",
@@ -22,7 +21,7 @@ __all__ = [
     "to_fake_tensordict",
 ]
 
-LOGGER = get_logger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 @dcls.dataclass
