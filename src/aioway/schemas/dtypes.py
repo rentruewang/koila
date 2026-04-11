@@ -10,7 +10,7 @@ import typing
 import numpy as np
 import torch
 
-from aioway._tracking import get_tracker
+from aioway._common import get_tracker
 
 __all__ = ["DType", "DTypeLike"]
 

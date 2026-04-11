@@ -9,7 +9,7 @@ import numpy as np
 import torch
 from numpy import typing as npt
 
-from aioway._tracking import get_tracker
+from aioway._common import get_tracker
 from aioway._typing import is_list_of, is_tuple_of
 
 __all__ = ["ShapeLike", "Shape"]

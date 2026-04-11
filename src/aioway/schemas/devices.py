@@ -5,7 +5,7 @@ import typing
 
 import torch
 
-from aioway._tracking import get_tracker
+from aioway._common import get_tracker
 
 __all__ = ["Device", "DeviceLike"]
 

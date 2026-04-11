@@ -9,7 +9,7 @@ from collections import abc as cabc
 
 import torch
 
-from aioway._tracking import get_tracker
+from aioway._common import get_tracker
 
 from .devices import Device, DeviceLike
 from .dtypes import DType, DTypeLike
