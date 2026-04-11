@@ -8,7 +8,7 @@ import typing
 
 import torch
 
-from aioway._typing import AnyUFunc2
+from aioway._common import AnyUFunc2
 from aioway.fn import TensorFn
 from aioway.schemas import Attr, attr
 

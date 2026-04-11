@@ -12,9 +12,8 @@ import numpy as np
 import tensordict as td
 import torch
 
-from aioway._common import get_tracker
+from aioway._common import get_tracker, is_dict_of_str_to, is_list_of
 from aioway._signs import Signature
-from aioway._typing import is_dict_of_str_to, is_list_of
 
 from .attrs import Attr, attr
 from .devices import Device, DeviceLike

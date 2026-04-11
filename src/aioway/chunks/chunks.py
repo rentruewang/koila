@@ -10,7 +10,7 @@ from collections import abc as cabc
 import tensordict as td
 import torch
 
-from aioway._typing import is_dict_of_str_to
+from aioway._common import is_dict_of_str_to
 from aioway.fn import tdict
 from aioway.schemas import AttrSetLike, attr_set
 

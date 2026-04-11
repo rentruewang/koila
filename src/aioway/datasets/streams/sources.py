@@ -12,7 +12,7 @@ from collections import abc as cabc
 
 from torch.utils import data
 
-from aioway._typing import is_list_of
+from aioway._common import is_list_of
 from aioway.chunks import Chunk
 from aioway.schemas import AttrSet
 
