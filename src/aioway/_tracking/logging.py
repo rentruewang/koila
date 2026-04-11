@@ -12,7 +12,7 @@ from rich import logging as rlogging
 
 from aioway._common import format_function
 
-__all__ = ["enable_log", "enable_rich_log", "Logger", "get_logger"]
+__all__ = ["enable_log", "enable_rich_log"]
 
 
 @ctxl.contextmanager
